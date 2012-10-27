@@ -247,9 +247,9 @@ class User {
       unset($_SESSION['switched_user']);
     }
   }
-  public function link($action="show", $text="Profile") {
+  public function link($action="show", $text="Profile", $raw=False) {
     // returns an HTML link to the current user's profile, with text provided.
-    return "<a href='/user.php?action=".urlencode($action)."&id=".intval($this->id)."'>".escape_output($text)."</a>";
+    return "<a href='/user.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
   public function switchForm() {
       return "<form action='user.php' method='POST' class='form-horizontal'>

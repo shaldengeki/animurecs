@@ -127,23 +127,23 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
     <div class='navbar-inner'>
       <div class='container-fluid'>
         <a href='./index.php' class='brand'>Animurecs</a>
-        <ul class='nav'>
-          <li class='divider-vertical'></li>\n";
+        <ul class='nav'>\n";
   if ($user->loggedIn()) {
-    echo "          <li><a href='/feed.php'>Feed</a></li>
+    echo "          <li class='divider-vertical'></li>
+          <li><a href='/feed.php'><i class='icon-th-list icon-white'></i> Feed</a></li>
           <li class='divider-vertical'></li>
-          <li>".$user->link("show", "You")."</li>
+          <li>".$user->link("show", "<i class='icon-home icon-white'></i> You", True)."</li>
           <li class='divider-vertical'></li>
-          <li><a href='user.php'>Connect</a></li>
+          <li><a href='user.php'><i class='icon-globe icon-white'></i> Connect</a></li>
           <li class='divider-vertical'></li>
-          <li><a href='anime.php'>Discover</a></li>
+          <li><a href='anime.php'><i class='icon-star icon-white'></i> Discover</a></li>
           <li class='divider-vertical'></li>\n";
   }
   echo "        </ul>
         <ul class='nav pull-right'>\n";
   if ($user->loggedIn()) {
     echo "          <li id='navbar-user' class='dropdown'>
-            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user'></i>".escape_output($user->username)."<b class='caret'></b></a>
+            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
               ".$user->link();
     if ($user->isAdmin() && !isset($user->switched_user)) {

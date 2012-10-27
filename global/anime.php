@@ -143,12 +143,12 @@ class Anime {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
   }
-  public function link($action="show", $text=Null) {
+  public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current anime's profile, with text provided.
     if ($text === Null) {
       $text = $this->title ? $this->title : "Info";
     }
-    return "<a href='/anime.php?action=".urlencode($action)."&id=".intval($this->id)."'>".escape_output($text)."</a>";
+    return "<a href='/anime.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
   public function profile() {
     // displays an anime's profile.
