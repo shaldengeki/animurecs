@@ -9,7 +9,7 @@ if (isset($_POST['name']) && isset($_POST['username']) && isset($_POST['email'])
 } else {
   start_html($database, $user, "Animurecs", "", $_REQUEST['status']);
 ?>
-<div class="row">
+<div class="row-fluid">
   <div class="span4">&nbsp;</div>
   <div class="span4">
 <?php

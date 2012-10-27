@@ -140,10 +140,10 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li class='divider-vertical'></li>\n";
   }
   echo "        </ul>
-        <ul class='nav pull-right'>
-          <li id='navbar-user' class='dropdown'>\n";
+        <ul class='nav pull-right'>\n";
   if ($user->loggedIn()) {
-    echo "            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user'></i>".escape_output($user->username)."<b class='caret'></b></a>
+    echo "          <li id='navbar-user' class='dropdown'>
+            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
               ".$user->link();
     if ($user->isAdmin() && !isset($user->switched_user)) {
@@ -155,10 +155,16 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
     echo "              <a href='/logout.php'>Sign out</a>
             </ul>\n";
   } else {
-    echo "            <a href='#' class='dropdown-toggle' data-toggle='dropdown'>Sign in<b class='caret'></b></a>
-              <ul class='dropdown-menu'>\n";
-    display_login_form();
-    echo "            </ul>\n";
+    echo "          <li>
+          <form class='form-inline' accept-charset='UTF-8' action='/login.php' method='post'>
+            <input name='username' type='text' class='input-small' placeholder='Username'>
+            <input name='password' type='password' class='input-small' placeholder='Password'>
+            <!--<label class='checkbox'>
+              <input type='checkbox'> Remember me
+            </label>-->
+            <button type='submit' class='btn btn-primary btn-small'>Sign in</button>
+          </form></li>
+        </ul>\n";
   }
   echo "          </li>
         </ul>
@@ -204,39 +210,36 @@ function display_ok_notok_dropdown($select_id="ok_notok", $selected=0) {
 function display_register_form($database, $action=".") {
   echo "    <form class='form-horizontal' name='register' method='post' action=".$_SERVER['SCRIPT_NAME'].">
       <fieldset>
-        <legend>Signing up is easy! Fill in the form below...</legend>
+        <legend>Signing up is easy! Fill in a few things...</legend>
         <div class='control-group'>
-          <label class='control-label'>Name</label>
-          <div class='controls'>
-            <input type='text' class='' name='name' id='name' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label'>Username</label>
+          <label class='control-label'>A username:</label>
           <div class='controls'>
             <input type='text' class='' name='username' id='username' />
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label'>Email</label>
-          <div class='controls'>
-            <input type='text' class='' name='email' id='email' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label'>Password</label>
+          <label class='control-label'>Your password:</label>
           <div class='controls'>
             <input type='password' class='' name='password' id='password' />
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label'>Confirm password</label>
+          <label class='control-label'>Repeat that password:</label>
           <div class='controls'>
             <input type='password' class='' name='password_confirmation' id='password_confirmation' />
           </div>
         </div>
-        <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>Sign up</button>
+        <div class='control-group'>
+          <label class='control-label'>Your email:</label>
+          <div class='controls'>
+            <input type='text' class='' name='email' id='email' />
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label'>... And you're done!</label>
+          <div class='controls'>
+            <button type='submit' class='btn btn-primary'>Sign up</button>
+          </div>
         </div>
       </fieldset>
     </form>\n";
