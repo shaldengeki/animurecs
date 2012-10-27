@@ -28,17 +28,25 @@ function get_numeric($val) {
   }
 }
 
-function convert_userlevel_to_text($userlevel) {
-  switch(intval($userlevel)) {
-    case 0:
-      return 'Normal';
-      break;
-    case 1:
-      return 'Administrator';
-      break;
-    default:
-      return 'Unknown';
+function convert_usermask_to_text($usermask) {
+  $usermask = intval($usermask);
+  $roles = [];
+  if ($usermask == 0) {
+    return "Guest";
   }
+  if ($usermask & 4) {
+    $roles[] = "Administrator";
+  }
+  if ($usermask & 2) {
+    $roles[] = "Moderator";
+  }
+  if ($usermask & 1) {
+    $roles[] = "User";
+  }
+  if (count($roles) == 0) {
+    return "Unknown";
+  }
+  return implode(", ", $roles);
 }
 
 function udate($format, $utimestamp = null) {

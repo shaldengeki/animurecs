@@ -23,9 +23,9 @@ class DbConn extends mysqli {
       if( get_magic_quotes_gpc() ) {
         $value = stripslashes($value);
       }
-      if( $value == '' ) {
+      if ($value === Null) {
         $value = 'NULL';
-      } if( !is_numeric($value) || $value[0] == '0' ) {
+      } elseif (!is_numeric($value) || $value[0] == '0' ) {
         $value = "\"".$this->real_escape_string($value)."\"";
       }
       return $value;

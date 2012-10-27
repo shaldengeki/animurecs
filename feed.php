@@ -12,7 +12,7 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
     <p>You are now logged in. Here's what I've got on my to-do list:</p>
     <ol>
       <li><s>User auth</s></li>
-      <li>Anime model, add/delete/update anime</li>
+      <li><s>Anime model, add/delete/update anime</s></li>
       <li>Tag model, add/delete/update tags</li>
       <li>Taggings</li>
       <li>Start pulling anime from third-party DBs</li>

@@ -1,68 +1,41 @@
 <?php
 include_once("global/includes.php");
-if (!$user->loggedIn()) {
-  header("Location: index.php");
-}
 
 if (isset($_POST['switch_username']) && $user->isAdmin()) {
   $switchUser = $user->switchUser($_POST['switch_username']);
   redirect_to($switchUser);
-} elseif ($_REQUEST['action'] == 'switch_back') {
-  $switchUser = $user->switchUser($_SESSION['switched_user']['username'], False);
-  redirect_to($switchUser);
 }
 
-$targetUser = False;
-if (isset($_REQUEST['id']) && is_numeric($_REQUEST['id'])) {
-  try {
-    $targetUser = new User($database, intval($_REQUEST['id']));
-  } catch (Exception $e) {
-    $targetUser = False;
-  }
+try {
+  $targetUser = new User($database, intval($_REQUEST['id']));
+} catch (Exception $e) {
+  $targetUser = new User($database, 0);
 }
 
-if ($targetUser !== False && !$targetUser->allow($user, $_REQUEST['action'])) {
+if (!$targetUser->allow($user, $_REQUEST['action'])) {
   $title = "Error: Insufficient privileges";
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {
   switch($_REQUEST['action']) {
+    case 'switch_back':
+      $switchUser = $user->switchUser($_SESSION['switched_user']['username'], False);
+      redirect_to($switchUser);
+      break;
     case 'switch_user':
-      if (!$user->isAdmin()) {
-        $output = display_error("Error: Insufficient privileges", "Only admins can switch users.");
-        break;      
-      }
       $title = "Switch Users";
       $output = "<h1>Switch Users</h1>\n".$user->switchForm();
       break;
     case 'edit':
-      if (!isset($_REQUEST['id']) || !is_numeric($_REQUEST['id'])) {
-        $output = display_error("Error: Invalid user ID", "Please check your ID and try again.");
-        break;
-      }
-      //ensure that user has sufficient privileges to modify this user.
-      if ($user->id != intval($_REQUEST['id']) && !$user->isAdmin()) {
-        $output = display_error("Error: Insufficient privileges", "You can't edit this user.");
-        break;
-      }
-      if ($targetUser === False) {
+      if ($targetUser->id === 0) {
         $output = display_error("Error: Invalid user", "The given user doesn't exist.");
         break;
       }
       $title = "Editing ".escape_output($targetUser->username);
       $output = "<h1>".escape_output($targetUser->username)."</h1>\n";
-      $output .= $targetUser->editForm($user);
+      $output .= $targetUser->form($user);
       break;
     case 'show':
-      if (!isset($_REQUEST['id']) || !is_numeric($_REQUEST['id'])) {
-        $output = display_error("Error: Invalid user ID", "Please check your ID and try again.");
-        break;
-      }
-      //ensure that user has sufficient privileges to view this user.
-      if ($user->id != intval($_REQUEST['id']) && !$user->isAdmin()) {
-        $output = display_error("Error: Insufficient privileges", "You can't view this user.");
-        break;
-      }
-      if ($targetUser === False) {
+      if ($targetUser->id === 0) {
         $output = display_error("Error: Invalid user", "The given user doesn't exist.");
         break;
       }

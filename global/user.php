@@ -1,16 +1,17 @@
 <?php
 
 class User {
+  public $dbConn;
   public $id;
   public $username;
   public $name;
   public $email;
   public $usermask;
-  public $dbConn;
   public $createdAt;
   public $lastActive;
   public $lastIP;
   public $avatarPath;
+  public $lastLoginCheckTime;
   public function __construct($database, $id=Null) {
     $this->dbConn = $database;
     if ($id === 0) {
@@ -49,6 +50,13 @@ class User {
         }
         return False;
         break;
+      case 'switch_user':
+        if ($authingUser->isAdmin()) {
+          return True;
+        }
+        return False;
+        break;
+      case 'switch_back':
       case 'show':
       case 'index':
         return True;
@@ -61,13 +69,21 @@ class User {
   public function loggedIn() {
     //if userID is not proper, or if user's last IP was not the requester's IP, return false.
     if (intval($this->id) <= 0) {
-      return false;
+      return False;
     }
-    $thisUserInfo = $this->dbConn->queryFirstRow("SELECT `last_ip` FROM `users` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if ($thisUserInfo['last_ip'] != $_SERVER['REMOTE_ADDR']) {
-      return false;
+    if (($this->id == $_SESSION['id']) && $_SESSION['lastLoginCheckTime'] > microtime(true) - 1) {
+      return True;
+    } elseif (isset($_SESSION['switched_user'])) {
+      $checkID = $_SESSION['switched_user'];
+    } else {
+      $checkID = $this->id;
     }
-    return true;
+    $thisUserInfo = $this->dbConn->queryFirstRow("SELECT `last_ip` FROM `users` WHERE `id` = ".intval($checkID)." LIMIT 1");
+    if (!$thisUserInfo || $thisUserInfo['last_ip'] != $_SERVER['REMOTE_ADDR']) {
+      return False;
+    }
+    $_SESSION['lastLoginCheckTime'] = microtime(true);
+    return True;
   }
   public function logIn($username, $password) {
     // rate-limit requests.
@@ -167,7 +183,7 @@ class User {
       }
       return intval($this->id);
     } else {
-      // add this facility.
+      // add this user.
       $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params));
       if (!$insertUser) {
         return False;
@@ -204,6 +220,31 @@ class User {
       $formEntries[] = new FormEntry($this->dbConn, intval($entry['id']));
     }
     return $formEntries;
+  }
+  public function switchUser($username, $switch_back=True) {
+    /*
+      Switches the current user's session out for another user (provided by $username) in the etiStats db.
+      If $switch_back is true, packs the current session into $_SESSION['switched_user'] before switching.
+      If not, then retrieves the packed session and overrides current session with that info.
+      Returns a redirect_to array.
+    */
+    if ($switch_back) {
+      // get user entry in database.
+      $findUserID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." && `id` != ".$this->id." LIMIT 1"));
+      if (!$findUserID) {
+        return array("location" => "feed.php", "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error');
+      }
+      $newUser = new User($this->dbConn, $findUserID);
+      $newUser->switched_user = $_SESSION['id'];
+      $_SESSION['lastLoginCheckTime'] = $newUser->lastLoginCheckTime = microtime(true);
+      $_SESSION['id'] = $newUser->id;
+      $_SESSION['switched_user'] = $newUser->switched_user;
+    } else {
+      $newUser = new User($this->dbConn, $_SESSION['switched_user']);
+      $_SESSION['id'] = $newUser->id;
+      $_SESSION['lastLoginCheckTime'] = microtime(true);
+      unset($_SESSION['switched_user']);
+    }
   }
   public function link($action="show", $text="Profile") {
     // returns an HTML link to the current user's profile, with text provided.
@@ -292,50 +333,50 @@ class User {
     echo "    </tbody>
     </table>\n";
   }
-  public function editForm($currentUser) {
-    $output = "<form action='user.php".(($id === 0) ? "" : "?id=".intval($id))."' method='POST' class='form-horizontal'>\n".(($id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
-  <fieldset>
-    <div class='control-group'>
-      <label class='control-label' for='user[name]'>Name</label>
-      <div class='controls'>
-        <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($id === 0) ? "" : " value='".escape_output($this->name)."'").">
-      </div>
-    </div>
-    <div class='control-group'>
-      <label class='control-label' for='user[name]'>Username</label>
-      <div class='controls'>
-        <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($id === 0) ? "" : " value='".escape_output($this->username)."'").">
-      </div>
-    </div>
-    <div class='control-group'>
-      <label class='control-label' for='user[password]'>Password</label>
-      <div class='controls'>
-        <input name='user[password]' type='password' class='input-xlarge' id='user[password]' />
-      </div>
-    </div>
-    <div class='control-group'>
-      <label class='control-label' for='user[password_confirmation]'>Confirm Password</label>
-      <div class='controls'>
-        <input name='user[password_confirmation]' type='password' class='input-xlarge' id='user[password_confirmation]' />
-      </div>
-    </div>
-    <div class='control-group'>
-      <label class='control-label' for='user[name]'>Email</label>
-      <div class='controls'>
-        <input name='user[email]' type='email' class='input-xlarge' id='user[email]'".(($id === 0) ? "" : " value='".escape_output($this->email)."'").">
-      </div>
-    </div>\n";
-    if ($currentUser->isAdmin()) {
-      $output .= "      <div class='control-group'>
-      <label class='control-label' for='user[userlevel]'>Role</label>
-      <div class='controls'>\n".display_userlevel_dropdown($database, "user[userlevel]", ($id === 0) ? 0 : intval($this->userlevel))."      </div>
-    </div>\n";
-    }
-    $output .= "    <div class='form-actions'>
-      <button type='submit' class='btn btn-primary'>".(($id === 0) ? "Add User" : "Save changes")."</button>
-      <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($id === 0) ? "Go back" : "Discard changes")."</a>
-    </div>
-  </fieldset>\n</form>\n";
+  public function form($currentUser) {
+    $output = "<form action='user.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
+      <fieldset>
+        <div class='control-group'>
+          <label class='control-label' for='user[name]'>Name</label>
+          <div class='controls'>
+            <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name)."'").">
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='user[username]'>Username</label>
+          <div class='controls'>
+            <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username)."'").">
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='user[password]'>Password</label>
+          <div class='controls'>
+            <input name='user[password]' type='password' class='input-xlarge' id='user[password]' />
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='user[password_confirmation]'>Confirm Password</label>
+          <div class='controls'>
+            <input name='user[password_confirmation]' type='password' class='input-xlarge' id='user[password_confirmation]' />
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='user[email]'>Email</label>
+          <div class='controls'>
+            <input name='user[email]' type='email' class='input-xlarge' id='user[email]'".(($this->id === 0) ? "" : " value='".escape_output($this->email)."'").">
+          </div>
+        </div>\n";
+        if ($currentUser->isAdmin()) {
+          $output .= "      <div class='control-group'>
+          <label class='control-label' for='user[userlevel]'>Role</label>
+          <div class='controls'>\n".display_userlevel_dropdown($database, "user[userlevel]", ($this->id === 0) ? 0 : intval($this->userlevel))."      </div>
+        </div>\n";
+        }
+        $output .= "    <div class='form-actions'>
+          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add User" : "Save changes")."</button>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
+        </div>
+      </fieldset>\n</form>\n";
     return $output;
   }
 }

@@ -134,16 +134,16 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li class='divider-vertical'></li>
           <li>".$user->link("show", "You")."</li>
           <li class='divider-vertical'></li>
-          <li><a href='#'>Connect</a></li>
+          <li><a href='user.php'>Connect</a></li>
           <li class='divider-vertical'></li>
-          <li><a href='#'>Discover</a></li>
+          <li><a href='anime.php'>Discover</a></li>
           <li class='divider-vertical'></li>\n";
   }
   echo "        </ul>
         <ul class='nav pull-right'>
           <li id='navbar-user' class='dropdown'>\n";
   if ($user->loggedIn()) {
-    echo "            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
+    echo "            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
               ".$user->link();
     if ($user->isAdmin() && !isset($user->switched_user)) {
@@ -167,7 +167,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
   </div>
   <div class='container-fluid'>\n";
   if ($status != '') {
-    echo "<div class='alert alert-".escape_output($statusClass).">
+    echo "<div class='alert alert-".escape_output($statusClass)."'>
   <button class='close' data-dismiss='alert' href='#'>×</button>
   ".escape_output($status)."\n</div>\n";
   }
@@ -244,35 +244,65 @@ function display_register_form($database, $action=".") {
 
 function display_users($database, $user) {
   //lists all users.
-  return;
-  echo "<table class='table table-striped table-bordered dataTable'>
+  $output = "<table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
       <th>Username</th>
-      <th>Email</th>
       <th>Role</th>
-      <th>Facility</th>
       <th></th>
       <th></th>
     </tr>
   </thead>
   <tbody>\n";
   if ($user->isAdmin()) {
-    $users = $database->stdQuery("SELECT `users`.`id`, `users`.`name`, `users`.`email`, `users`.`userlevel`, `facilities`.`name` AS `facility_name` FROM `users` LEFT OUTER JOIN `facilities` ON `users`.`facility_id` = `facilities`.`id` ORDER BY `users`.`name` ASC");
+    $users = $database->stdQuery("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC");
   } else {
-    $users = $database->stdQuery("SELECT `users`.`id`, `users`.`name`, `users`.`email`, `users`.`userlevel`, `facilities`.`name` AS `facility_name` FROM `users` LEFT OUTER JOIN `facilities` ON `users`.`facility_id` = `facilities`.`id` WHERE `users`.`facility_id` = ".intval($user->facility_id)." ORDER BY `users`.`name` ASC");
+    $users = $database->stdQuery("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC");
   }
-  while ($thisUser = mysqli_fetch_assoc($users)) {
-    echo "    <tr>
-      <td><a href='user.php?action=show&id=".intval($thisUser['id'])."'>".escape_output($thisUser['name'])."</a></td>
-      <td>".escape_output($thisUser['email'])."</td>
-      <td>".escape_output(convert_userlevel_to_text($thisUser['userlevel']))."</td>
-      <td>".escape_output($thisUser['facility_name'])."</td>
-      <td>"; if ($user->isAdmin()) { echo "<a href='user.php?action=edit&id=".intval($thisUser['id'])."'>Edit</a>"; } echo "</td>
-      <td>"; if ($user->isAdmin()) { echo "<a href='user.php?action=delete&id=".intval($thisUser['id'])."'>Delete</a>"; } echo "</td>
+  while ($thisID = $users->fetch_assoc()) {
+    $thisUser = new User($database, intval($thisID['id']));
+    $output .= "    <tr>
+      <td>".$thisUser->link("show", $thisUser->username)."</td>
+      <td>".escape_output(convert_usermask_to_text($thisUser->usermask))."</td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisUser->link("edit", "Edit"); } $output .= "</td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisUser->link("delete", "Delete"); } $output .= "</td>
     </tr>\n";
   }
-  echo "  </tbody>\n</table>\n";
+  $output .= "  </tbody>\n</table>\n";
+  return $output;
+}
+
+function display_anime($database, $user) {
+  //lists all anime.
+  $newAnime = new Anime($database, 0);
+  $output = "<table class='table table-striped table-bordered dataTable'>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Description</th>
+      <th>Length</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>\n";
+  if ($user->isAdmin()) {
+    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC");
+  } else {
+    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC");
+  }
+  while ($thisID = $anime->fetch_assoc()) {
+    $thisAnime = new Anime($database, intval($thisID['id']));
+    $output .= "    <tr>
+      <td>".$thisAnime->link("show", $thisAnime->title)."</td>
+      <td>".escape_output($thisAnime->description)."</td>
+      <td>".intval($thisAnime->episodeCount * $thisAnime->episodeLength)." minutes</td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisAnime->link("edit", "Edit"); } $output .= "</td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisAnime->link("delete", "Delete"); } $output .= "</td>
+    </tr>\n";
+  }
+  $output .= "  </tbody>\n</table>\n".$newAnime->link("new", "Add an anime");
+  return $output;
 }
 
 function display_userlevel_dropdown($database, $select_id="userlevel", $selected=0) {

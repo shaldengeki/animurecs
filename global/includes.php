@@ -1,9 +1,13 @@
 <?php
 include_once("/global/config.php");
+
 include_once("/global/bcrypt.php");
 include_once("/global/database.php");
 include_once("/global/curl.php");
+
 include_once("/global/user.php");
+include_once("/global/anime.php");
+
 include_once("/global/display.php");
 include_once("/global/misc.php");
 
