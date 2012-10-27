@@ -2,3 +2,4 @@
 *.sublime-workspace
 global/config.php
 Thumbs.db
+css/*.less
