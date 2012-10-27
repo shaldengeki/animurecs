@@ -8,7 +8,7 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
 <div class="row-fluid">
   <div class="hero-unit">
     <h1>Welcome to Animurecs!</h1>
-    <p>This is Animurecs, an anime and manga social networking site.</p>
+    <p>Animurecs is an anime and manga database, built around the idea that watching anime is more fun when you're with friends.</p>
     <p>
       <a href="/register.php" class="btn btn-success btn-large">
         Sign up

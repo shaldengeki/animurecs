@@ -9,5 +9,7 @@ define('ROOT_URL', 'http://your.domain.here'); // no trailing backslashes!
 define('SERVER_TIMEZONE', 'Your/timezone');
 define('OUTPUT_TIMEZONE', 'Timezone/to/output');
 
+// settings for debugging in development environments.
+define('DEBUG_ON', False);
 error_reporting(E_ALL ^ E_NOTICE);
 ?>

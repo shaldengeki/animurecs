@@ -12,6 +12,8 @@ class User {
   public $lastIP;
   public $avatarPath;
   public $lastLoginCheckTime;
+  public $animeEntries;
+  public $animeList;
   public function __construct($database, $id=Null) {
     $this->dbConn = $database;
     if ($id === 0) {
@@ -20,6 +22,7 @@ class User {
       $this->name = "Guest";
       $this->usermask = 0;
       $this->email = "";
+      $this->animeEntries = $this->animeList = [];
     } else {
       $userInfo = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `email` FROM `users` WHERE `id` = ".intval($id)." LIMIT 1");
       $this->id = intval($userInfo['id']);
@@ -27,6 +30,8 @@ class User {
       $this->name = $userInfo['name'];
       $this->usermask = intval($userInfo['usermask']);
       $this->email = $userInfo['email'];
+      $this->animeEntries = $this->getAnimeEntries();
+      $this->animeList = $this->getAnimeList();
     }
   }
   public function allow($authingUser, $action) {
@@ -205,22 +210,15 @@ class User {
     }
     return true;
   }
-  public function getFacility() {
-    // retrieves an id,name array corresponding to this users's facility.
-    return $this->dbConn->queryFirstRow("SELECT `facilities`.`id`, `facilities`.`name` FROM `users` LEFT OUTER JOIN `facilities` ON `facilities`.`id` = `users`.`facility_id` WHERE `users`.`id` = ".intval($this->id));
+  public function getAnimeEntries() {
+    // retrieves a list of id arrays corresponding to anime list entries belonging to this user.
+    return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `user_id` = ".intval($this->id)." ORDER BY `time` DESC");
   }
-  public function getFormEntries() {
-    // retrieves a list of id arrays corresponding to form entries belonging to this user.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `form_entries` WHERE `user_id` = ".intval($this->id)." ORDER BY `updated_at` DESC");
-  }
-  public function getApprovals() {
-    // retrieves a list of FormEntry objects that the user has approved, ordered by updated_at desc.
-    $formEntryQuery = $this->dbConn->stdQuery("SELECT `id` FROM `form_entries` WHERE `approved_user_id` = ".intval($this->id)." ORDER BY `updated_at` DESC");
-    $formEntries = [];
-    while ($entry = $formEntryQuery->fetch_assoc()) {
-      $formEntries[] = new FormEntry($this->dbConn, intval($entry['id']));
-    }
-    return $formEntries;
+  public function getAnimeList() {
+    // retrieves a list of anime_id, id arrays corresponding to the latest list entry for each anime this user has watched.
+    return $this->dbConn->queryAssoc("SELECT `anime_id`, MAX(`id`) AS `id` FROM `anime_lists`
+                                      WHERE `user_id` = ".intval($this->id)."
+                                      GROUP BY `anime_id`");
   }
   public function switchUser($username, $switch_back=True) {
     /*

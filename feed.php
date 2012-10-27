@@ -13,8 +13,8 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
     <ol>
       <li><s>User model, auth, add/delete/update</s></li>
       <li><s>Anime model, add/delete/update anime</s></li>
-      <li>Tag model, add/delete/update tags</li>
-      <li>Taggings</li>
+      <li><s>Tag model, add/delete/update tags</s></li>
+      <li><s>Taggings</s></li>
       <li>Start pulling anime from third-party DBs</li>
       <li>List model, add/delete/update list entries</li>
       <li>Feed</li>

@@ -5,8 +5,10 @@ include_once("/global/bcrypt.php");
 include_once("/global/database.php");
 include_once("/global/curl.php");
 
-include_once("/global/user.php");
+include_once("/global/tag_type.php");
+include_once("/global/tag.php");
 include_once("/global/anime.php");
+include_once("/global/user.php");
 
 include_once("/global/display.php");
 include_once("/global/misc.php");
@@ -20,6 +22,9 @@ if (isset($_SESSION['id'])) {
 }
 if (!isset($_REQUEST['status'])) {
   $_REQUEST['status'] = "";
+}
+if (!isset($_REQUEST['class'])) {
+  $_REQUEST['class'] = "";
 }
 if (!isset($_REQUEST['action'])) {
   $_REQUEST['action'] = 'index';

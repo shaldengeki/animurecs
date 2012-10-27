@@ -276,7 +276,7 @@ function display_users($database, $user) {
 }
 
 function display_anime($database, $user) {
-  //lists all anime.
+  // lists all anime.
   $newAnime = new Anime($database, 0);
   $output = "<table class='table table-striped table-bordered dataTable'>
   <thead>
@@ -305,6 +305,78 @@ function display_anime($database, $user) {
     </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".$newAnime->link("new", "Add an anime");
+  return $output;
+}
+
+function display_tags($database, $user) {
+  // lists all tags.
+  $newTag = new Tag($database, 0);
+  $output = "<table class='table table-striped table-bordered dataTable'>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Type</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>\n";
+  if ($user->isAdmin()) {
+    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` ORDER BY `tags`.`name` ASC");
+  } else {
+    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC");
+  }
+  while ($thisID = $tag->fetch_assoc()) {
+    $thisTag = new Tag($database, intval($thisID['id']));
+    $output .= "    <tr>
+      <td>".$thisTag->link("show", $thisTag->name)."</td>
+      <td>".escape_output($thisTag->description)."</td>
+      <td><a href='tag_type.php?action=show&id=".intval($thisTag->type['id'])."'>".escape_output($thisTag->type['name'])."</a></td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("edit", "Edit"); } $output .= "</td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("delete", "Delete"); } $output .= "</td>
+    </tr>\n";
+  }
+  $output .= "  </tbody>\n</table>\n".$newTag->link("new", "Add a tag");
+  return $output;
+}
+
+function display_tag_types($database, $user) {
+  // lists all tag types.
+  $newTagType = new TagType($database, 0);
+  $output = "<table class='table table-striped table-bordered dataTable'>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Created By</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>\n";
+  $tagTypes = $database->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` ORDER BY `tag_types`.`name` ASC");
+  while ($thisID = $tagTypes->fetch_assoc()) {
+    $thisTagType = new TagType($database, intval($thisID['id']));
+    $output .= "    <tr>
+      <td>".$thisTagType->link("show", $thisTagType->name)."</td>
+      <td>".escape_output($thisTagType->description)."</td>
+      <td><a href='user.php?action=show&id=".intval($thisTagType->createdBy['id'])."'>".escape_output($thisTagType->createdBy['username'])."</a></td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisTagType->link("edit", "Edit"); } $output .= "</td>
+      <td>"; if ($user->isAdmin()) { $output .= $thisTagType->link("delete", "Delete"); } $output .= "</td>
+    </tr>\n";
+  }
+  $output .= "  </tbody>\n</table>\n".$newTagType->link("new", "Add a tag type");
+  return $output;
+}
+
+function display_tag_type_dropdown($database, $select_id="tag[tag_type_id]", $selected=0) {
+  $output = "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
+  $allTypes = $database->stdQuery("SELECT `id`, `name` FROM `tag_types` ORDER BY `name` ASC");
+  while ($type = $allTypes->fetch_assoc()) {
+    $output .= "<option value='".intval($type['id'])."'".(($selected == intval($type['id'])) ? "selected='selected'" : "").">".escape_output($type['name'])."</option>\n";
+  }
+  $output .= "</select>\n";
   return $output;
 }
 
@@ -524,8 +596,12 @@ function display_history_plot($database, $user, $form_id) {
 
 function display_footer() {
   echo "    <hr />
-    <p>Created and maintained by <a href='http://llanim.us'>shaldengeki</a>.</p>
-  </div>\n</body>\n</html>";
+    <p>Created and maintained by <a href='http://llanim.us'>shaldengeki</a>.</p>\n";
+  if (DEBUG_ON) {
+    echo "<pre>".escape_output(print_r($GLOBALS['database']->queryLog, True))."</pre>\n";
+    echo "<pre>".escape_output(print_r($GLOBALS, True))."</pre>\n";
+  }
+  echo "  </div>\n</body>\n</html>";
 }
 
 ?>

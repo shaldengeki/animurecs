@@ -3,6 +3,7 @@
 class DbConn extends mysqli {
   //basic database connection class that provides input-escaping and standardized query error output.
   
+  public $queryLog;
   private $host, $username, $password, $database;
 
   public function __construct($host, $username, $password, $database) {
@@ -10,6 +11,7 @@ class DbConn extends mysqli {
     $this->username = $username;
     $this->password = $password;
     $this->database = $database;
+    $this->queryLog = [];
     parent::__construct($host, $username, $password, $database);
     if (mysqli_connect_error()) {
       die('Could not connect to the database.');
@@ -33,21 +35,24 @@ class DbConn extends mysqli {
   }
   public function stdQuery($query) {
     //executes a query with standardized error message.
-    // $result = $this->query($query)
-    //   or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
-    //       Time: ".time());
-    /* Use the bottom command if you need to debug */
-    $result = $this->query($query)
-      or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
+    if (DEBUG_ON) {
+      $this->queryLog[] = $query;
+      $result = $this->query($query)
+        or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
           Query: ".$query."<br />
           ".$this->error."<br />
           Time: ".time());
+    } else {
+      $result = $this->query($query)
+        or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
+           Time: ".time());
+    }
     return $result;
   }
   public function queryFirstRow($query) {
     $result = $this->stdQuery($query);
     if ($result->num_rows < 1) {
-      return false;
+      return False;
     }
     $returnValue = $result->fetch_assoc();
     $result->free();
@@ -56,7 +61,7 @@ class DbConn extends mysqli {
   public function queryFirstValue($query) {
     $result = $this->queryFirstRow($query);
     if (!$result || count($result) != 1) {
-      return false;
+      return False;
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
@@ -79,7 +84,7 @@ class DbConn extends mysqli {
   public function queryCount($query, $column="*") {
     $result = $this->queryFirstRow($query);
     if (!$result) {
-      return false;
+      return False;
     }
     return intval($result['COUNT('.$column.')']);
   }
