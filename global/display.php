@@ -305,12 +305,22 @@ function display_anime($database, $user) {
   return $output;
 }
 
-function display_userlevel_dropdown($database, $select_id="userlevel", $selected=0) {
-  echo "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
-  for ($userlevel = 0; $userlevel <= 3; $userlevel++) {
-    echo "  <option value='".intval($userlevel)."'".(($selected == intval($userlevel)) ? "selected='selected'" : "").">".escape_output(convert_userlevel_to_text($userlevel))."</option>\n";
+function display_user_roles_select($select_id="user[usermask][]", $mask=0) {
+  $output = "";
+  for ($usermask = 0; $usermask <= 2; $usermask++) {
+    $output .= "<label class='checkbox'>
+  <input type='checkbox' name='".escape_output($select_id)."' value='".intval(pow(2, $usermask))."'".(($mask & intval(pow(2, $usermask))) ? "checked='checked'" : "")." />".escape_output(convert_usermask_to_text(pow(2, $usermask)))."\n</label>\n";
   }
-  echo "</select>\n";
+  return $output;
+}
+
+function display_userlevel_dropdown($database, $select_id="userlevel", $selected=0) {
+  $output = "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
+  for ($userlevel = 0; $userlevel <= 3; $userlevel++) {
+    $output .= "  <option value='".intval($userlevel)."'".(($selected == intval($userlevel)) ? "selected='selected'" : "").">".escape_output(convert_userlevel_to_text($userlevel))."</option>\n";
+  }
+  $output .= "</select>\n";
+  return $output;
 }
 
 function display_user_edit_form($database, $user, $id=false) {

@@ -177,18 +177,19 @@ class User {
     //go ahead and register or update this user.
     if ($this->id != 0) {
       //update this user.
-      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params)."  WHERE `id` = ".intval($this->id)." LIMIT 1");
+      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params).", `last_active` = NOW()  WHERE `id` = ".intval($this->id)." LIMIT 1");
       if (!$updateUser) {
         return False;
       }
       return intval($this->id);
     } else {
       // add this user.
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params));
+      $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params).", `created_at` = NOW(), `last_active` = NOW()");
       if (!$insertUser) {
         return False;
       } else {
-        return intval($this->dbConn->insert_id);
+        $this->id = intval($this->dbConn->insert_id);
+        return $this->id;
       }
     }
   }
@@ -368,12 +369,14 @@ class User {
         </div>\n";
         if ($currentUser->isAdmin()) {
           $output .= "      <div class='control-group'>
-          <label class='control-label' for='user[userlevel]'>Role</label>
-          <div class='controls'>\n".display_userlevel_dropdown($database, "user[userlevel]", ($this->id === 0) ? 0 : intval($this->userlevel))."      </div>
+          <label class='control-label' for='user[usermask]'>Role(s)</label>
+          <div class='controls'>\n".display_user_roles_select("user[usermask][]", ($this->id === 0) ? 0 : intval($this->usermask))."      </div>
         </div>\n";
+        } else {
+          $output .= "      <input type='hidden' name='user[usermask][]' value='".($this->id === 0 ? 1 : intval($this->usermask))."' />\n";
         }
         $output .= "    <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add User" : "Save changes")."</button>
+          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Sign Up" : "Save changes")."</button>
           <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
         </div>
       </fieldset>\n</form>\n";

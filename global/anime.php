@@ -166,9 +166,9 @@ class Anime {
       <dt>Facility</dt>
       <dd><a href='facility.php?action=show&id=".intval($userObject->facility_id)."'>".escape_output($facility)."</a></dd>
       <dt>User Role</dt>
-      <dd>".escape_output(convert_userlevel_to_text($userObject->userlevel))."</dd>
+      <dd>".escape_output(convert_usermask_to_text($userObject->usermask))."</dd>
     </dl>\n";
-    if (convert_userlevel_to_text($userObject->userlevel) == 'Physicist') {
+    if (convert_usermask_to_text($userObject->usermask) == 'Physicist') {
       $form_approvals = $database->stdQuery("SELECT `form_entries`.`id`, `qa_month`, `qa_year`, `machine_id`, `machines`.`name` AS `machine_name`, `user_id`, `users`.`name` AS `user_name`, `approved_on` FROM `form_entries` LEFT OUTER JOIN `machines` ON `machines`.`id` = `form_entries`.`machine_id` LEFT OUTER JOIN `users` ON `users`.`id` = `form_entries`.`user_id` WHERE `approved_user_id` = ".intval($userObject->id)." ORDER BY `approved_on` DESC");
       echo "  <h3>Approvals</h3>
     <table class='table table-striped table-bordered dataTable'>
