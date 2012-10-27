@@ -1,0 +1,117 @@
+@import "bootstrap";
+body {
+    padding-top: 42px;
+}
+@import "bootstrap-responsive";
+
+@greenGrass: #278C00;
+@darkGreen: #59C631;
+.navbar {
+  background-color: @greenGrass;
+  background: @greenGrass;
+  color: white;
+}
+.invertedNavbar {
+  background-color: white;
+  background: white;
+  color: @greenGrass;
+}
+
+.container-fluid {
+  width: 1000px;
+  margin: 0 auto;
+}
+
+// navbar styles.
+.navbar-inverse {
+  .divider-vertical {
+    border-right-color: @darkGreen;
+    border-left-color: @darkGreen;
+  }
+  .navbar-inner {
+    margin-bottom: 0 !important;
+    border-color: transparent;
+    .navbar;
+    .container-fluid {
+      ul.nav {
+        li#navbar-user {
+          a {
+            text-transform: none;
+            &:hover {
+              .invertedNavbar;
+            }
+          }
+        }
+        li#navbar-user.dropdown.open {
+          a.dropdown-toggle {
+            .invertedNavbar;
+          }
+        }
+        li > a {
+          &:hover {
+            .invertedNavbar;
+          }
+          text-transform: uppercase;
+        }
+      }
+      a.brand, .nav > li > a {
+        color: white;
+      }
+    }
+  }
+}
+
+.control-group.error input {
+  background-color: #B94A48;
+  color: white;
+}
+
+/* css for timepicker */
+.ui-timepicker-div {
+  .ui-widget-header { margin-bottom: 8px; }
+  dl { text-align: left; }
+  dl dt { height: 25px; margin-bottom: -25px; }
+  dl dd { margin: 0 10px 10px 65px; }
+  td { font-size: 90%; }
+}
+.ui-tpicker-grid-label { background: none; border: none; margin: 0; padding: 0; }
+
+/* css for form graphs. */
+.rule line {
+  stroke: #eee;
+}
+path {
+  fill: none;
+}
+
+#vis {
+  text-align: center;
+}
+
+/* css for forms. */
+.center-horizontal {
+  text-align: center;
+}
+
+.add-tag-list {
+  position: absolute;
+  list-style: none;
+  .tag-list { background: none repeat scroll 0% 0% rgb(239, 242, 247); }
+  .tag-list:hover { background: none repeat scroll 0% 0% rgb(182, 199, 227); }
+}
+
+.image-preview {
+  border: 1px solid black;
+  -moz-border-radius: 20px;
+  -webkit-border-radius: 20px;
+  -khtml-border-radius: 20px;
+  border-radius: 20px;
+}
+
+table > tbody > tr > td.control-group > input[class*="span"] {
+  display: inline;
+}
+
+#login_form {
+  margin: 5px 8px;
+}

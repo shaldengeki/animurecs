@@ -1,0 +1,4 @@
+*.sublime-project
+*.sublime-workspace
+global/config.php
+Thumbs.db
