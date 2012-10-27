@@ -123,7 +123,7 @@ class User {
     $this->usermask = intval($findUsername['usermask']);
     return array("location" => "/feed.php", "status" => "Successfully logged in.", 'class' => 'success');
   }
-  public function register($username, $name, $email, $password, $password_confirmation, $facility_id) {
+  public function register($username, $email, $password, $password_confirmation) {
     //check if user's passwords match.
     if ($password != $password_confirmation) {
         $returnArray = array("location" => "register.php", "status" => "Your passwords do not match. Please try again.");      
@@ -140,11 +140,11 @@ class User {
         } else {
           //register this user.
           $bcrypt = new Bcrypt();
-          $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = ".$this->dbConn->quoteSmart($name).", `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `created_at` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `avatar_path` = ''");
+          $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `created_at` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `avatar_path` = ''");
           if (!$registerUser) {
             $returnArray = array("location" => "register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
           } else {
-            $returnArray = array("location" => "register.php", "status" => "Registration successful. ".escape_output($name)." can now log in.", 'class' => 'success');
+            $returnArray = array("location" => "register.php", "status" => "Registration successful. You can now log in as ".escape_output($username).".", 'class' => 'success');
           }
         }
       }
