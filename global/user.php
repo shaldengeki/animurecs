@@ -91,7 +91,7 @@ class User {
     return True;
   }
   public function log_failed_login($username, $password) {
-    $insert_log = $this->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->quoteSmart($username).", ".$this->quoteSmart($password).")");
+    $insert_log = $this->dbConn->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->quoteSmart($username).", ".$this->quoteSmart($password).")");
   }
   public function logIn($username, $password) {
     // rate-limit requests.
@@ -103,11 +103,11 @@ class User {
     $bcrypt = new Bcrypt();
     $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
     if (!$findUsername) {
-      $this->dbConn->log_failed_login($username, $password);
+      $this->log_failed_login($username, $password);
       return array("location" => "index.php", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     if (!$bcrypt->verify($password, $findUsername['password_hash'])) {
-      $this->dbConn->log_failed_login($username, $password);
+      $this->log_failed_login($username, $password);
       return array("location" => "index.php", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     
