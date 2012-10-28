@@ -935,6 +935,7 @@ path{fill:none;}
 .center-horizontal{text-align:center;}
 .add-tag-list{position:absolute;list-style:none;}.add-tag-list .tag-list{background:none repeat scroll 0% 0% #eff2f7;}
 .add-tag-list .tag-list:hover{background:none repeat scroll 0% 0% #b6c7e3;}
+ul.token-input-list-facebook{display:inline-block;}
 .image-preview{border:1px solid black;-moz-border-radius:20px;-webkit-border-radius:20px;-khtml-border-radius:20px;border-radius:20px;}
 table>tbody>tr>td.control-group>input[class*="span"]{display:inline;}
 #login_form{margin:5px 8px;}

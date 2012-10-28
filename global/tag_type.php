@@ -56,7 +56,7 @@ class TagType {
     // creates or updates a tag type based on the parameters passed in $tag_type and this object's attributes.
     // returns False if failure, or the ID of the tag type if success.
     // make sure tag type name adheres to standards.
-    $tag_type['name'] = str_replace(" ", "_", strtolower($tag_type['name']));
+    $tag_type['name'] = str_replace("_", " ", strtolower($tag_type['name']));
     $params = array();
     foreach ($tag_type as $parameter => $value) {
       if (!is_array($value)) {

@@ -34,7 +34,7 @@ class Anime {
       $this->imagePath = $animeInfo['image_path'];
       $this->approvedOn = $animeInfo['approved_on'];
       $this->approvedUser = $this->getApprovedUser();
-      //$this->tags = $this->getTags();
+      $this->tags = $this->getTags();
       //$this->comments = $this->getComments();
       //$this->entries = $this->getEntries();
     }
@@ -50,6 +50,7 @@ class Anime {
         }
         return False;
         break;
+      case 'json_search':
       case 'new':
         if ($authingUser->loggedIn()) {
           return True;
@@ -65,20 +66,62 @@ class Anime {
         break;
     }
   }
-  public function delete() {
-    // delete this anime from the database.
-    // returns a boolean.
-    $deleteAnime = $this->dbConn->stdQuery("DELETE FROM `anime` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteAnime) {
+  public function create_or_update_tagging($tag_id, $currentUser) {
+    /*
+      Creates or updates an existing tagging for the current anime.
+      Takes a tag ID.
+      Returns a boolean.
+    */
+    // check to see if this is an update.
+    if (isset($this->tags[intval($tag_id)])) {
+      return True;
+    }
+    try {
+      $tag = new Tag($this->dbConn, intval($tag_id));
+    } catch (Exception $e) {
       return False;
+    }
+    $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
+    if (!$insertDependency) {
+      return False;
+    }
+    $this->tags[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
+    return True;
+  }
+  public function drop_taggings($tags=False) {
+    /*
+      Deletes tagging relations.
+      Takes an array of tag ids as input, defaulting to all tags.
+      Returns a boolean.
+    */
+    if ($tags === False) {
+      $tags = array_keys($this->tags);
+    }
+    $tagIDs = array();
+    foreach ($tags as $tag) {
+      if (is_numeric($tag)) {
+        $tagIDs[] = intval($tag);
+      }
+    }
+    if (count($tagIDs) > 0) {
+      $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `anime_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
+      if (!$drop_taggings) {
+        return False;
+      }
+    }
+    foreach ($tagIDs as $tagID) {
+      unset($this->tags[intval($tagID)]);
     }
     return True;
   }
-  public function create_or_update($anime, $currentUser=Null) {
+  public function create_or_update($anime, $currentUser) {
     // creates or updates a anime based on the parameters passed in $anime and this object's attributes.
     // returns False if failure, or the ID of the anime if success.
 
     // filter some parameters out first and replace them with their corresponding db fields.
+    if (isset($anime['anime_tags']) && !is_array($anime['anime_tags'])) {
+      $anime['anime_tags'] = explode(",", $anime['anime_tags']);
+    }
     if ((isset($anime['approved']) && intval($anime['approved']) == 1 && !$this->isApproved())) {
       $anime['approved_on'] = unixToMySQLDateTime();
       $anime['approved_user_id'] = $currentUser->id;
@@ -117,8 +160,34 @@ class Anime {
     }
 
     // now process any taggings.
-    // TODO
+    if (isset($anime['anime_tags'])) {
+      // drop any unneeded access rules.
+      $tagsToDrop = array();
+      foreach ($this->tags as $tag) {
+        if (!in_array($tag['id'], $anime['anime_tags'])) {
+          $tagsToDrop[] = intval($tag['id']);
+        }
+      }
+      $drop_tags = $this->drop_taggings($tagsToDrop);
+      foreach ($anime['anime_tags'] as $tagToAdd) {
+        // find this tagID.
+        $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
+        if ($tagID) {
+          $create_tagging = $this->create_or_update_tagging($tagID, $currentUser);
+        }
+      }
+    }
+
     return $this->id;
+  }
+  public function delete() {
+    // delete this anime from the database.
+    // returns a boolean.
+    $deleteAnime = $this->dbConn->stdQuery("DELETE FROM `anime` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    if (!$deleteAnime) {
+      return False;
+    }
+    return True;
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
@@ -132,16 +201,31 @@ class Anime {
     return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
   }
   public function getTags() {
-    // retrieves a list of id arrays corresponding to form entries belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `tags_anime` LEFT OUTER JOIN `tags` ON `tags`.`id` = `tags_anime`.`tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
+    // retrieves a list of id,name entries corresponding to tags belonging to this anime.
+    $tags = [];
+    $tagQuery = $this->dbConn->stdQuery("SELECT `id`, `name` FROM `anime_tags` LEFT OUTER JOIN `tags` ON `tags`.`id` = `anime_tags`.`tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
+    while ($tag = $tagQuery->fetch_assoc()) {
+      $tags[intval($tag['id'])] = $tag;
+    }
+    return $tags;
   }
   public function getComments() {
-    // retrieves a list of id arrays corresponding to form entries belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `comments` WHERE `anime_id` = ".intval($this->id)." ORDER BY `updated_at` DESC");
+    // retrieves a list of id entries corresponding to comments belonging to this anime.
+    $comments = [];
+    $commentQuery = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = 'anime' && `type_id` = ".intval($this->id)." ORDER BY `comments`.`created_at` DESC");
+    while ($comment = $commentQuery->fetch_assoc()) {
+      $comments[intval($comment['id'])] = $comment;
+    }
+    return $comments;
   }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
+    $entries = [];
+    $entryQuery = $this->dbConn->stdQuery("SELECT `id` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
+    while ($entry = $entryQuery->fetch_assoc()) {
+      $entries[intval($entry['id'])] = $entry;
+    }
+    return $entries;
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current anime's profile, with text provided.
@@ -238,6 +322,12 @@ class Anime {
           <div class='controls'>
             <input name='anime[episode_count]' type='number' min=0 step=1 class='input-small' id='anime[episode_count]'".(($this->id === 0) ? "" : " value=".intval($this->episodeCount))." /> episodes at 
             <input name='anime[episode_minutes]' type='number' min=0 step=1 class='input-small' id='anime[episode_minutes]'".(($this->id === 0) ? "" : " value=".intval($this->episodeLength/60))." /> minutes per episode
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='anime[anime_tags]'>Tags</label>
+          <div class='controls'>
+            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=json_search' ".($this->id === 0 ? "" : "data-value='".escape_output(json_encode(array_values($this->tags)))."'")."id='anime[anime_tags]' />
           </div>
         </div>\n";
         if ($currentUser->isModerator || $currentUser->isAdmin()) {

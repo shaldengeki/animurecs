@@ -109,19 +109,28 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 	<title>".escape_output($title).($subtitle != '' ? ' - '.escape_output($subtitle) : '')."</title>
 	<link rel='shortcut icon' href='/favicon.ico' />
+
 	<link rel='stylesheet' href='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' type='text/css' />
-	<link rel='stylesheet' href='css/jquery.dataTables.css' type='text/css' />
+  <link rel='stylesheet' href='css/jquery.dataTables.css' type='text/css' />
+  <link rel='stylesheet' href='css/token-input.css' type='text/css' />
   <link rel='stylesheet' href='css/animurecs.css' type='text/css' />
+
   <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
   <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js'></script>
+
   <script type='text/javascript' src='js/jquery-ui-timepicker-addon.js'></script>
 	<script type='text/javascript' language='javascript' src='js/jquery.dropdownPlain.js'></script>
 	<script type='text/javascript' language='javascript' src='js/jquery.dataTables.min.js'></script>
+  <script type='text/javascript' language='javascript' src='js/jquery.tokeninput.js'></script>
+  <script type='text/javascript' language='javascript' src='js/jquery.json-2.3.min.js'></script>
+
   <script type='text/javascript' src='https://www.google.com/jsapi'></script>
   <script type='text/javascript' src='js/d3.v2.min.js'></script>
   <script type='text/javascript' src='js/d3-helpers.js'></script>
+
 	<script type='text/javascript' language='javascript' src='js/bootstrap.min.js'></script>
 	<script type='text/javascript' language='javascript' src='js/bootstrap-dropdown.js'></script>
+
 	<script type='text/javascript' language='javascript' src='js/animurecs.js'></script>\n</head>\n<body>
   <div class='navbar navbar-inverse navbar-fixed-top'>
     <div class='navbar-inner'>

@@ -43,6 +43,12 @@ class Tag {
         }
         return False;
         break;
+      case 'json_search':
+        if ($authingUser->loggedIn()) {
+          return True;
+        }
+        return False;
+        break;
       case 'show':
       case 'index':
         return True;
@@ -52,12 +58,51 @@ class Tag {
         break;
     }
   }
-  public function delete() {
-    // delete this tag from the database.
-    // returns a boolean.
-    $deleteTag = $this->dbConn->stdQuery("DELETE FROM `tags` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteTag) {
+  public function create_or_update_tagging($anime_id, $currentUser) {
+    /*
+      Creates or updates an existing tagging for the current anime.
+      Takes a tag ID.
+      Returns a boolean.
+    */
+    // check to see if this is an update.
+    if (isset($this->anime[intval($anime_id)])) {
+      return True;
+    }
+    try {
+      $anime = new Anime($this->dbConn, intval($anime_id));
+    } catch (Exception $e) {
       return False;
+    }
+    $insertTagging = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
+    if (!$insertTagging) {
+      return False;
+    }
+    $this->anime[intval($anime->id)] = array('id' => intval($anime->id), 'title' => $anime->title);
+    return True;
+  }
+  public function drop_taggings($animus=False) {
+    /*
+      Deletes tagging relations.
+      Takes an array of anime ids as input, defaulting to all anime.
+      Returns a boolean.
+    */
+    if ($animus === False) {
+      $animus = array_keys($this->anime);
+    }
+    $animeIDs = array();
+    foreach ($animus as $anime) {
+      if (is_numeric($anime)) {
+        $animeIDs[] = intval($anime);
+      }
+    }
+    if (count($animeIDs) > 0) {
+      $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
+      if (!$drop_taggings) {
+        return False;
+      }
+    }
+    foreach ($animeIDs as $animeID) {
+      unset($this->anime[intval($animeID)]);
     }
     return True;
   }
@@ -65,7 +110,12 @@ class Tag {
     // creates or updates a tag based on the parameters passed in $tag and this object's attributes.
     // returns False if failure, or the ID of the tag if success.
     // make sure this tag name adheres to standards.
-    $tag['name'] = str_replace(" ", "_", strtolower($tag['name']));
+    $tag['name'] = str_replace("_", " ", strtolower($tag['name']));
+
+    // filter some parameters out first and replace them with their corresponding db fields.
+    if (isset($tag['anime_tags']) && !is_array($tag['anime_tags'])) {
+      $tag['anime_tags'] = explode(",", $tag['anime_tags']);
+    }
 
     $params = array();
     foreach ($tag as $parameter => $value) {
@@ -89,7 +139,36 @@ class Tag {
         $this->id = intval($this->dbConn->insert_id);
       }
     }
+
+    // now process any taggings.
+    if (isset($tag['anime_tags'])) {
+      // drop any unneeded access rules.
+      $animeToDrop = array();
+      foreach ($this->anime as $anime) {
+        if (!in_array($anime['id'], $tag['anime_tags'])) {
+          $animeToDrop[] = intval($anime['id']);
+        }
+      }
+      $drop_anime = $this->drop_taggings($animeToDrop);
+      foreach ($tag['anime_tags'] as $animeToAdd) {
+        // find this animeID.
+        $animeID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `id` = ".intval($animeToAdd)." LIMIT 1"));
+        if ($animeID) {
+          $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
+        }
+      }
+    }
+
     return $this->id;
+  }
+  public function delete() {
+    // delete this tag from the database.
+    // returns a boolean.
+    $deleteTag = $this->dbConn->stdQuery("DELETE FROM `tags` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    if (!$deleteTag) {
+      return False;
+    }
+    return True;
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
@@ -114,8 +193,13 @@ class Tag {
     return $this->dbConn->queryFirstRow("SELECT `tag_types`.`id`, `tag_types`.`name` FROM `tags` LEFT OUTER JOIN `tag_types` ON `tag_types`.`id` = `tags`.`tag_type_id` WHERE `tags`.`id` = ".intval($this->id));
   }
   public function getAnime() {
-    // retrieves a list of id arrays corresponding to anime tagged with this tag.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `tags_anime` LEFT OUTER JOIN `anime` ON `anime`.`id` = `tags_anime`.`anime_id` WHERE `tag_id` = ".intval($this->id)." ORDER BY `anime`.`title` ASC");
+    // retrieves a list of id,title arrays corresponding to anime tagged with this tag.
+    $animus = [];
+    $animeQuery = $this->dbConn->stdQuery("SELECT `id`, `title` FROM `anime_tags` LEFT OUTER JOIN `anime` ON `anime`.`id` = `anime_tags`.`anime_id` WHERE `tag_id` = ".intval($this->id)." ORDER BY `anime`.`title` ASC");
+    while ($anime = $animeQuery->fetch_assoc()) {
+      $animus[intval($anime['id'])] = $anime;
+    }
+    return $animus;
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current tag's profile, with text provided.
@@ -211,6 +295,12 @@ class Tag {
           <label class='control-label' for='tag[tag_type_id]'>Type</label>
           <div class='controls'>
             ".display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type['id'])))."
+          </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='tag[anime_tags]'>Anime</label>
+          <div class='controls'>
+            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=json_search' ".($this->id === 0 ? "" : "data-value='".escape_output(json_encode(array_values($this->anime)))."'")."id='tag[anime_tags]' />
           </div>
         </div>\n";
         /*

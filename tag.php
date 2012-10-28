@@ -36,6 +36,14 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {
   switch($_REQUEST['action']) {
+    case 'json_search':
+      $tags = [];
+      if (isset($_REQUEST['q'])) {
+        $tags = $database->queryAssoc("SELECT `id`, `name` FROM `tags` WHERE MATCH(`name`) AGAINST(".$database->quoteSmart($_REQUEST['q'])." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+      }
+      echo json_encode($tags);
+      exit;
+      break;
     case 'new':
       $title = "Create a Tag";
       $output = "<h1>Add an tag</h1>\n";
