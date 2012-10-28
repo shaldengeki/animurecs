@@ -922,7 +922,7 @@ body>.container-fluid{padding-top:20px;}
 .navbar-inverse>.navbar-inner>.container-fluid>ul.nav li#navbar-user.dropdown.open a.dropdown-toggle{background-color:#2ea600;background:#2ea600;color:white;}
 .navbar-inverse>.navbar-inner>.container-fluid>ul.nav li>a:hover{background-color:#2ea600;background:#2ea600;color:white;}
 .navbar-inverse>.navbar-inner>.container-fluid a.brand,.navbar-inverse>.navbar-inner>.container-fluid .nav>li>a{background-color:#278c00;background:#278c00;color:#f5f5f5;color:white;}
-.front-bg{position:fixed;width:200%;height:200%;left:-40%;top:-20px;z-index:-10;}.front-bg img.front-image{display:block;margin:auto;min-width:60%;min-height:50%;top:0;bottom:0;left:0;right:0;}
+.front-bg{position:fixed;width:200%;height:200%;left:-50%;top:-20px;z-index:-10;}.front-bg img.front-image{display:block;margin:auto;min-width:50%;min-height:50%;top:0;bottom:0;left:0;right:0;}
 .hero-unit{background-color:transparent;text-align:center;}.hero-unit h1,.hero-unit p{color:white;text-shadow:black 0 2px 3px;}
 .thumbnail{background-color:rgba(238, 238, 238, 0.95);}.thumbnail h1,.thumbnail h2,.thumbnail h3,.thumbnail h4,.thumbnail p{color:#222;}
 .control-group.error input{background-color:#B94A48;color:white;}
