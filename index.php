@@ -3,15 +3,18 @@ include_once("global/includes.php");
 if ($user->loggedIn()) {
 	header("Location: /feed.php");
 }
-start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST['class']);
+start_html($database, $user, "Animurecs", "Animu Recommendations", $_REQUEST['status'], $_REQUEST['class']);
 ?>
+<div class="front-bg">
+  <img class="front-image" src="img/front-bg.jpg" />
+</div>
 <div class="row-fluid">
   <div class="hero-unit">
     <h1>Welcome to Animurecs!</h1>
     <p>Animurecs is an anime and manga database, built around the idea that watching anime is more fun when you're with friends.</p>
     <p>
       <a href="/register.php" class="btn btn-success btn-large">
-        Sign up
+        Sign up today!
       </a>
     </p>
   </div>
@@ -59,6 +62,6 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
     </li>
   </ul>
 </div>
-<?php
-display_footer();
-?>
+</div>
+</body>
+</html>
