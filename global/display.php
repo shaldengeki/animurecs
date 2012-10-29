@@ -102,6 +102,32 @@ function display_error($title="Error", $text="An unknown error occurred. Please 
   <p>".escape_output($text)."</p>";
 }
 
+function paginate($baseLink, $currPage=1, $maxPages=1) {
+  // displays a pagination bar.
+  //baseLink should be everything up to, say, &page=
+  $pageIncrement = 10;
+  $displayFirstPages = 10;
+  $output = "<div class='pagination pagination-centered'>
+  <ul>\n";
+  $i = 1;
+  while ($i <= $maxPages) {
+  if ($i == $currPage) {
+    $output .= "    <li class='active'><a href='#'>".$i."</a></li>";     
+  } else {
+    $output .= "    <li><a href='".$baseLink.$i."''>".$i."</a></li>";
+  }
+      if ($i < $displayFirstPages || abs($currPage - $i) <= $pageIncrement ) {
+          $i++;
+      } elseif ($i >= $displayFirstPages && $maxPages <= $i + $pageIncrement) {
+          $i++;
+      } elseif ($i >= $displayFirstPages && $maxPages > $i + $pageIncrement) {
+          $i += $pageIncrement;
+      }
+  }
+  $output .= "  </ul>\n</div>\n";
+    return $output;
+}
+
 function start_html($database, $user, $title="Animurecs", $subtitle="", $status="", $statusClass="") {
   echo "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
         'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>\n<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>\n<head>
@@ -286,34 +312,47 @@ function display_users($database, $user) {
 
 function display_anime($database, $user) {
   // lists all anime.
+  $resultsPerPage = 25;
   $newAnime = new Anime($database, 0);
-  $output = "<table class='table table-striped table-bordered dataTable'>
+  if ($user->isAdmin()) {
+    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime`")/$resultsPerPage);
+  } else {
+    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
+  }
+  $output = paginate("/anime.php?action=index&page=", intval($_REQUEST['page']), $animePages);
+  $output .= "<table class='table table-striped table-bordered dataTable' data-recordsPerPage='25'>
   <thead>
     <tr>
       <th>Title</th>
       <th>Description</th>
-      <th>Length</th>
-      <th></th>
-      <th></th>
-    </tr>
+      <th>Length</th>\n";
+  if ($newAnime->allow($user, 'edit')) {
+    $output .= "      <th></th>\n";
+  }
+  if ($newAnime->allow($user, 'delete')) {
+    $output .= "      <th></th>\n";
+  }
+  $output .= "    </tr>
   </thead>
   <tbody>\n";
-  if ($user->isAdmin()) {
-    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC");
-  } else {
-    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC");
-  }
   while ($thisID = $anime->fetch_assoc()) {
     $thisAnime = new Anime($database, intval($thisID['id']));
     $output .= "    <tr>
       <td>".$thisAnime->link("show", $thisAnime->title)."</td>
       <td>".escape_output($thisAnime->description)."</td>
-      <td>".intval($thisAnime->episodeCount * $thisAnime->episodeLength)." minutes</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisAnime->link("edit", "Edit"); } $output .= "</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisAnime->link("delete", "Delete"); } $output .= "</td>
-    </tr>\n";
+      <td>".intval($thisAnime->episodeCount * $thisAnime->episodeLength)." minutes</td>\n";
+    if ($newAnime->allow($user, 'edit')) { 
+      $output .= "      <td>".$thisAnime->link("edit", "Edit")."</td>\n";
+    }
+    if ($newAnime->allow($user, 'delete')) { 
+      $output .= "      <td>".$thisAnime->link("delete", "Delete")."</td>\n";
+    }
+    $output .= "    </tr>\n";
   }
-  $output .= "  </tbody>\n</table>\n".$newAnime->link("new", "Add an anime");
+  $output .= "  </tbody>\n</table>\n".($newAnime->allow($user, 'new') ? $newAnime->link("new", "Add an anime") : "")."\n";
+  $output .= paginate("/anime.php?action=index&page=", intval($_REQUEST['page']), $animePages)."\n";
   return $output;
 }
 

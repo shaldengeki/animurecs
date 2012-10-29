@@ -217,12 +217,30 @@ $(document).ready(function () {
   $('.dropdown-toggle').dropdown();
   /* Table initialisation */
   $('.dataTable').each(function() {
+    // see if there's a default-sort column. if not, default to the first column.
+    defaultSortColumn = $(this).find('thead > tr > th.dataTable-default-sort').index('.dataTable > thead > tr > th');
+    if (defaultSortColumn == -1) {
+      defaultSortColumn = 0;
+      defaultSortOrder = "asc";
+    } else {
+      defaultSortOrder = $(this).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order");
+    }
+    if(typeof $(this).attr('data-recordsPerPage') != 'undefined') {
+      recordsPerPage = $(this).attr('data-recordsPerPage');
+    } else {
+      recordsPerPage = 25;
+    }
     $(this).dataTable({
       "sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
       "sPaginationType": "bootstrap",
       "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
-      }
+      },
+      "iDisplayLength": recordsPerPage,
+      "bPaginate": false,
+      "bFilter": false,
+      "bInfo": false,
+      "aaSorting": [[ defaultSortColumn, defaultSortOrder ]]
     });
   });
   if ($('#vis').length > 0) {

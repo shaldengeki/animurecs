@@ -29,6 +29,11 @@ if (!isset($_REQUEST['class'])) {
 if (!isset($_REQUEST['action'])) {
   $_REQUEST['action'] = 'index';
 }
+if (!isset($_REQUEST['page'])) {
+  $_REQUEST['page']  = 1;
+} else {
+  $_REQUEST['page'] = max(1, intval($_REQUEST['page']));
+}
 date_default_timezone_set(SERVER_TIMEZONE);
 $outputTimeZone = new DateTimeZone(OUTPUT_TIMEZONE);
 

@@ -16,6 +16,7 @@ class DbConn extends mysqli {
     if (mysqli_connect_error()) {
       die('Could not connect to the database.');
     }
+    $this->set_charset("utf8");
   }
   public function quoteSmart($value) {
     //escapes input values for insertion into a query.
