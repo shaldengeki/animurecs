@@ -17,7 +17,7 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li><s>Taggings</s></li>
       <li><s>Start pulling anime from third-party DBs</s></li>
       <li>List model, add/delete/update list entries</li>
-      <li>Feed</li>
+      <li><s>Feed</s></li>
       <li>Friends</li>
       <li>Posts/comments/+1/props/upvote/likes</li>
       <li>Recommendations</li>
