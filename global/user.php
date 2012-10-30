@@ -6,6 +6,7 @@ class User {
   public $username;
   public $name;
   public $email;
+  public $about;
   public $usermask;
   public $createdAt;
   public $lastActive;
@@ -21,15 +22,20 @@ class User {
       $this->username = "guest";
       $this->name = "Guest";
       $this->usermask = 0;
-      $this->email = "";
+      $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
       $this->animeEntries = $this->animeList = [];
     } else {
-      $userInfo = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `email` FROM `users` WHERE `id` = ".intval($id)." LIMIT 1");
+      $userInfo = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `about`, `usermask`, `last_ip`, `created_at`, `last_active`, `avatar_path` FROM `users` WHERE `id` = ".intval($id)." LIMIT 1");
       $this->id = intval($userInfo['id']);
       $this->username = $userInfo['username'];
       $this->name = $userInfo['name'];
-      $this->usermask = intval($userInfo['usermask']);
       $this->email = $userInfo['email'];
+      $this->about = $userInfo['about'];
+      $this->usermask = intval($userInfo['usermask']);
+      $this->createdAt = $userInfo['created_at'];
+      $this->lastActive = $userInfo['last_active'];
+      $this->lastIP = $userInfo['last_ip'];
+      $this->avatarPath = $userInfo['avatar_path'];
       $this->animeEntries = $this->getAnimeEntries();
       $this->animeList = $this->getAnimeList();
     }
@@ -176,6 +182,7 @@ class User {
     } else {
       unset($user['usermask']);
     }
+
     $params = array();
     foreach ($user as $parameter => $value) {
       if (!is_array($value)) {
@@ -185,7 +192,39 @@ class User {
     //go ahead and register or update this user.
     if ($this->id != 0) {
       //update this user.
-      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params).", `last_active` = NOW()  WHERE `id` = ".intval($this->id)." LIMIT 1");
+      // process uploaded image.
+      $file_array = $_FILES['avatar_image'];
+      $imagePath = "";
+      if (!empty($file_array['tmp_name']) && is_uploaded_file($file_array['tmp_name'])) {
+        if ($file_array['error'] != UPLOAD_ERR_OK) {
+          return False;
+        }
+        $file_contents = file_get_contents($file_array['tmp_name']);
+        if (!$file_contents) {
+          return False;
+        }
+        $newIm = @imagecreatefromstring($file_contents);
+        if (!$newIm) {
+          return False;
+        }
+        $imageSize = getimagesize($file_array['tmp_name']);
+        if ($imageSize[0] > 300 || $imageSize[1] > 300) {
+          return False;
+        }
+        // move file to destination and save path in db.
+        if (!is_dir(joinPaths(APP_ROOT, "img", "users", intval($this->id)))) {
+          mkdir(joinPaths(APP_ROOT, "img", "users", intval($this->id)));
+        }
+        $imagePathInfo = pathinfo($file_array['tmp_name']);
+        $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
+        if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
+          return False;
+        }
+      } else {
+        $imagePath = $this->avatarPath;
+      }
+
+      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params).", `avatar_path` = ".$this->dbConn->quoteSmart($imagePath).", `last_active` = NOW()  WHERE `id` = ".intval($this->id)." LIMIT 1");
       if (!$updateUser) {
         return False;
       }
@@ -252,6 +291,77 @@ class User {
     // returns an HTML link to the current user's profile, with text provided.
     return "<a href='/user.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
+  public function animeFeed($maxTime=False,$numEntries=50) {
+    // returns markup for this user's anime feed.
+    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+    $nowTime = new DateTime();
+    $nowTime->setTimezone($outputTimezone);
+    if ($maxTime === False) {
+      $maxTime = $nowTime;
+    }
+    $feedEntries = $this->dbConn->stdQuery("SELECT `anime_lists`.`anime_id`, `anime`.`title`, `time`, `status`, `score`, `episode` FROM `anime_lists` INNER JOIN `anime` ON `anime`.`id` = `anime_lists`.`anime_id`
+                                            WHERE `user_id` = ".intval($this->id)." && `time` < ".$this->dbConn->quoteSmart($maxTime->format("Y-m-d H:i:s"))."
+                                            ORDER BY `time` DESC LIMIT ".intval($numEntries));
+    $output = "<ul class='userFeed'>\n";
+
+    // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
+    $statusStrings = array(0 => array(0 => "did something mysterious with [ANIME]",
+                                      1 => "is now watching [ANIME]",
+                                      2 => "marked [ANIME] as completed",
+                                      3 => "marked [ANIME] as on-hold",
+                                      4 => "marked [ANIME] as dropped",
+                                      6 => "plans to watch [ANIME]"),
+                            1 => array(0 => "removed [ANIME]",
+                                      1 => "started watching [ANIME]",
+                                      2 => "finished [ANIME]",
+                                      3 => "put [ANIME] on hold",
+                                      4 => "dropped [ANIME]",
+                                      6 => "now plans to watch [ANIME]"));
+    $scoreStrings = array(0 => array("rated [ANIME] a [SCORE]/10", "and rated it a [SCORE]/10"),
+                          1 => array("unrated [ANIME]", "and unrated it"));
+    $episodeStrings = array("is now watching episode [EPISODE] of [ANIME]", "and finished episode [EPISODE]");
+    while ($entry = $feedEntries->fetch_assoc()) {
+      // fetch the previous feed entry and compare values against current entry.
+      $entryTime = new DateTime($entry['time'], $outputTimezone);
+      $diffInterval = $nowTime->diff($entryTime);
+      $prevEntry = $this->dbConn->queryFirstRow("SELECT `status`, `score`, `episode` FROM `anime_lists`
+                                                  WHERE `user_id` = ".intval($this->id)." && `anime_id` = ".intval($entry['anime_id'])." && `time` < ".$this->dbConn->quoteSmart($entryTime->format("Y-m-d H:i:s"))."
+                                                  ORDER BY `time` DESC LIMIT 1");
+      if (!$prevEntry) {
+        $prevEntry = array('status' => 0, 'score' => 0, 'episode' => 0);
+      }
+      $statusChanged = (bool) ($entry['status'] != $prevEntry['status']);
+      $scoreChanged = (bool) ($entry['score'] != $prevEntry['score']);
+      $episodeChanged = (bool) ($entry['episode'] != $prevEntry['episode']);
+      
+      // concatenate appropriate parts of this status text.
+      $statusTexts = [];
+      if ($statusChanged) {
+        $statusTexts[] = $statusStrings[intval((bool)$prevEntry)][intval($entry['status'])];
+      }
+      if ($scoreChanged) {
+        $statusTexts[] = $scoreStrings[intval($statusChanged)];
+      }
+      if ($episodeChanged) {
+        $statusTexts[] = $episodeStrings[intval($statusChanged || $scoreChanged)];
+      }
+      $statusText = implode(" ", $statusTexts);
+
+      // replace placeholders.
+      $statusText = str_replace("[ANIME]", $entry['title'], $statusText);
+      $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
+      $statusText = str_replace("[EPISODE]", $entry['episode'], $statusText);
+      $statusText = ucfirst($statusText);
+
+      $output .= "  <li class='feedEntry row-fluid'><div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div><div class='feedAvatar'>".$this->link("show", "<img class='feedAvatarImg' src='".escape_output($this->avatarPath)."' />", True)."</div><div class='feedText'><div class='feedUser'>".$this->link("show", $this->username)."</div>".$statusText.".</div></li>\n";
+    }
+    $output .= "</ul>\n";
+    return $output;
+  }
+  public function animeList() {
+    // returns markup for this user's anime feed.
+    return "List here.";
+  }
   public function switchForm() {
       return "<form action='user.php' method='POST' class='form-horizontal'>
         <fieldset>
@@ -267,76 +377,48 @@ class User {
           </div>
         </fieldset>\n</form>\n";
   }
-  public function profile() {
+  public function profile($currentUser) {
     // displays a user's profile.
-    return;
-    $userObject = new User($database, $user_id);
-    $facility = $database->queryFirstValue("SELECT `name` FROM `facilities` WHERE `id` = ".intval($userObject->facility_id)." LIMIT 1");
-    $form_entries = $database->stdQuery("SELECT `form_entries`.*, `forms`.`name` AS `form_name`, `machines`.`name` AS `machine_name` FROM `form_entries` 
-                                          LEFT OUTER JOIN `forms` ON `forms`.`id` = `form_entries`.`form_id`
-                                          LEFT OUTER JOIN `machines` ON `machines`.`id` = `form_entries`.`machine_id`
-                                          WHERE `user_id` = ".intval($user_id)." 
-                                          ORDER BY `updated_at` DESC");
-    echo "<dl class='dl-horizontal'>
-      <dt>Email</dt>
-      <dd>".escape_output($userObject->email)."</dd>
-      <dt>Facility</dt>
-      <dd><a href='facility.php?action=show&id=".intval($userObject->facility_id)."'>".escape_output($facility)."</a></dd>
-      <dt>User Role</dt>
-      <dd>".escape_output(convert_userlevel_to_text($userObject->userlevel))."</dd>
-    </dl>\n";
-    if (convert_userlevel_to_text($userObject->userlevel) == 'Physicist') {
-      $form_approvals = $database->stdQuery("SELECT `form_entries`.`id`, `qa_month`, `qa_year`, `machine_id`, `machines`.`name` AS `machine_name`, `user_id`, `users`.`name` AS `user_name`, `approved_on` FROM `form_entries` LEFT OUTER JOIN `machines` ON `machines`.`id` = `form_entries`.`machine_id` LEFT OUTER JOIN `users` ON `users`.`id` = `form_entries`.`user_id` WHERE `approved_user_id` = ".intval($userObject->id)." ORDER BY `approved_on` DESC");
-      echo "  <h3>Approvals</h3>
-    <table class='table table-striped table-bordered dataTable'>
-      <thead>
-        <tr>
-          <th>QA Date</th>
-          <th>Machine</th>
-          <th>Submitter</th>
-          <th>Approval Date</th>
-        </tr>
-      </thead>
-      <tbody>\n";
-      while ($approval = mysqli_fetch_assoc($form_approvals)) {
-        echo "      <tr>
-          <td><a href='form_entry.php?action=edit&id=".intval($approval['id'])."'>".escape_output($approval['qa_year']."/".$approval['qa_month'])."</a></td>
-          <td><a href='form.php?action=show&id=".intval($approval['machine_id'])."'>".escape_output($approval['machine_name'])."</a></td>
-          <td><a href='user.php?action=show&id=".intval($approval['user_id'])."'>".escape_output($approval['user_name'])."</a></td>
-          <td>".escape_output(format_mysql_timestamp($approval['approved_on']))."</td>
-        </tr>\n";
-      }
-      echo "    </tbody>
-    </table>\n";
+
+    // info header.
+    $output = "     <div class='row-fluid'>
+        <div class='span3'>
+          <ul class='thumbnails avatarContainer'>
+            <li class='span12'>
+              <div class='thumbnail profileAvatar'>\n";
+    if ($this->avatarPath != '') {
+      $output .= "                <img src='".escape_output($this->avatarPath)."' class='img-rounded' alt=''>\n";
+    } else {
+
     }
-    echo "  <h3>Form Entries</h3>
-    <table class='table table-striped table-bordered dataTable'>
-      <thead>
-        <tr>
-          <th>Form</th>
-          <th>Machine</th>
-          <th>Comments</th>
-          <th>QA Date</th>
-          <th>Submitted on</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>\n";
-    while ($form_entry = mysqli_fetch_assoc($form_entries)) {
-      echo "    <tr>
-        <td><a href='form.php?action=show&id=".intval($form_entry['form_id'])."'>".escape_output($form_entry['form_name'])."</a></td>
-        <td><a href='form.php?action=show&id=".intval($form_entry['machine_id'])."'>".escape_output($form_entry['machine_name'])."</a></td>
-        <td>".escape_output($form_entry['comments'])."</td>
-        <td>".escape_output($form_entry['qa_year']."/".$form_entry['qa_month'])."</td>
-        <td>".escape_output(format_mysql_timestamp($form_entry['created_at']))."</td>
-        <td><a href='form_entry.php?action=edit&id=".intval($form_entry['id'])."'>View</a></td>
-      </tr>\n";
-    }
-    echo "    </tbody>
-    </table>\n";
+    $output .= "          </div>
+            </li>
+          </ul>
+        </div>
+        <div class='span9'>
+          <div class='profileUserInfo'>
+            <h1>".escape_output($this->username).($this->allow($currentUser, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : "")."</h1>
+            ".($this->isModerator() ? "<span class='modUserTag'>Moderator</span>" : "").($this->isAdmin() ? "<span class='adminUserTag'>Admin</span>" : "")."
+            <p class='lead'>
+              ".escape_output($this->about)."
+            </p>
+          </div>
+          <ul class='nav nav-tabs'>
+            <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
+            <li><a href='#userList' data-toggle='tab'>List</a></li>
+            <li><a href='#userFriends' data-toggle='tab'>Friends</a></li>
+          </ul>
+          <div class='tab-content'>
+            <div class='tab-pane active' id='userFeed'>".$this->animeFeed()."</div>
+            <div class='tab-pane' id='userList'>".$this->animeList().".</div>
+            <div class='tab-pane' id='userFriends'>Friends here.</div>
+          </div>
+        </div>
+      </div>\n";
+    return $output;
   }
   public function form($currentUser) {
-    $output = "<form action='user.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='user.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>
@@ -367,7 +449,21 @@ class User {
           <div class='controls'>
             <input name='user[email]' type='email' class='input-xlarge' id='user[email]'".(($this->id === 0) ? "" : " value='".escape_output($this->email)."'").">
           </div>
+        </div>
+        <div class='control-group'>
+          <label class='control-label' for='user[about]'>About</label>
+          <div class='controls'>
+            <textarea name='user[about]' id='user[about]' rows='5'>".(($this->id === 0) ? "" : escape_output($this->about))."</textarea>
+          </div>
         </div>\n";
+        if ($this->id != 0) {
+          $output .= "        <div class='control-group'>
+          <label class='control-label' for='avatar_image'>Avatar</label>
+          <div class='controls'>
+            <input name='avatar_image' class='input-file' type='file' onChange='displayImagePreview(this.files);' /><span class='help-inline'>Max size 300x300, JPEG/PNG/GIF.</span>
+          </div>
+        </div>\n";
+        }
         if ($currentUser->isAdmin()) {
           $output .= "      <div class='control-group'>
           <label class='control-label' for='user[usermask]'>Role(s)</label>

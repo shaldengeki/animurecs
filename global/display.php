@@ -37,6 +37,26 @@ function escape_output($input) {
   return htmlspecialchars(html_entity_decode($input, ENT_QUOTES, "UTF-8"), ENT_QUOTES, "UTF-8");
 }
 
+function ago($dateInterval){
+  $m = $dateInterval->s;
+  if ($dateInterval->y > 0) {
+    $o = $dateInterval->y."yr";
+  } elseif ($dateInterval->m > 0) {
+    $o = $dateInterval->m."mo";
+  } elseif ($dateInterval->d > 0) {
+    $o = $dateInterval->d."d";
+  } elseif ($dateInterval->h > 0) {
+    $o = $dateInterval->h."h";
+  } elseif ($dateInterval->i > 0) {
+    $o = $dateInterval->i."min";
+  } elseif ($dateInterval->s > 0) {
+    $o = $dateInterval->s."s";
+  } else {
+    $o = "just now";
+  }
+  return $o;
+}
+
 function redirect_to($redirect_array) {
   $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : 'index.php';
   $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
@@ -110,11 +130,14 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
   $output = "<div class='pagination pagination-centered'>
   <ul>\n";
   $i = 1;
+  if ($currPage > 1) {
+    $output .= "    <li><a href='".$baseLink.($currPage-1)."'>«</a></li>\n";
+  }
   while ($i <= $maxPages) {
   if ($i == $currPage) {
     $output .= "    <li class='active'><a href='#'>".$i."</a></li>";     
   } else {
-    $output .= "    <li><a href='".$baseLink.$i."''>".$i."</a></li>";
+    $output .= "    <li><a href='".$baseLink.$i."'>".$i."</a></li>";
   }
       if ($i < $displayFirstPages || abs($currPage - $i) <= $pageIncrement ) {
           $i++;
@@ -123,6 +146,9 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
       } elseif ($i >= $displayFirstPages && $maxPages > $i + $pageIncrement) {
           $i += $pageIncrement;
       }
+  }
+  if ($currPage < $maxPages) {
+    $output .= "    <li><a href='".$baseLink.($currPage+1)."'>»</a></li>\n";
   }
   $output .= "  </ul>\n</div>\n";
     return $output;

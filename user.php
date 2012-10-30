@@ -82,7 +82,7 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetUser->username)."'s Profile";
-      $output = "<h1>".escape_output($targetUser->username).($targetUser->allow($user, "edit") ? " <small>(".$targetUser->link("edit", "edit").")</small>" : "")."</h1>\n".$targetUser->profile();
+      $output = $targetUser->profile($user);
       break;
     case 'delete':
       if ($targetUser->id == 0) {
