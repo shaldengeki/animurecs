@@ -359,7 +359,7 @@ class User {
       $statusText = implode(" ", $statusTexts);
 
       // replace placeholders.
-      $statusText = str_replace("[ANIME]", $entryAnime->title, $statusText);
+      $statusText = str_replace("[ANIME]", $entryAnime->link("show", $entryAnime->title), $statusText);
       $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
       $statusText = str_replace("[EPISODE]", $entry['episode'], $statusText);
       $statusText = str_replace("[TOTAL_EPISODES]", $entryAnime->episodeCount, $statusText);

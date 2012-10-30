@@ -670,7 +670,7 @@ function display_history_plot($database, $user, $form_id) {
 
 function display_footer() {
   echo "    <hr />
-    <p>Created and maintained by <a href='http://llanim.us'>shaldengeki</a>.</p>\n";
+    <p>Created and maintained by <a href='".ROOT_URL."/user.php?action=show&id=1'>shaldengeki</a>.</p>\n";
   if (DEBUG_ON) {
     echo "<pre>".escape_output(print_r($GLOBALS['database']->queryLog, True))."</pre>\n";
     echo "<pre>".escape_output(print_r($GLOBALS, True))."</pre>\n";
