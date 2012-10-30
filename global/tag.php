@@ -194,12 +194,7 @@ class Tag {
   }
   public function getAnime() {
     // retrieves a list of id,title arrays corresponding to anime tagged with this tag.
-    $animus = [];
-    $animeQuery = $this->dbConn->stdQuery("SELECT `id`, `title` FROM `anime_tags` LEFT OUTER JOIN `anime` ON `anime`.`id` = `anime_tags`.`anime_id` WHERE `tag_id` = ".intval($this->id)." ORDER BY `anime`.`title` ASC");
-    while ($anime = $animeQuery->fetch_assoc()) {
-      $animus[intval($anime['id'])] = $anime;
-    }
-    return $animus;
+    return $this->dbConn->queryAssoc("SELECT `id`, `title` FROM `anime_tags` LEFT OUTER JOIN `anime` ON `anime`.`id` = `anime_tags`.`anime_id` WHERE `tag_id` = ".intval($this->id)." ORDER BY `anime`.`title` ASC", "id");
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current tag's profile, with text provided.

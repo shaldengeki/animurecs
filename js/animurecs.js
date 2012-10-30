@@ -98,12 +98,16 @@ $(document).ready(function () {
   /* Table initialisation */
   $('.dataTable').each(function() {
     // see if there's a default-sort column. if not, default to the first column.
-    defaultSortColumn = $(this).find('thead > tr > th.dataTable-default-sort').index('.dataTable > thead > tr > th');
+    defaultSortColumn = $(this).find('thead > tr > th').index($(this).find('thead > tr > th.dataTable-default-sort'));
     if (defaultSortColumn == -1) {
       defaultSortColumn = 0;
       defaultSortOrder = "asc";
     } else {
-      defaultSortOrder = $(this).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order");
+      if (typeof $(this).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order") != 'undefined') {
+        defaultSortOrder = $(this).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order");
+      } else {
+        defaultSortOrder = "asc";
+      }
     }
     if(typeof $(this).attr('data-recordsPerPage') != 'undefined') {
       recordsPerPage = $(this).attr('data-recordsPerPage');

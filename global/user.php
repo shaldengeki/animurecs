@@ -254,13 +254,16 @@ class User {
   }
   public function getAnimeEntries() {
     // retrieves a list of id arrays corresponding to anime list entries belonging to this user.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `user_id` = ".intval($this->id)." ORDER BY `time` DESC");
+    return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `user_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
   }
   public function getAnimeList() {
-    // retrieves a list of anime_id, id arrays corresponding to the latest list entry for each anime this user has watched.
-    return $this->dbConn->queryAssoc("SELECT `anime_id`, MAX(`id`) AS `id` FROM `anime_lists`
-                                      WHERE `user_id` = ".intval($this->id)."
-                                      GROUP BY `anime_id`");
+    // retrieves a list of anime_id, time, status, score, episode arrays corresponding to the latest list entry for each anime this user has watched.
+    return $this->dbConn->queryAssoc("SELECT `anime_id`, `time`, `score`, `status`, `episode` FROM (
+                                        SELECT MAX(`id`) AS `id` FROM `anime_lists`
+                                        WHERE `user_id` = ".intval($this->id)."
+                                        GROUP BY `anime_id`
+                                      ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
+                                      ORDER BY `status` ASC, `score` DESC", "anime_id");
   }
   public function switchUser($username, $switch_back=True) {
     /*
@@ -299,7 +302,7 @@ class User {
     if ($maxTime === False) {
       $maxTime = $nowTime;
     }
-    $feedEntries = $this->dbConn->stdQuery("SELECT `anime_lists`.`anime_id`, `anime`.`title`, `time`, `status`, `score`, `episode` FROM `anime_lists` INNER JOIN `anime` ON `anime`.`id` = `anime_lists`.`anime_id`
+    $feedEntries = $this->dbConn->stdQuery("SELECT `anime_lists`.`anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` INNER JOIN `anime` ON `anime`.`id` = `anime_lists`.`anime_id`
                                             WHERE `user_id` = ".intval($this->id)." && `time` < ".$this->dbConn->quoteSmart($maxTime->format("Y-m-d H:i:s"))."
                                             ORDER BY `time` DESC LIMIT ".intval($numEntries));
     $output = "<ul class='userFeed'>\n";
@@ -319,13 +322,21 @@ class User {
                                       6 => "now plans to watch [ANIME]"));
     $scoreStrings = array(0 => array("rated [ANIME] a [SCORE]/10", "and rated it a [SCORE]/10"),
                           1 => array("unrated [ANIME]", "and unrated it"));
-    $episodeStrings = array("is now watching episode [EPISODE] of [ANIME]", "and finished episode [EPISODE]");
+    $episodeStrings = array("is now watching episode [EPISODE]/[TOTAL_EPISODES] of [ANIME]", "and finished episode [EPISODE]/[TOTAL_EPISODES]");
+
+    $cachedAnime = [];
+
     while ($entry = $feedEntries->fetch_assoc()) {
       // fetch the previous feed entry and compare values against current entry.
+      if (!isset($cachedAnime[intval($entry['anime_id'])])) {
+        $cachedAnime[intval($entry['anime_id'])] = new Anime($this->dbConn, intval($entry['anime_id']));
+      }
+      $entryAnime = $cachedAnime[intval($entry['anime_id'])];
+
       $entryTime = new DateTime($entry['time'], $outputTimezone);
       $diffInterval = $nowTime->diff($entryTime);
       $prevEntry = $this->dbConn->queryFirstRow("SELECT `status`, `score`, `episode` FROM `anime_lists`
-                                                  WHERE `user_id` = ".intval($this->id)." && `anime_id` = ".intval($entry['anime_id'])." && `time` < ".$this->dbConn->quoteSmart($entryTime->format("Y-m-d H:i:s"))."
+                                                  WHERE `user_id` = ".intval($this->id)." && `anime_id` = ".intval($entryAnime->id)." && `time` < ".$this->dbConn->quoteSmart($entryTime->format("Y-m-d H:i:s"))."
                                                   ORDER BY `time` DESC LIMIT 1");
       if (!$prevEntry) {
         $prevEntry = array('status' => 0, 'score' => 0, 'episode' => 0);
@@ -340,7 +351,7 @@ class User {
         $statusTexts[] = $statusStrings[intval((bool)$prevEntry)][intval($entry['status'])];
       }
       if ($scoreChanged) {
-        $statusTexts[] = $scoreStrings[intval($statusChanged)];
+        $statusTexts[] = $scoreStrings[intval($entry['score'] == 0)][intval($statusChanged)];
       }
       if ($episodeChanged) {
         $statusTexts[] = $episodeStrings[intval($statusChanged || $scoreChanged)];
@@ -348,34 +359,79 @@ class User {
       $statusText = implode(" ", $statusTexts);
 
       // replace placeholders.
-      $statusText = str_replace("[ANIME]", $entry['title'], $statusText);
+      $statusText = str_replace("[ANIME]", $entryAnime->title, $statusText);
       $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
       $statusText = str_replace("[EPISODE]", $entry['episode'], $statusText);
+      $statusText = str_replace("[TOTAL_EPISODES]", $entryAnime->episodeCount, $statusText);
       $statusText = ucfirst($statusText);
-
-      $output .= "  <li class='feedEntry row-fluid'><div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div><div class='feedAvatar'>".$this->link("show", "<img class='feedAvatarImg' src='".escape_output($this->avatarPath)."' />", True)."</div><div class='feedText'><div class='feedUser'>".$this->link("show", $this->username)."</div>".$statusText.".</div></li>\n";
+      if ($statusText != '') {
+        $output .= "  <li class='feedEntry row-fluid'><div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div><div class='feedAvatar'>".$this->link("show", "<img class='feedAvatarImg' src='".escape_output($this->avatarPath)."' />", True)."</div><div class='feedText'><div class='feedUser'>".$this->link("show", $this->username)."</div>".$statusText.".</div></li>\n";
+      }
     }
     $output .= "</ul>\n";
     return $output;
   }
+  public function animeListSection($status) {
+    // returns markup for one status section of a user's anime list.
+    $statusStrings = array(1 => array('id' => 'currentlyWatching', 'title' => 'Currently Watching'),
+                          2 => array('id' => 'completed', 'title' => 'Completed'),
+                          3 => array('id' => 'onHold', 'title' => 'On Hold'),
+                          4 => array('id' => 'dropped', 'title' => 'Dropped'),
+                          6 => array('id' => 'planToWatch', 'title' => 'Plan to Watch'));
+
+    $relevantEntries = [];
+    foreach ($this->animeList as $entry) {
+      if ($entry['status'] == $status) {
+        $relevantEntries[] = $entry;
+      }
+    }
+    $output = "      <div class='".escape_output($statusStrings[$status]['id'])."'>
+        <h2>".escape_output($statusStrings[$status]['title'])."</h2>
+        <table class='table table-bordered table-striped dataTable'>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th class='dataTable-default-sort' data-sort-order='desc'>Score</th>
+              <th>Episodes</th>
+            </tr>
+          </thead>
+          <tbody>\n";
+    foreach ($relevantEntries as $entry) {
+          $anime = new Anime($this->dbConn, intval($entry['anime_id']));
+          $output .= "          <tr>
+              <td>".$anime->link("show", $anime->title)."</td>
+              <td>".(intval($entry['score']) > 0 ? intval($entry['score'])."/10" : "")."</td>
+              <td>".intval($entry['episode'])."/".intval($anime->episodeCount)."</td>
+            </tr>\n";
+    }
+    $output .= "          <tbody>
+        </table>      </div>\n";
+    return $output;
+  }
   public function animeList() {
-    // returns markup for this user's anime feed.
-    return "List here.";
+    // returns markup for this user's anime list.
+    $output = "";
+    $output .= $this->animeListSection(1);
+    $output .= $this->animeListSection(2);
+    $output .= $this->animeListSection(3);
+    $output .= $this->animeListSection(4);
+    $output .= $this->animeListSection(6);
+    return $output;
   }
   public function switchForm() {
-      return "<form action='user.php' method='POST' class='form-horizontal'>
-        <fieldset>
-          <div class='control-group'>
-            <label class='control-label' for='switch_username'>Username</label>
-            <div class='controls'>
-              <input name='switch_username' type='text' class='input-xlarge' id='switch_username' />
-            </div>
+    return "<form action='user.php' method='POST' class='form-horizontal'>
+      <fieldset>
+        <div class='control-group'>
+          <label class='control-label' for='switch_username'>Username</label>
+          <div class='controls'>
+            <input name='switch_username' type='text' class='input-xlarge' id='switch_username' />
           </div>
-          <div class='form-actions'>
-            <button type='submit' class='btn btn-primary'>Switch</button>
-            <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>Back</a>
-          </div>
-        </fieldset>\n</form>\n";
+        </div>
+        <div class='form-actions'>
+          <button type='submit' class='btn btn-primary'>Switch</button>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>Back</a>
+        </div>
+      </fieldset>\n</form>\n";
   }
   public function profile($currentUser) {
     // displays a user's profile.

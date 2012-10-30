@@ -101,7 +101,7 @@ class TagType {
   }
   public function getTags() {
     // retrieves a list of id arrays corresponding to tags belonging to this tag type
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC");
+    return $this->dbConn->queryAssoc("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC", "id");
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current tag's profile, with text provided.

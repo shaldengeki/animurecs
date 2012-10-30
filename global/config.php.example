@@ -3,8 +3,13 @@ define('MYSQL_HOST', 'localhost');
 define('MYSQL_USERNAME', 'MYSQL_USERNAME');
 define('MYSQL_PASSWORD', 'MYSQL_PASSWORD');
 define('MYSQL_DATABASE', 'MYSQL_DATABASE');
-define('APP_ROOT', '/var/www'); // no trailing backslash!
-define('ROOT_URL', 'http://your.domain.here'); // no trailing backslashes!
+
+define('MEMCACHED_HOST', 'localhost');
+define('MEMCACHED_PORT', 11211);
+define('MEMCACHED_DEFAULT_LIFESPAN', 20); // in seconds.
+
+define('APP_ROOT', '/var/www'); 				// no trailing backslash!
+define('ROOT_URL', 'http://your.domain.here'); 	// no trailing backslashes!
 
 define('SERVER_TIMEZONE', 'Your/timezone');
 define('OUTPUT_TIMEZONE', 'Timezone/to/output');

@@ -202,30 +202,15 @@ class Anime {
   }
   public function getTags() {
     // retrieves a list of id,name entries corresponding to tags belonging to this anime.
-    $tags = [];
-    $tagQuery = $this->dbConn->stdQuery("SELECT `id`, `name` FROM `anime_tags` LEFT OUTER JOIN `tags` ON `tags`.`id` = `anime_tags`.`tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
-    while ($tag = $tagQuery->fetch_assoc()) {
-      $tags[intval($tag['id'])] = $tag;
-    }
-    return $tags;
+    return $this->dbConn->queryAssoc("SELECT `id`, `name` FROM `anime_tags` LEFT OUTER JOIN `tags` ON `tags`.`id` = `anime_tags`.`tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC", "id");
   }
   public function getComments() {
     // retrieves a list of id entries corresponding to comments belonging to this anime.
-    $comments = [];
-    $commentQuery = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = 'anime' && `type_id` = ".intval($this->id)." ORDER BY `comments`.`created_at` DESC");
-    while ($comment = $commentQuery->fetch_assoc()) {
-      $comments[intval($comment['id'])] = $comment;
-    }
-    return $comments;
+    return $this->dbConn->queryAssoc("SELECT `id` FROM `comments` WHERE `type` = 'anime' && `type_id` = ".intval($this->id)." ORDER BY `comments`.`created_at` DESC", "id");
   }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
-    $entries = [];
-    $entryQuery = $this->dbConn->stdQuery("SELECT `id` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
-    while ($entry = $entryQuery->fetch_assoc()) {
-      $entries[intval($entry['id'])] = $entry;
-    }
-    return $entries;
+    return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current anime's profile, with text provided.

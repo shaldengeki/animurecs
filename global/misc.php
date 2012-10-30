@@ -6,9 +6,12 @@ function joinPaths() {
         $paths = array_merge($paths, (array)$arg);
     }
 
-    $paths = array_map(create_function('$p', 'return trim($p, "'.addslashes(DIRECTORY_SEPARATOR).'");'), $paths);
-    $paths = array_filter($paths);
-    return join(DIRECTORY_SEPARATOR, $paths);
+    $trimmedPaths = array_map(create_function('$p', 'return trim($p, "'.addslashes(DIRECTORY_SEPARATOR).'");'), $paths);
+    if (count($trimmedPaths) > 0) {
+      $trimmedPaths[0] = rtrim($paths[0], addslashes(DIRECTORY_SEPARATOR));
+    }
+    $trimmedPaths = array_filter($trimmedPaths);
+    return join(DIRECTORY_SEPARATOR, $trimmedPaths);
 }
 
 function getNormalizedFILES() {

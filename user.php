@@ -43,10 +43,14 @@ if (isset($_POST['user']) && is_array($_POST['user'])) {
   redirect_to($switchUser);
 }
 
-try {
-  $targetUser = new User($database, intval($_REQUEST['id']));
-} catch (Exception $e) {
-  $targetUser = new User($database, 0);
+if (intval($_REQUEST['id']) === $user->id) {
+  $targetUser = $user;
+} else {
+  try {
+    $targetUser = new User($database, intval($_REQUEST['id']));
+  } catch (Exception $e) {
+    $targetUser = new User($database, 0);
+  }
 }
 
 if (!$targetUser->allow($user, $_REQUEST['action'])) {
