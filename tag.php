@@ -36,10 +36,10 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {
   switch($_REQUEST['action']) {
-    case 'json_search':
+    case 'token_search':
       $tags = [];
-      if (isset($_REQUEST['q'])) {
-        $tags = $database->queryAssoc("SELECT `id`, `name` FROM `tags` WHERE MATCH(`name`) AGAINST(".$database->quoteSmart($_REQUEST['q'])." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+      if (isset($_REQUEST['term'])) {
+        $tags = $database->queryAssoc("SELECT `id`, `name` FROM `tags` WHERE MATCH(`name`) AGAINST(".$database->quoteSmart($_REQUEST['term'])." IN BOOLEAN MODE) ORDER BY `name` ASC;");
       }
       echo json_encode($tags);
       exit;

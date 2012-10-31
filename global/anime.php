@@ -50,7 +50,7 @@ class Anime {
         }
         return False;
         break;
-      case 'json_search':
+      case 'token_search':
       case 'new':
         if ($authingUser->loggedIn()) {
           return True;
@@ -312,7 +312,7 @@ class Anime {
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=json_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->tags))))."' id='anime[anime_tags]' />
+            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->tags))))."' id='anime[anime_tags]' />
           </div>
         </div>\n";
         if ($currentUser->isModerator || $currentUser->isAdmin()) {

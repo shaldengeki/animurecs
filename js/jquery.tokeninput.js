@@ -183,7 +183,6 @@ $.TokenList = function (input, url_or_data, settings) {
     // Keep track of the timeout, old vals
     var timeout;
     var input_val;
-
     // Create a new text input an attach keyup events
     var input_box = $("<input type=\"text\"  autocomplete=\"off\">")
         .css({

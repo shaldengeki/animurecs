@@ -41,6 +41,27 @@ if (isset($_POST['user']) && is_array($_POST['user'])) {
 } elseif (isset($_POST['switch_username']) && $user->isAdmin()) {
   $switchUser = $user->switchUser($_POST['switch_username']);
   redirect_to($switchUser);
+} elseif (isset($_POST['anime_entry']) && is_array($_POST['anime_entry'])) {
+  // create or update an anime list entry for the current user.
+  if (!isset($_POST['anime_entry']['user_id']) || !isset($_POST['anime_entry']['anime_id']) || !isset($_POST['anime_entry']['status'])) {
+    redirect_to(array('location' => 'user.php', 'status' => "You must provide an anime and at least a status."));
+  }
+  try {
+    $targetUser = new User($database, intval($_POST['anime_entry']['user_id']));
+  } catch (Exception $e) {
+    // this non-zero userID does not exist.
+    redirect_to(array('location' => 'user.php', 'status' => 'This user ID does not exist.', 'class' => 'error'));
+  }
+  if (!$targetUser->allow($user, 'anime_entry')) {
+    redirect_to(array('location' => 'user.php?action=show&id='.$targetUser->id, 'status' => "You're not allowed to do that.", 'class' => 'error'));
+  }
+  $animeEntry = $targetUser->create_or_update_anime_entry($_POST['anime_entry']);
+  if ($animeEntry) {
+    redirect_to(array('location' => 'user.php?action=show&id='.$targetUser->id, 'status' => "Successfully updated your list.", 'class' => 'success'));
+  } else {
+    redirect_to(array('location' => 'user.php?action=show&id='.$targetUser->id, 'status' => "An error occurred while updating your list.", 'class' => 'error'));
+  }
+
 }
 
 if (intval($_REQUEST['id']) === $user->id) {

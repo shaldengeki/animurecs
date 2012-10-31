@@ -938,12 +938,15 @@ body>.container-fluid{padding-top:20px;}
 .ui-timepicker-div dl dd{margin:0 10px 10px 65px;}
 .ui-timepicker-div td{font-size:90%;}
 .ui-tpicker-grid-label{background:none;border:none;margin:0;padding:0;}
-.avatarContainer{min-height:230px;}.avatarContainer .profileAvatar{background-color:transparent;}.avatarContainer .profileAvatar img{width:100%;}
-.profileUserInfo{min-height:230px;}
-.feedEntry{list-style:none;padding:10px 0;border-bottom:1px solid gray;}.feedEntry .feedDate{float:right;font-size:8pt;color:gray;}
-.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0;text-align:center;}.feedEntry .feedAvatar img{max-width:40px;max-height:40px;}
-.feedEntry .feedText{padding:0px 50px;font-size:10pt;}.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}.feedEntry .feedText .feedUser a:link,.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
-.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
+.leftColumn .avatarContainer{min-height:230px;}.leftColumn .avatarContainer .profileAvatar{background-color:transparent;}.leftColumn .avatarContainer .profileAvatar img{width:100%;}
+.rightColumn.span9{margin-left:0;}.rightColumn.span9 .profileUserInfo{padding-left:2.564102564102564%;min-height:230px;}
+.rightColumn.span9 .profileUserTabs .nav-tabs{margin-bottom:0;}
+.rightColumn.span9 .profileUserTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding-top:20px;}
+#userFeed .addListEntryForm{text-align:center;}
+#userFeed ul.userFeed{margin:0;}#userFeed ul.userFeed li.feedEntry{list-style:none;padding:10px 0;border-bottom:1px solid #dddddd;}#userFeed ul.userFeed li.feedEntry .feedDate{float:right;margin-right:10px;font-size:8pt;color:gray;}
+#userFeed ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 0 0 5px;text-align:center;}#userFeed ul.userFeed li.feedEntry .feedAvatar img{max-width:40px;max-height:40px;}
+#userFeed ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}#userFeed ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:link,#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
+#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}

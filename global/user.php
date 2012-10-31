@@ -12,7 +12,6 @@ class User {
   public $lastActive;
   public $lastIP;
   public $avatarPath;
-  public $lastLoginCheckTime;
   public $animeEntries;
   public $animeList;
   public function __construct($database, $id=Null) {
@@ -43,6 +42,7 @@ class User {
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      case 'anime_entry':
       case 'edit':
         if ($authingUser->id == $this->id || ( ($authingUser->isModerator() || $authingUser->isAdmin()) && $authingUser->usermask > $this->usermask) ) {
           return True;
@@ -157,12 +157,84 @@ class User {
     }
     return $returnArray;
   }
-  public function delete() {
-    // delete this user from the database.
-    // returns a boolean.
-    $deleteUser = $this->dbConn->stdQuery("DELETE FROM `users` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteUser) {
+  public function create_or_update_anime_entry($entry) {
+    /*
+      Creates or updates an existing anime list entry for the current user.
+      Takes an array of entry parameters.
+      Returns a boolean.
+    */
+    $params = [];
+    foreach ($entry as $parameter => $value) {
+      if (!is_array($value)) {
+        if ($parameter == 'anime_id' || $parameter == 'user_id' || $parameter == 'status' || $parameter == 'score' || $parameter == 'episode') {
+          $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".intval($value);
+        } else {
+          $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
+        }
+      }
+    }
+
+    try {
+      $user = new User($this->dbConn, intval($entry['user_id']));
+      $anime = new Anime($this->dbConn, intval($entry['anime_id']));
+    } catch (Exception $e) {
       return False;
+    }
+    // check to see if this is an update.
+    if (isset($this->animeEntries[intval($entry['id'])])) {
+      $updateDependency = $this->dbConn->stdQuery("UPDATE `anime_lists` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
+      if (!$updateDependency) {
+        return False;
+      }
+      // update list locally.
+      if ($this->animeList[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->animeList[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->animeList[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
+        if (intval($entry['status']) == 0) {
+          unset($this->animeList[intval($entry['anime_id'])]);
+        } else {
+          $this->animeList[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
+        }
+      }
+      $returnValue = intval($entry['id']);
+    } else {
+      $timeString = (isset($entry['time']) ? "" : ", `time` = NOW()");
+      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_lists` SET ".implode(",", $params).$timeString);
+      if (!$insertDependency) {
+        return False;
+      }
+      // insert list locally.
+      if (intval($entry['status']) == 0) {
+        unset($this->animeList[intval($entry['anime_id'])]);
+      } else {
+        $this->animeList[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
+      }
+      $returnValue = intval($this->dbConn->insert_id);
+    }
+    $this->animeEntries[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
+    return $returnValue;
+  }
+  public function drop_anime_entries($entries=False) {
+    /*
+      Deletes anime list entries.
+      Takes an array of entry ids as input, defaulting to all entries.
+      Returns a boolean.
+    */
+    if ($entries === False) {
+      $entries = array_keys($this->animeEntries);
+    }
+    $entryIDs = array();
+    foreach ($entries as $entry) {
+      if (is_numeric($entry)) {
+        $entryIDs[] = intval($entry);
+      }
+    }
+    if (count($entryIDs) > 0) {
+      $drop_entries = $this->dbConn->stdQuery("DELETE FROM `anime_lists` WHERE `user_id` = ".intval($this->id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
+      if (!$drop_entries) {
+        return False;
+      }
+    }
+    foreach ($entryIDs as $entryID) {
+      unset($this->animeEntries[intval($entryID)]);
     }
     return True;
   }
@@ -181,6 +253,9 @@ class User {
       $user['usermask'] = intval(@array_sum($user['usermask']));
     } else {
       unset($user['usermask']);
+    }
+    if (isset($user['username']) && $this->id != 0) {
+      unset($user['username']);
     }
 
     $params = array();
@@ -228,7 +303,6 @@ class User {
       if (!$updateUser) {
         return False;
       }
-      return intval($this->id);
     } else {
       // add this user.
       $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params).", `created_at` = NOW(), `last_active` = NOW()");
@@ -236,9 +310,22 @@ class User {
         return False;
       } else {
         $this->id = intval($this->dbConn->insert_id);
-        return $this->id;
       }
     }
+
+    // now process anime entries.
+    // TODO
+
+    return intval($this->id);
+  }
+  public function delete() {
+    // delete this user from the database.
+    // returns a boolean.
+    $deleteUser = $this->dbConn->stdQuery("DELETE FROM `users` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    if (!$deleteUser) {
+      return False;
+    }
+    return True;
   }
   public function isModerator() {
     if (!$this->usermask or !(intval($this->usermask) & 2)) {
@@ -263,6 +350,7 @@ class User {
                                         WHERE `user_id` = ".intval($this->id)."
                                         GROUP BY `anime_id`
                                       ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
+                                      WHERE `status` != 0
                                       ORDER BY `status` ASC, `score` DESC", "anime_id");
   }
   public function switchUser($username, $switch_back=True) {
@@ -280,7 +368,7 @@ class User {
       }
       $newUser = new User($this->dbConn, $findUserID);
       $newUser->switched_user = $_SESSION['id'];
-      $_SESSION['lastLoginCheckTime'] = $newUser->lastLoginCheckTime = microtime(true);
+      $_SESSION['lastLoginCheckTime'] = microtime(true);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switched_user;
     } else {
@@ -438,7 +526,7 @@ class User {
 
     // info header.
     $output = "     <div class='row-fluid'>
-        <div class='span3'>
+        <div class='span3 userProfileColumn leftColumn'>
           <ul class='thumbnails avatarContainer'>
             <li class='span12'>
               <div class='thumbnail profileAvatar'>\n";
@@ -451,7 +539,7 @@ class User {
             </li>
           </ul>
         </div>
-        <div class='span9'>
+        <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>".escape_output($this->username).($this->allow($currentUser, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : "")."</h1>
             ".($this->isModerator() ? "<span class='modUserTag'>Moderator</span>" : "").($this->isAdmin() ? "<span class='adminUserTag'>Admin</span>" : "")."
@@ -459,15 +547,42 @@ class User {
               ".escape_output($this->about)."
             </p>
           </div>
-          <ul class='nav nav-tabs'>
-            <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
-            <li><a href='#userList' data-toggle='tab'>List</a></li>
-            <li><a href='#userFriends' data-toggle='tab'>Friends</a></li>
-          </ul>
-          <div class='tab-content'>
-            <div class='tab-pane active' id='userFeed'>".$this->animeFeed()."</div>
-            <div class='tab-pane' id='userList'>".$this->animeList().".</div>
-            <div class='tab-pane' id='userFriends'>Friends here.</div>
+          <div class='profileUserTabs'>
+            <ul class='nav nav-tabs'>
+              <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
+              <li><a href='#userList' data-toggle='tab'>List</a></li>
+              <li><a href='#userFriends' data-toggle='tab'>Friends</a></li>
+            </ul>
+            <div class='tab-content'>
+              <div class='tab-pane active' id='userFeed'>\n";
+    if ($this->id == $currentUser->id) {
+      $output .= "                <div class='addListEntryForm'>
+                  <form class='form-inline' action='user.php' method='POST'>
+                    <input name='anime_entry[user_id]' id='anime_entry_user_id' type='hidden' value='".intval($this->id)."' />
+                    <input name='anime_entry_anime_title' id='anime_entry_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='/anime.php?action=token_search' data-tokenLimit='1' data-outputElement='#anime_entry_anime_id' placeholder='Have an anime to update? Type it in!' />
+                    <input name='anime_entry[anime_id]' id='anime_entry_anime_id' type='hidden' value='' />
+                    ".display_status_dropdown()."
+                    <div class='input-append'>
+                      <input class='input-mini' name='anime_entry[score]' id='anime_entry_score' type='number' min='0' max='10' step='1' value='0' />
+                      <span class='add-on'>/10</span>
+                    </div>
+                    <div class='input-prepend'>
+                      <span class='add-on'>Ep</span>
+                      <input class='input-mini' name='anime_entry[episode]' id='anime_entry_episode' type='number' min='0' step='1' />
+                    </div>
+                    <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
+                  </form>
+                </div>\n";
+    }
+    $output .= "                ".$this->animeFeed()."
+              </div>
+              <div class='tab-pane' id='userList'>
+                ".$this->animeList()."
+              </div>
+              <div class='tab-pane' id='userFriends'>
+                Friends coming soon!
+              </div>
+            </div>
           </div>
         </div>
       </div>\n";

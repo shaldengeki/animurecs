@@ -138,12 +138,56 @@ $(document).ready(function () {
     });
   });
   $('.token-input').each(function() {
+    if(typeof $(this).attr('data-tokenLimit') != 'undefined') {
+      tokenLimit = $(this).attr('data-tokenLimit');
+    } else {
+      tokenLimit = null;
+    }
+    if(typeof $(this).attr('data-value') != 'undefined') {
+      prePopulated = $.secureEvalJSON($(this).attr('data-value'));
+    } else {
+      prePopulated = null;
+    }
     $(this).tokenInput($(this).attr("data-url"), {
+      queryParam: "term",
       minChars: 3,
       theme: "facebook",
       preventDuplicates: true,
       propertyToSearch: $(this).attr("data-field"),
-      prePopulate: $.secureEvalJSON($(this).attr("data-value"))
+      prePopulate: prePopulated,
+      tokenLimit: tokenLimit
+    });
+  });
+  $('.autocomplete').each(function() {
+    if(typeof $(this).attr('data-valueField') != 'undefined') {
+      valueField = $(this).attr('data-valueField');
+    } else {
+      valueField = "value";
+    }
+    if(typeof $(this).attr('data-labelField') != 'undefined') {
+      labelField = $(this).attr('data-labelField');
+    } else {
+      labelField = "label";
+    }
+    if(typeof $(this).attr('data-outputElement') != 'undefined') {
+      outputElement = $(this).attr('data-outputElement');
+    } else {
+      outputElement = $(this);
+    }
+    $(this).autocomplete({
+        source: $(this).attr('data-url'),
+        minLength: 3,
+        response: function(event, ui) {
+          $.each(ui.content, function() {
+            $(this).attr("label", $(this).attr(labelField));
+            $(this).attr("value", $(this).attr(valueField));
+          });
+        },
+        select: function(event, ui) {
+          $(this).val(ui.item.label);
+          $(outputElement).val(ui.item.value);
+          event.preventDefault();
+        }
     });
   });
 });

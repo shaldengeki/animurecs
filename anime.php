@@ -36,10 +36,10 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {
   switch($_REQUEST['action']) {
-    case 'json_search':
+    case 'token_search':
       $animus = [];
-      if (isset($_REQUEST['q'])) {
-        $animus = $database->queryAssoc("SELECT `id`, `title` FROM `anime` WHERE MATCH(`title`) AGAINST(".$database->quoteSmart($_REQUEST['q'])." IN BOOLEAN MODE) ORDER BY `title` ASC;");
+      if (isset($_REQUEST['term'])) {
+        $animus = $database->queryAssoc("SELECT `id`, `title` FROM `anime` WHERE MATCH(`title`) AGAINST(".$database->quoteSmart($_REQUEST['term'])." IN BOOLEAN MODE) ORDER BY `title` ASC;");
       }
       echo json_encode($animus);
       exit;

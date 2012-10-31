@@ -167,8 +167,8 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
   <link rel='stylesheet' href='css/token-input.css' type='text/css' />
   <link rel='stylesheet' href='css/animurecs.css' type='text/css' />
 
-  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
-  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js'></script>
+  <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js'></script>
+  <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js'></script>
 
   <script type='text/javascript' src='js/jquery-ui-timepicker-addon.js'></script>
 	<script type='text/javascript' language='javascript' src='js/jquery.dropdownPlain.js'></script>
@@ -245,6 +245,23 @@ function display_login_form() {
   <input id='username' name='username' size='30' type='text' placeholder='Username' />
   <input id='password' name='password' size='30' type='password' placeholder='Password' />
   <input class='btn btn-primary' name='commit' type='submit' value='Sign in' />\n</form>\n";
+}
+
+function display_status_dropdown($select_id="anime_entry[status]", $selected=False) {
+  $statuses = array(
+      0 => "Remove",
+      1 => "Currently Watching",
+      2 => "Completed",
+      3 => "On Hold",
+      4 => "Plan to Watch",
+      6 => "Dropped"
+  );
+  $output = "<select class='span2' id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
+  foreach ($statuses as $id => $text) {
+    $output .= "<option value='".intval($id)."'".(($selected == intval($id)) ? "selected='selected'" : "").">".escape_output($text)."</option>\n";
+  }
+  $output .= "</select>\n";
+  return $output;
 }
 
 function display_month_year_dropdown($select_id="", $select_name_prefix="form_entry", $selected=False) {
@@ -384,8 +401,17 @@ function display_anime($database, $user) {
 
 function display_tags($database, $user) {
   // lists all tags.
+  $resultsPerPage = 25;
   $newTag = new Tag($database, 0);
-  $output = "<table class='table table-striped table-bordered dataTable'>
+  if ($user->isAdmin()) {
+    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` ORDER BY `tags`.`name` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $tagPages = ceil($database->queryCount("SELECT COUNT(*) FROM `tags`")/$resultsPerPage);
+  } else {
+    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $tagPages = ceil($database->queryCount("SELECT COUNT(*) FROM `tags` WHERE `approved_on` != ''")/$resultsPerPage);
+  }
+  $output = paginate("/tag.php?action=index&page=", intval($_REQUEST['page']), $tagPages);
+  $output .= "<table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
       <th>Name</th>
@@ -396,11 +422,6 @@ function display_tags($database, $user) {
     </tr>
   </thead>
   <tbody>\n";
-  if ($user->isAdmin()) {
-    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` ORDER BY `tags`.`name` ASC");
-  } else {
-    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC");
-  }
   while ($thisID = $tag->fetch_assoc()) {
     $thisTag = new Tag($database, intval($thisID['id']));
     $output .= "    <tr>
@@ -412,6 +433,7 @@ function display_tags($database, $user) {
     </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".$newTag->link("new", "Add a tag");
+  $output .= paginate("/tag.php?action=index&page=", intval($_REQUEST['page']), $tagPages)."\n";
   return $output;
 }
 

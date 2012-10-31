@@ -43,7 +43,7 @@ class Tag {
         }
         return False;
         break;
-      case 'json_search':
+      case 'token_search':
         if ($authingUser->loggedIn()) {
           return True;
         }
@@ -295,7 +295,7 @@ class Tag {
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=json_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->anime))))."' id='tag[anime_tags]' />
+            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->anime))))."' id='tag[anime_tags]' />
           </div>
         </div>\n";
         /*
