@@ -39,7 +39,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
     case 'token_search':
       $animus = [];
       if (isset($_REQUEST['term'])) {
-        $animus = $database->queryAssoc("SELECT `id`, `title` FROM `anime` WHERE MATCH(`title`) AGAINST(".$database->quoteSmart($_REQUEST['term'])." IN BOOLEAN MODE) ORDER BY `title` ASC;");
+        $animus = $database->queryAssoc("SELECT `id`, `title` FROM `anime` WHERE MATCH(`title`, `description`) AGAINST(".$database->quoteSmart($_REQUEST['term']).") ORDER BY MATCH(`title`, `description`) AGAINST(".$database->quoteSmart($_REQUEST['term']).") DESC LIMIT 15");
       }
       echo json_encode($animus);
       exit;
