@@ -193,7 +193,6 @@ class AnimeList {
     $entryCount = 0;
     foreach ($this->entries as $entry) {
       $entryDate = new DateTime($value['time'], $serverTimezone);
-      $entryDate->setTimezone($outputTimezone);
       if ($entryDate > $maxTime) {
         continue;
       }
@@ -213,9 +212,9 @@ class AnimeList {
   public function prevEntry($anime_id, $beforeTime) {
     // Returns the previous entry in this user's anime list for $anime_id and before $beforeTime.
     $prevEntry = array('status' => 0, 'score' => 0, 'episode' => 0);
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     foreach ($this->entries as $entry) {
-      $entryDate = new DateTime($entry['time'], $outputTimezone);
+      $entryDate = new DateTime($entry['time'], $serverTimezone);
       if ($entryDate >= $beforeTime) {
         continue;
       }

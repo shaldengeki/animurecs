@@ -400,7 +400,6 @@ class User {
       $entryAnime = $cachedAnime[intval($entry['anime_id'])];
 
       $entryTime = new DateTime($entry['time'], $serverTimezone);
-      $entryTime->setTimezone($outputTimezone);
       $diffInterval = $nowTime->diff($entryTime);
       $prevEntry = $this->animeList->prevEntry($entryAnime->id, $entryTime);
 
