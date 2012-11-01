@@ -6,8 +6,27 @@ class AnimeList {
   public $entries, $list;
   public $startTime, $endTime;
   public $listAvg, $listStdDev, $entryAvg, $entryStdDev;
+  private $statusStrings, $scoreStrings, $episodeStrings, $cachedAnime;
   public function __construct($database, $user_id=Null) {
     $this->dbConn = $database;
+    // strings with which to build feed messages.
+    // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
+    $this->statusStrings = array(0 => array(0 => "did something mysterious with [ANIME]",
+                                      1 => "is now watching [ANIME]",
+                                      2 => "marked [ANIME] as completed",
+                                      3 => "marked [ANIME] as on-hold",
+                                      4 => "marked [ANIME] as dropped",
+                                      6 => "plans to watch [ANIME]"),
+                                  1 => array(0 => "removed [ANIME]",
+                                            1 => "started watching [ANIME]",
+                                            2 => "finished [ANIME]",
+                                            3 => "put [ANIME] on hold",
+                                            4 => "dropped [ANIME]",
+                                            6 => "now plans to watch [ANIME]"));
+    $this->scoreStrings = array(0 => array("rated [ANIME] a [SCORE]/10", "and rated it a [SCORE]/10"),
+                          1 => array("unrated [ANIME]", "and unrated it"));
+    $this->episodeStrings = array("is now watching episode [EPISODE]/[TOTAL_EPISODES] of [ANIME]", "and finished episode [EPISODE]/[TOTAL_EPISODES]");
+    $this->cachedAnime = [];
     $this->listAvg = $this->listStdDev = $this->entryAvg = $this->entryStdDev = 0;
     if ($user_id === 0) {
       $this->user_id = 0;
@@ -60,7 +79,9 @@ class AnimeList {
     foreach ($entry as $parameter => $value) {
       if (!is_array($value)) {
         if ($parameter == 'anime_id' || $parameter == 'user_id' || $parameter == 'status' || $parameter == 'score' || $parameter == 'episode') {
-          $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".intval($value);
+          if (is_numeric($value)) {
+            $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".intval($value);
+          }
         } else {
           $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
         }
@@ -74,17 +95,17 @@ class AnimeList {
       return False;
     }
     // check to see if this is an update.
-    if (isset($this->animeEntries[intval($entry['id'])])) {
+    if (isset($this->entries[intval($entry['id'])])) {
       $updateDependency = $this->dbConn->stdQuery("UPDATE `anime_lists` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
       }
       // update list locally.
-      if ($this->animeList[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->animeList[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->animeList[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
+      if ($this->list[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->list[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->list[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
         if (intval($entry['status']) == 0) {
-          unset($this->animeList[intval($entry['anime_id'])]);
+          unset($this->list[intval($entry['anime_id'])]);
         } else {
-          $this->animeList[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
+          $this->list[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
         }
       }
       $returnValue = intval($entry['id']);
@@ -96,13 +117,13 @@ class AnimeList {
       }
       // insert list locally.
       if (intval($entry['status']) == 0) {
-        unset($this->animeList[intval($entry['anime_id'])]);
+        unset($this->list[intval($entry['anime_id'])]);
       } else {
-        $this->animeList[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
+        $this->list[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
       }
       $returnValue = intval($this->dbConn->insert_id);
     }
-    $this->animeEntries[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
+    $this->entries[intval($returnValue)] = $entry;
     return $returnValue;
   }
   public function delete($entries=False) {
@@ -224,6 +245,61 @@ class AnimeList {
       }
     }
     return $prevEntry;
+  }
+  public function feedEntry($entry, $user, $currentUser) {
+    // fetch the previous feed entry and compare values against current entry.
+    if (!isset($this->cachedAnime[intval($entry['anime_id'])])) {
+      $this->cachedAnime[intval($entry['anime_id'])] = new Anime($this->dbConn, intval($entry['anime_id']));
+    }
+    $entryAnime = $this->cachedAnime[intval($entry['anime_id'])];
+
+    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $nowTime = new DateTime("now", $outputTimezone);
+
+    $entryTime = new DateTime($entry['time'], $serverTimezone);
+    $diffInterval = $nowTime->diff($entryTime);
+    $prevEntry = $this->prevEntry($entryAnime->id, $entryTime);
+
+    $statusChanged = (bool) ($entry['status'] != $prevEntry['status']);
+    $scoreChanged = (bool) ($entry['score'] != $prevEntry['score']);
+    $episodeChanged = (bool) ($entry['episode'] != $prevEntry['episode']);
+    
+    // concatenate appropriate parts of this status text.
+    $statusTexts = [];
+    if ($statusChanged) {
+      $statusTexts[] = $this->statusStrings[intval((bool)$prevEntry)][intval($entry['status'])];
+    }
+    if ($scoreChanged) {
+      $statusTexts[] = $this->scoreStrings[intval($entry['score'] == 0)][intval($statusChanged)];
+    }
+    if ($episodeChanged) {
+      $statusTexts[] = $this->episodeStrings[intval($statusChanged || $scoreChanged)];
+    }
+    $statusText = implode(" ", $statusTexts);
+
+    // replace placeholders.
+    $statusText = str_replace("[ANIME]", $entryAnime->link("show", $entryAnime->title), $statusText);
+    $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
+    $statusText = str_replace("[EPISODE]", $entry['episode'], $statusText);
+    $statusText = str_replace("[TOTAL_EPISODES]", $entryAnime->episodeCount, $statusText);
+    $statusText = ucfirst($statusText);
+
+    $output = "";
+    if ($statusText != '') {
+      $output .= "  <li class='feedEntry row-fluid'>
+        <div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div>
+        <div class='feedAvatar'>".$user->link("show", "<img class='feedAvatarImg' src='".escape_output($user->avatarPath)."' />", True)."</div>
+        <div class='feedText'>
+          <div class='feedUser'>".$user->link("show", $user->username)."</div>
+          ".$statusText.".\n";
+      if ($currentUser->id === $user->id) {
+        $output .= "            <ul class='feedEntryMenu hidden'><li>".$this->entryLink(intval($entry['id']), "delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>";
+      }
+      $output .= "          </div>
+      </li>\n";
+    }
+    return $output;
   }
   public function entryLink($id, $action="show", $text=Null, $raw=False) {
     // returns an HTML link to an entry link, with text provided.

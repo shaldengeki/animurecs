@@ -127,7 +127,7 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
   //baseLink should be everything up to, say, &page=
   $pageIncrement = 10;
   $displayFirstPages = 10;
-  $output = "<div class='pagination pagination-centered'>
+  $output = "<div class='pagination pagination-small pagination-centered'>
   <ul>\n";
   $i = 1;
   if ($currPage > 1) {

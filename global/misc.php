@@ -60,4 +60,39 @@ function udate($format, $utimestamp = null) {
   $milliseconds = round(($utimestamp - $timestamp) * 1000000);
   return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
 }
+
+function buildKeySorter($key, $order) {
+  // returns a function that sorts two input arrays on a key in a given order.
+  // order=1 corresponds to ascending, order=-1 corresponds to descending.
+  return function($a, $b) use ($key, $order) {
+    if (!isset($a[$key])) {
+      if (!isset($b[$key])) {
+        return 0;
+      } else {
+        return -1*$order;
+      }
+    } else {
+      if (!isset($b[$key])) {
+        return 1*$order;
+      } else {
+        return (($a[$key] < $b[$key]) ? -1 : 1)*$order;
+      }
+    }
+  };
+}
+
+function array_sort_by_key($a, $key, $order="desc") {
+  // sorts a list of associative arrays by a given key in a given order.
+  switch($order) {
+    case 'asc':
+      $orderVal = 1;
+      break;
+    default:
+    case 'desc':
+      $orderVal = -1;
+      break;
+  }
+  uasort($a, buildKeySorter($key, $orderVal));
+  return $a;
+}
 ?>

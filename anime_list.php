@@ -25,6 +25,12 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
         $_POST['anime_list'] = $_REQUEST['anime_list'];
       }
       if (isset($_POST['anime_list']) && is_array($_POST['anime_list'])) {
+        // filter out any blank values to fill them with the previous entry's values.
+        foreach ($_POST['anime_list'] as $key=>$value) {
+          if ($_POST['anime_list'][$key] === '') {
+            unset($_POST['anime_list'][$key]);
+          }
+        }
         // check to ensure that the user has perms to create or update a user.
         try {
           $targetUser = new User($database, intval($_POST['anime_list']['user_id']));
@@ -42,20 +48,11 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
           $class = "error";
           break;
         }
-        if (isset($_POST['anime_list']['id'])) {
-          if (!$targetUser->animeList->allow($user, 'edit')) {
-            $location = 'user.php?action=show&id='.intval($targetUser->id);
-            $status = "You don't have permissions to update this user's anime list.";
-            $class = "error";
-            break;
-          }
-        } else {
-          if (!$targetUser->animeList->allow($user, 'new')) {
-            $location = 'user.php?action=show&id='.intval($targetUser->id);
-            $status = "You don't have permissions to add to this user's anime list.";
-            $class = "error";
-            break;
-          }
+        if (!isset($_POST['anime_list']['id'])) {
+          // fill default values from the last entry for this anime.
+          $lastEntry = $targetUser->animeList->list[intval($_POST['anime_list']['anime_id'])];
+          unset($lastEntry['id'], $lastEntry['time']);
+          $_POST['anime_list'] = array_merge($lastEntry, $_POST['anime_list']);
         }
         $updateList = $targetUser->animeList->create_or_update($_POST['anime_list']);
         if ($updateList) {
@@ -76,12 +73,7 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
       break;
     case 'delete':
       if (!isset($_REQUEST['id'])) {
-        if (!$targetUser->animeList->allow($user, 'd')) {
-          $location = 'user.php?action=show&id='.intval($targetUser->id);
-          $status = "You don't have permissions to update this user's anime list.";
-          $class = "error";
-          break;
-        }
+        $_REQUEST['id'] = False;
       }
       $deleteList = $targetUser->animeList->delete($_REQUEST['id']);
       if ($updateList) {

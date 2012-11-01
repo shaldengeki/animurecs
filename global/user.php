@@ -39,6 +39,7 @@ class User {
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      case 'mal_import':
       case 'edit':
         if ($authingUser->id == $this->id || ( ($authingUser->isModerator() || $authingUser->isAdmin()) && $authingUser->usermask > $this->usermask) ) {
           return True;
@@ -235,6 +236,20 @@ class User {
     }
     return True;
   }
+  public function importMAL($malUsername) {
+    // imports a user's MAL lists.
+    // takes a MAL username and returns a boolean.
+    $malList = parseMALList($malUsername);
+    $listIDs = [];
+    foreach($malList as $entry) {
+      $entry['user_id'] = $this->id;
+      $listIDs[$entry['anime_id']] = $this->animeList->create_or_update($entry);
+    }
+    if (in_array(False, $listIDs, True)) {
+      return False;
+    }
+    return True;
+  }
   public function create_or_update($user) {
     // creates or updates a user based on the parameters passed in $user and this object's attributes.
     // returns False if failure, or the ID of the user if success.
@@ -365,86 +380,36 @@ class User {
     // returns an HTML link to the current user's profile, with text provided.
     return "<a href='/user.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
+  public function feed($entries, $currentUser) {
+    // returns markup for a generic feed.
+    $output = "";
+    $cachedAnime = [];
+    foreach ($entries as $entry) {
+      $output .= $this->animeList->feedEntry($entry, $this, $currentUser);
+    }
+    return $output;
+  }
+  public function globalFeed($maxTime=Null, $numEntries=50) {
+    // returns markup for this user's global feed.
+    $feedEntries = $this->animeList->entries($maxTime, $numEntries);
+
+    $feedEntries = array_sort_by_key($feedEntries, "time");
+    $output = "<ul class='userFeed'>\n";
+    if (count($feedEntries) == 0) {
+      $output .= "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n";
+    }
+    $output .= $this->feed($feedEntries, $currentUser);
+    $output .= "</ul>\n";
+    return $output;
+  }
   public function animeFeed($currentUser, $maxTime=Null,$numEntries=50) {
     // returns markup for this user's anime feed.
     $feedEntries = $this->animeList->entries($maxTime, $numEntries);
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-    $nowTime = new DateTime("now", $outputTimezone);
-
     $output = "<ul class='userFeed'>\n";
-
     if (count($feedEntries) == 0) {
       $output .= "<blockquote><p>No entries yet - add some above!</p></blockquote>\n";
     }
-
-    // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
-    $statusStrings = array(0 => array(0 => "did something mysterious with [ANIME]",
-                                      1 => "is now watching [ANIME]",
-                                      2 => "marked [ANIME] as completed",
-                                      3 => "marked [ANIME] as on-hold",
-                                      4 => "marked [ANIME] as dropped",
-                                      6 => "plans to watch [ANIME]"),
-                            1 => array(0 => "removed [ANIME]",
-                                      1 => "started watching [ANIME]",
-                                      2 => "finished [ANIME]",
-                                      3 => "put [ANIME] on hold",
-                                      4 => "dropped [ANIME]",
-                                      6 => "now plans to watch [ANIME]"));
-    $scoreStrings = array(0 => array("rated [ANIME] a [SCORE]/10", "and rated it a [SCORE]/10"),
-                          1 => array("unrated [ANIME]", "and unrated it"));
-    $episodeStrings = array("is now watching episode [EPISODE]/[TOTAL_EPISODES] of [ANIME]", "and finished episode [EPISODE]/[TOTAL_EPISODES]");
-
-    $cachedAnime = [];
-
-    foreach ($feedEntries as $entry) {
-      // fetch the previous feed entry and compare values against current entry.
-      if (!isset($cachedAnime[intval($entry['anime_id'])])) {
-        $cachedAnime[intval($entry['anime_id'])] = new Anime($this->dbConn, intval($entry['anime_id']));
-      }
-      $entryAnime = $cachedAnime[intval($entry['anime_id'])];
-
-      $entryTime = new DateTime($entry['time'], $serverTimezone);
-      $diffInterval = $nowTime->diff($entryTime);
-      $prevEntry = $this->animeList->prevEntry($entryAnime->id, $entryTime);
-
-      $statusChanged = (bool) ($entry['status'] != $prevEntry['status']);
-      $scoreChanged = (bool) ($entry['score'] != $prevEntry['score']);
-      $episodeChanged = (bool) ($entry['episode'] != $prevEntry['episode']);
-      
-      // concatenate appropriate parts of this status text.
-      $statusTexts = [];
-      if ($statusChanged) {
-        $statusTexts[] = $statusStrings[intval((bool)$prevEntry)][intval($entry['status'])];
-      }
-      if ($scoreChanged) {
-        $statusTexts[] = $scoreStrings[intval($entry['score'] == 0)][intval($statusChanged)];
-      }
-      if ($episodeChanged) {
-        $statusTexts[] = $episodeStrings[intval($statusChanged || $scoreChanged)];
-      }
-      $statusText = implode(" ", $statusTexts);
-
-      // replace placeholders.
-      $statusText = str_replace("[ANIME]", $entryAnime->link("show", $entryAnime->title), $statusText);
-      $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
-      $statusText = str_replace("[EPISODE]", $entry['episode'], $statusText);
-      $statusText = str_replace("[TOTAL_EPISODES]", $entryAnime->episodeCount, $statusText);
-      $statusText = ucfirst($statusText);
-      if ($statusText != '') {
-        $output .= "  <li class='feedEntry row-fluid'>
-          <div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div>
-          <div class='feedAvatar'>".$this->link("show", "<img class='feedAvatarImg' src='".escape_output($this->avatarPath)."' />", True)."</div>
-          <div class='feedText'>
-            <div class='feedUser'>".$this->link("show", $this->username)."</div>
-            ".$statusText.".\n";
-        if ($currentUser->id === $this->id) {
-          $output .= "            <ul class='feedEntryMenu hidden'><li>".$this->animeList->entryLink(intval($entry['id']), "delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>";
-        }
-        $output .= "          </div>
-        </li>\n";
-      }
-    }
+    $output .= $this->feed($feedEntries, $currentUser);
     $output .= "</ul>\n";
     return $output;
   }
@@ -542,7 +507,7 @@ class User {
               ".escape_output($this->about)."
             </p>
           </div>
-          <div class='profileUserTabs'>
+          <div class='profileTabs'>
             <ul class='nav nav-tabs'>
               <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
               <li><a href='#userList' data-toggle='tab'>List</a></li>
@@ -584,21 +549,23 @@ class User {
     return $output;
   }
   public function form($currentUser) {
-    $output = "<form action='user.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='user.php".(($this->id === 0) ? "?action=new" : "?action=edit&id=".intval($this->id))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>
           <div class='controls'>
             <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name)."'").">
           </div>
-        </div>
-        <div class='control-group'>
+        </div>";
+    if ($this->id === 0) {
+      $output .= "        <div class='control-group'>
           <label class='control-label' for='user[username]'>Username</label>
           <div class='controls'>
             <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username)."'").">
           </div>
-        </div>
-        <div class='control-group'>
+        </div>\n";
+    }
+    $output .= "        <div class='control-group'>
           <label class='control-label' for='user[password]'>Password</label>
           <div class='controls'>
             <input name='user[password]' type='password' class='input-xlarge' id='user[password]' />

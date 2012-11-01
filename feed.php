@@ -7,7 +7,7 @@ if (!$user->loggedIn()) {
 start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST['class']);
 ?>
 <div class="row-fluid">
-  <div class="span12">
+  <div class="span6">
     <h1>Welcome!</h1>
     <p>I'm rewriting Animurecs in PHP since half the time I spend in Rails is trying to work around its architecture. Here's what I've got on my to-do list:</p>
     <ol>
@@ -17,14 +17,19 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li><s>Taggings</s></li>
       <li><s>Start pulling anime from third-party DBs</s></li>
       <li><s>List model, add/delete/update list entries</s></li>
-      <li><s>Fe</s>ed</li>
+      <li><s>Import list from MAL</s></li>
       <li>Friends</li>
       <li>Posts/comments/+1/props/upvote/likes</li>
+      <li><s>Fe</s>ed</li>
       <li>Recommendations</li>
       <li>Groups</li>
     </ol>
   </div>
-</div>
 <?php
+echo "  <div class='span6'>
+    <h2>My Feed</h2>
+    ".$user->globalFeed()."
+  </div>
+</div>";
 display_footer();
 ?>

@@ -942,11 +942,11 @@ body>.container-fluid{padding-top:20px;}
 .rightColumn.span9 .profileUserTabs .nav-tabs{margin-bottom:0;}
 .rightColumn.span9 .profileUserTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding-top:20px;}
 #userFeed .addListEntryForm{text-align:center;}
-#userFeed ul.userFeed{margin:0;}#userFeed ul.userFeed li.feedEntry{list-style:none;padding:10px 0;border-bottom:1px solid #dddddd;}#userFeed ul.userFeed li.feedEntry .feedDate{float:right;margin-right:10px;font-size:8pt;color:gray;}
-#userFeed ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 0 0 5px;text-align:center;}#userFeed ul.userFeed li.feedEntry .feedAvatar img{max-width:40px;max-height:40px;}
-#userFeed ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}#userFeed ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:link,#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
-#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
-#userFeed ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}#userFeed ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;}
+ul.userFeed{margin:0;}ul.userFeed li.feedEntry{list-style:none;padding:10px 0;border-bottom:1px solid #dddddd;}ul.userFeed li.feedEntry .feedDate{float:right;margin-right:10px;font-size:8pt;color:gray;}
+ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 0 0 5px;text-align:center;}ul.userFeed li.feedEntry .feedAvatar img{max-width:40px;max-height:40px;}
+ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}ul.userFeed li.feedEntry .feedText .feedUser a:link,ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
+ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
+ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;}
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}
