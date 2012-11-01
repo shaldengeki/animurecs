@@ -8,6 +8,7 @@ include_once("./global/curl.php");
 include_once("./global/tag_type.php");
 include_once("./global/tag.php");
 include_once("./global/anime.php");
+include_once("./global/anime_list.php");
 include_once("./global/user.php");
 
 include_once("./global/display.php");

@@ -247,7 +247,7 @@ function display_login_form() {
   <input class='btn btn-primary' name='commit' type='submit' value='Sign in' />\n</form>\n";
 }
 
-function display_status_dropdown($select_id="anime_entry[status]", $selected=False) {
+function display_status_dropdown($select_id="anime_list[status]", $class="", $selected=False) {
   $statuses = array(
       0 => "Remove",
       1 => "Currently Watching",
@@ -256,7 +256,7 @@ function display_status_dropdown($select_id="anime_entry[status]", $selected=Fal
       4 => "Plan to Watch",
       6 => "Dropped"
   );
-  $output = "<select class='span2' id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
+  $output = "<select class='".escape_output($class)."' id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
   foreach ($statuses as $id => $text) {
     $output .= "<option value='".intval($id)."'".(($selected == intval($id)) ? "selected='selected'" : "").">".escape_output($text)."</option>\n";
   }

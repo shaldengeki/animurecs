@@ -917,6 +917,7 @@ body{padding-top:40px;}
 .highlightNavbarColors{background-color:#2ea600;background:#2ea600;color:white;}
 .blackBlueLink a:link,.blackBlueLink a:visited{color:#333333;text-decoration:none;}
 .blackBlueLink a:hover{color:#0000ff;text-decoration:underline;}
+.hidden{display:none;}
 .staffUserTag{text-transform:uppercase;font-size:8pt;border-radius:8px;padding:3px;margin:3px;}
 .adminUserTag{text-transform:uppercase;font-size:8pt;border-radius:8px;padding:3px;margin:3px;color:red;border:2px solid red;}
 .modUserTag{text-transform:uppercase;font-size:8pt;border-radius:8px;padding:3px;margin:3px;color:blue;border:2px solid blue;}
@@ -947,6 +948,7 @@ body>.container-fluid{padding-top:20px;}
 #userFeed ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 0 0 5px;text-align:center;}#userFeed ul.userFeed li.feedEntry .feedAvatar img{max-width:40px;max-height:40px;}
 #userFeed ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}#userFeed ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:link,#userFeed ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
 #userFeed ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
+#userFeed ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}#userFeed ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;}
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}

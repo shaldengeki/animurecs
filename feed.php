@@ -16,8 +16,8 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li><s>Tag model, add/delete/update tags</s></li>
       <li><s>Taggings</s></li>
       <li><s>Start pulling anime from third-party DBs</s></li>
-      <li>List model, <s>add</s>/delete/<s>upd</s>ate list entries</li>
-      <li><s>Feed</s></li>
+      <li><s>List model, add/delete/update list entries</s></li>
+      <li><s>Fe</s>ed</li>
       <li>Friends</li>
       <li>Posts/comments/+1/props/upvote/likes</li>
       <li>Recommendations</li>

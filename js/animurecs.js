@@ -35,8 +35,8 @@ $.extend( $.fn.dataTableExt.oPagination, {
         '</ul>'
       );
       var els = $('a', nPaging);
-      $(els[0]).bind( 'click.DT', { action: "previous" }, fnClickHandler );
-      $(els[1]).bind( 'click.DT', { action: "next" }, fnClickHandler );
+      $(els[0]).on( 'click.DT', { action: "previous" }, fnClickHandler );
+      $(els[1]).on( 'click.DT', { action: "next" }, fnClickHandler );
     },
 
     "fnUpdate": function ( oSettings, fnDraw ) {
@@ -69,7 +69,7 @@ $.extend( $.fn.dataTableExt.oPagination, {
           sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
           $('<li '+sClass+'><a href="#">'+j+'</a></li>')
             .insertBefore( $('li:last', an[i])[0] )
-            .bind('click', function (e) {
+            .on('click', function (e) {
               e.preventDefault();
               oSettings._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
               fnDraw( oSettings );
@@ -92,6 +92,85 @@ $.extend( $.fn.dataTableExt.oPagination, {
     }
   }
 } );
+
+function displayListEditForm(elt) {
+  // converts a normal table list entry into a list edit form.
+  // is called on the last cell of a list entry row, on the icon's link.
+
+  $(elt).parent().parent().find('.listEntryTitle .listEntryStatus').removeClass('hidden');
+  scoreNode = $(elt).parent().parent().find('.listEntryScore');
+  score = $(scoreNode).html();
+  if (score == "") {
+    score = 0;
+  } else {
+    score = parseInt(score.split("/")[0]);
+  }
+  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_list[score]' type='number' min=0 max=10 step=1 value='"+score+"' /><span class='add-on'>/10</span></div>");
+
+  episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
+  episodeText = $(episodeNode).html();
+  if (episodeText == "") {
+    episodes = 0;
+    episodeTotal = 0;
+  } else {
+    episodes = parseInt(episodeText.split("/")[0]);
+    episodeTotal = parseInt(episodeText.split("/")[1]);
+  }
+  $(episodeNode).html("<div class='input-append'><input class='input-mini' name='anime_list[episode]' type='number' min=0 step=1 value='"+episodes+"' /><span class='add-on'>/" + episodeTotal + "</span></div>");
+
+  editNode = $(elt).parent();
+  url = $(elt).attr('data-url');
+  $(editNode).empty().append($('<a></a>').attr('href', '#').attr('data-url', url).addClass('btn btn-mini btn-primary').text("Update").click(function(event) {
+    submitListUpdate(this);
+    event.preventDefault();
+  }));
+}
+
+function revertListEditForm(elt) {
+  // converts a list edit form back to a normal table list entry.
+  // is called on the last cell of a list entry row, on the button.
+  url = $(elt).attr('data-url');
+  rowNode = $(elt).parent().parent();
+  buttonNode = $(elt).parent();
+
+  $(rowNode).find('.listEntryTitle .listEntryStatus').addClass('hidden');
+
+  scoreNode = $(elt).parent().parent().find('.listEntryScore');
+  $(scoreNode).html(scoreNode.find('input').val() + "/10");
+
+  episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
+  finishedEps = $(episodeNode).find('.input-append input').val();
+  totalEps = $(episodeNode).find('.input-append .add-on').text();
+  $(episodeNode).html(finishedEps + totalEps);
+
+  $(buttonNode).empty().append($('<a></a>').attr('href', '#').attr('data-url', url).addClass('listEdit').append("<i></i>").addClass('icon-pencil').click(function(event) {
+    displayListEditForm(this);
+    event.preventDefault();
+  }));
+}
+
+function submitListUpdate(elt) {
+  // submits a list entry update.
+  // is called on the last cell of a list entry row, on the button.
+
+  tableNode = $(elt).parent().parent().parent().parent();
+  rowNode = $(elt).parent().parent();
+
+  $(elt).off('click');
+  $(elt).addClass("disabled");
+  $(elt).text("Updating...");
+
+  user_id = parseInt($(tableNode).attr('data-id'));
+  anime_id = parseInt($(rowNode).attr('data-id'));
+  status = parseInt($(rowNode).find('.listEntryStatus').find('option:selected').val());
+  score = parseInt($(rowNode).find('.listEntryScore').find('input').val());
+  episode = parseInt($(rowNode).find('.listEntryEpisode').find('input').val());
+
+  url = $(elt).attr('data-url');
+  $.post(url + "?action=new&user_id=" + user_id, { "anime_list[user_id]": user_id, "anime_list[anime_id]": anime_id, "anime_list[status]": status, "anime_list[score]": score, "anime_list[episode]": episode}).complete(function() {
+    revertListEditForm(elt);
+  });
+}
 
 $(document).ready(function () {
   $('.dropdown-toggle').dropdown();
@@ -132,7 +211,7 @@ $(document).ready(function () {
   }
   $('.btn').each(function() {
     $(this).click( function() {
-      $(this).unbind('click');
+      $(this).off('click');
       $(this).addClass("disabled");
       $(this).text("Loading...");
     });
@@ -188,6 +267,20 @@ $(document).ready(function () {
           $(outputElement).val(ui.item.value);
           event.preventDefault();
         }
+    });
+  });
+  $('.feedEntry').each(function() {
+    $(this).hover(function() {
+      $(this).find('.feedEntryMenu').removeClass('hidden');
+    }, function() {
+      $(this).find('.feedEntryMenu').addClass('hidden');
+    });
+  });
+  $(".listEdit").each(function() {
+    // allows users to update entries from their list.
+    $(this).click(function(event) {
+      displayListEditForm(this);
+      event.preventDefault();
     });
   });
 });

@@ -331,5 +331,4 @@ class Anime {
     return $output;
   }
 }
-
 ?>
