@@ -937,7 +937,7 @@ body>.container-fluid{padding-top:20px;}
 .ui-timepicker-div dl dd{margin:0 10px 10px 65px;}
 .ui-timepicker-div td{font-size:90%;}
 .ui-tpicker-grid-label{background:none;border:none;margin:0;padding:0;}
-.leftColumn .avatarContainer{min-height:230px;}.leftColumn .avatarContainer .profileAvatar{background-color:transparent;}.leftColumn .avatarContainer .profileAvatar img{width:100%;}
+.leftColumn .avatarContainer{min-height:230px;}.leftColumn .avatarContainer .profileAvatar{background-color:transparent;}.leftColumn .avatarContainer .profileAvatar img{height:220px;max-width:220px;}
 .rightColumn.span9{margin-left:0;}.rightColumn.span9 .profileUserInfo{padding-left:2.564102564102564%;min-height:230px;}
 .rightColumn.span9 .profileUserTabs .nav-tabs{margin-bottom:0;}
 .rightColumn.span9 .profileUserTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding-top:20px;}
