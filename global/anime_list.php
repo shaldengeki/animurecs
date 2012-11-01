@@ -182,6 +182,7 @@ class AnimeList {
   }
   public function entries($maxTime=Null, $limit=Null) {
     // Returns a list of up to $limit entries up to $maxTime.
+    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     if ($maxTime === Null) {
       $nowTime = new DateTime();
@@ -191,7 +192,8 @@ class AnimeList {
     $returnList = [];
     $entryCount = 0;
     foreach ($this->entries as $entry) {
-      $entryDate = new DateTime($value['time'], $outputTimezone);
+      $entryDate = new DateTime($value['time'], $serverTimezone);
+      $entryDate->setTimezone($outputTimezone);
       if ($entryDate > $maxTime) {
         continue;
       }

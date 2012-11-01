@@ -368,8 +368,8 @@ class User {
     // returns markup for this user's anime feed.
     $feedEntries = $this->animeList->entries($maxTime, $numEntries);
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    $nowTime = new DateTime();
-    $nowTime->setTimezone($outputTimezone);
+    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $nowTime = new DateTime("now", $outputTimezone);
 
     $output = "<ul class='userFeed'>\n";
 
@@ -399,7 +399,8 @@ class User {
       }
       $entryAnime = $cachedAnime[intval($entry['anime_id'])];
 
-      $entryTime = new DateTime($entry['time'], $outputTimezone);
+      $entryTime = new DateTime($entry['time'], $serverTimezone);
+      $entryTime->setTimezone($outputTimezone);
       $diffInterval = $nowTime->diff($entryTime);
       $prevEntry = $this->animeList->prevEntry($entryAnime->id, $entryTime);
 
