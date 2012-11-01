@@ -373,6 +373,10 @@ class User {
 
     $output = "<ul class='userFeed'>\n";
 
+    if (count($feedEntries) == 0) {
+      $output .= "<blockquote><p>No entries yet - add some above!</p></blockquote>\n";
+    }
+
     // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
     $statusStrings = array(0 => array(0 => "did something mysterious with [ANIME]",
                                       1 => "is now watching [ANIME]",

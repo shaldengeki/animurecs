@@ -202,6 +202,7 @@ class AnimeList {
         return $returnList;
       }
     }
+    return $returnList;
   }
   public function listSection($status=Null, $score=Null) {
     // returns a section of this user's anime list.
