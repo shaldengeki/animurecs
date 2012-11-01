@@ -101,5 +101,5 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
       break;
   }
 }
-redirect_to(array('location' => 'user.php?action=show&id='.intval($targetUser->id)."#list"));
+redirect_to(array('location' => $location, 'status' => $status, 'class' => $class));
 ?>
