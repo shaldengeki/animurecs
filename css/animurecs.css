@@ -918,9 +918,7 @@ body{padding-top:40px;}
 .blackBlueLink a:link,.blackBlueLink a:visited{color:#333333;text-decoration:none;}
 .blackBlueLink a:hover{color:#0000ff;text-decoration:underline;}
 .hidden{display:none;}
-.staffUserTag{text-transform:uppercase;font-size:8pt;border-radius:8px;padding:3px;margin:3px;}
-.adminUserTag{text-transform:uppercase;font-size:8pt;border-radius:8px;padding:3px;margin:3px;color:red;border:2px solid red;}
-.modUserTag{text-transform:uppercase;font-size:8pt;border-radius:8px;padding:3px;margin:3px;color:blue;border:2px solid blue;}
+.staffUserTag{text-transform:uppercase;padding:3px;margin:3px;}
 .container-fluid{width:1000px;margin:0 auto;}
 body>.container-fluid{padding-top:20px;}
 .navbar-inverse form{margin:5px 0 0 0;}.navbar-inverse form .btn{margin-top:0;}

@@ -537,7 +537,7 @@ class User {
         <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>".escape_output($this->username).($this->allow($currentUser, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : "")."</h1>
-            ".($this->isModerator() ? "<span class='modUserTag'>Moderator</span>" : "").($this->isAdmin() ? "<span class='adminUserTag'>Admin</span>" : "")."
+            ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "")."
             <p class='lead'>
               ".escape_output($this->about)."
             </p>
