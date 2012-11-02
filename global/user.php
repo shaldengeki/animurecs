@@ -491,9 +491,8 @@ class User extends BaseObject {
       $feedEntries[$key."_".$this->username()] = $myEntry;
     }
     foreach ($this->friends() as $friend) {
-      $friend = new User($this->dbConn, intval($friend['user_id']));
-      foreach ($friend->feed($friend->animeList()->entries($maxTime, $numEntries), $this) as $key=>$friendEntry) {
-        $feedEntries[$key."_".$friend->username] = $friendEntry;
+      foreach ($friend['user']->feed($friend['user']->animeList()->entries($maxTime, $numEntries), $this) as $key=>$friendEntry) {
+        $feedEntries[$key."_".$friend['user']->username] = $friendEntry;
       }
     }
 
