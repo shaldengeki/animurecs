@@ -1,26 +1,31 @@
 <?php
 
-class TagType {
-  public $dbConn;
-  public $id;
-  public $name;
-  public $description;
-  public $tags;
-  public $createdUser;
+class TagType extends BaseObject {
+  protected $name;
+  protected $description;
+
+  protected $tags;
+  protected $createdUser;
   public function __construct($database, $id=Null) {
+    $this->modelTable = "tag_types";
+    $this->modelPlural = "tagTypes";
     $this->dbConn = $database;
     if ($id === 0) {
       $this->id = 0;
       $this->name = $this->description = "";
-      $this->tags = $this->createdUser = [];
+      $this->tags = [];
+      $this->createdUser = Null;
     } else {
-      $typeInfo = $this->dbConn->queryFirstRow("SELECT `id`, `name`, `description` FROM `tag_types` WHERE `id` = ".intval($id)." LIMIT 1");
       $this->id = intval($typeInfo['id']);
-      $this->name = $typeInfo['name'];
-      $this->description = $typeInfo['description'];
-      $this->tags = $this->getTags();
-      $this->createdUser = $this->getCreatedUser();
+      $fetchID = $this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types` WHERE `id` = ".intval($this->id));
+      if ($fetchID < 1) {
+        throw new Exception('ID Not Found');
+      }
+      $this->name = $this->description = $this->tags = $this->createdUser = Null;
     }
+  }
+  public function name() {
+    return $this->returnInfo('name');
   }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
@@ -96,12 +101,30 @@ class TagType {
     // return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
   }
   public function getCreatedUser() {
-    // retrieves an id,name array corresponding to the user who created this tag type.
-    return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `tag_types` LEFT OUTER JOIN `users` ON `users`.`id` = `tag_types`.`created_user_id` WHERE `tag_types`.`id` = ".intval($this->id));
+    // retrieves a user object corresponding to the user who created this tag type.
+    return new User($this->dbConn, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tag_types` WHERE `tag_types`.`id` = ".intval($this->id))));
   }
+  public function createdUser() {
+    if ($this->createdUser === Null) {
+      $this->createdUser = $this->getCreatedUser();
+    }
+    return $this->createdUser;
+  }
+
   public function getTags() {
     // retrieves a list of id arrays corresponding to tags belonging to this tag type
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC", "id");
+    $tags = [];
+    $tagIDs = $this->dbConn->stdQuery("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC");
+    while ($tagID = $tagIDs->fetch_assoc()) {
+      $tags[] = new Tag($this->dbConn, intval($tagID['id']));
+    }
+    return $tags;
+  }
+  public function tags() {
+    if ($this->tags === Null) {
+      $this->tags = $this->getTags();
+    }
+    return $this->tags;
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current tag's profile, with text provided.

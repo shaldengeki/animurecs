@@ -50,8 +50,12 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
         }
         if (!isset($_POST['anime_list']['id'])) {
           // fill default values from the last entry for this anime.
-          $lastEntry = $targetUser->animeList->animeList()[intval($_POST['anime_list']['anime_id'])];
-          unset($lastEntry['id'], $lastEntry['time']);
+          $lastEntry = $targetUser->animeList->animeList[intval($_POST['anime_list']['anime_id'])];
+          if (!$lastEntry) {
+            $lastEntry = [];
+          } else {
+            unset($lastEntry['id'], $lastEntry['time'], $lastEntry['anime']);
+          }
           $_POST['anime_list'] = array_merge($lastEntry, $_POST['anime_list']);
         }
         $updateList = $targetUser->animeList->create_or_update($_POST['anime_list']);

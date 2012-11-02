@@ -1,26 +1,26 @@
 <?php
 
-class User {
-  public $dbConn;
-
-  public $id;
-  private $username;
-  private $name;
-  private $email;
-  private $about;
-  private $usermask;
-  private $createdAt;
-  private $lastActive;
-  private $lastIP;
-  private $avatarPath;
+class User extends BaseObject {
+  protected $username;
+  protected $name;
+  protected $email;
+  protected $about;
+  protected $usermask;
+  protected $createdAt;
+  protected $lastActive;
+  protected $lastIP;
+  protected $avatarPath;
 
   public $switchedUser;
 
-  public $animeList;
-  private $friends;
-  private $friendRequests;
-  private $requestedFriends;
+  protected $animeList;
+  protected $friends;
+  protected $friendRequests;
+  protected $requestedFriends;
+
   public function __construct($database, $id=Null) {
+    $this->modelTable = "users";
+    $this->modelPlural = "users";
     $this->dbConn = $database;
     if ($id === 0) {
       $this->id = 0;
@@ -29,67 +29,119 @@ class User {
       $this->usermask = 0;
       $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = [];
+      $this->animeList = new AnimeList($this->dbConn, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
       $this->id = intval($id);
-      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = Null;
+      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = Null;
     }
-    $this->animeList = new AnimeList($this->dbConn, intval($this->id));
-  }
-  public function __get($property) {
-    // A property accessor exists
-    if (method_exists($this, $property)) {
-      return $this->$property();
-    } elseif (property_exists($this, $property)) {
-      return $this->$property;
-    }
-  }
-  public function getUserInfo() {
-    $userInfo = $this->dbConn->queryFirstRow("SELECT `username`, `name`, `email`, `about`, `usermask`, `last_ip`, `created_at`, `last_active`, `avatar_path` FROM `users` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    $this->username = $userInfo['username'];
-    $this->name = $userInfo['name'];
-    $this->email = $userInfo['email'];
-    $this->about = $userInfo['about'];
-    $this->usermask = intval($userInfo['usermask']);
-    $this->createdAt = $userInfo['created_at'];
-    $this->lastActive = $userInfo['last_active'];
-    $this->lastIP = $userInfo['last_ip'];
-    $this->avatarPath = $userInfo['avatar_path'];
-  }
-  public function returnUserInfo($param) {
-    if ($this->$param === Null) {
-      $this->getUserInfo();
-    }
-    return $this->$param;
   }
   public function username() {
-    return $this->returnUserInfo('username');
+    return $this->returnInfo('username');
   }
   public function name() {
-    return $this->returnUserInfo('name');
+    return $this->returnInfo('name');
   }
   public function email() {
-    return $this->returnUserInfo('email');
+    return $this->returnInfo('email');
   }
   public function about() {
-    return $this->returnUserInfo('about');
+    return $this->returnInfo('about');
   }
   public function usermask() {
-    return $this->returnUserInfo('usermask');
+    return $this->returnInfo('usermask');
   }
   public function createdAt() {
-    return $this->returnUserInfo('createdAt');
+    return $this->returnInfo('createdAt');
   }
   public function lastActive() {
-    return $this->returnUserInfo('lastActive');
+    return $this->returnInfo('lastActive');
   }
   public function lastIP() {
-    return $this->returnUserInfo('lastIP');
+    return $this->returnInfo('lastIP');
   }
   public function avatarPath() {
-    return $this->returnUserInfo('avatarPath');
+    return $this->returnInfo('avatarPath');
+  }
+  public function getFriends($status=1) {
+    // returns a list of user_id,username,time,message arrays corresponding to all friends of this user.
+    // keyed by not-this-userID.
+    $friendReqs = $this->dbConn->stdQuery("SELECT `user_id_1`, `user_id_2`, `u1`.`username` AS `username_1`, `u2`.`username` AS `username_2`, `time`, `message` FROM `users_friends`
+                                            INNER JOIN `users` AS `u1` ON `u1`.`id` = `user_id_1`
+                                            INNER JOIN `users` AS `u2` ON `u2`.`id` = `user_id_2`
+                                            WHERE ( (`user_id_1` = ".intval($this->id)." || `user_id_2` = ".intval($this->id).") && `status` = ".intval($status).")");
+    $friends = [];
+    while ($req = $friendReqs->fetch_assoc()) {
+      $reqArray = array('time' => $req['time'], 'message' => $req['message']);
+      if (intval($req['user_id_1']) === $this->id) {
+        $userID = intval($req['user_id_2']);
+      } else {
+        $userID = intval($req['user_id_1']);
+      }
+      $reqArray['user'] = new User($this->dbConn, $userID);
+      $friends[$userID] = $reqArray;
+    }
+    return $friends;
+  }
+  public function friends() {
+    if ($this->friends === Null) {
+      $this->friends = $this->getFriends();
+    }
+    return $this->friends;
+  }
+  public function getFriendRequests($status=0) {
+    // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests directed at this user.
+    // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
+    // ordered by time desc.
+    $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_1`, `time`, `message` FROM `users_friends`
+                                                WHERE (`user_id_2` = ".intval($this->id)." && `status` = ".intval($status).")
+                                                ORDER BY `time` DESC");
+    $friendReqs = [];
+    while ($req = $friendReqsQuery->fetch_assoc()) {
+      $friendReqs[] = array(
+          'user' => new User($this->dbConn, intval($req['user_id_1'])),
+          'time' => $req['time'],
+          'message' => $req['message']
+        );
+    }
+    return $friendReqs;
+  }
+  public function friendRequests() {
+    if ($this->friendRequests === Null) {
+      $this->friendRequests = $this->getFriendRequests();
+    }
+    return $this->friendRequests;
+  }
+  public function getRequestedFriends($status=0) {
+    // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests originating from this user.
+    // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
+    // ordered by time desc.
+    $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_2`, `time`, `message` FROM `users_friends`
+                                                WHERE (`user_id_1` = ".intval($this->id)." && `status` = ".intval($status).")
+                                                ORDER BY `time` DESC");
+    $friendReqs = [];
+    while ($req = $friendReqsQuery->fetch_assoc()) {
+      $friendReqs[] = array(
+          'user' => new User($this->dbConn, intval($req['user_id_2'])),
+          'time' => $req['time'],
+          'message' => $req['message']
+        );
+    }
+    return $friendReqs;
+  }
+  public function requestedFriends() {
+    if ($this->requestedFriends === Null) {
+      $this->requestedFriends = $this->getRequestedFriends();
+    }
+    return $this->requestedFriends;
+  }
+  public function animeList() {
+    if ($this->animeList === Null) {
+      $this->animeList = new AnimeList($this->dbConn, $this->id);
+    }
+    return $this->animeList;
   }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
@@ -135,63 +187,6 @@ class User {
         return False;
         break;
     }
-  }
-  public function getFriendRequests($status=0) {
-    // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests directed at this user.
-    // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
-    // ordered by time desc.
-    return $this->dbConn->queryAssoc("SELECT `user_id_1` AS `user_id`, `u1`.`username`, `time`, `message` FROM `users_friends`
-                                            INNER JOIN `users` AS `u1` ON `u1`.`id` = `user_id_1`
-                                            WHERE (`user_id_2` = ".intval($this->id)." && `status` = ".intval($status).")
-                                            ORDER BY `time` DESC");
-  }
-  public function getRequestedFriends($status=0) {
-    // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests originating from this user.
-    // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
-    // ordered by time desc.
-    return $this->dbConn->queryAssoc("SELECT `user_id_2` AS `user_id`, `u2`.`username`, `time`, `message` FROM `users_friends`
-                                            INNER JOIN `users` AS `u2` ON `u2`.`id` = `user_id_2`
-                                            WHERE (`user_id_1` = ".intval($this->id)." && `status` = ".intval($status).")
-                                            ORDER BY `time` DESC");
-  }
-  public function getFriends($status=1) {
-    // returns a list of user_id,username,time,message arrays corresponding to all friends of this user.
-    // keyed by not-this-userID.
-    $friendReqs = $this->dbConn->stdQuery("SELECT `user_id_1`, `user_id_2`, `u1`.`username` AS `username_1`, `u2`.`username` AS `username_2`, `time`, `message` FROM `users_friends`
-                                            INNER JOIN `users` AS `u1` ON `u1`.`id` = `user_id_1`
-                                            INNER JOIN `users` AS `u2` ON `u2`.`id` = `user_id_2`
-                                            WHERE ( (`user_id_1` = ".intval($this->id)." || `user_id_2` = ".intval($this->id).") && `status` = ".intval($status).")");
-    $friends = [];
-    while ($req = $friendReqs->fetch_assoc()) {
-      $reqArray = array('time' => $req['time'], 'message' => $req['message']);
-      if (intval($req['user_id_1']) === $this->id) {
-        $reqArray['user_id'] = intval($req['user_id_2']);
-        $reqArray['username'] = $req['username_2'];
-      } else {
-        $reqArray['user_id'] = intval($req['user_id_1']);
-        $reqArray['username'] = $req['username_1'];
-      }
-      $friends[$userID] = $reqArray;
-    }
-    return $friends;
-  }
-  public function friends() {
-    if ($this->friends === Null) {
-      $this->friends = $this->getFriends();
-    }
-    return $this->friends;
-  }
-  public function friendRequests() {
-    if ($this->friendRequests === Null) {
-      $this->friendRequests = $this->getFriendRequests();
-    }
-    return $this->friendRequests;
-  }
-  public function requestedFriends() {
-    if ($this->requestedFriends === Null) {
-      $this->requestedFriends = $this->getRequestedFriends();
-    }
-    return $this->requestedFriends;
   }
   public function loggedIn() {
     //if userID is not proper, or if user's last IP was not the requester's IP, return false.
@@ -281,7 +276,7 @@ class User {
     $listIDs = [];
     foreach($malList as $entry) {
       $entry['user_id'] = $this->id;
-      $listIDs[$entry['anime_id']] = $this->animeList->create_or_update($entry);
+      $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
     }
     if (in_array(False, $listIDs, True)) {
       return False;
@@ -298,13 +293,12 @@ class User {
     $params[] = "`status` = 0";
     $params[] = "`time` = NOW()";
 
-
     // check to see if this already exists in friends or requests.
-    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
+    if (array_filter_by_key_property($this->friends(), 'user', 'id', $requestedUser->id)) {
       // this friendship already exists.
       return True;
     }
-    if (array_filter_by_key($this->friendRequests, 'user_id', $requestedUser->id) || array_filter_by_key($this->requestedFriends, 'user_id', $requestedUser->id)) {
+    if (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $requestedUser->id)) {
       // this request already exists.
       return True;
     }
@@ -475,7 +469,7 @@ class User {
     foreach ($this->friendRequests() as $request) {
       $entryTime = new DateTime($request['time'], $serverTimezone);
       $entryTime->setTimezone($outputTimezone);
-      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['username'])."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, $request['user_id'])."</li>\n";
+      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, $request['user']->id)."</li>\n";
     } 
     return $output;
   }
@@ -483,7 +477,7 @@ class User {
     // returns an array of feed entries, keyed by the time of the entry.
     $output = [];
     foreach ($entries as $entry) {
-      $output[$entry['time']] = $this->animeList->feedEntry($entry, $this, $currentUser);
+      $output[$entry['time']] = $this->animeList()->feedEntry($entry, $this, $currentUser);
     }
     return $output;
   }
@@ -491,14 +485,14 @@ class User {
     // returns markup for this user's global feed.
 
     // add each user's personal feeds to the total feed, keyed by timestamp_username.
-    $myEntries = $this->animeList->entries($maxTime, $numEntries);
+    $myEntries = $this->animeList()->entries($maxTime, $numEntries);
     $feedEntries = [];
     foreach ($this->feed($myEntries, $this) as $key=>$myEntry) {
       $feedEntries[$key."_".$this->username()] = $myEntry;
     }
     foreach ($this->friends() as $friend) {
       $friend = new User($this->dbConn, intval($friend['user_id']));
-      foreach ($friend->feed($friend->animeList->entries($maxTime, $numEntries), $this) as $key=>$friendEntry) {
+      foreach ($friend->feed($friend->animeList()->entries($maxTime, $numEntries), $this) as $key=>$friendEntry) {
         $feedEntries[$key."_".$friend->username] = $friendEntry;
       }
     }
@@ -516,7 +510,7 @@ class User {
   }
   public function animeFeed($currentUser, $maxTime=Null,$numEntries=50) {
     // returns markup for this user's anime feed.
-    $feedEntries = $this->animeList->entries($maxTime, $numEntries);
+    $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
     $output = "<ul class='userFeed'>\n";
     if (count($feedEntries) == 0) {
       $output .= "<blockquote><p>No entries yet - add some above!</p></blockquote>\n";
@@ -533,7 +527,7 @@ class User {
                           4 => array('id' => 'dropped', 'title' => 'Dropped'),
                           6 => array('id' => 'planToWatch', 'title' => 'Plan to Watch'));
 
-    $relevantEntries = $this->animeList->listSection($status);
+    $relevantEntries = $this->animeList()->listSection($status);
 
     $output = "      <div class='".escape_output($statusStrings[$status]['id'])."'>
         <h2>".escape_output($statusStrings[$status]['title'])."</h2>
@@ -550,16 +544,15 @@ class User {
           </thead>
           <tbody>\n";
     foreach ($relevantEntries as $entry) {
-          $anime = new Anime($this->dbConn, intval($entry['anime_id']));
           $output .= "          <tr data-id='".intval($entry['anime_id'])."'>
               <td class='listEntryTitle'>
-                ".$anime->link("show", $anime->title)."
+                ".$entry['anime']->link("show", $entry['anime']->title)."
                 <span class='pull-right hidden listEntryStatus'>
                   ".display_status_dropdown("anime_list[status]", "span12", intval($entry['status']))."
                 </span>
               </td>
               <td class='listEntryScore'>".(intval($entry['score']) > 0 ? intval($entry['score'])."/10" : "")."</td>
-              <td class='listEntryEpisode'>".intval($entry['episode'])."/".intval($anime->episodeCount)."</td>\n";
+              <td class='listEntryEpisode'>".intval($entry['episode'])."/".intval($entry['anime']->episodeCount)."</td>\n";
           if ($currentUser->id == $this->id) {
             $output .= "              <td><a href='#' class='listEdit' data-url='anime_list.php'><i class='icon-pencil'></i></td>\n";
           }
@@ -569,7 +562,7 @@ class User {
         </table>      </div>\n";
     return $output;
   }
-  public function animeList($currentUser) {
+  public function displayAnimeList($currentUser) {
     // returns markup for this user's anime list.
     $output = "";
     $output .= $this->animeListSection(1, $currentUser);
@@ -617,8 +610,7 @@ class User {
     shuffle($friendSlice);
     $friendSlice = array_slice($friendSlice, 0, 4);
     foreach ($friendSlice as $friendEntry) {
-      $friend = new User($this->dbConn, intval($friendEntry['user_id']));
-      $output .= "            <li class='friendGridEntry'>".$friend->link("show", "<img class='friendGridImage' src='".$friend->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['username'])."</div>", True)."</li>\n";
+      $output .= "            <li class='friendGridEntry'>".$friendEntry['user']->link("show", "<img class='friendGridImage' src='".$friendEntry['user']->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True)."</li>\n";
     }
     $output .= "            </ul>
           </div>
@@ -630,7 +622,7 @@ class User {
               ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").
               ($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "").
               ($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "").
-              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key($this->friends(), 'user_id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='user.php?action=request_friend&id=".intval($this->id)."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
+              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='user.php?action=request_friend&id=".intval($this->id)."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
             <p class='lead'>
               ".escape_output($this->about())."
             </p>
@@ -665,7 +657,7 @@ class User {
     $output .= "                ".$this->animeFeed($currentUser)."
               </div>
               <div class='tab-pane' id='userList'>
-                ".$this->animeList($currentUser)."
+                ".$this->displayAnimeList($currentUser)."
               </div>
               <div class='tab-pane' id='userFriends'>
                 Friends coming soon!

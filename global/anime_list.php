@@ -1,13 +1,17 @@
 <?php
 
-class AnimeList {
-  public $dbConn;
+class AnimeList extends BaseObject {
   public $user_id;
-  private $entries, $animeList;
-  private $startTime, $endTime;
-  private $animeListAvg, $animeListStdDev, $entryAvg, $entryStdDev;
-  private $statusStrings, $scoreStrings, $episodeStrings, $cachedAnime;
+
+  protected $startTime, $endTime;
+  protected $animeListAvg, $animeListStdDev, $entryAvg, $entryStdDev;
+  protected $statusStrings, $scoreStrings, $episodeStrings;
+
+  protected $entries, $animeList;
+
   public function __construct($database, $user_id=Null) {
+    $this->modelTable = "anime_lists";
+    $this->modelPlural = "animeLists";
     $this->dbConn = $database;
     // strings with which to build feed messages.
     // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
@@ -25,8 +29,7 @@ class AnimeList {
                                             6 => "now plans to watch [ANIME]"));
     $this->scoreStrings = array(0 => array("rated [ANIME] a [SCORE]/10", "and rated it a [SCORE]/10"),
                           1 => array("unrated [ANIME]", "and unrated it"));
-    $this->episodeStrings = array("is now watching episode [EPISODE]/[TOTAL_EPISODES] of [ANIME]", "and finished episode [EPISODE]/[TOTAL_EPISODES]");
-    $this->cachedAnime = [];
+    $this->episodeStrings = array("just finished episode [EPISODE]/[TOTAL_EPISODES] of [ANIME]", "and finished episode [EPISODE]/[TOTAL_EPISODES]");
     $this->animeListAvg = $this->animeListStdDev = $this->entryAvg = $this->entryStdDev = 0;
     if ($user_id === 0) {
       $this->user_id = 0;
@@ -35,14 +38,6 @@ class AnimeList {
     } else {
       $this->user_id = intval($user_id);
       $this->entries = $this->animeList = Null;
-    }
-  }
-  public function __get($property) {
-    // A property accessor exists
-    if (method_exists($this, $property)) {
-      return $this->$property();
-    } elseif (property_exists($this, $property)) {
-      return $this->$property;
     }
   }
   public function allow($authingUser, $action) {
@@ -157,7 +152,7 @@ class AnimeList {
     }
     return True;
   }
-  public function getListInfo() {
+  public function getInfo() {
     $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `anime_lists` WHERE `user_id` = ".intval($user_id));
     if (!$userInfo) {
       return False;
@@ -166,23 +161,19 @@ class AnimeList {
     $this->endTime = intval($userInfo['end_time']);
   }
   public function startTime() {
-    if ($this->startTime === Null) {
-      $this->getListInfo();
-    }
-    return $this->startTime;
+    return $this->returnInfo("startTime");
   }
   public function endTime() {
-    if ($this->endTime === Null) {
-      $this->getListInfo();
-    }
-    return $this->endTime;
+    return $this->returnInfo("endTime");
   }
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = $this->dbConn->queryAssoc("SELECT `id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC", "id");
     $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryCount = count($returnList);
-    foreach ($returnList as $entry) {
+    foreach ($returnList as $key=>$entry) {
+      $returnList[$key]['anime'] = new Anime($this->dbConn, intval($entry['anime_id']));
+      unset($returnList[$key]['anime_id']);
       $entrySum += intval($entry['score']);
     }
     $this->entryAvg = ($entryCount === 0) ? 0 : $entrySum / $entryCount;
@@ -237,7 +228,9 @@ class AnimeList {
                                             WHERE `status` != 0
                                             ORDER BY `status` ASC, `score` DESC", "anime_id");
     $this->animeListAvg = $this->animeListStdDev = $animeListSum = $animeListCount = 0;
-    foreach ($returnList as $entry) {
+    foreach ($returnList as $key=>$entry) {
+      $returnList[$key]['anime'] = new Anime($this->dbConn, intval($entry['anime_id']));
+      unset($returnList[$key]['anime_id']);
       if ($entry['score'] != 0) {
         $animeListCount++;
         $animeListSum += intval($entry['score']);
@@ -276,7 +269,7 @@ class AnimeList {
       if ($entryDate >= $beforeTime) {
         continue;
       }
-      if ($entry['anime_id'] == $anime_id) {
+      if ($entry['anime']->id == $anime_id) {
         return $entry;
       }
     }
@@ -284,10 +277,6 @@ class AnimeList {
   }
   public function feedEntry($entry, $user, $currentUser) {
     // fetch the previous feed entry and compare values against current entry.
-    if (!isset($this->cachedAnime[intval($entry['anime_id'])])) {
-      $this->cachedAnime[intval($entry['anime_id'])] = new Anime($this->dbConn, intval($entry['anime_id']));
-    }
-    $entryAnime = $this->cachedAnime[intval($entry['anime_id'])];
 
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
@@ -295,7 +284,7 @@ class AnimeList {
 
     $entryTime = new DateTime($entry['time'], $serverTimezone);
     $diffInterval = $nowTime->diff($entryTime);
-    $prevEntry = $this->prevEntry($entryAnime->id, $entryTime);
+    $prevEntry = $this->prevEntry($entry['anime']->id, $entryTime);
 
     $statusChanged = (bool) ($entry['status'] != $prevEntry['status']);
     $scoreChanged = (bool) ($entry['score'] != $prevEntry['score']);
@@ -315,10 +304,10 @@ class AnimeList {
     $statusText = implode(" ", $statusTexts);
 
     // replace placeholders.
-    $statusText = str_replace("[ANIME]", $entryAnime->link("show", $entryAnime->title), $statusText);
+    $statusText = str_replace("[ANIME]", $entry['anime']->link("show", $entry['anime']->title), $statusText);
     $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
     $statusText = str_replace("[EPISODE]", $entry['episode'], $statusText);
-    $statusText = str_replace("[TOTAL_EPISODES]", $entryAnime->episodeCount, $statusText);
+    $statusText = str_replace("[TOTAL_EPISODES]", $entry['anime']->episodeCount, $statusText);
     $statusText = ucfirst($statusText);
 
     $output = "";

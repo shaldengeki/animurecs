@@ -1,35 +1,40 @@
 <?php
 
-class Tag {
-  public $dbConn;
-  public $id;
-  public $name;
-  public $description;
-  public $type;
-  public $anime;
-  public $manga;
-  public $createdAt;
-  public $updatedAt;
-  public $createdUser;
+class Tag extends BaseObject {
+  protected $name;
+  protected $description;
+  protected $type;
+  protected $createdAt;
+  protected $updatedAt;
+
+  protected $createdUser;
+  protected $anime;
+  protected $manga;
+
   public function __construct($database, $id=Null) {
+    $this->modelTable = "tags";
+    $this->modelPlural = "tags";
     $this->dbConn = $database;
     if ($id === 0) {
       $this->id = 0;
       $this->name = $this->description = $this->createdAt = $this->updatedAt = "";
-      $this->episodeCount = $this->episodeLength = 0;
       $this->type = $this->anime = $this->manga = $this->createdUser = [];
     } else {
-      $tagInfo = $this->dbConn->queryFirstRow("SELECT `id`, `name`, `description`, `created_at`, `updated_at` FROM `tags` WHERE `id` = ".intval($id)." LIMIT 1");
-      $this->id = intval($tagInfo['id']);
-      $this->name = $tagInfo['name'];
-      $this->description = $tagInfo['description'];
-      $this->createdAt = $tagInfo['created_at'];
-      $this->updatedAt = $tagInfo['updated_at'];
-      $this->type = $this->getType();
-      $this->createdUser = $this->getCreatedUser();
-      $this->anime = $this->getAnime();
-      //$this->manga = $this->getManga();
+      $this->id = intval($id);
+      $this->name = $this->description = $this->createdAt = $this->updatedAt = $this->type = $this->anime = $this->manga = $this->createdUser = Null;
     }
+  }
+  public function name() {
+    return $this->returnInfo('name');
+  }
+  public function description() {
+    return $this->returnInfo('description');
+  }
+  public function createdAt() {
+    return $this->returnInfo('createdAt');
+  }
+  public function updatedAt() {
+    return $this->returnInfo('updatedAt');
   }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
@@ -65,7 +70,7 @@ class Tag {
       Returns a boolean.
     */
     // check to see if this is an update.
-    if (isset($this->anime[intval($anime_id)])) {
+    if (isset($this->anime()[intval($anime_id)])) {
       return True;
     }
     try {
@@ -87,7 +92,7 @@ class Tag {
       Returns a boolean.
     */
     if ($animus === False) {
-      $animus = array_keys($this->anime);
+      $animus = array_keys($this->anime());
     }
     $animeIDs = array();
     foreach ($animus as $anime) {
@@ -174,7 +179,7 @@ class Tag {
     // Returns a bool reflecting whether or not the current anime is approved.
     // doesn't do anything for now. maybe use later.
     /* 
-    if ($this->approvedOn === '' or !$this->approvedOn) {
+    if ($this->approvedOn() === '' or !$this->approvedOn()) {
       return False;
     }
     return True;
@@ -185,21 +190,44 @@ class Tag {
     // return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
   }
   public function getCreatedUser() {
-    // retrieves an id,name array corresponding to the user who created this tag.
-    return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `tags` LEFT OUTER JOIN `users` ON `users`.`id` = `tags`.`created_user_id` WHERE `tags`.`id` = ".intval($this->id));
+    // retrieves a user object corresponding to the user who created this tag.
+    return new User($this->dbConn, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tags` WHERE `id` = ".intval($this->id))));
+  }
+  public function createdUser() {
+    if ($this->createdUser === Null) {
+      $this->createdUser = $this->getCreatedUser();
+    }
+    return $this->createdUser;
   }
   public function getType() {
-    // retrieves an id,name array corresponding to the tag type this tag belongs to.
-    return $this->dbConn->queryFirstRow("SELECT `tag_types`.`id`, `tag_types`.`name` FROM `tags` LEFT OUTER JOIN `tag_types` ON `tag_types`.`id` = `tags`.`tag_type_id` WHERE `tags`.`id` = ".intval($this->id));
+    // retrieves the tag type that this tag belongs to.
+    return new TagType($this->dbConn, intval($this->dbConn->queryFirstValue("SELECT `tag_type_id` FROM `tags` WHERE `id` = ".intval($this->id))));
+  }
+  public function type() {
+    if ($this->type === Null) {
+      $this->type = $this->getType();
+    }
+    return $this->type;
   }
   public function getAnime() {
-    // retrieves a list of id,title arrays corresponding to anime tagged with this tag.
-    return $this->dbConn->queryAssoc("SELECT `id`, `title` FROM `anime_tags` LEFT OUTER JOIN `anime` ON `anime`.`id` = `anime_tags`.`anime_id` WHERE `tag_id` = ".intval($this->id)." ORDER BY `anime`.`title` ASC", "id");
+    // retrieves a list of anime objects corresponding to anime tagged with this tag.
+    $animes = [];
+    $animeIDs = $this->dbConn->stdQuery("SELECT `anime_id` FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
+    while ($animeID = $animeIDs->fetch_assoc()) {
+      $animes[] = new Anime($this->dbConn, intval($animeID['anime_id']));
+    }
+    return $animes;
+  }
+  public function anime() {
+    if ($this->anime === Null) {
+      $this->anime = $this->getAnime();
+    }
+    return $this->anime;
   }
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current tag's profile, with text provided.
     if ($text === Null) {
-      $text = $this->title ? $this->title : "Info";
+      $text = $this->title() ? $this->title() : "Info";
     }
     return "<a href='/tag.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
@@ -277,25 +305,25 @@ class Tag {
         <div class='control-group'>
           <label class='control-label' for='tag[name]'>Tag Name</label>
           <div class='controls'>
-            <input name='tag[name]' type='text' class='input-xlarge' id='tag[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name)."'")." />
+            <input name='tag[name]' type='text' class='input-xlarge' id='tag[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name())."'")." />
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='tag[description]' rows='3' id='tag[description]'>".(($this->id === 0) ? "" : escape_output($this->description))."</textarea>
+            <textarea class='field span4' name='tag[description]' rows='3' id='tag[description]'>".(($this->id === 0) ? "" : escape_output($this->description()))."</textarea>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[tag_type_id]'>Type</label>
           <div class='controls'>
-            ".display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type['id'])))."
+            ".display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type()['id'])))."
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->anime))))."' id='tag[anime_tags]' />
+            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->anime()))))."' id='tag[anime_tags]' />
           </div>
         </div>\n";
         /*

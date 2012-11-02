@@ -61,6 +61,61 @@ function udate($format, $utimestamp = null) {
   return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
 }
 
+function buildPropertyFilter($property, $value) {
+  // returns a function that filters a list of objects on an property
+  return function($a) use ($property, $value) {
+    if (!property_exists($a, $property)) {
+      return False;
+    } elseif ($a->$property == $value) {
+      return True;
+    } else {
+      return False;
+    }
+  };
+}
+
+function array_filter_by_property($a, $property, $value) {
+  // filters a list of objects on a given property for a given value.
+  return array_filter($a, buildPropertyFilter($property, $value));
+}
+
+function buildKeyPropertyFilter($key, $property, $value) {
+  // returns a function that filters a list of objects on an property
+  return function($a) use ($key, $property, $value) {
+    if (!isset($a[$key]) || !property_exists($a[$key], $property)) {
+      return False;
+    } elseif ($a[$key]->$property == $value) {
+      return True;
+    } else {
+      return False;
+    }
+  };
+}
+
+function array_filter_by_key_property($a, $key, $property, $value) {
+  /* filters a list of associative arrays containing objects for a given key on a given property for a given value.
+  ex. array(
+    array(
+      'user' => User (
+        id: 2
+      )
+    )
+    array(
+      'user' => User (
+        id: 3
+      )
+    )
+    array(
+      'user' => User (
+        id: 4
+      )
+    )
+  )
+  we'd use array_filter_by_key_property($array, 'user', 'id', 3) to get the second array.
+  */
+  return array_filter($a, buildKeyPropertyFilter($key, $property, $value));
+}
+
 function buildKeyFilter($key, $value) {
   // returns a function that filters a list of arrays on a key.
   return function($a) use ($key, $value) {

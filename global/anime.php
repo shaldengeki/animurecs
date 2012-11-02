@@ -1,24 +1,23 @@
 <?php
 
-class Anime {
-  public $dbConn;
-  public $id;
+class Anime extends BaseObject {
+  protected $title;
+  protected $description;
+  protected $episodeCount;
+  protected $episodeLength;
+  protected $createdAt;
+  protected $updatedAt;
+  protected $approvedUser;
+  protected $approvedOn;
+  protected $imagePath;
 
-  private $title;
-  private $description;
-  private $episodeCount;
-  private $episodeLength;
-  private $createdAt;
-  private $updatedAt;
-  private $approvedUser;
-  private $approvedOn;
-  private $imagePath;
-
-  private $tags;
-  private $comments;
-  private $entries;
+  protected $tags;
+  protected $comments;
+  protected $entries;
   public function __construct($database, $id=Null) {
     $this->dbConn = $database;
+    $this->modelTable = "anime";
+    $this->modelPlural = "anime";
     if ($id === 0) {
       $this->id = 0;
       $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = "";
@@ -29,54 +28,29 @@ class Anime {
       $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = Null;
     }
   }
-  public function __get($property) {
-    // A property accessor exists
-    if (method_exists($this, $property)) {
-      return $this->$property();
-    } elseif (property_exists($this, $property)) {
-      return $this->$property;
-    }
-  }
-  public function getAnimeInfo() {
-    $animeInfo = $this->dbConn->queryFirstRow("SELECT `title`, `description`, `episode_count`, `episode_length`, `created_at`, `updated_at`, `image_path`, `approved_on` FROM `anime` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    $this->title = $animeInfo['title'];
-    $this->description = $animeInfo['description'];
-    $this->episodeCount = intval($animeInfo['episode_count']);
-    $this->episodeLength = intval($animeInfo['episode_length']);
-    $this->createdAt = $animeInfo['created_at'];
-    $this->updatedAt = $animeInfo['updated_at'];
-    $this->imagePath = $animeInfo['image_path'];
-    $this->approvedOn = $animeInfo['approved_on'];
-  }
-  public function returnAnimeInfo($param) {
-    if ($this->$param === Null) {
-      $this->getAnimeInfo();
-    }
-    return $this->$param;
-  }
   public function title() {
-    return $this->returnAnimeInfo('title');
+    return $this->returnInfo('title');
   }
   public function description() {
-    return $this->returnAnimeInfo('description');
+    return $this->returnInfo('description');
   }
   public function episodeCount() {
-    return $this->returnAnimeInfo('episodeCount');
+    return $this->returnInfo('episodeCount');
   }
   public function episodeLength() {
-    return $this->returnAnimeInfo('episodeLength');
+    return $this->returnInfo('episodeLength');
   }
   public function createdAt() {
-    return $this->returnAnimeInfo('createdAt');
+    return $this->returnInfo('createdAt');
   }
   public function updatedAt() {
-    return $this->returnAnimeInfo('updatedAt');
+    return $this->returnInfo('updatedAt');
   }
   public function imagePath() {
-    return $this->returnAnimeInfo('imagePath');
+    return $this->returnInfo('imagePath');
   }
   public function approvedOn() {
-    return $this->returnAnimeInfo('approvedOn');
+    return $this->returnInfo('approvedOn');
   }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
@@ -112,7 +86,7 @@ class Anime {
       Returns a boolean.
     */
     // check to see if this is an update.
-    if (isset($this->tags[intval($tag_id)])) {
+    if (isset($this->tags()[intval($tag_id)])) {
       return True;
     }
     try {
@@ -134,7 +108,7 @@ class Anime {
       Returns a boolean.
     */
     if ($tags === False) {
-      $tags = array_keys($this->tags);
+      $tags = array_keys($this->tags());
     }
     $tagIDs = array();
     foreach ($tags as $tag) {
@@ -246,8 +220,12 @@ class Anime {
     return True;
   }
   public function getTags() {
-    // retrieves a list of id,name entries corresponding to tags belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id`, `name` FROM `anime_tags` LEFT OUTER JOIN `tags` ON `tags`.`id` = `anime_tags`.`tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC", "id");
+    // retrieves a list of tag objects corresponding to tags belonging to this anime.
+    $tags = [];
+    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` WHERE `anime_id` = ".intval($this->id));
+    while ($tagID = $tagIDs->fetch_assoc()) {
+      $tags[] = new Tag($this->dbConn, intval($tagID['tag_id']));
+    }
   }
   public function tags() {
     if ($this->tags === Null) {
