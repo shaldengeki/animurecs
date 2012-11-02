@@ -1,5 +1,4 @@
 <?php
-
 class AnimeList extends BaseList {
   // anime list.
   public function __construct($database, $user_id=Null) {

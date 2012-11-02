@@ -1,5 +1,4 @@
-﻿<?php
-
+<?php
 function humanize($str) {
   $str = trim(strtolower($str));
   $str = preg_replace('/_/', ' ', $str);
@@ -707,5 +706,4 @@ function display_footer() {
   }
   echo "  </div>\n</body>\n</html>";
 }
-
 ?>

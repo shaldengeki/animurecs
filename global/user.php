@@ -1,5 +1,4 @@
 <?php
-
 class User extends BaseObject {
   protected $username;
   protected $name;
@@ -730,5 +729,4 @@ class User extends BaseObject {
     return $output;
   }
 }
-
 ?>

@@ -1,5 +1,4 @@
 <?php
-
 class DbConn extends mysqli {
   //basic database connection class that provides input-escaping and standardized query error output.
   

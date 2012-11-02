@@ -1,5 +1,4 @@
 <?php
-
 class BaseList extends BaseObject {
   public $user_id;
 

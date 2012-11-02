@@ -1,5 +1,4 @@
 <?php
-
 class TagType extends BaseObject {
   protected $name;
   protected $description;
@@ -108,7 +107,6 @@ class TagType extends BaseObject {
     }
     return $this->createdUser;
   }
-
   public function getTags() {
     // retrieves a list of id arrays corresponding to tags belonging to this tag type
     $tags = [];
@@ -232,5 +230,4 @@ class TagType extends BaseObject {
     return $output;
   }
 }
-
 ?>

@@ -1,5 +1,4 @@
 <?php
-
 class Anime extends BaseObject {
   protected $title;
   protected $description;

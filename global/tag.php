@@ -1,5 +1,4 @@
 <?php
-
 class Tag extends BaseObject {
   protected $name;
   protected $description;
@@ -349,5 +348,4 @@ class Tag extends BaseObject {
     return $output;
   }
 }
-
 ?>

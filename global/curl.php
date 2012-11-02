@@ -177,5 +177,4 @@ function parseMALList($username, $type="anime") {
 	}
 	return $animeList;
 }
-
 ?>

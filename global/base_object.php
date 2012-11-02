@@ -1,5 +1,4 @@
 <?php
-
 class BaseObject {
   public $dbConn;
   public $id;
