@@ -96,13 +96,13 @@ class AnimeList {
       return False;
     }
     // check to see if this is an update.
-    if (isset($this->entries[intval($entry['id'])])) {
+    if (isset($this->entries()[intval($entry['id'])])) {
       $updateDependency = $this->dbConn->stdQuery("UPDATE `anime_lists` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
       }
       // update list locally.
-      if ($this->animeList[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->animeList[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->animeList[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
+      if ($this->animeList()[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->animeList()[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->animeList()[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
         if (intval($entry['status']) == 0) {
           unset($this->animeList[intval($entry['anime_id'])]);
         } else {
@@ -117,6 +117,7 @@ class AnimeList {
         return False;
       }
       // insert list locally.
+      $this->animeList();
       if (intval($entry['status']) == 0) {
         unset($this->animeList[intval($entry['anime_id'])]);
       } else {
