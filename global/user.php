@@ -4,22 +4,22 @@ class User {
   public $dbConn;
 
   public $id;
-  public $username;
-  public $name;
-  public $email;
-  public $about;
-  public $usermask;
-  public $createdAt;
-  public $lastActive;
-  public $lastIP;
-  public $avatarPath;
+  private $username;
+  private $name;
+  private $email;
+  private $about;
+  private $usermask;
+  private $createdAt;
+  private $lastActive;
+  private $lastIP;
+  private $avatarPath;
 
   public $switchedUser;
 
   public $animeList;
-  public $friends;
-  public $friendRequests;
-  public $requestedFriends;
+  private $friends;
+  private $friendRequests;
+  private $requestedFriends;
   public function __construct($database, $id=Null) {
     $this->dbConn = $database;
     if ($id === 0) {
@@ -30,27 +30,66 @@ class User {
       $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = [];
     } else {
-      $userInfo = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `about`, `usermask`, `last_ip`, `created_at`, `last_active`, `avatar_path` FROM `users` WHERE `id` = ".intval($id)." LIMIT 1");
-      $this->id = intval($userInfo['id']);
-      $this->username = $userInfo['username'];
-      $this->name = $userInfo['name'];
-      $this->email = $userInfo['email'];
-      $this->about = $userInfo['about'];
-      $this->usermask = intval($userInfo['usermask']);
-      $this->createdAt = $userInfo['created_at'];
-      $this->lastActive = $userInfo['last_active'];
-      $this->lastIP = $userInfo['last_ip'];
-      $this->avatarPath = $userInfo['avatar_path'];
-
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-
-      $this->friends = $this->getFriends();
-      $this->friendRequests = $this->getFriendRequests();
-      $this->requestedFriends = $this->getRequestedFriends();
+      $this->id = intval($id);
+      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = Null;
     }
     $this->animeList = new AnimeList($this->dbConn, intval($this->id));
+  }
+  public function __get($property) {
+    // A property accessor exists
+    if (method_exists($this, $property)) {
+      return $this->$property();
+    } elseif (property_exists($this, $property)) {
+      return $this->$property;
+    }
+  }
+  public function getUserInfo() {
+    $userInfo = $this->dbConn->queryFirstRow("SELECT `username`, `name`, `email`, `about`, `usermask`, `last_ip`, `created_at`, `last_active`, `avatar_path` FROM `users` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    $this->username = $userInfo['username'];
+    $this->name = $userInfo['name'];
+    $this->email = $userInfo['email'];
+    $this->about = $userInfo['about'];
+    $this->usermask = intval($userInfo['usermask']);
+    $this->createdAt = $userInfo['created_at'];
+    $this->lastActive = $userInfo['last_active'];
+    $this->lastIP = $userInfo['last_ip'];
+    $this->avatarPath = $userInfo['avatar_path'];
+  }
+  public function returnUserInfo($param) {
+    if ($this->$param === Null) {
+      $this->getUserInfo();
+    }
+    return $this->$param;
+  }
+  public function username() {
+    return $this->returnUserInfo('username');
+  }
+  public function name() {
+    return $this->returnUserInfo('name');
+  }
+  public function email() {
+    return $this->returnUserInfo('email');
+  }
+  public function about() {
+    return $this->returnUserInfo('about');
+  }
+  public function usermask() {
+    return $this->returnUserInfo('usermask');
+  }
+  public function createdAt() {
+    return $this->returnUserInfo('createdAt');
+  }
+  public function lastActive() {
+    return $this->returnUserInfo('lastActive');
+  }
+  public function lastIP() {
+    return $this->returnUserInfo('lastIP');
+  }
+  public function avatarPath() {
+    return $this->returnUserInfo('avatarPath');
   }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
@@ -135,6 +174,24 @@ class User {
       $friends[$userID] = $reqArray;
     }
     return $friends;
+  }
+  public function friends() {
+    if ($this->friends === Null) {
+      $this->friends = $this->getFriends();
+    }
+    return $this->friends;
+  }
+  public function friendRequests() {
+    if ($this->friendRequests === Null) {
+      $this->friendRequests = $this->getFriendRequests();
+    }
+    return $this->friendRequests;
+  }
+  public function requestedFriends() {
+    if ($this->requestedFriends === Null) {
+      $this->requestedFriends = $this->getRequestedFriends();
+    }
+    return $this->requestedFriends;
   }
   public function loggedIn() {
     //if userID is not proper, or if user's last IP was not the requester's IP, return false.
@@ -243,7 +300,7 @@ class User {
 
 
     // check to see if this already exists in friends or requests.
-    if (array_filter_by_key($this->friends, 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends, 'user_id_2', $requestedUser->id)) {
+    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
       // this friendship already exists.
       return True;
     }
@@ -263,7 +320,7 @@ class User {
     // confirms a friend request from requestedUser directed at the current user.
     // returns a boolean.
     // check to see if this already exists in friends or requests.
-    if (array_filter_by_key($this->friends, 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends, 'user_id_2', $requestedUser->id)) {
+    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
       // this friendship already exists.
       return True;
     }
@@ -365,13 +422,13 @@ class User {
     return True;
   }
   public function isModerator() {
-    if (!$this->usermask or !(intval($this->usermask) & 2)) {
+    if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
       return false;
     }
     return true;
   }
   public function isAdmin() {
-    if (!$this->usermask or !(intval($this->usermask) & 4)) {
+    if (!$this->usermask() or !(intval($this->usermask()) & 4)) {
       return false;
     }
     return true;
@@ -415,7 +472,7 @@ class User {
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $output = "";
-    foreach ($this->friendRequests as $request) {
+    foreach ($this->friendRequests() as $request) {
       $entryTime = new DateTime($request['time'], $serverTimezone);
       $entryTime->setTimezone($outputTimezone);
       $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['username'])."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, $request['user_id'])."</li>\n";
@@ -437,9 +494,9 @@ class User {
     $myEntries = $this->animeList->entries($maxTime, $numEntries);
     $feedEntries = [];
     foreach ($this->feed($myEntries, $this) as $key=>$myEntry) {
-      $feedEntries[$key."_".$this->username] = $myEntry;
+      $feedEntries[$key."_".$this->username()] = $myEntry;
     }
-    foreach ($this->friends as $friend) {
+    foreach ($this->friends() as $friend) {
       $friend = new User($this->dbConn, intval($friend['user_id']));
       foreach ($friend->feed($friend->animeList->entries($maxTime, $numEntries), $this) as $key=>$friendEntry) {
         $feedEntries[$key."_".$friend->username] = $friendEntry;
@@ -545,8 +602,8 @@ class User {
           <ul class='thumbnails avatarContainer'>
             <li class='span12'>
               <div class='thumbnail profileAvatar'>\n";
-    if ($this->avatarPath != '') {
-      $output .= "                <img src='".escape_output($this->avatarPath)."' class='img-rounded' alt=''>\n";
+    if ($this->avatarPath() != '') {
+      $output .= "                <img src='".escape_output($this->avatarPath())."' class='img-rounded' alt=''>\n";
     } else {
 
     }
@@ -554,11 +611,11 @@ class User {
             </li>
           </ul>
           <div class='friendListBox'>
-            <h3>Friends</h3>
+            <h3>Friends".((count($this->friends()) > 0) ? " (".count($this->friends()).") " : "")."</h3>
             <ul class='friendGrid'>\n";
-    $friendSlice = $this->friends;
+    $friendSlice = $this->friends();
     shuffle($friendSlice);
-    $friendSlice = array_slice($friendSlice, 0, 9);
+    $friendSlice = array_slice($friendSlice, 0, 4);
     foreach ($friendSlice as $friendEntry) {
       $friend = new User($this->dbConn, intval($friendEntry['user_id']));
       $output .= "            <li class='friendGridEntry'>".$friend->link("show", "<img class='friendGridImage' src='".$friend->avatarPath."' /><div class='friendGridUsername'>".escape_output($friendEntry['username'])."</div>", True)."</li>\n";
@@ -569,13 +626,13 @@ class User {
         <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>
-              ".escape_output($this->username)." 
+              ".escape_output($this->username())." 
               ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").
               ($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "").
               ($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "").
-              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key($this->friends, 'user_id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='user.php?action=request_friend&id=".intval($this->id)."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
+              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key($this->friends(), 'user_id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='user.php?action=request_friend&id=".intval($this->id)."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
             <p class='lead'>
-              ".escape_output($this->about)."
+              ".escape_output($this->about())."
             </p>
           </div>
           <div class='profileTabs'>
@@ -625,14 +682,14 @@ class User {
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>
           <div class='controls'>
-            <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name)."'").">
+            <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name())."'").">
           </div>
         </div>";
     if ($this->id === 0) {
       $output .= "        <div class='control-group'>
           <label class='control-label' for='user[username]'>Username</label>
           <div class='controls'>
-            <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username)."'").">
+            <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username())."'").">
           </div>
         </div>\n";
     }
@@ -651,13 +708,13 @@ class User {
         <div class='control-group'>
           <label class='control-label' for='user[email]'>Email</label>
           <div class='controls'>
-            <input name='user[email]' type='email' class='input-xlarge' id='user[email]'".(($this->id === 0) ? "" : " value='".escape_output($this->email)."'").">
+            <input name='user[email]' type='email' class='input-xlarge' id='user[email]'".(($this->id === 0) ? "" : " value='".escape_output($this->email())."'").">
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='user[about]'>About</label>
           <div class='controls'>
-            <textarea name='user[about]' id='user[about]' rows='5'>".(($this->id === 0) ? "" : escape_output($this->about))."</textarea>
+            <textarea name='user[about]' id='user[about]' rows='5'>".(($this->id === 0) ? "" : escape_output($this->about()))."</textarea>
           </div>
         </div>\n";
         if ($this->id != 0) {
@@ -671,10 +728,10 @@ class User {
         if ($currentUser->isAdmin()) {
           $output .= "      <div class='control-group'>
           <label class='control-label' for='user[usermask]'>Role(s)</label>
-          <div class='controls'>\n".display_user_roles_select("user[usermask][]", ($this->id === 0) ? 0 : intval($this->usermask))."      </div>
+          <div class='controls'>\n".display_user_roles_select("user[usermask][]", ($this->id === 0) ? 0 : intval($this->usermask()))."      </div>
         </div>\n";
         } else {
-          $output .= "      <input type='hidden' name='user[usermask][]' value='".($this->id === 0 ? 1 : intval($this->usermask))."' />\n";
+          $output .= "      <input type='hidden' name='user[usermask][]' value='".($this->id === 0 ? 1 : intval($this->usermask()))."' />\n";
         }
         $output .= "    <div class='form-actions'>
           <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Sign Up" : "Save changes")."</button>

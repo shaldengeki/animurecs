@@ -3,18 +3,20 @@
 class Anime {
   public $dbConn;
   public $id;
-  public $title;
-  public $description;
-  public $episodeCount;
-  public $episodeLength;
-  public $createdAt;
-  public $updatedAt;
-  public $approvedUser;
-  public $approvedOn;
-  public $imagePath;
-  public $tags;
-  public $comments;
-  public $entries;
+
+  private $title;
+  private $description;
+  private $episodeCount;
+  private $episodeLength;
+  private $createdAt;
+  private $updatedAt;
+  private $approvedUser;
+  private $approvedOn;
+  private $imagePath;
+
+  private $tags;
+  private $comments;
+  private $entries;
   public function __construct($database, $id=Null) {
     $this->dbConn = $database;
     if ($id === 0) {
@@ -23,21 +25,58 @@ class Anime {
       $this->episodeCount = $this->episodeLength = 0;
       $this->tags = $this->comments = $this->entries = $this->approvedUser = [];
     } else {
-      $animeInfo = $this->dbConn->queryFirstRow("SELECT `id`, `title`, `description`, `episode_count`, `episode_length`, `created_at`, `updated_at`, `image_path`, `approved_on` FROM `anime` WHERE `id` = ".intval($id)." LIMIT 1");
-      $this->id = intval($animeInfo['id']);
-      $this->title = $animeInfo['title'];
-      $this->description = $animeInfo['description'];
-      $this->episodeCount = intval($animeInfo['episode_count']);
-      $this->episodeLength = intval($animeInfo['episode_length']);
-      $this->createdAt = $animeInfo['created_at'];
-      $this->updatedAt = $animeInfo['updated_at'];
-      $this->imagePath = $animeInfo['image_path'];
-      $this->approvedOn = $animeInfo['approved_on'];
-      $this->approvedUser = $this->getApprovedUser();
-      $this->tags = $this->getTags();
-      //$this->comments = $this->getComments();
-      //$this->entries = $this->getEntries();
+      $this->id = intval($id);
+      $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = Null;
     }
+  }
+  public function __get($property) {
+    // A property accessor exists
+    if (method_exists($this, $property)) {
+      return $this->$property();
+    } elseif (property_exists($this, $property)) {
+      return $this->$property;
+    }
+  }
+  public function getAnimeInfo() {
+    $animeInfo = $this->dbConn->queryFirstRow("SELECT `title`, `description`, `episode_count`, `episode_length`, `created_at`, `updated_at`, `image_path`, `approved_on` FROM `anime` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    $this->title = $animeInfo['title'];
+    $this->description = $animeInfo['description'];
+    $this->episodeCount = intval($animeInfo['episode_count']);
+    $this->episodeLength = intval($animeInfo['episode_length']);
+    $this->createdAt = $animeInfo['created_at'];
+    $this->updatedAt = $animeInfo['updated_at'];
+    $this->imagePath = $animeInfo['image_path'];
+    $this->approvedOn = $animeInfo['approved_on'];
+  }
+  public function returnAnimeInfo($param) {
+    if ($this->$param === Null) {
+      $this->getAnimeInfo();
+    }
+    return $this->$param;
+  }
+  public function title() {
+    return $this->returnAnimeInfo('title');
+  }
+  public function description() {
+    return $this->returnAnimeInfo('description');
+  }
+  public function episodeCount() {
+    return $this->returnAnimeInfo('episodeCount');
+  }
+  public function episodeLength() {
+    return $this->returnAnimeInfo('episodeLength');
+  }
+  public function createdAt() {
+    return $this->returnAnimeInfo('createdAt');
+  }
+  public function updatedAt() {
+    return $this->returnAnimeInfo('updatedAt');
+  }
+  public function imagePath() {
+    return $this->returnAnimeInfo('imagePath');
+  }
+  public function approvedOn() {
+    return $this->returnAnimeInfo('approvedOn');
   }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
@@ -189,6 +228,16 @@ class Anime {
     }
     return True;
   }
+  public function getApprovedUser() {
+    // retrieves an id,name array corresponding to the user who approved this anime.
+    return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
+  }
+  public function approvedUser() {
+    if ($this->approvedUser === Null) {
+      $this->approvedUser = $this->getApprovedUser();
+    }
+    return $this->approvedUser;
+  }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
     if ($this->approvedOn === '' or !$this->approvedOn) {
@@ -196,13 +245,15 @@ class Anime {
     }
     return True;
   }
-  public function getApprovedUser() {
-    // retrieves an id,name array corresponding to the user who approved this anime.
-    return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
-  }
   public function getTags() {
     // retrieves a list of id,name entries corresponding to tags belonging to this anime.
     return $this->dbConn->queryAssoc("SELECT `id`, `name` FROM `anime_tags` LEFT OUTER JOIN `tags` ON `tags`.`id` = `anime_tags`.`tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC", "id");
+  }
+  public function tags() {
+    if ($this->tags === Null) {
+      $this->tags = $this->getTags();
+    }
+    return $this->tags;
   }
   public function getComments() {
     // retrieves a list of id entries corresponding to comments belonging to this anime.
@@ -215,7 +266,7 @@ class Anime {
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current anime's profile, with text provided.
     if ($text === Null) {
-      $text = $this->title ? $this->title : "Info";
+      $text = $this->title() ? $this->title() : "Info";
     }
     return "<a href='/anime.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
@@ -293,29 +344,29 @@ class Anime {
         <div class='control-group'>
           <label class='control-label' for='anime[title]'>Series Title</label>
           <div class='controls'>
-            <input name='anime[title]' type='text' class='input-xlarge' id='anime[title]'".(($this->id === 0) ? "" : " value='".escape_output($this->title)."'")." />
+            <input name='anime[title]' type='text' class='input-xlarge' id='anime[title]'".(($this->id === 0) ? "" : " value='".escape_output($this->title())."'")." />
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='anime[description]' rows='3' id='anime[description]'>".(($this->id === 0) ? "" : escape_output($this->description))."</textarea>
+            <textarea class='field span4' name='anime[description]' rows='3' id='anime[description]'>".(($this->id === 0) ? "" : escape_output($this->description()))."</textarea>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[episode_count]'>Episodes</label>
           <div class='controls'>
-            <input name='anime[episode_count]' type='number' min=0 step=1 class='input-small' id='anime[episode_count]'".(($this->id === 0) ? "" : " value=".intval($this->episodeCount))." /> episodes at 
-            <input name='anime[episode_minutes]' type='number' min=0 step=1 class='input-small' id='anime[episode_minutes]'".(($this->id === 0) ? "" : " value=".intval($this->episodeLength/60))." /> minutes per episode
+            <input name='anime[episode_count]' type='number' min=0 step=1 class='input-small' id='anime[episode_count]'".(($this->id === 0) ? "" : " value=".intval($this->episodeCount()))." /> episodes at 
+            <input name='anime[episode_minutes]' type='number' min=0 step=1 class='input-small' id='anime[episode_minutes]'".(($this->id === 0) ? "" : " value=".intval($this->episodeLength()/60))." /> minutes per episode
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->tags))))."' id='anime[anime_tags]' />
+            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->tags()))))."' id='anime[anime_tags]' />
           </div>
         </div>\n";
-        if ($currentUser->isModerator || $currentUser->isAdmin()) {
+        if ($currentUser->isModerator() || $currentUser->isAdmin()) {
           $output .= "        <div class='control-group'>
           <label class='control-label' for='anime[approved]'>Approved</label>
           <div class='controls'>

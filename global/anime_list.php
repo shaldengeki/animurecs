@@ -3,9 +3,9 @@
 class AnimeList {
   public $dbConn;
   public $user_id;
-  public $entries, $list;
-  public $startTime, $endTime;
-  public $listAvg, $listStdDev, $entryAvg, $entryStdDev;
+  private $entries, $animeList;
+  private $startTime, $endTime;
+  private $animeListAvg, $animeListStdDev, $entryAvg, $entryStdDev;
   private $statusStrings, $scoreStrings, $episodeStrings, $cachedAnime;
   public function __construct($database, $user_id=Null) {
     $this->dbConn = $database;
@@ -27,21 +27,22 @@ class AnimeList {
                           1 => array("unrated [ANIME]", "and unrated it"));
     $this->episodeStrings = array("is now watching episode [EPISODE]/[TOTAL_EPISODES] of [ANIME]", "and finished episode [EPISODE]/[TOTAL_EPISODES]");
     $this->cachedAnime = [];
-    $this->listAvg = $this->listStdDev = $this->entryAvg = $this->entryStdDev = 0;
+    $this->animeListAvg = $this->animeListStdDev = $this->entryAvg = $this->entryStdDev = 0;
     if ($user_id === 0) {
       $this->user_id = 0;
       $this->username = $this->startTime = $this->endTime = "";
-      $this->entries = $this->list = [];
+      $this->entries = $this->animeList = [];
     } else {
-      $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `anime_lists` WHERE `user_id` = ".intval($user_id));
-      if (!$userInfo) {
-        return False;
-      }
-      $this->user_id = intval($userInfo['user_id']);
-      $this->startTime = intval($userInfo['start_time']);
-      $this->endTime = intval($userInfo['end_time']);
-      $this->entries = $this->getEntries();
-      $this->list = $this->getList();
+      $this->user_id = intval($user_id);
+      $this->entries = $this->animeList = Null;
+    }
+  }
+  public function __get($property) {
+    // A property accessor exists
+    if (method_exists($this, $property)) {
+      return $this->$property();
+    } elseif (property_exists($this, $property)) {
+      return $this->$property;
     }
   }
   public function allow($authingUser, $action) {
@@ -101,11 +102,11 @@ class AnimeList {
         return False;
       }
       // update list locally.
-      if ($this->list[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->list[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->list[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
+      if ($this->animeList[intval($entry['anime_id'])]['score'] != intval($entry['score']) || $this->animeList[intval($entry['anime_id'])]['status'] != intval($entry['status']) || $this->animeList[intval($entry['anime_id'])]['episode'] != intval($entry['episode'])) {
         if (intval($entry['status']) == 0) {
-          unset($this->list[intval($entry['anime_id'])]);
+          unset($this->animeList[intval($entry['anime_id'])]);
         } else {
-          $this->list[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
+          $this->animeList[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
         }
       }
       $returnValue = intval($entry['id']);
@@ -117,9 +118,9 @@ class AnimeList {
       }
       // insert list locally.
       if (intval($entry['status']) == 0) {
-        unset($this->list[intval($entry['anime_id'])]);
+        unset($this->animeList[intval($entry['anime_id'])]);
       } else {
-        $this->list[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
+        $this->animeList[intval($entry['anime_id'])] = array('anime_id' => intval($entry['anime_id']), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), 'episode' => intval($entry['episode']));
       }
       $returnValue = intval($this->dbConn->insert_id);
     }
@@ -155,6 +156,26 @@ class AnimeList {
     }
     return True;
   }
+  public function getListInfo() {
+    $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `anime_lists` WHERE `user_id` = ".intval($user_id));
+    if (!$userInfo) {
+      return False;
+    }
+    $this->startTime = intval($userInfo['start_time']);
+    $this->endTime = intval($userInfo['end_time']);
+  }
+  public function startTime() {
+    if ($this->startTime === Null) {
+      $this->getListInfo();
+    }
+    return $this->startTime;
+  }
+  public function endTime() {
+    if ($this->endTime === Null) {
+      $this->getListInfo();
+    }
+    return $this->endTime;
+  }
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = $this->dbConn->queryAssoc("SELECT `id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC", "id");
@@ -173,7 +194,39 @@ class AnimeList {
     }
     return $returnList;
   }
-  public function getList() {
+  public function entries($maxTime=Null, $limit=Null) {
+    if ($this->entries === Null) {
+      $this->entries = $this->getEntries();
+    }
+    if ($maxTime !== Null || $limit !== Null) {
+      // Returns a list of up to $limit entries up to $maxTime.
+      $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+      $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+      if ($maxTime === Null) {
+        $nowTime = new DateTime();
+        $nowTime->setTimezone($outputTimezone);
+        $maxTime = $nowTime;
+      }
+      $returnList = [];
+      $entryCount = 0;
+      foreach ($this->entries() as $entry) {
+        $entryDate = new DateTime($value['time'], $serverTimezone);
+        if ($entryDate > $maxTime) {
+          continue;
+        }
+        $entry['user_id'] = intval($this->user_id);
+        $returnList[] = $entry;
+        $entryCount++;
+        if ($limit !== Null && $entryCount >= $limit) {
+          return $returnList;
+        }
+      }
+      return $returnList;
+    } else {
+      return $this->entries;
+    }
+  }
+  public function getAnimeList() {
     // retrieves a list of anime_id, time, status, score, episode arrays corresponding to the latest list entry for each anime this user has watched.
     $returnList = $this->dbConn->queryAssoc("SELECT `anime_lists`.`id`, `anime_id`, `time`, `score`, `status`, `episode` FROM (
                                               SELECT MAX(`id`) AS `id` FROM `anime_lists`
@@ -182,53 +235,34 @@ class AnimeList {
                                             ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
                                             WHERE `status` != 0
                                             ORDER BY `status` ASC, `score` DESC", "anime_id");
-    $this->listAvg = $this->listStdDev = $listSum = $listCount = 0;
+    $this->animeListAvg = $this->animeListStdDev = $animeListSum = $animeListCount = 0;
     foreach ($returnList as $entry) {
       if ($entry['score'] != 0) {
-        $listCount++;
-        $listSum += intval($entry['score']);
+        $animeListCount++;
+        $animeListSum += intval($entry['score']);
       }
     }
-    $this->listAvg = ($listCount === 0) ? 0 : $listSum / $listCount;
-    $listSum = 0;
-    if ($listCount > 1) {
+    $this->animeListAvg = ($animeListCount === 0) ? 0 : $animeListSum / $animeListCount;
+    $animeListSum = 0;
+    if ($animeListCount > 1) {
       foreach ($returnList as $entry) {
         if ($entry['score'] != 0) {
-          $listSum += pow(intval($entry['score']) - $this->listAvg, 2);
+          $animeListSum += pow(intval($entry['score']) - $this->animeListAvg, 2);
         }
       }
-      $this->listStdDev = pow($listSum / ($listCount - 1), 0.5);
+      $this->animeListStdDev = pow($animeListSum / ($animeListCount - 1), 0.5);
     }
     return $returnList;
   }
-  public function entries($maxTime=Null, $limit=Null) {
-    // Returns a list of up to $limit entries up to $maxTime.
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    if ($maxTime === Null) {
-      $nowTime = new DateTime();
-      $nowTime->setTimezone($outputTimezone);
-      $maxTime = $nowTime;
+  public function animeList() {
+    if ($this->animeList === Null) {
+      $this->animeList = $this->getAnimeList();
     }
-    $returnList = [];
-    $entryCount = 0;
-    foreach ($this->entries as $entry) {
-      $entryDate = new DateTime($value['time'], $serverTimezone);
-      if ($entryDate > $maxTime) {
-        continue;
-      }
-      $entry['user_id'] = intval($this->user_id);
-      $returnList[] = $entry;
-      $entryCount++;
-      if ($limit !== Null && $entryCount >= $limit) {
-        return $returnList;
-      }
-    }
-    return $returnList;
+    return $this->animeList;
   }
   public function listSection($status=Null, $score=Null) {
     // returns a section of this user's anime list.
-    return array_filter($this->list, function($value) use ($status, $score) {
+    return array_filter($this->animeList(), function($value) use ($status, $score) {
       return (($status !== Null && intval($value['status']) === $status) || ($score !== Null && intval($value['score']) === $score));
     });
   }

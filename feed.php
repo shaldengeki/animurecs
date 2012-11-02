@@ -18,7 +18,7 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li><s>Start pulling anime from third-party DBs</s></li>
       <li><s>List model, add/delete/update list entries</s></li>
       <li><s>Import list from MAL</s></li>
-      <li>Friends</li>
+      <li><s>Friends</s></li>
       <li>Posts/comments/+1/props/upvote/likes</li>
       <li><s>Fe</s>ed</li>
       <li>Recommendations</li>
