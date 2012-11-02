@@ -14,6 +14,25 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {
   switch($_REQUEST['action']) {
+    case 'request_friend':
+      if ($targetUser->id === $user->id) {
+        redirect_to(array('location' => 'user.php?action=show&id='.intval($user->id), 'status' => "You can't befriend yourself, silly!"));
+      }
+      $requestFriend = $user->requestFriend($targetUser, $_POST['friend_request']);
+      if ($requestFriend) {
+        redirect_to(array('location' => 'user.php?action=show&id='.intval($targetUser->id), 'status' => "Your friend request has been sent to ".urlencode($targetUser->username).".", 'class' => 'success'));
+      } else {
+        redirect_to(array('location' => 'user.php?action=show&id='.intval($targetUser->id), 'status' => 'An error occurred while requesting this friend. Please try again.', 'class' => 'error'));
+      }
+      break;
+    case 'confirm_friend':
+      $confirmFriend = $user->confirmFriend($targetUser);
+      if ($confirmFriend) {
+        redirect_to(array('location' => 'user.php?action=show&id='.intval($targetUser->id), 'status' => "Hooray! You're now friends with ".urlencode($targetUser->username).".", 'class' => 'success'));
+      } else {
+        redirect_to(array('location' => 'user.php?action=show&id='.intval($targetUser->id), 'status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
+      }
+      break;
     case 'mal_import':
       // import a MAL list for this user.
       if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {

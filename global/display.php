@@ -158,7 +158,6 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
   echo "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
         'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>\n<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>\n<head>
 	<meta http-equiv='content-type' content='text/html; charset=utf-8' />
-  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 	<title>".escape_output($title).($subtitle != '' ? ' - '.escape_output($subtitle) : '')."</title>
 	<link rel='shortcut icon' href='/favicon.ico' />
 
@@ -203,14 +202,23 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
   echo "        </ul>
         <ul class='nav pull-right'>\n";
   if ($user->loggedIn()) {
-    echo "          <li id='navbar-user' class='dropdown'>
+    echo "<li id='navbar-alerts'>\n";
+    if (count($user->friendRequests) > 0) {
+      echo "            <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'>".count($user->friendRequests)."</span></a>
+              <ul class='dropdown-menu'>
+                ".$user->friendRequestsList()."
+              </ul>
+            </span>\n";
+    }
+    echo "          </li>
+          <li id='navbar-user' class='dropdown'>
             <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
               ".$user->link();
-    if ($user->isAdmin() && !isset($user->switched_user)) {
+    if ($user->isAdmin() && !isset($user->switchedUser)) {
       echo "            <a href='/user.php?action=switch_user'>Switch Users</a>\n";
     }
-    if (isset($user->switched_user) && is_numeric($user->switched_user)) {
+    if (isset($user->switchedUser) && is_numeric($user->switchedUser)) {
       echo "            <a href='/user.php?action=switch_back'>Switch Back</a>\n";
     }
     echo "              <a href='/logout.php'>Sign out</a>

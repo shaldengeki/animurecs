@@ -61,6 +61,24 @@ function udate($format, $utimestamp = null) {
   return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
 }
 
+function buildKeyFilter($key, $value) {
+  // returns a function that filters a list of arrays on a key.
+  return function($a) use ($key, $value) {
+    if (!isset($a[$key])) {
+      return False;
+    } elseif ($a[$key] == $value) {
+      return True;
+    } else {
+      return False;
+    }
+  };
+}
+
+function array_filter_by_key($a, $key, $value) {
+  // filters a list of associative arrays on a given key for a given value.
+  return array_filter($a, buildKeyFilter($key, $value));
+}
+
 function buildKeySorter($key, $order) {
   // returns a function that sorts two input arrays on a key in a given order.
   // order=1 corresponds to ascending, order=-1 corresponds to descending.

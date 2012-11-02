@@ -30,7 +30,7 @@ class AnimeList {
     $this->listAvg = $this->listStdDev = $this->entryAvg = $this->entryStdDev = 0;
     if ($user_id === 0) {
       $this->user_id = 0;
-      $this->startTime = $this->endTime = "";
+      $this->username = $this->startTime = $this->endTime = "";
       $this->entries = $this->list = [];
     } else {
       $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `anime_lists` WHERE `user_id` = ".intval($user_id));
@@ -217,6 +217,7 @@ class AnimeList {
       if ($entryDate > $maxTime) {
         continue;
       }
+      $entry['user_id'] = intval($this->user_id);
       $returnList[] = $entry;
       $entryCount++;
       if ($limit !== Null && $entryCount >= $limit) {
