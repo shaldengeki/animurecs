@@ -19,11 +19,10 @@ class User extends BaseObject {
   protected $requestedFriends;
 
   public function __construct($database, $id=Null) {
+    parent::__construct($database, $id);
     $this->modelTable = "users";
     $this->modelPlural = "users";
-    $this->dbConn = $database;
     if ($id === 0) {
-      $this->id = 0;
       $this->username = "guest";
       $this->name = "Guest";
       $this->usermask = 0;
@@ -34,7 +33,6 @@ class User extends BaseObject {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->id = intval($id);
       $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = Null;
     }
   }
@@ -543,7 +541,7 @@ class User extends BaseObject {
           </thead>
           <tbody>\n";
     foreach ($relevantEntries as $entry) {
-          $output .= "          <tr data-id='".intval($entry['anime_id'])."'>
+          $output .= "          <tr data-id='".intval($entry['anime']->id)."'>
               <td class='listEntryTitle'>
                 ".$entry['anime']->link("show", $entry['anime']->title)."
                 <span class='pull-right hidden listEntryStatus'>

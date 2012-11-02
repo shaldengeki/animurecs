@@ -7,16 +7,14 @@ class TagType extends BaseObject {
   protected $tags;
   protected $createdUser;
   public function __construct($database, $id=Null) {
+    parent::__construct($database, $id);
     $this->modelTable = "tag_types";
     $this->modelPlural = "tagTypes";
-    $this->dbConn = $database;
     if ($id === 0) {
-      $this->id = 0;
       $this->name = $this->description = "";
       $this->tags = [];
       $this->createdUser = Null;
     } else {
-      $this->id = intval($typeInfo['id']);
       $fetchID = $this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types` WHERE `id` = ".intval($this->id));
       if ($fetchID < 1) {
         throw new Exception('ID Not Found');

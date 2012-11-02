@@ -1,4 +1,5 @@
 <?php
+session_start();
 include_once("./global/config.php");
 
 include_once("./global/bcrypt.php");
@@ -6,6 +7,7 @@ include_once("./global/database.php");
 include_once("./global/curl.php");
 
 include_once("./global/base_object.php");
+include_once("./global/base_list.php");
 include_once("./global/tag_type.php");
 include_once("./global/tag.php");
 include_once("./global/anime.php");
@@ -16,7 +18,6 @@ include_once("./global/display.php");
 include_once("./global/misc.php");
 
 $database = new DbConn(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE);
-session_start();
 if (isset($_SESSION['id'])) {
   $user = new User($database, $_SESSION['id']);
 } else {

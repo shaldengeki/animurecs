@@ -6,9 +6,12 @@ class BaseObject {
 
   protected $modelTable;
   protected $modelPlural;
+  protected $className;
 
-  public function __construct($database, $user_id=Null) {
+  public function __construct($database, $id=Null) {
     $this->dbConn = $database;
+    $this->id = intval($id);
+    $this->className = get_class($this);
   }
   public function __get($property) {
     // A property accessor exists
@@ -30,6 +33,9 @@ class BaseObject {
   }
   public function getInfo() {
     $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    if (!$info) {
+      throw new Exception('ID Not Found');
+    }
     foreach ($info as $key=>$value) {
       $paramName = $this->humanizeParameter($key);
       if (is_numeric($value)) {

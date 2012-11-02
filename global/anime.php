@@ -15,16 +15,14 @@ class Anime extends BaseObject {
   protected $comments;
   protected $entries;
   public function __construct($database, $id=Null) {
-    $this->dbConn = $database;
+    parent::__construct($database, $id);
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
     if ($id === 0) {
-      $this->id = 0;
       $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = "";
       $this->episodeCount = $this->episodeLength = 0;
       $this->tags = $this->comments = $this->entries = $this->approvedUser = [];
     } else {
-      $this->id = intval($id);
       $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = Null;
     }
   }
@@ -107,6 +105,7 @@ class Anime extends BaseObject {
       Takes an array of tag ids as input, defaulting to all tags.
       Returns a boolean.
     */
+    $this->tags();
     if ($tags === False) {
       $tags = array_keys($this->tags());
     }
@@ -174,19 +173,22 @@ class Anime extends BaseObject {
 
     // now process any taggings.
     if (isset($anime['anime_tags'])) {
-      // drop any unneeded access rules.
+      // drop any unneeded  tags.
       $tagsToDrop = array();
-      foreach ($this->tags as $tag) {
-        if (!in_array($tag['id'], $anime['anime_tags'])) {
-          $tagsToDrop[] = intval($tag['id']);
+      foreach ($this->tags() as $tag) {
+        if (!in_array($tag->id, $anime['anime_tags'])) {
+          $tagsToDrop[] = intval($tag->id);
         }
       }
       $drop_tags = $this->drop_taggings($tagsToDrop);
       foreach ($anime['anime_tags'] as $tagToAdd) {
-        // find this tagID.
-        $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
-        if ($tagID) {
-          $create_tagging = $this->create_or_update_tagging($tagID, $currentUser);
+        // add any needed tags.
+        if (!array_filter_by_property($this->tags(), 'id', $tagToAdd)) {
+          // find this tagID.
+          $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
+          if ($tagID) {
+            $create_tagging = $this->create_or_update_tagging($tagID, $currentUser);
+          }
         }
       }
     }
@@ -226,6 +228,7 @@ class Anime extends BaseObject {
     while ($tagID = $tagIDs->fetch_assoc()) {
       $tags[] = new Tag($this->dbConn, intval($tagID['tag_id']));
     }
+    return $tags;
   }
   public function tags() {
     if ($this->tags === Null) {
@@ -317,6 +320,10 @@ class Anime extends BaseObject {
     </table>\n";
   }
   public function form($currentUser) {
+    $animeTags = [];
+    foreach ($this->tags() as $tag) {
+      $animeTags[] = array('id' => $tag->id, 'name' => $tag->name);
+    }
     $output = "<form action='anime.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
@@ -341,7 +348,7 @@ class Anime extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->tags()))))."' id='anime[anime_tags]' />
+            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))."' id='anime[anime_tags]' />
           </div>
         </div>\n";
         if ($currentUser->isModerator() || $currentUser->isAdmin()) {

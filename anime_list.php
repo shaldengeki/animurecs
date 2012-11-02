@@ -50,7 +50,7 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
         }
         if (!isset($_POST['anime_list']['id'])) {
           // fill default values from the last entry for this anime.
-          $lastEntry = $targetUser->animeList->animeList[intval($_POST['anime_list']['anime_id'])];
+          $lastEntry = $targetUser->animeList->uniqueList[intval($_POST['anime_list']['anime_id'])];
           if (!$lastEntry) {
             $lastEntry = [];
           } else {
@@ -80,7 +80,7 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
         $_REQUEST['id'] = False;
       }
       $deleteList = $targetUser->animeList->delete($_REQUEST['id']);
-      if ($updateList) {
+      if ($deleteList) {
         $location = 'user.php?action=show&id='.intval($targetUser->id);
         $status = "Successfully updated your anime list.";
         $class = "success";

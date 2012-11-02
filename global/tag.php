@@ -12,15 +12,13 @@ class Tag extends BaseObject {
   protected $manga;
 
   public function __construct($database, $id=Null) {
+    parent::__construct($database, $id);
     $this->modelTable = "tags";
     $this->modelPlural = "tags";
-    $this->dbConn = $database;
     if ($id === 0) {
-      $this->id = 0;
       $this->name = $this->description = $this->createdAt = $this->updatedAt = "";
       $this->type = $this->anime = $this->manga = $this->createdUser = [];
     } else {
-      $this->id = intval($id);
       $this->name = $this->description = $this->createdAt = $this->updatedAt = $this->type = $this->anime = $this->manga = $this->createdUser = Null;
     }
   }
@@ -70,6 +68,7 @@ class Tag extends BaseObject {
       Returns a boolean.
     */
     // check to see if this is an update.
+    $this->anime();
     if (isset($this->anime()[intval($anime_id)])) {
       return True;
     }
@@ -91,6 +90,7 @@ class Tag extends BaseObject {
       Takes an array of anime ids as input, defaulting to all anime.
       Returns a boolean.
     */
+    $this->anime();
     if ($animus === False) {
       $animus = array_keys($this->anime());
     }
@@ -149,21 +149,22 @@ class Tag extends BaseObject {
     if (isset($tag['anime_tags'])) {
       // drop any unneeded access rules.
       $animeToDrop = array();
-      foreach ($this->anime as $anime) {
-        if (!in_array($anime['id'], $tag['anime_tags'])) {
-          $animeToDrop[] = intval($anime['id']);
+      foreach ($this->anime() as $anime) {
+        if (!in_array($anime->id, $tag['anime_tags'])) {
+          $animeToDrop[] = intval($anime->id);
         }
       }
       $drop_anime = $this->drop_taggings($animeToDrop);
       foreach ($tag['anime_tags'] as $animeToAdd) {
-        // find this animeID.
-        $animeID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `id` = ".intval($animeToAdd)." LIMIT 1"));
-        if ($animeID) {
-          $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
+        if (!array_filter_by_property($this->anime(), 'id', $animeToAdd)) {
+          // find this tagID.
+          $animeID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `id` = ".intval($animeToAdd)." LIMIT 1"));
+          if ($animeID) {
+            $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
+          }
         }
       }
     }
-
     return $this->id;
   }
   public function delete() {
@@ -214,7 +215,7 @@ class Tag extends BaseObject {
     $animes = [];
     $animeIDs = $this->dbConn->stdQuery("SELECT `anime_id` FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
     while ($animeID = $animeIDs->fetch_assoc()) {
-      $animes[] = new Anime($this->dbConn, intval($animeID['anime_id']));
+      $animes[intval($animeID['anime_id'])] = new Anime($this->dbConn, intval($animeID['anime_id']));
     }
     return $animes;
   }
@@ -300,6 +301,10 @@ class Tag extends BaseObject {
     </table>\n";
   }
   public function form($currentUser) {
+    $tagAnime = [];
+    foreach ($this->anime() as $anime) {
+      $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title);
+    }
     $output = "<form action='tag.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
@@ -317,13 +322,13 @@ class Tag extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='tag[tag_type_id]'>Type</label>
           <div class='controls'>
-            ".display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type()['id'])))."
+            ".display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type()->id)))."
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($this->anime()))))."' id='tag[anime_tags]' />
+            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode($tagAnime)))."' id='tag[anime_tags]' />
           </div>
         </div>\n";
         /*
