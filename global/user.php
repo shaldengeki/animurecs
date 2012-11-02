@@ -618,7 +618,7 @@ class User {
     $friendSlice = array_slice($friendSlice, 0, 4);
     foreach ($friendSlice as $friendEntry) {
       $friend = new User($this->dbConn, intval($friendEntry['user_id']));
-      $output .= "            <li class='friendGridEntry'>".$friend->link("show", "<img class='friendGridImage' src='".$friend->avatarPath."' /><div class='friendGridUsername'>".escape_output($friendEntry['username'])."</div>", True)."</li>\n";
+      $output .= "            <li class='friendGridEntry'>".$friend->link("show", "<img class='friendGridImage' src='".$friend->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['username'])."</div>", True)."</li>\n";
     }
     $output .= "            </ul>
           </div>
