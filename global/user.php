@@ -440,13 +440,13 @@ class User extends BaseObject {
       $_SESSION['lastLoginCheckTime'] = microtime(true);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
-      return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username).".", 'class' => 'success');
+      return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username()).".", 'class' => 'success');
     } else {
-      $newUser = new User($this->dbConn, $_SESSION['switched_user']->id);
+      $newUser = new User($this->dbConn, $username);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['lastLoginCheckTime'] = microtime(true);
       unset($_SESSION['switched_user']);
-      return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username).".", 'class' => 'success');
+      return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
     }
   }
   public function link($action="show", $text="Profile", $raw=False, $id=False) {
