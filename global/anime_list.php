@@ -37,7 +37,7 @@ class AnimeList extends BaseList {
   public function entryLink($id, $action="show", $text=Null, $raw=False) {
     // returns an HTML link to an entry link, with text provided.
     $text = ($text === Null) ? "List" : $text;
-    return "<a href='/anime_lists/".intval($this->user_id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='/anime_lists/".intval($id)."/".urlencode($action)."/?user_id=".intval($this->user_id)."'>".($raw ? $text : escape_output($text))."</a>";
   }
 }
 ?>

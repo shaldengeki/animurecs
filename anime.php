@@ -71,11 +71,12 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
         $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
         break;
       }
+      $animeTitle = $targetAnime->title;
       $deleteAnime = $targetAnime->delete();
-      if ($deleteAnime === True) {
-        redirect_to(array('location' => "/anime/", 'status' => 'Successfully deleted '.urlencode($targetAnime->title).'.', 'class' => 'success'));
+      if ($deleteAnime) {
+        redirect_to(array('location' => "/anime/", 'status' => 'Successfully deleted '.urlencode($animeTitle).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => "/anime/".intval($targetAnime->id)."/show/", 'status' => 'An error occurred while deleting this anime.', 'class' => 'error'));
+        redirect_to(array('location' => "/anime/".intval($targetAnime->id)."/show/", 'status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
       }
       break;
     default:

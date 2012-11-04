@@ -43,7 +43,7 @@ class TagType extends BaseObject {
         break;
     }
   }
-  public function create_or_update($tag_type, $currentUser) {
+  public function create_or_update($tag_type, $currentUser=Null) {
     // creates or updates a tag type based on the parameters passed in $tag_type and this object's attributes.
     // returns False if failure, or the ID of the tag type if success.
     // make sure tag type name adheres to standards.
@@ -71,15 +71,6 @@ class TagType extends BaseObject {
       }
     }
     return $this->id;
-  }
-  public function delete() {
-    // delete this tag type from the database.
-    // returns a boolean.
-    $deleteType = $this->dbConn->stdQuery("DELETE FROM `tag_types` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteType) {
-      return False;
-    }
-    return True;
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.

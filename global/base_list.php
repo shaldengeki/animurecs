@@ -50,12 +50,19 @@ class BaseList extends BaseObject {
       $this->entries = $this->uniqueList = Null;
     }
   }
-  public function create_or_update($entry) {
+  public function create_or_update($entry, $currentUser=Null) {
     /*
       Creates or updates an existing list entry for the current user.
       Takes an array of entry parameters.
       Returns the resultant list entry ID.
     */
+    // ensure that this user and list type exist.
+    try {
+      $user = new User($this->dbConn, intval($entry['user_id']));
+      $type = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
+    } catch (Exception $e) {
+      return False;
+    }
     $params = [];
     foreach ($entry as $parameter => $value) {
       if (!is_array($value)) {
@@ -65,13 +72,6 @@ class BaseList extends BaseObject {
           $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
         }
       }
-    }
-
-    try {
-      $user = new User($this->dbConn, intval($entry['user_id']));
-      $type = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
-    } catch (Exception $e) {
-      return False;
     }
 
     // check to see if this is an update.
@@ -351,7 +351,7 @@ class BaseList extends BaseObject {
     // returns markup for a compatibility bar between this list and the current user's list.
     $compatibility = $this->similarity($currentList);
     if ($compatibility === False) {
-      return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div></div>";
+      return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div>Unknown</div>";
     }
     $compatibility = 100 * (1 + $compatibility) / 2.0;
     if ($compatibility >= 75) {
@@ -363,7 +363,7 @@ class BaseList extends BaseObject {
     } else {
       $barClass = "info";
     }
-    return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($compatibility)."%'></div></div>";
+    return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($compatibility)."%'>".round($compatibility)."%</div></div>";
   }
 }
 ?>

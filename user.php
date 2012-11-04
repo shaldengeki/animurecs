@@ -143,11 +143,12 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
         $output = display_error("Error: Invalid user", "The given user doesn't exist.");
         break;
       }
+      $username = $targetUser->username;
       $deleteUser = $targetUser->delete();
       if ($deleteUser === True) {
-        redirect_to(array('location' => '/users/', 'status' => 'Successfully deleted '.urlencode($targetUser->username).'.', 'class' => 'success'));
+        redirect_to(array('location' => '/users/', 'status' => 'Successfully deleted '.urlencode($username).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => "/users/".intval($targetUser->id)."/show/", 'status' => 'An error occurred while deleting '.urlencode($targetUser->username).'.', 'class' => 'error'));
+        redirect_to(array('location' => "/users/".intval($targetUser->id)."/show/", 'status' => 'An error occurred while deleting '.urlencode($username).'.', 'class' => 'error'));
       }
       break;
     default:

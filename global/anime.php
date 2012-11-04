@@ -123,7 +123,7 @@ class Anime extends BaseObject {
     }
     return True;
   }
-  public function create_or_update($anime, $currentUser) {
+  public function create_or_update($anime, $currentUser=Null) {
     // creates or updates a anime based on the parameters passed in $anime and this object's attributes.
     // returns False if failure, or the ID of the anime if success.
 
@@ -191,15 +191,6 @@ class Anime extends BaseObject {
     }
 
     return $this->id;
-  }
-  public function delete() {
-    // delete this anime from the database.
-    // returns a boolean.
-    $deleteAnime = $this->dbConn->stdQuery("DELETE FROM `anime` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteAnime) {
-      return False;
-    }
-    return True;
   }
   public function getApprovedUser() {
     // retrieves an id,name array corresponding to the user who approved this anime.
@@ -281,7 +272,7 @@ class Anime extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tag/0/token_search/' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))."' id='anime[anime_tags]' />
+            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tags/0/token_search/' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))."' id='anime[anime_tags]' />
           </div>
         </div>\n";
         if ($currentUser->isModerator() || $currentUser->isAdmin()) {

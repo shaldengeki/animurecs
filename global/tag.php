@@ -108,7 +108,7 @@ class Tag extends BaseObject {
     }
     return True;
   }
-  public function create_or_update($tag, $currentUser) {
+  public function create_or_update($tag, $currentUser=Null) {
     // creates or updates a tag based on the parameters passed in $tag and this object's attributes.
     // returns False if failure, or the ID of the tag if success.
     // make sure this tag name adheres to standards.
@@ -134,7 +134,7 @@ class Tag extends BaseObject {
       }
     } else {
       // add this tag.
-      $insertTag = $this->dbConn->stdQuery("INSERT INTO `tags` SET ".implode(",", $params).", `created_at` = NOW(), `updated_at` = NOW(), `created_user_id` = ".intval($currentUser->id));
+      $insertTag = $this->dbConn->stdQuery("INSERT INTO `tags` SET ".implode(",", $params).", `created_at` = NOW(), `updated_at` = NOW(), `approved_on` = NULL, `approved_user_id` = 0, `created_user_id` = ".intval($currentUser->id));
       if (!$insertTag) {
         return False;
       } else {
@@ -164,14 +164,15 @@ class Tag extends BaseObject {
     }
     return $this->id;
   }
-  public function delete() {
+  public function delete($entries=False) {
     // delete this tag from the database.
     // returns a boolean.
-    $deleteTag = $this->dbConn->stdQuery("DELETE FROM `tags` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteTag) {
+    // drop all taggings for this tag first.
+    $dropTaggings = $this->drop_taggings();
+    if (!$dropTaggings) {
       return False;
     }
-    return True;
+    return parent::delete($this->id);
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.

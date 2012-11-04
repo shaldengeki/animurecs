@@ -71,11 +71,12 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
         $output = display_error("Error: Invalid tag", "The given tag doesn't exist.");
         break;
       }
+      $tagName = $targetTag->name;
       $deleteTag = $targetTag->delete();
-      if ($deleteTag === True) {
-        redirect_to(array('location' => '/tags/', 'status' => 'Successfully deleted '.urlencode($targetTag->name).'.', 'class' => 'success'));
+      if ($deleteTag) {
+        redirect_to(array('location' => '/tags/', 'status' => 'Successfully deleted '.urlencode($tagName).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => "/tags/".intval($targetTag->id)."/show/", 'status' => 'An error occurred while deleting '.urlencode($targetTag->name).'.', 'class' => 'error'));
+        redirect_to(array('location' => "/tags/".intval($targetTag->id)."/show/", 'status' => 'An error occurred while deleting '.urlencode($tagName).'.', 'class' => 'error'));
       }
       break;
     default:

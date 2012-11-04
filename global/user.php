@@ -321,7 +321,7 @@ class User extends BaseObject {
       return False;
     }
   }
-  public function create_or_update($user) {
+  public function create_or_update($user, $currentUser=Null) {
     // creates or updates a user based on the parameters passed in $user and this object's attributes.
     // returns False if failure, or the ID of the user if success.
 
@@ -379,7 +379,7 @@ class User extends BaseObject {
           return False;
         }
       } else {
-        $imagePath = $this->avatarPath;
+        $imagePath = $this->avatarPath();
       }
 
       $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params).", `avatar_path` = ".$this->dbConn->quoteSmart($imagePath).", `last_active` = NOW()  WHERE `id` = ".intval($this->id)." LIMIT 1");
@@ -401,14 +401,16 @@ class User extends BaseObject {
 
     return intval($this->id);
   }
-  public function delete() {
+  public function delete($entries=False) {
     // delete this user from the database.
     // returns a boolean.
-    $deleteUser = $this->dbConn->stdQuery("DELETE FROM `users` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$deleteUser) {
+
+    // delete objects that belong to this user.
+    $deleteList = $this->animeList()->delete();
+    if (!$deleteList) {
       return False;
     }
-    return True;
+    return parent::delete($this->id);
   }
   public function isModerator() {
     if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
@@ -648,7 +650,7 @@ class User extends BaseObject {
               <div class='tab-pane active' id='userFeed'>\n";
     if ($this->id == $currentUser->id) {
       $output .= "                <div class='addListEntryForm'>
-                  <form class='form-inline' action='/anime_lists/".intval($this->id)."/new/' method='POST'>
+                  <form class='form-inline' action='/anime_lists/0/new/?user_id=".intval($this->id)."' method='POST'>
                     <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
                     <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='/anime/0/token_search/' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
                     <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
