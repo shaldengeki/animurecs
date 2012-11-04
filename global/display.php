@@ -161,31 +161,31 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
 	<link rel='shortcut icon' href='/favicon.ico' />
 
 	<link rel='stylesheet' href='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' type='text/css' />
-  <link rel='stylesheet' href='css/jquery.dataTables.css' type='text/css' />
-  <link rel='stylesheet' href='css/token-input.css' type='text/css' />
-  <link rel='stylesheet' href='css/animurecs.css' type='text/css' />
+  <link rel='stylesheet' href='".ROOT_URL."/css/jquery.dataTables.css' type='text/css' />
+  <link rel='stylesheet' href='".ROOT_URL."/css/token-input.css' type='text/css' />
+  <link rel='stylesheet' href='".ROOT_URL."/css/animurecs.css' type='text/css' />
 
   <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js'></script>
   <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js'></script>
 
-  <script type='text/javascript' src='js/jquery-ui-timepicker-addon.js'></script>
-	<script type='text/javascript' language='javascript' src='js/jquery.dropdownPlain.js'></script>
-	<script type='text/javascript' language='javascript' src='js/jquery.dataTables.min.js'></script>
-  <script type='text/javascript' language='javascript' src='js/jquery.tokeninput.js'></script>
-  <script type='text/javascript' language='javascript' src='js/jquery.json-2.3.min.js'></script>
+  <script type='text/javascript' src='".ROOT_URL."/jquery-ui-timepicker-addon.js'></script>
+	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.dropdownPlain.js'></script>
+	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.dataTables.min.js'></script>
+  <script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.tokeninput.js'></script>
+  <script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.json-2.3.min.js'></script>
 
   <script type='text/javascript' src='https://www.google.com/jsapi'></script>
-  <script type='text/javascript' src='js/d3.v2.min.js'></script>
-  <script type='text/javascript' src='js/d3-helpers.js'></script>
+  <script type='text/javascript' src='".ROOT_URL."/js/d3.v2.min.js'></script>
+  <script type='text/javascript' src='".ROOT_URL."/js/d3-helpers.js'></script>
 
-	<script type='text/javascript' language='javascript' src='js/bootstrap.min.js'></script>
-	<script type='text/javascript' language='javascript' src='js/bootstrap-dropdown.js'></script>
+	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/bootstrap.min.js'></script>
+	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/bootstrap-dropdown.js'></script>
 
-	<script type='text/javascript' language='javascript' src='js/animurecs.js'></script>\n</head>\n<body>
+	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/animurecs.js'></script>\n</head>\n<body>
   <div class='navbar navbar-inverse navbar-fixed-top'>
     <div class='navbar-inner'>
       <div class='container-fluid'>
-        <a href='./index.php' class='brand'>Animurecs</a>
+        <a href='/index.php' class='brand'>Animurecs</a>
         <ul class='nav'>\n";
   if ($user->loggedIn()) {
     echo "          <li class='divider-vertical'></li>
@@ -193,9 +193,9 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li class='divider-vertical'></li>
           <li>".$user->link("show", "<i class='icon-home icon-white'></i> You", True)."</li>
           <li class='divider-vertical'></li>
-          <li><a href='user.php'><i class='icon-globe icon-white'></i> Connect</a></li>
+          <li><a href='/user.php'><i class='icon-globe icon-white'></i> Connect</a></li>
           <li class='divider-vertical'></li>
-          <li><a href='anime.php'><i class='icon-star icon-white'></i> Discover</a></li>
+          <li><a href='/anime.php'><i class='icon-star icon-white'></i> Discover</a></li>
           <li class='divider-vertical'></li>\n";
   }
   echo "        </ul>
@@ -434,7 +434,7 @@ function display_tags($database, $user) {
     $output .= "    <tr>
       <td>".$thisTag->link("show", $thisTag->name)."</td>
       <td>".escape_output($thisTag->description)."</td>
-      <td><a href='tag_type.php?action=show&id=".intval($thisTag->type['id'])."'>".escape_output($thisTag->type['name'])."</a></td>
+      <td><a href='tag_type.php?action=show&id=".intval($thisTag->type->id)."'>".escape_output($thisTag->type->name)."</a></td>
       <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("edit", "Edit"); } $output .= "</td>
       <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("delete", "Delete"); } $output .= "</td>
     </tr>\n";

@@ -28,11 +28,9 @@ class AnimeList extends BaseList {
         }
         return False;
         break;
+      default:
       case 'show':
         return True;
-        break;
-      default:
-        return False;
         break;
     }
   }

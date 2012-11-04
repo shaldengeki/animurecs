@@ -37,11 +37,9 @@ class TagType extends BaseObject {
         return False;
         break;
       case 'show':
+      default:
       case 'index':
         return True;
-        break;
-      default:
-        return False;
         break;
     }
   }

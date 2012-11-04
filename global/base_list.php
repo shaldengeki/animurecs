@@ -1,12 +1,17 @@
 <?php
 class BaseList extends BaseObject {
+  // base list from which anime and manga lists inherit methods and properties.
+
   public $user_id;
+  protected $user;
 
   protected $startTime, $endTime;
   protected $uniqueListAvg, $uniqueListStdDev, $entryAvg, $entryStdDev;
   protected $statusStrings, $scoreStrings, $partStrings;
 
-  protected $entries, $uniqueList, $partName, $typeVerb;
+  protected $entries, $uniqueList;
+
+  protected $partName, $modelTable, $modelPlural, $listType, $listTypeLower, $typeVerb, $typeID;
 
   public function __construct($database, $user_id=Null) {
     parent::__construct($database, $user_id);
@@ -34,7 +39,8 @@ class BaseList extends BaseObject {
     $this->scoreStrings = array(0 => array("rated [TITLE] a [SCORE]/10", "and rated it a [SCORE]/10"),
                           1 => array("unrated [TITLE]", "and unrated it"));
     $this->partStrings = array("just finished [PART_NAME] [PART]/[TOTAL_PARTS] of [TITLE]", "and finished [PART_NAME] [PART]/[TOTAL_PARTS]");
-    $this->uniqueListAvg = $this->uniqueListStdDev = $this->entryAvg = $this->entryStdDev = 0;
+    $this->uniqueListAvg = $this->uniqueListStdDev = $this->entryAvg = $this->entryStdDev = Null;
+    $this->user = Null;
     if ($user_id === 0) {
       $this->user_id = 0;
       $this->username = $this->startTime = $this->endTime = "";
@@ -129,6 +135,12 @@ class BaseList extends BaseObject {
       unset($this->entries[intval($entryID)]);
     }
     return True;
+  }
+  public function user() {
+    if ($this->user === Null) {
+      $this->user = new User($this->dbConn, $this->user_id);
+    }
+    return $this->user;
   }
   public function getInfo() {
     $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id));
@@ -233,6 +245,12 @@ class BaseList extends BaseObject {
     }
     return $this->uniqueList;
   }
+  public function uniqueListStdDev() {
+    if ($this->uniqueListStdDev === Null) {
+      $this->uniqueList();
+    }
+    return $this->uniqueListStdDev;
+  }
   public function listSection($status=Null, $score=Null) {
     // returns a section of this user's unique list.
     return array_filter($this->uniqueList(), function($value) use ($status, $score) {
@@ -295,7 +313,7 @@ class BaseList extends BaseObject {
     if ($statusText != '') {
       $output .= "  <li class='feedEntry row-fluid'>
         <div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div>
-        <div class='feedAvatar'>".$user->link("show", "<img class='feedAvatarImg' src='".escape_output($user->avatarPath)."' />", True)."</div>
+        <div class='feedAvatar'>".$user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($user->avatarPath))."' />", True)."</div>
         <div class='feedText'>
           <div class='feedUser'>".$user->link("show", $user->username)."</div>
           ".$statusText.".\n";
@@ -311,6 +329,41 @@ class BaseList extends BaseObject {
     // returns an HTML link to the current tag's profile, with text provided.
     $text = ($text === Null) ? "List" : $text;
     return "<a href='/user.php?action=".urlencode($action)."&id=".intval($this->user_id)."#".$this->listType."List'>".($raw ? $text : escape_output($text))."</a>";
+  }
+  public function similarity($currentList) {
+    // calculates pearson's r between this list and the current user's list.
+    if ($this->uniqueListStdDev() == 0 || $currentList->uniqueListStdDev() == 0) {
+      return False;
+    }
+    $similaritySum = $similarityCount = 0;
+    foreach($this->uniqueList() as $entryID=>$entry) {
+      if (intval($entry['score']) != 0 && isset($currentList->uniqueList()[$entryID]) && intval($currentList->uniqueList()[$entryID]['score']) != 0) {
+        $similaritySum += (intval($entry['score']) - $this->uniqueListAvg) * (intval($currentList->uniqueList()[$entryID]['score']) - $currentList->uniqueListAvg);
+        $similarityCount++;
+      }
+    }
+    if ($similarityCount < 10) {
+      return False;
+    }
+    return $similaritySum / ($this->uniqueListStdDev() * $currentList->uniqueListStdDev() * ($similarityCount - 1));
+  }
+  public function compatibilityBar($currentList) {
+    // returns markup for a compatibility bar between this list and the current user's list.
+    $compatibility = $this->similarity($currentList);
+    if ($compatibility === False) {
+      return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div></div>";
+    }
+    $compatibility = 100 * (1 + $compatibility) / 2.0;
+    if ($compatibility >= 75) {
+      $barClass = "danger";
+    } elseif ($compatibility >= 50) {
+      $barClass = "warning";
+    } elseif ($compatibility >= 25) {
+      $barClass = "success";
+    } else {
+      $barClass = "info";
+    }
+    return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($compatibility)."%'></div></div>";
   }
 }
 ?>

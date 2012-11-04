@@ -52,11 +52,9 @@ class Tag extends BaseObject {
         return False;
         break;
       case 'show':
+      default:
       case 'index':
         return True;
-        break;
-      default:
-        return False;
         break;
     }
   }
@@ -229,7 +227,7 @@ class Tag extends BaseObject {
     if ($text === Null) {
       $text = $this->title() ? $this->title() : "Info";
     }
-    return "<a href='/tag.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='/tags/".intval($this->id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
   }
   public function profile() {
     // displays a tag's profile.

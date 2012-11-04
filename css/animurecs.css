@@ -938,7 +938,7 @@ body>.container-fluid{padding-top:20px;}
 .ui-timepicker-div dl dd{margin:0 10px 10px 65px;}
 .ui-timepicker-div td{font-size:90%;}
 .ui-tpicker-grid-label{background:none;border:none;margin:0;padding:0;}
-.leftColumn .avatarContainer{min-height:230px;}.leftColumn .avatarContainer .profileAvatar{background-color:transparent;}.leftColumn .avatarContainer .profileAvatar img{height:220px;max-width:220px;}
+.leftColumn .avatarContainer{min-height:230px;margin-bottom:0;}.leftColumn .avatarContainer .profileAvatar{background-color:transparent;}.leftColumn .avatarContainer .profileAvatar img{height:220px;max-width:220px;}
 .leftColumn .friendListBox{width:208px;border:1px solid #dddddd;}.leftColumn .friendListBox h3{padding-left:10px;margin:2px;background-color:#f1f1f1;border-radius:4px 4px 0 0;border:1px solid #dddddd;}
 .leftColumn .friendListBox ul.friendGrid{margin:0;padding:2px;list-style:none;height:202px;width:202px;line-height:normal;}.leftColumn .friendListBox ul.friendGrid li.friendGridEntry{float:left;width:98px;height:98px;position:relative;margin:1px;background-color:white;text-align:center;}.leftColumn .friendListBox ul.friendGrid li.friendGridEntry img{max-width:98px;height:98px;}
 .leftColumn .friendListBox ul.friendGrid li.friendGridEntry .friendGridUsername{text-align:left;position:absolute;background:-webkit-linear-gradient(transparent, rgba(0, 0, 0, 0.7));bottom:0;color:white;display:block;left:0;width:100%;}

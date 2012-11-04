@@ -177,11 +177,9 @@ class User extends BaseObject {
         break;
       case 'switch_back':
       case 'show':
+      default:
       case 'index':
         return True;
-        break;
-      default:
-        return False;
         break;
     }
   }
@@ -456,7 +454,7 @@ class User extends BaseObject {
     if ($id === False) {
       $id = intval($this->id);
     }
-    return "<a href='/user.php?action=".$action."&id=".intval($id)."'>".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='/users/".intval($id)."/".$action."/'>".($raw ? $text : escape_output($text))."</a>";
   }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
@@ -568,6 +566,9 @@ class User extends BaseObject {
     $output .= $this->animeListSection(6, $currentUser);
     return $output;
   }
+  public function displayStats() {
+
+  }
   public function switchForm() {
     return "<form action='user.php?action=switch_user' method='POST' class='form-horizontal'>
       <fieldset>
@@ -592,7 +593,7 @@ class User extends BaseObject {
             <li class='span12'>
               <div class='thumbnail profileAvatar'>\n";
     if ($this->avatarPath() != '') {
-      $output .= "                <img src='".escape_output($this->avatarPath())."' class='img-rounded' alt=''>\n";
+      $output .= "                <img src='".joinPaths(array(ROOT_URL,escape_output($this->avatarPath())))."' class='img-rounded' alt=''>\n";
     } else {
 
     }
@@ -621,8 +622,22 @@ class User extends BaseObject {
               (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='user.php?action=request_friend&id=".intval($this->id)."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
             <p class='lead'>
               ".escape_output($this->about())."
-            </p>
-          </div>
+            </p>\n";
+    if ($this->id !== $currentUser->id) {
+      $output .= "            <ul class='thumbnails'>
+              <li class='span4'>
+                <p>Anime compatibility:</p>
+                ".$this->animeList()->compatibilityBar($currentUser->animeList())."
+              </li>
+              <li class='span4'>
+                
+              </li>
+              <li class='span4'>
+                
+              </li>
+            </ul>\n";
+    }
+    $output .= "          </div>
           <div class='profileTabs'>
             <ul class='nav nav-tabs'>
               <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>

@@ -6,7 +6,7 @@ if ($user->loggedIn()) {
 start_html($database, $user, "Animurecs", "Animu Recommendations", $_REQUEST['status'], $_REQUEST['class']);
 ?>
 <div class="front-bg">
-  <img class="front-image" src="img/front-bg.jpg" />
+  <img class="front-image" src=<?php echo joinPaths(ROOT_URL,"img/front-bg.jpg"); ?> />
 </div>
 <div class="row-fluid">
   <div class="hero-unit">

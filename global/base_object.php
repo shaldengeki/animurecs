@@ -36,14 +36,14 @@ class BaseObject {
       throw new Exception('ID Not Found');
     }
     foreach ($info as $key=>$value) {
-      $paramName = $this->humanizeParameter($key);
       if (is_numeric($value)) {
         $value = ( (int) $value == $value ? (int) $value : (float) $value);
       }
-      $this->$paramName = $value;
+      $this->{$this->humanizeParameter($key)} = $value;
     }
   }
   public function returnInfo($param) {
+    // sets object property if not set, then returns requested property.
     if ($this->$param === Null) {
       $this->getInfo();
     }

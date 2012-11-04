@@ -68,11 +68,9 @@ class Anime extends BaseObject {
         return False;
         break;
       case 'show':
+      default:
       case 'index':
         return True;
-        break;
-      default:
-        return False;
         break;
     }
   }
@@ -248,7 +246,7 @@ class Anime extends BaseObject {
     if ($text === Null) {
       $text = $this->title() ? $this->title() : "Info";
     }
-    return "<a href='/anime.php?action=".urlencode($action)."&id=".intval($this->id)."'>".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='/anime/".intval($this->id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
   }
   public function profile() {
     // displays an anime's profile.
