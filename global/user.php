@@ -607,7 +607,7 @@ class User extends BaseObject {
     shuffle($friendSlice);
     $friendSlice = array_slice($friendSlice, 0, 4);
     foreach ($friendSlice as $friendEntry) {
-      $output .= "            <li class='friendGridEntry'>".$friendEntry['user']->link("show", "<img class='friendGridImage' src='".$friendEntry['user']->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True)."</li>\n";
+      $output .= "            <li class='friendGridEntry'>".$friendEntry['user']->link("show", "<img class='friendGridImage' src='/".$friendEntry['user']->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True)."</li>\n";
     }
     $output .= "            </ul>
           </div>
