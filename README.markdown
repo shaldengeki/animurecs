@@ -19,12 +19,12 @@ After that, you'll want to write some rewrite rules for your webserver so you ca
         rewrite ^/anime_lists/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /anime_list.php?action=$2&id=$1 last;
     }
 
-    location /tags/ {
-        rewrite ^/tags/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /tag.php?action=$2&id=$1 last;
-    }
-
     location /tag_types/ {
         rewrite ^/tag_types/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /tag_type.php?action=$2&id=$1 last;
+    }
+
+    location /tags/ {
+        rewrite ^/tags/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /tag.php?action=$2&id=$1 last;
     }
 
     location /comments/ {

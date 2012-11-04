@@ -46,7 +46,7 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
       }
       break;
     case 'switch_back':
-      $switchUser = $user->switchUser($_SESSION['switched_user']['username'], False);
+      $switchUser = $user->switchUser($_SESSION['switched_user']->username, False);
       redirect_to($switchUser);
       break;
     case 'switch_user':
