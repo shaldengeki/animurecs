@@ -7,7 +7,7 @@ if (isset($_POST['anime']) && is_array($_POST['anime'])) {
     $targetAnime = new Anime($database, intval($_POST['anime']['id']));
   } catch (Exception $e) {
     // this non-zero animeID does not exist.
-    redirect_to(array('location' => 'anime.php', 'status' => 'This anime ID does not exist.', 'class' => 'error'));
+    redirect_to(array('location' => "/anime/", 'status' => 'This anime ID does not exist.', 'class' => 'error'));
   }
   if ($targetAnime->id === 0) {
     $authStatus = $targetAnime->allow($user, 'new');
@@ -15,13 +15,13 @@ if (isset($_POST['anime']) && is_array($_POST['anime'])) {
     $authStatus = $targetAnime->allow($user, 'edit');
   }
   if (!$authStatus) {
-    redirect_to(array('location' => 'anime.php'.($targetAnime->id === 0 ? "" : "?action=show&id=".intval($targetAnime->id)), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+    redirect_to(array('location' => "/anime/".($targetAnime->id === 0 ? "" : intval($targetAnime->id)."/show/"), 'status' => "You're not allowed to do this.", 'class' => 'error'));
   }
   $updateAnime = $targetAnime->create_or_update($_POST['anime'], $user);
   if ($updateAnime) {
-    redirect_to(array('location' => 'anime.php?action=show&id='.intval($targetAnime->id), 'status' => "Successfully updated.", 'class' => 'success'));
+    redirect_to(array('location' => "/anime/".intval($targetAnime->id)."/show/", 'status' => "Successfully updated.", 'class' => 'success'));
   } else {
-    redirect_to(array('location' => 'anime.php'.($targetAnime->id === 0 ? "?action=new" : "?action=edit&id=".intval($targetAnime->id)), 'status' => "An error occurred while creating or updating this anime.", 'class' => 'error'));
+    redirect_to(array('location' => "/anime/".($targetAnime->id === 0 ? "?action=new" : "?action=edit&id=".intval($targetAnime->id)), 'status' => "An error occurred while creating or updating this anime.", 'class' => 'error'));
   }
 }
 
@@ -73,9 +73,9 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
       }
       $deleteAnime = $targetAnime->delete();
       if ($deleteAnime === True) {
-        redirect_to(array('location' => 'anime.php?action=index', 'status' => 'Successfully deleted '.urlencode($targetAnime->title).'.', 'class' => 'success'));
+        redirect_to(array('location' => "/anime/", 'status' => 'Successfully deleted '.urlencode($targetAnime->title).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => 'anime.php?action=show&id='.intval($targetAnime->id), 'status' => 'An error occurred while deleting this anime.', 'class' => 'error'));
+        redirect_to(array('location' => "/anime/".intval($targetAnime->id)."/show/", 'status' => 'An error occurred while deleting this anime.', 'class' => 'error'));
       }
       break;
     default:

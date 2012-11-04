@@ -232,77 +232,13 @@ class Tag extends BaseObject {
   public function profile() {
     // displays a tag's profile.
     return;
-    $userObject = new User($database, $user_id);
-    $facility = $database->queryFirstValue("SELECT `name` FROM `facilities` WHERE `id` = ".intval($userObject->facility_id)." LIMIT 1");
-    $form_entries = $database->stdQuery("SELECT `form_entries`.*, `forms`.`name` AS `form_name`, `machines`.`name` AS `machine_name` FROM `form_entries` 
-                                          LEFT OUTER JOIN `forms` ON `forms`.`id` = `form_entries`.`form_id`
-                                          LEFT OUTER JOIN `machines` ON `machines`.`id` = `form_entries`.`machine_id`
-                                          WHERE `user_id` = ".intval($user_id)." 
-                                          ORDER BY `updated_at` DESC");
-    echo "<dl class='dl-horizontal'>
-      <dt>Email</dt>
-      <dd>".escape_output($userObject->email)."</dd>
-      <dt>Facility</dt>
-      <dd><a href='facility.php?action=show&id=".intval($userObject->facility_id)."'>".escape_output($facility)."</a></dd>
-      <dt>User Role</dt>
-      <dd>".escape_output(convert_usermask_to_text($userObject->usermask))."</dd>
-    </dl>\n";
-    if (convert_usermask_to_text($userObject->usermask) == 'Physicist') {
-      $form_approvals = $database->stdQuery("SELECT `form_entries`.`id`, `qa_month`, `qa_year`, `machine_id`, `machines`.`name` AS `machine_name`, `user_id`, `users`.`name` AS `user_name`, `approved_on` FROM `form_entries` LEFT OUTER JOIN `machines` ON `machines`.`id` = `form_entries`.`machine_id` LEFT OUTER JOIN `users` ON `users`.`id` = `form_entries`.`user_id` WHERE `approved_user_id` = ".intval($userObject->id)." ORDER BY `approved_on` DESC");
-      echo "  <h3>Approvals</h3>
-    <table class='table table-striped table-bordered dataTable'>
-      <thead>
-        <tr>
-          <th>QA Date</th>
-          <th>Machine</th>
-          <th>Submitter</th>
-          <th>Approval Date</th>
-        </tr>
-      </thead>
-      <tbody>\n";
-      while ($approval = mysqli_fetch_assoc($form_approvals)) {
-        echo "      <tr>
-          <td><a href='form_entry.php?action=edit&id=".intval($approval['id'])."'>".escape_output($approval['qa_year']."/".$approval['qa_month'])."</a></td>
-          <td><a href='form.php?action=show&id=".intval($approval['machine_id'])."'>".escape_output($approval['machine_name'])."</a></td>
-          <td><a href='user.php?action=show&id=".intval($approval['user_id'])."'>".escape_output($approval['user_name'])."</a></td>
-          <td>".escape_output(format_mysql_timestamp($approval['approved_on']))."</td>
-        </tr>\n";
-      }
-      echo "    </tbody>
-    </table>\n";
-    }
-    echo "  <h3>Form Entries</h3>
-    <table class='table table-striped table-bordered dataTable'>
-      <thead>
-        <tr>
-          <th>Form</th>
-          <th>Machine</th>
-          <th>Comments</th>
-          <th>QA Date</th>
-          <th>Submitted on</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>\n";
-    while ($form_entry = mysqli_fetch_assoc($form_entries)) {
-      echo "    <tr>
-        <td><a href='form.php?action=show&id=".intval($form_entry['form_id'])."'>".escape_output($form_entry['form_name'])."</a></td>
-        <td><a href='form.php?action=show&id=".intval($form_entry['machine_id'])."'>".escape_output($form_entry['machine_name'])."</a></td>
-        <td>".escape_output($form_entry['comments'])."</td>
-        <td>".escape_output($form_entry['qa_year']."/".$form_entry['qa_month'])."</td>
-        <td>".escape_output(format_mysql_timestamp($form_entry['created_at']))."</td>
-        <td><a href='form_entry.php?action=edit&id=".intval($form_entry['id'])."'>View</a></td>
-      </tr>\n";
-    }
-    echo "    </tbody>
-    </table>\n";
   }
   public function form($currentUser) {
     $tagAnime = [];
     foreach ($this->anime() as $anime) {
       $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title);
     }
-    $output = "<form action='tag.php".(($this->id === 0) ? "" : "?id=".intval($this->id))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='/tags/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag[name]'>Tag Name</label>
@@ -325,7 +261,7 @@ class Tag extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime.php?action=token_search' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode($tagAnime)))."' id='tag[anime_tags]' />
+            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime/0/token_search/' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode($tagAnime)))."' id='tag[anime_tags]' />
           </div>
         </div>\n";
         /*

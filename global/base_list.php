@@ -328,7 +328,7 @@ class BaseList extends BaseObject {
   public function link($action="show", $text=Null, $raw=False) {
     // returns an HTML link to the current tag's profile, with text provided.
     $text = ($text === Null) ? "List" : $text;
-    return "<a href='/user.php?action=".urlencode($action)."&id=".intval($this->user_id)."#".$this->listType."List'>".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='/user/".intval($this->user_id)."/".urlencode($action)."/#".$this->listType."List'>".($raw ? $text : escape_output($text))."</a>";
   }
   public function similarity($currentList) {
     // calculates pearson's r between this list and the current user's list.

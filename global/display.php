@@ -57,7 +57,7 @@ function ago($dateInterval){
 }
 
 function redirect_to($redirect_array) {
-  $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : 'index.php';
+  $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : '/';
   $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
   $class = (isset($redirect_array['class'])) ? $redirect_array['class'] : '';
   
@@ -74,7 +74,7 @@ function redirect_to($redirect_array) {
 }
 
 function js_redirect_to($redirect_array) {
-  $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : 'index.php';
+  $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : '/';
   $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
   $class = (isset($redirect_array['class'])) ? $redirect_array['class'] : '';
   
@@ -185,7 +185,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
   <div class='navbar navbar-inverse navbar-fixed-top'>
     <div class='navbar-inner'>
       <div class='container-fluid'>
-        <a href='/index.php' class='brand'>Animurecs</a>
+        <a href='/' class='brand'>Animurecs</a>
         <ul class='nav'>\n";
   if ($user->loggedIn()) {
     echo "          <li class='divider-vertical'></li>
@@ -193,9 +193,9 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li class='divider-vertical'></li>
           <li>".$user->link("show", "<i class='icon-home icon-white'></i> You", True)."</li>
           <li class='divider-vertical'></li>
-          <li><a href='/user.php'><i class='icon-globe icon-white'></i> Connect</a></li>
+          <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
           <li class='divider-vertical'></li>
-          <li><a href='/anime.php'><i class='icon-star icon-white'></i> Discover</a></li>
+          <li><a href='/anime/'><i class='icon-star icon-white'></i> Discover</a></li>
           <li class='divider-vertical'></li>\n";
   }
   echo "        </ul>
@@ -215,10 +215,10 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
             <ul class='dropdown-menu'>
               ".$user->link();
     if ($user->isAdmin() && !isset($user->switchedUser)) {
-      echo "            <a href='/user.php?action=switch_user'>Switch Users</a>\n";
+      echo "            ".$user->link("switch_user", "Switch User")."\n";
     }
     if (isset($user->switchedUser) && is_numeric($user->switchedUser)) {
-      echo "            <a href='/user.php?action=switch_back'>Switch Back</a>\n";
+      echo "            ".$user->link("switch_back", "Switch Back");
     }
     echo "              <a href='/logout.php'>Sign out</a>
             </ul>\n";
@@ -371,7 +371,7 @@ function display_anime($database, $user) {
     $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
     $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
   }
-  $output = paginate("/anime.php?action=index&page=", intval($_REQUEST['page']), $animePages);
+  $output = paginate("/anime/?page=", intval($_REQUEST['page']), $animePages);
   $output .= "<table class='table table-striped table-bordered dataTable' data-recordsPerPage='25'>
   <thead>
     <tr>
@@ -402,7 +402,7 @@ function display_anime($database, $user) {
     $output .= "    </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".($newAnime->allow($user, 'new') ? $newAnime->link("new", "Add an anime") : "")."\n";
-  $output .= paginate("/anime.php?action=index&page=", intval($_REQUEST['page']), $animePages)."\n";
+  $output .= paginate("/anime/?page=", intval($_REQUEST['page']), $animePages)."\n";
   return $output;
 }
 
@@ -417,7 +417,7 @@ function display_tags($database, $user) {
     $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagPages = ceil($database->queryCount("SELECT COUNT(*) FROM `tags` WHERE `approved_on` != ''")/$resultsPerPage);
   }
-  $output = paginate("/tag.php?action=index&page=", intval($_REQUEST['page']), $tagPages);
+  $output = paginate("/tags/?page=", intval($_REQUEST['page']), $tagPages);
   $output .= "<table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -434,13 +434,13 @@ function display_tags($database, $user) {
     $output .= "    <tr>
       <td>".$thisTag->link("show", $thisTag->name)."</td>
       <td>".escape_output($thisTag->description)."</td>
-      <td><a href='tag_type.php?action=show&id=".intval($thisTag->type->id)."'>".escape_output($thisTag->type->name)."</a></td>
+      <td>".$thisTag->type->link("show", $thisTag->type->name)."</td>
       <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("edit", "Edit"); } $output .= "</td>
       <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("delete", "Delete"); } $output .= "</td>
     </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".$newTag->link("new", "Add a tag");
-  $output .= paginate("/tag.php?action=index&page=", intval($_REQUEST['page']), $tagPages)."\n";
+  $output .= paginate("/tags/?page=", intval($_REQUEST['page']), $tagPages)."\n";
   return $output;
 }
 
@@ -464,7 +464,7 @@ function display_tag_types($database, $user) {
     $output .= "    <tr>
       <td>".$thisTagType->link("show", $thisTagType->name)."</td>
       <td>".escape_output($thisTagType->description)."</td>
-      <td><a href='user.php?action=show&id=".intval($thisTagType->createdBy['id'])."'>".escape_output($thisTagType->createdBy['username'])."</a></td>
+      <td>".$thisTagType->createdUser->link("show", $thisTagType->createdUser->username)."</td>
       <td>"; if ($user->isAdmin()) { $output .= $thisTagType->link("edit", "Edit"); } $output .= "</td>
       <td>"; if ($user->isAdmin()) { $output .= $thisTagType->link("delete", "Delete"); } $output .= "</td>
     </tr>\n";
@@ -502,115 +502,6 @@ function display_userlevel_dropdown($database, $select_id="userlevel", $selected
 }
 
 function display_user_edit_form($database, $user, $id=false) {
-}
-
-function display_tag_info($database, $user, $tag_id) {
-  try {
-    $tag = new Tag($database, $tag_id);
-  } catch (Exception $e) {
-    display_error("Error: Invalid Tag ID", "Please check the ID provided and try again.");
-    return;
-  }
-  echo "<blockquote>
-  <p>".$tag->description."</p>\n</blockquote>\n";
-    // fetch the historical tag activity data.
-  $timelines = $user->getTagActivity(array($tag), False, False, time(), 10);
-  $postCountTimeline = $timelines['postCount'];
-  if (count($postCountTimeline) > 0) {
-    echo "<div class='row-fluid'>
-  <div class='span12'>\n";
-    displayTagActivityGraph("Number of Posts", $postCountTimeline, array($tag), "postCountTimeline");
-    echo "  </div>\n</div>\n";
-  }
-  echo "<div class='row-fluid'>
-  <div class='span4'>
-    <h4 class='center-horizontal'>Related Tags</h4>\n<ul>\n";
-  foreach ($tag->relatedTags as $relatedTag) {
-    echo "      <li><a href='tag.php?action=show&id=".intval($relatedTag['id'])."'>".escape_output($relatedTag['name'])."</a><button type='button' class='close remove-tag-link remove-related-tag-link' data-dismiss='alert'>×</button></li>\n";
-  }
-  if ($user->isTagAdmin($tag_id)) {
-    echo "      <li><a href='#' class='add-tag-link add-related-tag-link'>Add a tag</a></li>\n";
-  }
-  echo "    </ul>\n  </div>
-  <div class='span4'>
-    <h4 class='center-horizontal'>Dependent Tags</h4>
-    <ul>\n";
-  foreach ($tag->dependencyTags as $dependencyTag) {
-    echo "      <li><a href='tag.php?action=show&id=".intval($dependencyTag['id'])."'>".escape_output($dependencyTag['name'])."</a><button type='button' class='close remove-tag-link remove-dependency-tag-link' data-dismiss='alert'>×</button></li>\n";
-  }
-  if ($user->isTagAdmin($tag_id)) {
-    echo "      <li><a href='#' class='add-tag-link add-dependency-tag-link'>Add a tag</a></li>\n";
-  }
-  echo "    </ul>\n  </div>
-  <div class='span4'>
-    <h4 class='center-horizontal'>Forbidden Tags</h4>
-    <ul>\n";
-  foreach ($tag->forbiddenTags as $forbiddenTag) {
-    echo "      <li><a href='tag.php?action=show&id=".intval($forbiddenTag['id'])."'>".escape_output($forbiddenTag['name'])."</a><button type='button' class='close remove-tag-link remove-forbidden-tag-link' data-dismiss='alert'>×</button></li>\n";
-  }
-  if ($user->isTagAdmin($tag_id)) {
-    echo "      <li><a href='#' class='add-tag-link add-forbidden-tag-link'>Add a tag</a></li>\n";
-  }
-  echo "    </ul>\n  </div>\n</div>\n";
-  echo "<h3>Latest Topics</h3>\n";
-  $latestTopics = $tag->getLatestTopics();
-  echo "<div class='row-fluid'>
-  <div class='span12'>
-    <table class='table dataTable table-bordered table-striped'>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Creator</th>
-          <th># Posts</th>
-          <th>Last Posted</th>
-        </tr>
-      </thead>
-      <tbody>\n";
-  foreach ($latestTopics as $topic) {
-    echo "        <tr>
-          <td><a href='https://boards.endoftheinter.net/showmessages.php?topic=".intval($topic['topic_id'])."' target='_blank'>".escape_output($topic['title'])."</a></td>
-          <td><a href='https://endoftheinter.net/profile.php?user=".intval($topic['user_id'])."' target='_blank'>".escape_output($topic['username'])."</a></td>
-          <td>".intval($topic['postCount'])."</td>
-          <td>".display_post_time($topic['lastPostTime'])."</td>
-        </tr>\n";
-  }
-  echo "      </tbody>
-      </table>
-    </div>
-  </div>\n";
-}
-
-function display_tag_add_form($database, $user) {
-  // displays a form to add a tag to tagETI to start managing.
-  echo "<div class='row-fluid'>
-  <div class='span6'>
-    <h4>Glad you're here! To start managing a tag through TagETI, you have to:</h4>
-    <ol>
-      <li>Be a mod or admin for your tag</li>
-      <li>Install the TagETI Greasemonkey script (coming soon!)</li>
-    </ol>
-  </div>
-  <div class='span6'>
-    <h5>To get the most out of TagETI, you can (but don't have to!):</h5>
-    <ol>
-      <li>Go to the tag's management page on ETI (https://boards.endoftheinter.net/tag.php?tag=YOUR_TAG_NAME_HERE)</li>
-      <li>Add 'Sakagami Tomoyo' to the list of administrators</li>
-      <li>Remove all admins/mods besides you and Sakagami Tomoyo</li>
-      <li>Have your mods/admins install the TagETI Greasemonkey script (coming soon!)</li>
-    </ol>
-    <p>This will allow you to track all tag moderation through TagETI, giving you a more complete history.</p>
-  </div>\n</div>\n<div class='row-fluid'>&nbsp;</div>\n<div class='row-fluid'>\n
-  <div class='span12' style='text-align: center;'>
-    <p>When you're ready, select the tag you want to add below and hit Add Tag!</p>
-    <form class='form-inline' action='tag.php?action=new' method='post'>
-      <select id='tag_name' name='tag_name'>\n";
-  foreach ($user->unManagedTags as $tag) {
-    echo "        <option value='".escape_output($tag->name)."'>".escape_output($tag->name)."</option>\n";
-  }
-  echo "      </select>
-    <a class='btn btn-xlarge btn-primary' href='#' id='add-tag-to-manage'>Add Tag</a>
-    </form>
-  </div>\n</div>\n";
 }
 
 function display_history_json($database, $user, $fields = array(), $machines=array()) {
@@ -699,7 +590,7 @@ function display_history_plot($database, $user, $form_id) {
 
 function display_footer() {
   echo "    <hr />
-    <p>Created and maintained by <a href='".ROOT_URL."/user.php?action=show&id=1'>shaldengeki</a>.</p>\n";
+    <p>Created and maintained by <a href='".ROOT_URL."/users/1/show/'>shaldengeki</a>.</p>\n";
   if (DEBUG_ON) {
     echo "<pre>".escape_output(print_r($GLOBALS['database']->queryLog, True))."</pre>\n";
     echo "<pre>".escape_output(print_r($GLOBALS, True))."</pre>\n";

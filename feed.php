@@ -2,7 +2,7 @@
 include_once("global/includes.php");
 
 if (!$user->loggedIn()) {
-  header("Location: index.php");
+  header("Location: /");
 }
 start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST['class']);
 ?>
