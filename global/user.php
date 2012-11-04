@@ -442,7 +442,7 @@ class User extends BaseObject {
       $_SESSION['switched_user'] = $newUser->switchedUser;
       return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username).".", 'class' => 'success');
     } else {
-      $newUser = new User($this->dbConn, $_SESSION['switched_user']);
+      $newUser = new User($this->dbConn, $_SESSION['switched_user']->id);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['lastLoginCheckTime'] = microtime(true);
       unset($_SESSION['switched_user']);
