@@ -209,18 +209,18 @@ class User extends BaseObject {
     // rate-limit requests.
     $numFailedRequests = $this->dbConn->queryCount("SELECT COUNT(*) FROM `failed_logins` WHERE `ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR'])." AND `time` > NOW() - INTERVAL 1 HOUR");
     if ($numFailedRequests > 5) {
-      return array("location" => "index.php", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error');
+      return array("location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error');
     }
   
     $bcrypt = new Bcrypt();
     $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
     if (!$findUsername) {
       $this->log_failed_login($username, $password);
-      return array("location" => "index.php", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
+      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     if (!$bcrypt->verify($password, $findUsername['password_hash'])) {
       $this->log_failed_login($username, $password);
-      return array("location" => "index.php", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
+      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     
     //update last IP address and last active.
@@ -238,26 +238,26 @@ class User extends BaseObject {
   public function register($username, $email, $password, $password_confirmation) {
     //check if user's passwords match.
     if ($password != $password_confirmation) {
-        $returnArray = array("location" => "register.php", "status" => "Your passwords do not match. Please try again.");      
+        $returnArray = array("location" => "/register.php", "status" => "Your passwords do not match. Please try again.");      
     } else {
       //check if email is well-formed.
       $email_regex = "/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/";
       if (!preg_match($email_regex, $email)) {
-        $returnArray = array("location" => "register.php", "status" => "The email address you have entered is malformed. Please check it and try again.");
+        $returnArray = array("location" => "/register.php", "status" => "The email address you have entered is malformed. Please check it and try again.");
       } else {
         //check if user is already registered.
         $checkNameEmail = intval($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE (`username` = ".$this->dbConn->quoteSmart($username)." || `email` = ".$this->dbConn->quoteSmart($email).")"));
         if ($checkNameEmail > 0) {
-          $returnArray = array("location" => "register.php", "status" => "Your username or email has previously been registered. Please try logging in.");
+          $returnArray = array("location" => "/register.php", "status" => "Your username or email has previously been registered. Please try logging in.");
         } else {
           //register this user.
           $bcrypt = new Bcrypt();
           $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `about` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `created_at` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `avatar_path` = ''");
           if (!$registerUser) {
-            $returnArray = array("location" => "register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
+            $returnArray = array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
           } else {
             $_SESSION['id'] = intval($this->dbConn->insert_id);
-            $returnArray = array("location" => "user.php?action=show&id=".intval($_SESSION['id']), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
+            $returnArray = array("location" => "/users/".intval($_SESSION['id'])."/show/", "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
           }
         }
       }
@@ -433,20 +433,20 @@ class User extends BaseObject {
       // get user entry in database.
       $findUserID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." && `id` != ".$this->id." LIMIT 1"));
       if (!$findUserID) {
-        return array("location" => "feed.php", "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error');
+        return array("location" => "/feed.php", "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error');
       }
       $newUser = new User($this->dbConn, $findUserID);
       $newUser->switchedUser = $_SESSION['id'];
       $_SESSION['lastLoginCheckTime'] = microtime(true);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
-      return array("location" => "feed.php", "status" => "You've switched to ".urlencode($newUser->username).".", 'class' => 'success');
+      return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username).".", 'class' => 'success');
     } else {
       $newUser = new User($this->dbConn, $_SESSION['switched_user']);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['lastLoginCheckTime'] = microtime(true);
       unset($_SESSION['switched_user']);
-      return array("location" => "feed.php", "status" => "You've switched back to ".urlencode($newUser->username).".", 'class' => 'success');
+      return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username).".", 'class' => 'success');
     }
   }
   public function link($action="show", $text="Profile", $raw=False, $id=False) {
@@ -548,7 +548,7 @@ class User extends BaseObject {
               <td class='listEntryScore'>".(intval($entry['score']) > 0 ? intval($entry['score'])."/10" : "")."</td>
               <td class='listEntryEpisode'>".intval($entry['episode'])."/".intval($entry['anime']->episodeCount)."</td>\n";
           if ($currentUser->id == $this->id) {
-            $output .= "              <td><a href='#' class='listEdit' data-url='anime_list.php'><i class='icon-pencil'></i></td>\n";
+            $output .= "              <td><a href='#' class='listEdit' data-url='/anime_lists/'><i class='icon-pencil'></i></td>\n";
           }
           $output .="            </tr>\n";
     }
@@ -570,7 +570,7 @@ class User extends BaseObject {
 
   }
   public function switchForm() {
-    return "<form action='user.php?action=switch_user' method='POST' class='form-horizontal'>
+    return "<form action='/users/".intval($this->id)."/switch_user/' method='POST' class='form-horizontal'>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='switch_username'>Username</label>
@@ -619,7 +619,7 @@ class User extends BaseObject {
               ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").
               ($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "").
               ($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "").
-              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='user.php?action=request_friend&id=".intval($this->id)."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
+              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='/users/".intval($this->id)."/request_friend/' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
             <p class='lead'>
               ".escape_output($this->about())."
             </p>\n";
@@ -648,9 +648,9 @@ class User extends BaseObject {
               <div class='tab-pane active' id='userFeed'>\n";
     if ($this->id == $currentUser->id) {
       $output .= "                <div class='addListEntryForm'>
-                  <form class='form-inline' action='anime_list.php?action=new&user_id=".intval($this->id)."' method='POST'>
+                  <form class='form-inline' action='/anime_lists/".intval($this->id)."/new/' method='POST'>
                     <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
-                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='/anime.php?action=token_search' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
+                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='/anime/0/token_search/' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
                     <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
                     ".display_status_dropdown("anime_list[status]", "span2")."
                     <div class='input-append'>
@@ -680,7 +680,7 @@ class User extends BaseObject {
     return $output;
   }
   public function form($currentUser) {
-    $output = "<form action='user.php".(($this->id === 0) ? "?action=new" : "?action=edit&id=".intval($this->id))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='/users/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>
