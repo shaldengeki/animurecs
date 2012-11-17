@@ -213,7 +213,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li id='navbar-user' class='dropdown'>
             <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
-              ".$user->link();
+              ".$user->link("show", "Profile");
     if ($user->isAdmin() && !isset($user->switchedUser)) {
       echo "            ".$user->link("switch_user", "Switch User")."\n";
     }
