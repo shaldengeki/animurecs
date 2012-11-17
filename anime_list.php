@@ -10,7 +10,7 @@ if (intval($_REQUEST['user_id']) === $user->id) {
     redirect_to(array('location' => '/users/', 'status' => "This user ID doesn't exist.", 'class' => 'error'));
   }
 }
-$location = "/users/".intval($targetUser->id)."/show/";
+$location = $targetUser->url("show");
 $status = "";
 $class = "";
 if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {

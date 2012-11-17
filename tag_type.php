@@ -15,13 +15,13 @@ if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
     $authStatus = $targetTagType->allow($user, 'edit');
   }
   if (!$authStatus) {
-    redirect_to(array('location' => "/tag_types/".($targetTagType->id === 0 ? "" : intval($targetTagType->id)."/show/"), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+    redirect_to(array('location' => ($targetTagType->id === 0 ? $targetTagType->url("index") : $targetTagType->url("show")), 'status' => "You're not allowed to do this.", 'class' => 'error'));
   }
   $updateTagType = $targetTagType->create_or_update($_POST['tag_type'], $user);
   if ($updateTagType) {
-    redirect_to(array('location' => "/tag_types/".intval($targetTagType->id)."/show/", 'status' => "Successfully updated.", 'class' => 'success'));
+    redirect_to(array('location' => $targetTagType->url("show"), 'status' => "Successfully updated.", 'class' => 'success'));
   } else {
-    redirect_to(array('location' => "/tag_types/".($targetTagType->id === 0 ? "?action=new" : "?action=edit&id=".intval($targetTagType->id)), 'status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
+    redirect_to(array('location' => ($targetTagType->id === 0 ? $targetTagType->url("new") : $targetTagType->url("edit")), 'status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
   }
 }
 

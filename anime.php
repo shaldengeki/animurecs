@@ -15,13 +15,13 @@ if (isset($_POST['anime']) && is_array($_POST['anime'])) {
     $authStatus = $targetAnime->allow($user, 'edit');
   }
   if (!$authStatus) {
-    redirect_to(array('location' => "/anime/".($targetAnime->id === 0 ? "" : intval($targetAnime->id)."/show/"), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+    redirect_to(array('location' => ($targetAnime->id === 0 ? $targetAnime->url("index") : $targetAnime->url("show")), 'status' => "You're not allowed to do this.", 'class' => 'error'));
   }
   $updateAnime = $targetAnime->create_or_update($_POST['anime'], $user);
   if ($updateAnime) {
-    redirect_to(array('location' => "/anime/".intval($targetAnime->id)."/show/", 'status' => "Successfully updated.", 'class' => 'success'));
+    redirect_to(array('location' => $targetAnime->url("show"), 'status' => "Successfully updated.", 'class' => 'success'));
   } else {
-    redirect_to(array('location' => "/anime/".($targetAnime->id === 0 ? "?action=new" : "?action=edit&id=".intval($targetAnime->id)), 'status' => "An error occurred while creating or updating this anime.", 'class' => 'error'));
+    redirect_to(array('location' => ($targetAnime->id === 0 ? $targetAnime->url("new") : $targetAnime->url("edit")), 'status' => "An error occurred while creating or updating this anime.", 'class' => 'error'));
   }
 }
 
@@ -76,7 +76,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
       if ($deleteAnime) {
         redirect_to(array('location' => "/anime/", 'status' => 'Successfully deleted '.urlencode($animeTitle).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => "/anime/".intval($targetAnime->id)."/show/", 'status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
+        redirect_to(array('location' => $targetAnime->url("show"), 'status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
       }
       break;
     default:

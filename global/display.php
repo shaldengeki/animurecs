@@ -371,7 +371,7 @@ function display_anime($database, $user) {
     $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
     $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
   }
-  $output = paginate("/anime/?page=", intval($_REQUEST['page']), $animePages);
+  $output = paginate($newAnime->url("index", "page="), intval($_REQUEST['page']), $animePages);
   $output .= "<table class='table table-striped table-bordered dataTable' data-recordsPerPage='25'>
   <thead>
     <tr>
@@ -402,7 +402,7 @@ function display_anime($database, $user) {
     $output .= "    </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".($newAnime->allow($user, 'new') ? $newAnime->link("new", "Add an anime") : "")."\n";
-  $output .= paginate("/anime/?page=", intval($_REQUEST['page']), $animePages)."\n";
+  $output .= paginate($newAnime->url("index", "page="), intval($_REQUEST['page']), $animePages)."\n";
   return $output;
 }
 
@@ -417,7 +417,7 @@ function display_tags($database, $user) {
     $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagPages = ceil($database->queryCount("SELECT COUNT(*) FROM `tags` WHERE `approved_on` != ''")/$resultsPerPage);
   }
-  $output = paginate("/tags/?page=", intval($_REQUEST['page']), $tagPages);
+  $output = paginate($newTag->url("index", "page="), intval($_REQUEST['page']), $tagPages);
   $output .= "<table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -440,7 +440,7 @@ function display_tags($database, $user) {
     </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".$newTag->link("new", "Add a tag");
-  $output .= paginate("/tags/?page=", intval($_REQUEST['page']), $tagPages)."\n";
+  $output .= paginate($newTag->url("index", "page="), intval($_REQUEST['page']), $tagPages)."\n";
   return $output;
 }
 

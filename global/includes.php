@@ -12,12 +12,16 @@ include_once("./global/tag.php");
 include_once("./global/anime.php");
 include_once("./global/anime_list.php");
 include_once("./global/user.php");
+include_once("./global/comment.php");
+include_once("./global/recs_engine.php");
 
 include_once("./global/display.php");
 include_once("./global/misc.php");
 
 session_start();
 $database = new DbConn(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE);
+$recsEngine = new RecsEngine(RECS_ENGINE_HOST, RECS_ENGINE_PORT);
+
 if (isset($_SESSION['id'])) {
   $user = new User($database, $_SESSION['id']);
 } else {

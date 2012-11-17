@@ -111,19 +111,12 @@ class TagType extends BaseObject {
     }
     return $this->tags;
   }
-  public function link($action="show", $text=Null, $raw=False) {
-    // returns an HTML link to the current tag's profile, with text provided.
-    if ($text === Null) {
-      $text = $this->title ? $this->title : "Info";
-    }
-    return "<a href='/tag_types/".intval($this->id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
-  }
   public function profile() {
     // displays a tag type's profile.
     return;
   }
   public function form($currentUser) {
-    $output = "<form action='/tag_types/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag_type[name]'>Name</label>

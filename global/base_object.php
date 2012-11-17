@@ -106,6 +106,17 @@ class BaseObject {
     }
     return True;
   }
+  public function url($action="show", $params=Null, $id=Null) {
+    // returns the url that maps to this object and the given action.
+    if ($id === Null) {
+      $id = intval($this->id);
+    }
+    return "/".$this->modelTable."/".($action !== "index" ? intval($id)."/".$action."/" : "").($params !== Null ? "?".$params : "");
+  }
+  public function link($action="show", $text="Show", $raw=False, $params=Null, $id=Null) {
+    // returns an HTML link to the current object's profile, with text provided.
+    return "<a href='".$this->url($action, $params, $id)."'>".($raw ? $text : escape_output($text))."</a>";
+  }
 
  }
 ?>

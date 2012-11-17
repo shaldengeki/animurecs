@@ -12,10 +12,12 @@ function hitPage($page, $cookieString="", $ssl=False, $referer=ROOT_URL) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 	curl_setopt($ch, CURLOPT_MAXREDIRS, 2);
+	// curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+	// curl_setopt($ch, CURLOPT_TIMEOUT_MS, 500);
 	$ret = curl_exec($ch);
 	if (curl_error($ch)) {
 		if (DEBUG_ON) {
-			display_curl_error($ch);
+			print_r(curl_error($ch));
 		}
 		curl_close($ch);
 		return False;
@@ -38,6 +40,8 @@ function hitForm($url, $formFields, $cookieString="", $ssl=False, $referer=ROOT_
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $formFields);
 	curl_setopt($ch, CURLOPT_URL, $url);
+	// curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+	// curl_setopt($ch, CURLOPT_TIMEOUT_MS, 500);
 	$ret = curl_exec($ch);
 	if (curl_error($ch)) {
 		curl_close($ch);

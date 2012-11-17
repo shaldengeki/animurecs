@@ -223,13 +223,6 @@ class Tag extends BaseObject {
     }
     return $this->anime;
   }
-  public function link($action="show", $text=Null, $raw=False) {
-    // returns an HTML link to the current tag's profile, with text provided.
-    if ($text === Null) {
-      $text = $this->title() ? $this->title() : "Info";
-    }
-    return "<a href='/tags/".intval($this->id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
-  }
   public function profile() {
     // displays a tag's profile.
     return;
@@ -239,7 +232,8 @@ class Tag extends BaseObject {
     foreach ($this->anime() as $anime) {
       $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title);
     }
-    $output = "<form action='/tags/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />")."
+    $anime = new Anime($this->dbConn, 0);
+    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag[name]'>Tag Name</label>
@@ -262,7 +256,7 @@ class Tag extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='/anime/0/token_search/' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode($tagAnime)))."' id='tag[anime_tags]' />
+            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='".$anime->url('token_search')."' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode($tagAnime)))."' id='tag[anime_tags]' />
           </div>
         </div>\n";
         /*

@@ -21,8 +21,10 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li><s>Friends</s></li>
       <li>Posts/comments/+1/props/upvote/likes</li>
       <li><s>Fe</s>ed</li>
-      <li>Recommendations</li>
+      <li><s>Recommend</s>ations</li>
+      <li>Achieves</li>
       <li>Groups</li>
+      <li>Groupwatches, contests</li>
     </ol>
   </div>
 <?php

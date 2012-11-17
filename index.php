@@ -50,9 +50,9 @@ start_html($database, $user, "Animurecs", "Animu Recommendations", $_REQUEST['st
     <li class="span4">
       <div class="thumbnail">
         <div class="caption">
-          <h4>Get great recommendations</h3>
+          <h4>Get personalized recommendations</h3>
           <p>
-            Animurecs learns what you like from what you've watched, and tailors its recommendations to your individual tastes so you don't have to go digging yourself.
+            Animurecs learns what you like from what you've watched, and tailors its recommendations to your tastes so you don't have to go digging to find something you'll like.
           </p>
           <p>
             <a href='#' class='btn btn-warning'>Try a demo</a>

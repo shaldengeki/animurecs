@@ -98,19 +98,12 @@ class Comment extends BaseObject {
     }
     return $this->id;
   }
-  public function link($action="show", $text=Null, $raw=False) {
-    // returns an HTML link to the current comment's profile, with text provided.
-    if ($text === Null) {
-      $text = "View";
-    }
-    return "<a href='/comments/".intval($this->id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
-  }
   public function profile() {
     // displays an comment's profile.
     return;
   }
   public function form($currentUser, $currentObject) {
-    $output = "<form action='/comments/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
       <input type='hidden' name='comment[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type)."' />
       <input type='hidden' name='comment[type_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->typeObject->id)."' />
       <fieldset>

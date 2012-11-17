@@ -257,7 +257,8 @@ class User extends BaseObject {
             $returnArray = array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
           } else {
             $_SESSION['id'] = intval($this->dbConn->insert_id);
-            $returnArray = array("location" => "/users/".intval($_SESSION['id'])."/show/", "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
+            $this->id = $_SESSION['id'];
+            $returnArray = array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
           }
         }
       }
@@ -451,13 +452,6 @@ class User extends BaseObject {
       return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
     }
   }
-  public function link($action="show", $text="Profile", $raw=False, $id=False) {
-    // returns an HTML link to the current user's profile, with text provided.
-    if ($id === False) {
-      $id = intval($this->id);
-    }
-    return "<a href='/users/".intval($id)."/".$action."/'>".($raw ? $text : escape_output($text))."</a>";
-  }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
@@ -522,7 +516,6 @@ class User extends BaseObject {
                           3 => array('id' => 'onHold', 'title' => 'On Hold'),
                           4 => array('id' => 'dropped', 'title' => 'Dropped'),
                           6 => array('id' => 'planToWatch', 'title' => 'Plan to Watch'));
-
     $relevantEntries = $this->animeList()->listSection($status);
 
     $output = "      <div class='".escape_output($statusStrings[$status]['id'])."'>
@@ -572,7 +565,7 @@ class User extends BaseObject {
 
   }
   public function switchForm() {
-    return "<form action='/users/".intval($this->id)."/switch_user/' method='POST' class='form-horizontal'>
+    return "<form action='".$this->url("switch_user")."' method='POST' class='form-horizontal'>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='switch_username'>Username</label>
@@ -597,7 +590,7 @@ class User extends BaseObject {
     if ($this->avatarPath() != '') {
       $output .= "                <img src='".joinPaths(array(ROOT_URL,escape_output($this->avatarPath())))."' class='img-rounded' alt=''>\n";
     } else {
-
+      $output .= "                <img src='/img/users/blank.png' class='img-rounded' alt=''>\n";
     }
     $output .= "          </div>
             </li>
@@ -621,7 +614,7 @@ class User extends BaseObject {
               ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").
               ($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "").
               ($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "").
-              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='/users/".intval($this->id)."/request_friend/' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
+              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
             <p class='lead'>
               ".escape_output($this->about())."
             </p>\n";
@@ -649,10 +642,12 @@ class User extends BaseObject {
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>\n";
     if ($this->id == $currentUser->id) {
+      $animeList = new AnimeList($this->dbConn, 0);
+      $anime = new Anime($this->dbConn, 0);
       $output .= "                <div class='addListEntryForm'>
-                  <form class='form-inline' action='/anime_lists/0/new/?user_id=".intval($this->id)."' method='POST'>
+                  <form class='form-inline' action='".$animeList->url("new", "user_id=".intval($this->id))."' method='POST'>
                     <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
-                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='/anime/0/token_search/' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
+                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
                     <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
                     ".display_status_dropdown("anime_list[status]", "span2")."
                     <div class='input-append'>
@@ -682,7 +677,7 @@ class User extends BaseObject {
     return $output;
   }
   public function form($currentUser) {
-    $output = "<form action='/users/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>

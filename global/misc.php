@@ -1,4 +1,14 @@
 <?php
+function dot($a, $b) {
+  $sum = 0;
+  foreach ($a as $key=>$val) {
+    if (isset($b[$key])) {
+      $sum += floatval($val) * floatval($b[$key]);
+    }
+  }
+  return $sum;
+}
+
 function joinPaths() {
     $args = func_get_args();
     $paths = array();

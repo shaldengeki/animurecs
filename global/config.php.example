@@ -8,6 +8,9 @@ define('MEMCACHED_HOST', 'localhost');
 define('MEMCACHED_PORT', 11211);
 define('MEMCACHED_DEFAULT_LIFESPAN', 20); // in seconds.
 
+define('RECS_ENGINE_HOST', 'localhost');
+define('RECS_ENGINE_PORT', 6275);
+
 define('APP_ROOT', '/var/www'); 				// no trailing backslash!
 define('ROOT_URL', 'http://your.domain.here'); 	// no trailing backslashes!
 

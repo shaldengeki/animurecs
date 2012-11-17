@@ -15,13 +15,13 @@ if (isset($_POST['tag']) && is_array($_POST['tag'])) {
     $authStatus = $targetTag->allow($user, 'edit');
   }
   if (!$authStatus) {
-    redirect_to(array('location' => "/tags/".($targetTag->id === 0 ? "" : intval($targetTag->id)."/show/"), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+    redirect_to(array('location' => ($targetTag->id === 0 ? $targetTag->url("index") : $targetTag->url("show")), 'status' => "You're not allowed to do this.", 'class' => 'error'));
   }
   $updateTag = $targetTag->create_or_update($_POST['tag'], $user);
   if ($updateTag) {
-    redirect_to(array('location' => "/tags/".intval($targetTag->id)."/show/", 'status' => "Successfully updated.", 'class' => 'success'));
+    redirect_to(array('location' => $targetTag->url("show"), 'status' => "Successfully updated.", 'class' => 'success'));
   } else {
-    redirect_to(array('location' => "/tags/".($targetTag->id === 0 ? "?action=new" : "?action=edit&id=".intval($targetTag->id)), 'status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
+    redirect_to(array('location' => ($targetTag->id === 0 ? $targetTag->url("new") : $targetTag->url("show")), 'status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
   }
 }
 
@@ -76,7 +76,7 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
       if ($deleteTag) {
         redirect_to(array('location' => '/tags/', 'status' => 'Successfully deleted '.urlencode($tagName).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => "/tags/".intval($targetTag->id)."/show/", 'status' => 'An error occurred while deleting '.urlencode($tagName).'.', 'class' => 'error'));
+        redirect_to(array('location' => $targetTag->url("show"), 'status' => 'An error occurred while deleting '.urlencode($tagName).'.', 'class' => 'error'));
       }
       break;
     default:

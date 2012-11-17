@@ -10,19 +10,24 @@ class Anime extends BaseObject {
   protected $approvedOn;
   protected $imagePath;
 
+  protected $entries;
+  protected $ratings;
+
+  protected $ratingAvg;
+  protected $regularizedAvg;
+
   protected $tags;
   protected $comments;
-  protected $entries;
   public function __construct($database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
     if ($id === 0) {
       $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = "";
-      $this->episodeCount = $this->episodeLength = 0;
-      $this->tags = $this->comments = $this->entries = $this->approvedUser = [];
+      $this->episodeCount = $this->episodeLength = $this->ratingAvg = $this->regularizedAvg = 0;
+      $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->entries = $this->ratings = [];
     } else {
-      $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = Null;
+      $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = $this->ratings = $this->ratingAvg = $this->regularizedAvg = Null;
     }
   }
   public function title() {
@@ -230,14 +235,43 @@ class Anime extends BaseObject {
   }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
+    return $this->dbConn->queryAssoc("SELECT `id`, `user_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
   }
-  public function link($action="show", $text=Null, $raw=False) {
-    // returns an HTML link to the current anime's profile, with text provided.
-    if ($text === Null) {
-      $text = $this->title() ? $this->title() : "Info";
+  public function entries() {
+    if ($this->entries === Null) {
+      $this->entries = $this->getEntries();
     }
-    return "<a href='/anime/".intval($this->id)."/".urlencode($action)."/'>".($raw ? $text : escape_output($text))."</a>";
+    return $this->entries;    
+  }
+  public function getRatings() {
+    $ratings = array_filter($this->entries(), function ($value) {
+      if (intval($value['score']) != 0) {
+        return True;
+      }
+      return False;
+    });
+    return $ratings;
+  }
+  public function ratings() {
+    if ($this->ratings === Null) {
+      $this->ratings = $this->getRatings();
+    }
+    return $this->ratings;    
+  }
+  public function ratingAvg() {
+    if ($this->ratingAvg === Null) {
+      $ratingSum = $ratingCount = 0;
+      foreach ($this->ratings() as $rating) {
+        $ratingSum += $rating['score'];
+        $ratingCount++;
+      }
+      if ($ratingCount != 0) {
+        $this->ratingAvg = $ratingSum / $ratingCount;
+      } else {
+        $this->ratingAvg = 0;
+      }
+    }
+    return $this->ratingAvg; 
   }
   public function profile() {
     // displays an anime's profile.
@@ -248,7 +282,7 @@ class Anime extends BaseObject {
     foreach ($this->tags() as $tag) {
       $animeTags[] = array('id' => $tag->id, 'name' => $tag->name);
     }
-    $output = "<form action='/anime/".(($this->id === 0) ? "0/new/" : intval($this->id)."/edit/")."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='anime[title]'>Series Title</label>
