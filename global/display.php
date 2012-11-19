@@ -195,7 +195,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li class='divider-vertical'></li>
           <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
           <li class='divider-vertical'></li>
-          <li><a href='/anime/'><i class='icon-star icon-white'></i> Discover</a></li>
+          <li><a href='/discover/'><i class='icon-star icon-white'></i> Discover</a></li>
           <li class='divider-vertical'></li>\n";
   }
   echo "        </ul>
@@ -403,6 +403,19 @@ function display_anime($database, $user) {
   }
   $output .= "  </tbody>\n</table>\n".($newAnime->allow($user, 'new') ? $newAnime->link("new", "Add an anime") : "")."\n";
   $output .= paginate($newAnime->url("index", "page="), intval($_REQUEST['page']), $animePages)."\n";
+  return $output;
+}
+
+function display_recommendations($recsEngine, $user) {
+  $recs = $recsEngine->recommend($user);
+
+  $output = "<h1>Your recommendations</h1>\n<ul class='recommendations'>\n";
+  foreach ($recs as $key=>$rec) {
+    $anime = new Anime($user->dbConn, intval($rec->id));
+    $output .= "<li>".$anime->link("show", "<img src='".$anime->imagePath."' /><div>".escape_output($anime->title)."</div>", True)."<em>Predicted score: ".round($rec->predicted_score, 1)."</em></li>\n";
+  }
+  $output .= "</ul>";
+
   return $output;
 }
 

@@ -34,6 +34,7 @@ class RecsEngine {
   public function userFeatures($user) {
     return $this->get("user", $user->id, "features");
   }
+  /*
   public function predictUserFeatures($user) {
     $ratings = [];
     foreach ($user->animeList->uniqueList as $id => $rating) {
@@ -52,15 +53,12 @@ class RecsEngine {
     }
     return $this->get("user", $user->id, "updateFeatures", array('ratings' => $ratings));
   }
+  */
   public function predict($user, $anime) {
-    $prediction = dot($this->predictUserFeatures($user), $this->animeFeatures($anime));
-    return $prediction;
-  }
-  public function svdPredict($user, $anime) {
     // fetches the predicted score for user and anime object pairs.
     return floatval($this->get("user", $user->id, "predict", array('anime' => intval($anime->id))));
   }
-  public function recommend($user, $n=100) {
+  public function recommend($user, $n=20) {
     return $this->get("user", $user->id, "recommend", array('n' => intval($n)));
   }
   

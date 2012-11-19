@@ -159,19 +159,6 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
   }
 }
 start_html($database, $user, "Animurecs", $title, $_REQUEST['status'], $_REQUEST['class']);
-
-if ($_REQUEST['test'] == 'true') {
-  $recs = $recsEngine->recommend($targetUser);
-
-  echo "<pre>";
-  echo "Recommended series:\n";
-  foreach ($recs as $key=>$rec) {
-    $anime = new Anime($database, intval($rec->id));
-    $recs[$key]->title = $anime->title;
-  }
-  print_r($recs);
-  echo "</pre>";
-}
 echo $output;
 display_footer();
 ?>

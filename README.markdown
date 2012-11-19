@@ -15,6 +15,10 @@ After that, you'll want to write some rewrite rules for your webserver so you ca
         rewrite ^/anime/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /anime.php?action=$2&id=$1 last;
     }
 
+    location /discover/ {
+        rewrite ^/discover/?([a-zA-Z0-9\_]+)?/?$ /discover.php?type=$1 last;
+    }
+
     location /anime_lists/ {
         rewrite ^/anime_lists/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /anime_list.php?action=$2&id=$1 last;
     }

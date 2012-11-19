@@ -318,17 +318,17 @@ class BaseList extends BaseObject {
           <div class='feedUser'>".$user->link("show", $user->username)."</div>
           ".$statusText.".\n";
       if ($currentUser->id === $user->id) {
-        $output .= "            <ul class='feedEntryMenu hidden'><li>".$this->link("delete", "<i class='icon-trash'></i> Delete", True, "user_id=".intval($this->user()->id), intval($entry['id']))."</li></ul>";
+        $output .= "            <ul class='feedEntryMenu hidden'><li>".$this->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($this->user()->id)), intval($entry['id']))."</li></ul>";
       }
       $output .= "          </div>
       </li>\n";
     }
     return $output;
   }
-  public function link($action="show", $text=Null, $raw=False, $params=Null, $id=Null) {
+  public function link($action="show", $text=Null, $raw=False, $params=Null, $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.
     $text = ($text === Null) ? "List" : $text;
-    return "<a href='".$this->url($action, $params, $id)."'>".($raw ? $text : escape_output($text))."</a>";
+    return parent::link($action, $text, $raw, $params, $urlParams, $id);
   }
   public function similarity($currentList) {
     // calculates pearson's r between this list and the current user's list.

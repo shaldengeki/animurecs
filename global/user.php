@@ -460,7 +460,7 @@ class User extends BaseObject {
     foreach ($this->friendRequests() as $request) {
       $entryTime = new DateTime($request['time'], $serverTimezone);
       $entryTime->setTimezone($outputTimezone);
-      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, $request['user']->id)."</li>\n";
+      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, Null, Null, $request['user']->id)."</li>\n";
     } 
     return $output;
   }

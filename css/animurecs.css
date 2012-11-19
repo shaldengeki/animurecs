@@ -951,6 +951,9 @@ ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 
 ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}ul.userFeed li.feedEntry .feedText .feedUser a:link,ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
 ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
 ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;}
+ul.recommendations{list-style:none;}ul.recommendations li{width:200px;height:200px;text-align:center;display:inline-block;}ul.recommendations li a img{height:150px;max-width:100px;}
+ul.recommendations li a div{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+ul.recommendations li em{font-size:10px;}
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}

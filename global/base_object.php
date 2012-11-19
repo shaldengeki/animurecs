@@ -111,11 +111,23 @@ class BaseObject {
     if ($id === Null) {
       $id = intval($this->id);
     }
-    return "/".$this->modelTable."/".($action !== "index" ? intval($id)."/".$action."/" : "").($params !== Null ? "?".$params : "");
+    $urlParams = [];
+    if (is_array($params)) {
+      foreach ($params as $key => $value) {
+        $urlParams[] = urlencode($key)."=".urlencode($value);
+      }
+    }
+    return "/".$this->modelTable."/".($action !== "index" ? intval($id)."/".$action."/" : "").($params !== Null ? "?".implode("&", $urlParams) : "");
   }
-  public function link($action="show", $text="Show", $raw=False, $params=Null, $id=Null) {
+  public function link($action="show", $text="Show", $raw=False, $params=Null, $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
-    return "<a href='".$this->url($action, $params, $id)."'>".($raw ? $text : escape_output($text))."</a>";
+    $linkParams = [];
+    if (is_array($params)) {
+      foreach ($params as $key => $value) {
+        $linkParams[] = escape_output($key)."='".escape_output($value)."'";
+      }
+    }
+    return "<a href='".$this->url($action, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
   }
 
  }
