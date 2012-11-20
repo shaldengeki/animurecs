@@ -431,26 +431,33 @@ class Anime extends BaseObject {
             </ul>\n";
     $output .= "          </div>
           <div id='userFeed'>\n";
-    if ($this->id == $currentUser->id) {
+    if ($currentUser->loggedIn()) {
       $animeList = new AnimeList($this->dbConn, 0);
       $anime = new Anime($this->dbConn, 0);
+      if (isset($currentUser->animeList->uniqueList[$this->id])) {
+        $thisEntry = $currentUser->animeList->uniqueList[$this->id];
+        $addText = "Update this anime in your list: ";
+      } else {
+        $thisEntry = [];
+        $addText = "Add this anime to your list: ";
+      }
       $output .= "            <div class='addListEntryForm'>
-              <form class='form-inline' action='".$animeList->url("new", array('user_id' => intval($currentUser->id)))."' method='POST'>
-                <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($currentUser->id)."' />
-                <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
-                <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='".intval($this->id)."' />
-                ".display_status_dropdown("anime_list[status]", "span2")."
-                <div class='input-append'>
-                  <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='0' />
-                  <span class='add-on'>/10</span>
-                </div>
-                <div class='input-prepend'>
-                  <span class='add-on'>Ep</span>
-                  <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' />
-                </div>
-                <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
-              </form>
-            </div>\n";
+            <form class='form-inline' action='".$animeList->url("new", array('user_id' => intval($currentUser->id)))."' method='POST'>
+              <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($currentUser->id)."' />
+              ".$addText."
+              <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='".intval($this->id)."' />
+              ".display_status_dropdown("anime_list[status]", "span3", $thisEntry['status'])."
+              <div class='input-append'>
+                <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='".intval($thisEntry['score'])."' />
+                <span class='add-on'>/10</span>
+              </div>
+              <div class='input-prepend'>
+                <span class='add-on'>Ep</span>
+                <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' value='".intval($thisEntry['episode'])."' />
+              </div>
+              <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
+            </form>
+          </div>\n";
     }
     $output .= "                ".$this->animeFeed($currentUser)."
           </div>

@@ -295,7 +295,7 @@ class BaseList extends BaseObject {
     if ($scoreChanged) {
       $statusTexts[] = $this->scoreStrings[intval($entry['score'] == 0)][intval($statusChanged)];
     }
-    if ($partChanged) {
+    if ($partChanged && ($entry[$this->partName] != $entry[$this->listTypeLower]->{$this->partName."Count"} || $entry['status'] != 2)) {
       $statusTexts[] = $this->partStrings[intval($statusChanged || $scoreChanged)];
     }
     $statusText = implode(" ", $statusTexts);
