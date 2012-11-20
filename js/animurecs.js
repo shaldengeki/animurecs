@@ -174,7 +174,8 @@ function submitListUpdate(elt) {
 
 $(document).ready(function () {
   $('.dropdown-toggle').dropdown();
-  /* Table initialisation */
+
+  /* Datatable initialisation */
   $('.dataTable').each(function() {
     // see if there's a default-sort column. if not, default to the first column.
     defaultSortColumn = $(this).find('thead > tr > th').index($(this).find('thead > tr > th.dataTable-default-sort'));
@@ -206,9 +207,13 @@ $(document).ready(function () {
       "aaSorting": [[ defaultSortColumn, defaultSortOrder ]]
     });
   });
+
+  /* D3 plot initialization */
   if ($('#vis').length > 0) {
     drawLargeD3Plot();
   }
+
+  /* Disable buttons on click */
   $('.btn').each(function() {
     $(this).click( function() {
       $(this).off('click');
@@ -216,6 +221,8 @@ $(document).ready(function () {
       $(this).text("Loading...");
     });
   });
+
+  /* token input initialization */
   $('.token-input').each(function() {
     if(typeof $(this).attr('data-tokenLimit') != 'undefined') {
       tokenLimit = $(this).attr('data-tokenLimit');
@@ -237,6 +244,8 @@ $(document).ready(function () {
       tokenLimit: tokenLimit
     });
   });
+
+  /* autocomplete initialization */
   $('.autocomplete').each(function() {
     if(typeof $(this).attr('data-valueField') != 'undefined') {
       valueField = $(this).attr('data-valueField');
@@ -269,6 +278,8 @@ $(document).ready(function () {
         }
     });
   });
+
+  /* feed entry menu initialization */
   $('.feedEntry').each(function() {
     $(this).hover(function() {
       $(this).find('.feedEntryMenu').removeClass('hidden');
@@ -276,6 +287,8 @@ $(document).ready(function () {
       $(this).find('.feedEntryMenu').addClass('hidden');
     });
   });
+
+  /* animelist edit link events */
   $(".listEdit").each(function() {
     // allows users to update entries from their list.
     $(this).click(function(event) {
@@ -283,4 +296,10 @@ $(document).ready(function () {
       event.preventDefault();
     });
   });
+
+  /* Load a specific tab if url contains a hash */
+  var url = document.location.toString();
+  if (url.match('#')) {
+      $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
+  }
 });

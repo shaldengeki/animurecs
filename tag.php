@@ -63,7 +63,7 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
         $output = display_error("Error: Invalid tag", "The given tag doesn't exist.");
         break;
       }
-      $name = escape_output($targetTag->name);
+      $title = escape_output($targetTag->name);
       $output = "<h1>".escape_output($targetTag->name).($targetTag->allow($user, "edit") ? " <small>(".$targetTag->link("edit", "edit").")</small>" : "")."</h1>\n".$targetTag->profile();
       break;
     case 'delete':

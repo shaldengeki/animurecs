@@ -64,7 +64,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetAnime->title);
-      $output = "<h1>".escape_output($targetAnime->title).($targetAnime->allow($user, "edit") ? " <small>(".$targetAnime->link("edit", "edit").")</small>" : "")."</h1>\n".$targetAnime->profile();
+      $output = $targetAnime->profile($user, $recsEngine);
       break;
     case 'delete':
       if ($targetAnime->id == 0) {

@@ -7,6 +7,9 @@ if (isset($_POST['username'])) {
 	$password = $_POST['password'];
 
 	$loginResult = $user->logIn($username, $password);
+	if (isset($_REQUEST['redirect_to'])) {
+		$loginResult['location'] = urldecode($_REQUEST['redirect_to']);
+	}
 	redirect_to($loginResult);
 }
 

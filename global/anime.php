@@ -54,6 +54,19 @@ class Anime extends BaseObject {
   public function approvedOn() {
     return $this->returnInfo('approvedOn');
   }
+  public function approvedUser() {
+    if ($this->approvedUser === Null) {
+      $this->approvedUser = new User($this->dbConn, intval($this->returnInfo('approvedUserId')));
+    }
+    return $this->approvedUser;
+  }
+  public function isApproved() {
+    // Returns a bool reflecting whether or not the current anime is approved.
+    if ($this->approvedOn() === '' or !$this->approvedOn()) {
+      return False;
+    }
+    return True;
+  }
   public function allow($authingUser, $action) {
     // takes a user object and an action and returns a bool.
     switch($action) {
@@ -73,6 +86,11 @@ class Anime extends BaseObject {
         return False;
         break;
       case 'show':
+        if ($this->isApproved()) {
+          return True;
+        }
+        return False;
+        break;
       default:
       case 'index':
         return True;
@@ -156,16 +174,53 @@ class Anime extends BaseObject {
         $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
       }
     }
+
+    // process uploaded image.
+    $file_array = $_FILES['anime_image'];
+    $imagePath = "";
+    if (!empty($file_array['tmp_name']) && is_uploaded_file($file_array['tmp_name'])) {
+      if ($file_array['error'] != UPLOAD_ERR_OK) {
+        return False;
+      }
+      $file_contents = file_get_contents($file_array['tmp_name']);
+      if (!$file_contents) {
+        return False;
+      }
+      $newIm = @imagecreatefromstring($file_contents);
+      if (!$newIm) {
+        return False;
+      }
+      $imageSize = getimagesize($file_array['tmp_name']);
+      if ($imageSize[0] > 300 || $imageSize[1] > 300) {
+        return False;
+      }
+      // move file to destination and save path in db.
+      if (!is_dir(joinPaths(APP_ROOT, "img", "anime", intval($this->id)))) {
+        mkdir(joinPaths(APP_ROOT, "img", "anime", intval($this->id)));
+      }
+      $imagePathInfo = pathinfo($file_array['tmp_name']);
+      $imagePath = joinPaths("img", "anime", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
+      if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
+        return False;
+      }
+    } else {
+      if ($this->id != 0) {
+        $imagePath = $this->imagePath();
+      } else {
+        $imagePath = "";  
+      }
+    }
+
     //go ahead and create or update this anime.
     if ($this->id != 0) {
       //update this anime.
-      $updateUser = $this->dbConn->stdQuery("UPDATE `anime` SET ".implode(", ", $params).", `updated_at` = NOW() WHERE `id` = ".intval($this->id)." LIMIT 1");
+      $updateUser = $this->dbConn->stdQuery("UPDATE `anime` SET ".implode(", ", $params).", `image_path` = ".$this->dbConn->quoteSmart($imagePath).", `updated_at` = NOW() WHERE `id` = ".intval($this->id)." LIMIT 1");
       if (!$updateUser) {
         return False;
       }
     } else {
       // add this anime.
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `anime` SET ".implode(",", $params).", `created_at` = NOW(), `updated_at` = NOW()");
+      $insertUser = $this->dbConn->stdQuery("INSERT INTO `anime` SET ".implode(",", $params).", `image_path` = ".$this->dbConn->quoteSmart($imagePath).", `created_at` = NOW(), `updated_at` = NOW()");
       if (!$insertUser) {
         return False;
       } else {
@@ -197,27 +252,10 @@ class Anime extends BaseObject {
 
     return $this->id;
   }
-  public function getApprovedUser() {
-    // retrieves an id,name array corresponding to the user who approved this anime.
-    return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
-  }
-  public function approvedUser() {
-    if ($this->approvedUser === Null) {
-      $this->approvedUser = $this->getApprovedUser();
-    }
-    return $this->approvedUser;
-  }
-  public function isApproved() {
-    // Returns a bool reflecting whether or not the current anime is approved.
-    if ($this->approvedOn === '' or !$this->approvedOn) {
-      return False;
-    }
-    return True;
-  }
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` WHERE `anime_id` = ".intval($this->id));
+    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
       $tags[] = new Tag($this->dbConn, intval($tagID['tag_id']));
     }
@@ -237,11 +275,39 @@ class Anime extends BaseObject {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     return $this->dbConn->queryAssoc("SELECT `id`, `user_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
   }
-  public function entries() {
+  public function entries($maxTime=Null, $limit=Null) {
     if ($this->entries === Null) {
       $this->entries = $this->getEntries();
     }
-    return $this->entries;    
+    if ($maxTime !== Null || $limit !== Null) {
+      // Returns a list of up to $limit entries up to $maxTime.
+      $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+      $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+      if ($maxTime === Null) {
+        $nowTime = new DateTime();
+        $nowTime->setTimezone($outputTimezone);
+        $maxTime = $nowTime;
+      }
+      $returnList = [];
+      $entryCount = 0;
+      foreach ($this->entries() as $entry) {
+        $entryDate = new DateTime($value['time'], $serverTimezone);
+        if ($entryDate > $maxTime) {
+          continue;
+        }
+        $entry['anime_id'] = intval($this->id);
+        $entry['anime'] = new Anime($this->dbConn, intval($this->id));
+        $entry['user'] = new User($this->dbConn, intval($entry['user_id']));
+        $returnList[] = $entry;
+        $entryCount++;
+        if ($limit !== Null && $entryCount >= $limit) {
+          return $returnList;
+        }
+      }
+      return $returnList;
+    } else {
+      return $this->entries;
+    }
   }
   public function getRatings() {
     $ratings = array_filter($this->entries(), function ($value) {
@@ -273,16 +339,132 @@ class Anime extends BaseObject {
     }
     return $this->ratingAvg; 
   }
-  public function profile() {
+  public function scoreBar($score=False) {
+    // returns markup for a score bar for a score given to this anime.
+    if ($score === False || $score == 0) {
+      return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div>Unknown</div>";
+    }
+    if ($score >= 7.5) {
+      $barClass = "danger";
+    } elseif ($score >= 5.0) {
+      $barClass = "warning";
+    } elseif ($score >= 2.5) {
+      $barClass = "success";
+    } else {
+      $barClass = "info";
+    }
+    return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($score*10.0)."%'>".round($score, 1)."/10</div></div>";
+  }
+  public function feed($entries, $currentUser) {
+    // returns an array of feed entries, keyed by the time of the entry.
+    $output = [];
+    foreach ($entries as $entry) {
+      $output[$entry['time']] = $entry['user']->animeList()->feedEntry($entry, $entry['user'], $currentUser);
+    }
+    return $output;
+  }
+  public function animeFeed($currentUser, $maxTime=Null,$numEntries=50) {
+    // returns markup for this user's anime feed.
+    $feedEntries = $this->entries($maxTime, $numEntries);
+    $output = "<ul class='userFeed'>\n";
+    if (count($feedEntries) == 0) {
+      $output .= "<blockquote><p>No entries yet - ".$currentUser->link("show", "be the first!")."</p></blockquote>\n";
+    }
+    $output .= implode("\n", $this->feed($feedEntries, $currentUser));
+    $output .= "</ul>\n";
+    return $output;
+  }
+  public function tagCloud($currentUser) {
+    $output = "<ul class='tagCloud'>";
+    foreach ($this->tags() as $tag) {
+      $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
+    }
+    $output .= "</ul>";
+    return $output;
+  }
+  public function profile($currentUser, $recsEngine=Null) {
     // displays an anime's profile.
-    return;
+    // info header.
+    $output = "     <div class='row-fluid'>
+        <div class='span3 userProfileColumn leftColumn'>
+          <ul class='thumbnails avatarContainer'>
+            <li class='span12'>
+              <div class='thumbnail profileAvatar'>\n";
+    if ($this->imagePath() != '') {
+      $output .= "                <img src='".joinPaths(array(ROOT_URL,escape_output($this->imagePath())))."' class='img-rounded' alt=''>\n";
+    } else {
+      $output .= "                <img src='/img/anime/blank.png' class='img-rounded' alt=''>\n";
+    }
+    $output .= "          </div>
+            </li>
+          </ul>
+        </div>
+        <div class='span9 userProfileColumn rightColumn'>
+          <div class='profileUserInfo'>
+            <h1>
+              ".escape_output($this->title())." 
+              ".($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "")."</h1>
+            <p>
+              ".escape_output($this->description())."
+            </p>\n";
+    if ($currentUser->loggedIn()) {
+      $output .= "            <ul class='thumbnails'>
+              <li class='span4'>\n";
+      if (!isset($currentUser->animeList->uniqueList[$this->id]) || $currentUser->animeList->uniqueList[$this->id]['score'] == 0) {
+        $output .= "                <p class='lead'>Predicted score:</p>
+                ".$this->scoreBar($recsEngine->predict($currentUser, $this))."\n";
+      } else {
+        $output .= "                <p>You rated this:</p>
+                ".$this->scoreBar($currentUser->animeList->uniqueList[$this->id]['score'])."\n";
+      }
+    } else {
+      $output .= "            <ul class='thumbnails'>
+              <li class='span4'>
+                <p class='lead'>Predicted score:</p>
+                <p>Sign in to view your predicted score!</p>\n";
+    }
+    $output .= "              </li>
+              <li class='span8'>
+                <p class='lead'>Tags:</p>
+                ".$this->tagCloud($currentUser)."
+              </li>
+            </ul>\n";
+    $output .= "          </div>
+          <div id='userFeed'>\n";
+    if ($this->id == $currentUser->id) {
+      $animeList = new AnimeList($this->dbConn, 0);
+      $anime = new Anime($this->dbConn, 0);
+      $output .= "            <div class='addListEntryForm'>
+              <form class='form-inline' action='".$animeList->url("new", array('user_id' => intval($currentUser->id)))."' method='POST'>
+                <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($currentUser->id)."' />
+                <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
+                <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='".intval($this->id)."' />
+                ".display_status_dropdown("anime_list[status]", "span2")."
+                <div class='input-append'>
+                  <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='0' />
+                  <span class='add-on'>/10</span>
+                </div>
+                <div class='input-prepend'>
+                  <span class='add-on'>Ep</span>
+                  <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' />
+                </div>
+                <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
+              </form>
+            </div>\n";
+    }
+    $output .= "                ".$this->animeFeed($currentUser)."
+          </div>
+        </div>
+      </div>\n";
+    return $output;
   }
   public function form($currentUser) {
     $animeTags = [];
+    $blankTag = new Tag($this->dbConn, 0);
     foreach ($this->tags() as $tag) {
       $animeTags[] = array('id' => $tag->id, 'name' => $tag->name);
     }
-    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />")."
+    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' enctype='multipart/form-data' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='anime[title]'>Series Title</label>
@@ -306,9 +488,17 @@ class Anime extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='/tags/0/token_search/' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))."' id='anime[anime_tags]' />
+            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='".$blankTag->url("token_search")."' data-value='".($this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))."' id='anime[anime_tags]' />
           </div>
         </div>\n";
+        if ($this->id != 0) {
+          $output .= "        <div class='control-group'>
+          <label class='control-label' for='anime_image'>Image</label>
+          <div class='controls'>
+            <input name='anime_image' class='input-file' type='file' onChange='displayImagePreview(this.files);' /><span class='help-inline'>Max size 300x300, JPEG/PNG/GIF.</span>
+          </div>
+        </div>\n";
+        }
         if ($currentUser->isModerator() || $currentUser->isAdmin()) {
           $output .= "        <div class='control-group'>
           <label class='control-label' for='anime[approved]'>Approved</label>

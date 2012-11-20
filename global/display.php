@@ -224,7 +224,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
             </ul>\n";
   } else {
     echo "          <li>
-          <form class='form-inline' accept-charset='UTF-8' action='/login.php' method='post'>
+          <form class='form-inline' accept-charset='UTF-8' action='/login.php?redirect_to=".urlencode($_SERVER['REQUEST_URI'])."' method='post'>
             <input name='username' type='text' class='input-small' placeholder='Username'>
             <input name='password' type='password' class='input-small' placeholder='Password'>
             <!--<label class='checkbox'>
@@ -371,7 +371,7 @@ function display_anime($database, $user) {
     $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
     $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
   }
-  $output = paginate($newAnime->url("index", "page="), intval($_REQUEST['page']), $animePages);
+  $output = paginate($newAnime->url("index", array('page' => '')), intval($_REQUEST['page']), $animePages);
   $output .= "<table class='table table-striped table-bordered dataTable' data-recordsPerPage='25'>
   <thead>
     <tr>
@@ -402,7 +402,7 @@ function display_anime($database, $user) {
     $output .= "    </tr>\n";
   }
   $output .= "  </tbody>\n</table>\n".($newAnime->allow($user, 'new') ? $newAnime->link("new", "Add an anime") : "")."\n";
-  $output .= paginate($newAnime->url("index", "page="), intval($_REQUEST['page']), $animePages)."\n";
+  $output .= paginate($newAnime->url("index", array('page' => '')), intval($_REQUEST['page']), $animePages)."\n";
   return $output;
 }
 

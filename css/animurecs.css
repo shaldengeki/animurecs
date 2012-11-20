@@ -951,6 +951,13 @@ ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 
 ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}ul.userFeed li.feedEntry .feedText .feedUser a:link,ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
 ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
 ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;}
+ul.tagCloud{list-style:none;width:100%;margin:0;}ul.tagCloud li.general{background-color:#EFF2F7;}
+ul.tagCloud li.studio{background-color:#DD8391;}ul.tagCloud li.studio span a,ul.tagCloud li.studio span a:hover,ul.tagCloud li.studio span a:active,ul.tagCloud li.studio span a:visited{color:#333333;}
+ul.tagCloud li.va{background-color:#76C659;}ul.tagCloud li.va span a,ul.tagCloud li.va span a:hover,ul.tagCloud li.va span a:active,ul.tagCloud li.va span a:visited{color:#333333;}
+ul.tagCloud li.type{background-color:#E0834A;}ul.tagCloud li.type span a,ul.tagCloud li.type span a:hover,ul.tagCloud li.type span a:active,ul.tagCloud li.type span a:visited{color:#333333;}
+ul.tagCloud li{float:left;height:18px;margin:3px;padding:2px 3px;font-size:11px;border:1px solid black;border-radius:5px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}ul.tagCloud li p,ul.tagCloud li a{display:inline;margin:0;padding:0;}
+ul.tagCloud li a,ul.tagCloud li a:hover,ul.tagCloud li a:active,ul.tagCloud li a:visited{text-decoration:none;color:inherit;}
+ul.tagCloud li span a,ul.tagCloud li span a:hover,ul.tagCloud li span a:active,ul.tagCloud li span a:visited{color:#A6B3CF;font-weight:bold;margin-left:5px;}
 ul.recommendations{list-style:none;}ul.recommendations li{width:200px;height:200px;text-align:center;display:inline-block;}ul.recommendations li a img{height:150px;max-width:100px;}
 ul.recommendations li a div{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 ul.recommendations li em{font-size:10px;}

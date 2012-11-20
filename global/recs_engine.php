@@ -61,6 +61,14 @@ class RecsEngine {
   public function recommend($user, $n=20) {
     return $this->get("user", $user->id, "recommend", array('n' => intval($n)));
   }
+  public function similarAnime($anime, $n=20) {
+    // fetches the top n most feature-similar anime for a given anime.
+    return $this->get("anime", $anime->id, "similar", array('n' => intval($n)));
+  }
+  public function similarUsers($user, $n=20) {
+    // fetches the top n most feature-similar users for a given user.
+    return $this->get("user", $user->id, "similar", array('n' => intval($n)));
+  }
   
 }
 ?>

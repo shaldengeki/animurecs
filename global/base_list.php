@@ -261,7 +261,7 @@ class BaseList extends BaseObject {
     // Returns the previous entry in this user's entry list for $this->typeID and before $beforeTime.
     $prevEntry = array('status' => 0, 'score' => 0, $this->partName => 0);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-    foreach ($this->entries as $entry) {
+    foreach ($this->entries() as $entry) {
       $entryDate = new DateTime($entry['time'], $serverTimezone);
       if ($entryDate >= $beforeTime) {
         continue;
