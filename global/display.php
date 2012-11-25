@@ -126,7 +126,7 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
   //baseLink should be everything up to, say, &page=
   $pageIncrement = 10;
   $displayFirstPages = 10;
-  $output = "<div class='pagination pagination-small pagination-centered'>
+  $output = "<div class='pagination pagination-centered'>
   <ul>\n";
   $i = 1;
   if ($currPage > 1) {
@@ -406,16 +406,49 @@ function display_anime($database, $user) {
   return $output;
 }
 
+function tag_list($animes, $n=50) {
+  // displays a list of tags for a list of anime, sorted by frequency of tag.
+  if (!is_array($animes)) {
+    $animes = array($animes);
+  }
+  $tagCounts = [];
+  $tags = [];
+  foreach ($animes as $anime) {
+    foreach ($anime->tags as $tag) {
+      if (!isset($tagCounts[$tag->id])) {
+        $tagCounts[$tag->id] = 1;
+        $tags[$tag->id] = $tag;
+      } else {
+        $tagCounts[$tag->id]++;
+      }
+    }
+  }
+  arsort($tagCounts);
+  $output = "<ul class='tagList'>\n";
+  $i = 1;
+  foreach ($tagCounts as $tagID=>$count) {
+    $output .= "<li>".$tags[$tagID]->link("show", $tags[$tagID]->name)." ".intval($count)."</li>\n";
+    if ($i >= $n) {
+      break;
+    }
+    $i++;
+  }
+  $output .= "</ul>";
+  return $output;
+}
+
 function display_recommendations($recsEngine, $user) {
   $recs = $recsEngine->recommend($user);
 
-  $output = "<h1>Your recommendations</h1>\n<ul class='recommendations'>\n";
+  $output = "<h1>Your Recs</h1>\n<ul class='recommendations'>\n";
+  $reccedAnime = [];
   foreach ($recs as $key=>$rec) {
     $anime = new Anime($user->dbConn, intval($rec->id));
-    $output .= "<li>".$anime->link("show", "<img src='".$anime->imagePath."' /><div>".escape_output($anime->title)."</div>", True)."<em>Predicted score: ".round($rec->predicted_score, 1)."</em></li>\n";
+    $reccedAnime[] = $anime;
+    $output .= "<li>".$anime->link("show", "<img src='".joinPaths(array(ROOT_URL, escape_output($anime->imagePath)))."' /><div>".escape_output($anime->title)."</div>", True)."<em>Predicted score: ".round($rec->predicted_score, 1)."</em></li>\n";
   }
   $output .= "</ul>";
-
+  $output .= tag_list($reccedAnime);
   return $output;
 }
 

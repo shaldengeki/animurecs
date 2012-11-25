@@ -541,7 +541,7 @@ class User extends BaseObject {
                 </span>
               </td>
               <td class='listEntryScore'>".(intval($entry['score']) > 0 ? intval($entry['score'])."/10" : "")."</td>
-              <td class='listEntryEpisode'>".intval($entry['episode'])."/".intval($entry['anime']->episodeCount)."</td>\n";
+              <td class='listEntryEpisode'>".intval($entry['episode'])."/".(intval($entry['anime']->episodeCount) == 0 ? "?" : intval($entry['anime']->episodeCount))."</td>\n";
           if ($currentUser->id == $this->id) {
             $output .= "              <td><a href='#' class='listEdit' data-url='/anime_lists/'><i class='icon-pencil'></i></td>\n";
           }
@@ -637,7 +637,8 @@ class User extends BaseObject {
             <ul class='nav nav-tabs'>
               <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
               <li><a href='#userList' data-toggle='tab'>List</a></li>
-              <li><a href='#userFriends' data-toggle='tab'>Friends</a></li>
+              <li><a href='#userStats' data-toggle='tab'>Stats</a></li>
+              <li><a href='#userAchieves' data-toggle='tab'>Achievements</a></li>
             </ul>
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>\n";
@@ -667,8 +668,11 @@ class User extends BaseObject {
               <div class='tab-pane' id='userList'>
                 ".$this->displayAnimeList($currentUser)."
               </div>
-              <div class='tab-pane' id='userFriends'>
-                Friends coming soon!
+              <div class='tab-pane' id='userStats'>
+                Stats coming soon!
+              </div>
+              <div class='tab-pane' id='userAchieves'>
+                Achievements coming soon!
               </div>
             </div>
           </div>

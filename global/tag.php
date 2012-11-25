@@ -276,5 +276,21 @@ class Tag extends BaseObject {
       </fieldset>\n</form>\n";
     return $output;
   }
+  public function link($action="show", $text="Show", $raw=False, $params=Null, $urlParams=Null, $id=Null) {
+    // returns an HTML link to the current object's profile, with text provided.
+    $linkParams = [];
+    if (is_array($params)) {
+      foreach ($params as $key => $value) {
+        $linkParams[] = escape_output($key)."='".escape_output($value)."'";
+      }
+    }
+    $linkClass = "";
+    $linkTitle = "";
+    if ($this->id != 0) {
+      $linkClass = " class='tag-".escape_output($this->type()->name)."'";
+      $linkTitle = " title='".escape_output($this->name())."'";
+    }
+    return "<a".$linkClass.$linkTitle." href='".$this->url($action, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
+  }
 }
 ?>

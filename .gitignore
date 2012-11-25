@@ -1,7 +1,8 @@
 *.sublime-project
 *.sublime-workspace
+dbv/data/meta/revision
 global/config.php
 Thumbs.db
-css/*.less
+less
 img/users/*
 img/anime/*

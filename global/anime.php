@@ -255,7 +255,7 @@ class Anime extends BaseObject {
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`name` ASC");
+    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
       $tags[] = new Tag($this->dbConn, intval($tagID['tag_id']));
     }

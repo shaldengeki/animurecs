@@ -32,6 +32,7 @@ try {
 }
 
 if (!$targetAnime->allow($user, $_REQUEST['action'])) {
+  // TODO: make this kawaiier
   $title = "Error: Insufficient privileges";
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {

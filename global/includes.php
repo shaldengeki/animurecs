@@ -4,7 +4,6 @@ include_once("./global/config.php");
 include_once("./global/bcrypt.php");
 include_once("./global/database.php");
 include_once("./global/curl.php");
-
 include_once("./global/base_object.php");
 include_once("./global/base_list.php");
 include_once("./global/tag_type.php");
@@ -33,8 +32,12 @@ if (!isset($_REQUEST['status'])) {
 if (!isset($_REQUEST['class'])) {
   $_REQUEST['class'] = "";
 }
-if (!isset($_REQUEST['action'])) {
-  $_REQUEST['action'] = 'index';
+if (!isset($_REQUEST['action']) || $_REQUEST['action'] == '') {
+  if (isset($_REQUEST['id']) && is_numeric($_REQUEST['id'])) {
+    $_REQUEST['action'] = 'show';
+  } else {
+    $_REQUEST['action'] = 'index';
+  }
 }
 if (!isset($_REQUEST['page'])) {
   $_REQUEST['page']  = 1;
