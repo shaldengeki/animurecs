@@ -24,7 +24,7 @@ class TagType extends BaseObject {
   public function name() {
     return $this->returnInfo('name');
   }
-  public function allow($authingUser, $action) {
+  public function allow($authingUser, $action, $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       // case 'approve':
@@ -37,9 +37,11 @@ class TagType extends BaseObject {
         return False;
         break;
       case 'show':
-      default:
       case 'index':
         return True;
+        break;
+      default:
+        return False;
         break;
     }
   }

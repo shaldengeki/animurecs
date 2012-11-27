@@ -49,6 +49,13 @@ class BaseObject {
     }
     return $this->$param;
   }
+  public function allow($authingUser, $action, $params=Null) {
+    // by default, don't let anybody do anything unless they're staff, in which case allow them to do everything.
+    if ($authingUser->isModerator() || $authingUser->isAdmin()) {
+      return True;
+    }
+    return False;
+  }
   public function create_or_update($object, $currentUser=Null) {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.
@@ -62,16 +69,18 @@ class BaseObject {
     if ($currentUser !== Null) {
       $whereClause = "`user_id` = ".intval($currentUser->id)." && ";
     }
+    $params[] = '`updated_at` = NOW()';
     //go ahead and create or update this object.
     if ($this->id != 0) {
       //update this object.
-      $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params).", `updated_at` = NOW() WHERE ".$whereClause."`id` = ".intval($this->id)." LIMIT 1");
+      $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".$whereClause."`id` = ".intval($this->id)." LIMIT 1");
       if (!$updateObject) {
         return False;
       }
     } else {
       // add this object.
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params).", `created_at` = NOW(), `updated_at` = NOW()");
+      $params[] = '`created_at` = NOW()';
+      $insertUser = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
       if (!$insertUser) {
         return False;
       } else {
@@ -117,7 +126,7 @@ class BaseObject {
         $urlParams[] = urlencode($key)."=".urlencode($value);
       }
     }
-    return "/".$this->modelTable."/".($action !== "index" ? intval($id)."/".$action."/" : "").($params !== Null ? "?".implode("&", $urlParams) : "");
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".implode("&", $urlParams) : "");
   }
   public function link($action="show", $text="Show", $raw=False, $params=Null, $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

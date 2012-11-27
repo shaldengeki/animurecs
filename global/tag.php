@@ -28,12 +28,12 @@ class Tag extends BaseObject {
     return $this->returnInfo('description');
   }
   public function createdAt() {
-    return $this->returnInfo('createdAt');
+    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
   }
   public function updatedAt() {
-    return $this->returnInfo('updatedAt');
+    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
   }
-  public function allow($authingUser, $action) {
+  public function allow($authingUser, $action, $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       // case 'approve':
@@ -52,9 +52,11 @@ class Tag extends BaseObject {
         return False;
         break;
       case 'show':
-      default:
       case 'index':
         return True;
+        break;
+      default:
+        return False;
         break;
     }
   }

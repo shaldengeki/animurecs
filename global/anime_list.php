@@ -11,7 +11,7 @@ class AnimeList extends BaseList {
     $this->listTypeLower = strtolower($this->listType);
     $this->typeID = $this->listTypeLower.'_id';
   }
-  public function allow($authingUser, $action) {
+  public function allow($authingUser, $action, $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'new':
@@ -28,9 +28,11 @@ class AnimeList extends BaseList {
         }
         return False;
         break;
-      default:
       case 'show':
         return True;
+        break;
+      default:
+        return False;
         break;
     }
   }

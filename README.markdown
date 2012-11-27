@@ -7,7 +7,8 @@ To get started (after installing the above dependencies), you should do the foll
 
 1. `git clone` Animurecs
 2. Modify `global/config.php.example` to work with your setup and rename it to `global/config.php`
-3. Open up `dbv/index.php` in your browser and push all the disk schema to your database
+3. Modify `dbv/config.php.sample` with the authentication setup of your choice and rename it to `dbv/config.php`
+4. Open up `dbv/index.php` in your browser and push all the disk schema to your database
 
 After that, you'll want to write some rewrite rules for your webserver so you can have pretty URLs. For nginx, they'd look something like this:
 

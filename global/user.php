@@ -16,6 +16,8 @@ class User extends BaseObject {
   protected $friends;
   protected $friendRequests;
   protected $requestedFriends;
+  protected $ownComments;
+  protected $profileComments;
 
   public function __construct($database, $id=Null) {
     parent::__construct($database, $id);
@@ -26,13 +28,13 @@ class User extends BaseObject {
       $this->name = "Guest";
       $this->usermask = 0;
       $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
-      $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = [];
+      $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->profileComments = [];
       $this->animeList = new AnimeList($this->dbConn, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = Null;
+      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->profileComments = Null;
     }
   }
   public function username() {
@@ -51,10 +53,10 @@ class User extends BaseObject {
     return $this->returnInfo('usermask');
   }
   public function createdAt() {
-    return $this->returnInfo('createdAt');
+    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
   }
   public function lastActive() {
-    return $this->returnInfo('lastActive');
+    return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(SERVER_TIMEZONE));
   }
   public function lastIP() {
     return $this->returnInfo('lastIP');
@@ -63,7 +65,7 @@ class User extends BaseObject {
     return $this->returnInfo('avatarPath');
   }
   public function getFriends($status=1) {
-    // returns a list of user_id,username,time,message arrays corresponding to all friends of this user.
+    // returns a list of user,time,message arrays corresponding to all friends of this user.
     // keyed by not-this-userID.
     $friendReqs = $this->dbConn->stdQuery("SELECT `user_id_1`, `user_id_2`, `u1`.`username` AS `username_1`, `u2`.`username` AS `username_2`, `time`, `message` FROM `users_friends`
                                             INNER JOIN `users` AS `u1` ON `u1`.`id` = `user_id_1`
@@ -140,7 +142,37 @@ class User extends BaseObject {
     }
     return $this->animeList;
   }
-  public function allow($authingUser, $action) {
+  public function getOwnComments() {
+    // returns a list of comment objects sent by this user.
+    $ownComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `user_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
+    $comments = [];
+    while ($comment = $ownComments->fetch_assoc()) {
+      $comments[] = new Comment($this->dbConn, intval($comment['id']));
+    }
+    return $comments;
+  }
+  public function ownComments() {
+    if ($this->ownComments === Null) {
+      $this->ownComments = $this->getOwnComments();
+    }
+    return $this->ownComments;
+  }
+  public function getProfileComments() {
+    // returns a list of comment objects sent by this user.
+    $profileComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = 'User' && `parent_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
+    $comments = [];
+    while ($comment = $profileComments->fetch_assoc()) {
+      $comments[] = new Comment($this->dbConn, intval($comment['id']));
+    }
+    return $comments;
+  }
+  public function profileComments() {
+    if ($this->profileComments === Null) {
+      $this->profileComments = $this->getProfileComments();
+    }
+    return $this->profileComments;
+  }
+  public function allow($authingUser, $action, $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'mal_import':
@@ -175,11 +207,19 @@ class User extends BaseObject {
         }
         return False;
         break;
+      case 'comment':
+        if ($authingUser->loggedIn()) {
+          return True;
+        }
+        return False;
+        break;
       case 'switch_back':
       case 'show':
-      default:
       case 'index':
         return True;
+        break;
+      default:
+        return False;
         break;
     }
   }
@@ -224,7 +264,7 @@ class User extends BaseObject {
     }
     
     //update last IP address and last active.
-    $updateLastIP = $this->dbConn->stdQuery("UPDATE `users` SET `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime())." WHERE `id` = ".intval($findUsername['id'])." LIMIT 1");
+    $updateLastIP = $this->dbConn->stdQuery("UPDATE `users` SET `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = NOW() WHERE `id` = ".intval($findUsername['id'])." LIMIT 1");
     $_SESSION['id'] = $findUsername['id'];
     $_SESSION['name'] = $findUsername['name'];
     $_SESSION['username'] = $findUsername['username'];
@@ -252,7 +292,7 @@ class User extends BaseObject {
         } else {
           //register this user.
           $bcrypt = new Bcrypt();
-          $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `about` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `created_at` = ".$this->dbConn->quoteSmart(unixToMySQLDateTime()).", `avatar_path` = ''");
+          $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `about` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = NOW(), `created_at` = NOW(), `avatar_path` = ''");
           if (!$registerUser) {
             $returnArray = array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
           } else {
@@ -383,13 +423,18 @@ class User extends BaseObject {
         $imagePath = $this->avatarPath();
       }
 
-      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params).", `avatar_path` = ".$this->dbConn->quoteSmart($imagePath).", `last_active` = NOW()  WHERE `id` = ".intval($this->id)." LIMIT 1");
+      $params[] = "`avatar_path` = ".$this->dbConn->quoteSmart($imagePath);
+      $params[] = "`last_active` = NOW()";
+
+      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params)." WHERE `id` = ".intval($this->id)." LIMIT 1");
       if (!$updateUser) {
         return False;
       }
     } else {
       // add this user.
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params).", `created_at` = NOW(), `last_active` = NOW()");
+      $params[] = "`created_at` = NOW()";
+      $params[] = "`last_active` = NOW()";
+      $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params));
       if (!$insertUser) {
         return False;
       } else {
@@ -465,47 +510,58 @@ class User extends BaseObject {
     return $output;
   }
   public function feed($entries, $currentUser) {
-    // returns an array of feed entries, keyed by the time of the entry.
+    // returns an array of animeList entries, in time-and-text format.
+    // TODO: rename this to something anime-specific.
     $output = [];
     foreach ($entries as $entry) {
-      $output[$entry['time']] = $this->animeList()->feedEntry($entry, $this, $currentUser);
+      $output[] = array('time' => strtotime($entry['time']), 'text' => $this->animeList()->feedEntry($entry, $this, $currentUser));
     }
     return $output;
   }
   public function globalFeed($maxTime=Null, $numEntries=50) {
     // returns markup for this user's global feed.
 
-    // add each user's personal feeds to the total feed, keyed by timestamp_username.
+    // add each user's personal feeds to the total feed.
     $myEntries = $this->animeList()->entries($maxTime, $numEntries);
-    $feedEntries = [];
-    foreach ($this->feed($myEntries, $this) as $key=>$myEntry) {
-      $feedEntries[$key."_".$this->username()] = $myEntry;
-    }
+    $feedEntries = $this->feed($myEntries, $this);
     foreach ($this->friends() as $friend) {
-      foreach ($friend['user']->feed($friend['user']->animeList()->entries($maxTime, $numEntries), $this) as $key=>$friendEntry) {
-        $feedEntries[$key."_".$friend['user']->username] = $friendEntry;
-      }
+      $feedEntries = array_merge($feedEntries, $friend['user']->feed($friend['user']->animeList()->entries($maxTime, $numEntries), $this));
     }
 
     // sort by key and grab only the latest numEntries.
-    krsort($feedEntries);
+    $feedEntries = array_sort_by_key($feedEntries, 'time', 'desc');
     $feedEntries = array_slice($feedEntries, 0, $numEntries);
     $output = "<ul class='userFeed'>\n";
     if (count($feedEntries) == 0) {
       $output .= "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n";
     }
-    $output .= implode("\n", $feedEntries);
+    $feedOutput = [];
+    foreach ($feedEntries as $entry) {
+      $feedOutput[] = $entry['text'];
+    }
+    $output .= implode("\n", $feedOutput);
     $output .= "</ul>\n";
     return $output;
   }
-  public function animeFeed($currentUser, $maxTime=Null,$numEntries=50) {
-    // returns markup for this user's anime feed.
+  public function profileFeed($currentUser, $maxTime=Null,$numEntries=50) {
+    // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
+
     $output = "<ul class='userFeed'>\n";
-    if (count($feedEntries) == 0) {
+    if (count($feedEntries) == 0 && $currentUser->id === $this->id) {
       $output .= "<blockquote><p>No entries yet - add some above!</p></blockquote>\n";
     }
-    $output .= implode("\n", $this->feed($feedEntries, $currentUser));
+    $feedEntries = $this->feed($feedEntries, $currentUser);
+    foreach ($this->profileComments() as $comment) {
+      // TODO: Make this pretty, refactor feedEntry in animeList to more general method.
+      $feedEntries[] = array('time' => $comment->createdAt->format('U'), 'text' => escape_output($comment->user->username())." said: ".escape_output($comment->message));
+    }
+    $feedEntries = array_sort_by_key($feedEntries, 'time', 'desc');
+    $feedOutput = [];
+    foreach ($feedEntries as $entry) {
+      $feedOutput[] = $entry['text'];
+    }
+    $output .= implode("\n", $feedOutput);
     $output .= "</ul>\n";
     return $output;
   }
@@ -663,7 +719,7 @@ class User extends BaseObject {
                   </form>
                 </div>\n";
     }
-    $output .= "                ".$this->animeFeed($currentUser)."
+    $output .= "                ".$this->profileFeed($currentUser)."
               </div>
               <div class='tab-pane' id='userList'>
                 ".$this->displayAnimeList($currentUser)."

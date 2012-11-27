@@ -317,7 +317,7 @@ class BaseList extends BaseObject {
         <div class='feedText'>
           <div class='feedUser'>".$user->link("show", $user->username)."</div>
           ".$statusText.".\n";
-      if ($currentUser->id === $user->id) {
+      if ($this->allow($currentUser, 'delete')) {
         $output .= "            <ul class='feedEntryMenu hidden'><li>".$this->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($this->user()->id)), intval($entry['id']))."</li></ul>";
       }
       $output .= "          </div>

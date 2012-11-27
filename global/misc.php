@@ -24,23 +24,6 @@ function joinPaths() {
     return join(DIRECTORY_SEPARATOR, $trimmedPaths);
 }
 
-function getNormalizedFILES() {
-    $newfiles = array();
-    foreach($_FILES as $fieldname => $fieldvalue)
-        foreach($fieldvalue as $paramname => $paramvalue)
-            foreach((array)$paramvalue as $index => $value)
-                $newfiles[$fieldname][$index][$paramname] = $value;
-    return $newfiles;
-}
-
-function get_numeric($val) { 
-  if (is_numeric($val)) { 
-    return $val + 0; 
-  } else {
-    return false;
-  }
-}
-
 function convert_usermask_to_text($usermask) {
   $usermask = intval($usermask);
   $roles = [];
@@ -60,15 +43,6 @@ function convert_usermask_to_text($usermask) {
     return "Unknown";
   }
   return implode(", ", $roles);
-}
-
-function udate($format, $utimestamp = null) {
-  if (is_null($utimestamp)) {
-    $utimestamp = microtime(true);
-  }
-  $timestamp = floor($utimestamp);
-  $milliseconds = round(($utimestamp - $timestamp) * 1000000);
-  return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
 }
 
 function buildPropertyFilter($property, $value) {

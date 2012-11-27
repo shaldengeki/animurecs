@@ -7,10 +7,10 @@ if (intval($_REQUEST['user_id']) === $user->id) {
   try {
     $targetUser = new User($database, intval($_REQUEST['user_id']));
   } catch (Exception $e) {
-    redirect_to(array('location' => '/users/', 'status' => "This user ID doesn't exist.", 'class' => 'error'));
+    redirect_to(array('location' => $user->url(), 'status' => "This user ID doesn't exist.", 'class' => 'error'));
   }
 }
-$location = $targetUser->url("show");
+$location = $targetUser->url();
 $status = "";
 $class = "";
 if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
@@ -30,19 +30,19 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
             unset($_POST['anime_list'][$key]);
           }
         }
-        // check to ensure that the user has perms to create or update a user.
+        // check to ensure that the user has perms to create or update an entry.
         try {
           $targetUser = new User($database, intval($_POST['anime_list']['user_id']));
         } catch (Exception $e) {
           // this non-zero userID does not exist.
-          $location = "/users/";
+          $location = $user->url();
           $status = "This user ID doesn't exist.";
           $class = "error";
           break;
         }
         if ($targetUser->id === 0) {
           // This user does not exist.
-          $location = "/users/";
+          $location = $user->url();
           $status = "This user ID doesn't exist.";
           $class = "error";
           break;
