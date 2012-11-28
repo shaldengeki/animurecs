@@ -281,7 +281,7 @@ class User extends BaseObject {
         return array("location" => "/register.php", "status" => "Your passwords do not match. Please try again.");      
     }
     if (strlen($password) < 6) {
-      return array("location" => "/register.php", "status" => "Your password must be at least 6 characters long.")
+      return array("location" => "/register.php", "status" => "Your password must be at least 6 characters long.");
     }
     //check if email is well-formed.
     $email_regex = "/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/";
