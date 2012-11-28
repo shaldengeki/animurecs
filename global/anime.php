@@ -18,7 +18,7 @@ class Anime extends BaseObject {
 
   protected $tags;
   protected $comments;
-  public function __construct($database, $id=Null) {
+  public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
@@ -67,7 +67,7 @@ class Anime extends BaseObject {
     }
     return True;
   }
-  public function allow($authingUser, $action, $params=Null) {
+  public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'remove_tag':
@@ -100,7 +100,7 @@ class Anime extends BaseObject {
         break;
     }
   }
-  public function create_or_update_tagging($tag_id, $currentUser) {
+  public function create_or_update_tagging($tag_id, User $currentUser) {
     /*
       Creates or updates an existing tagging for the current anime.
       Takes a tag ID.
@@ -122,23 +122,23 @@ class Anime extends BaseObject {
     $this->tags[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
     return True;
   }
-  public function drop_taggings($tags=False) {
+  public function drop_taggings(array $tags=Null) {
     /*
       Deletes tagging relations.
       Takes an array of tag ids as input, defaulting to all tags.
       Returns a boolean.
     */
     $this->tags();
-    if ($tags === False) {
+    if ($tags === Null) {
       $tags = array_keys($this->tags());
     }
-    $tagIDs = array();
+    $tagIDs = [];
     foreach ($tags as $tag) {
       if (is_numeric($tag)) {
         $tagIDs[] = intval($tag);
       }
     }
-    if (count($tagIDs) > 0) {
+    if ($tagIDs) {
       $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `anime_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
       if (!$drop_taggings) {
         return False;
@@ -149,7 +149,7 @@ class Anime extends BaseObject {
     }
     return True;
   }
-  public function create_or_update($anime, $currentUser=Null) {
+  public function create_or_update(array $anime, User $currentUser=Null) {
     // creates or updates a anime based on the parameters passed in $anime and this object's attributes.
     // returns False if failure, or the ID of the anime if success.
 
@@ -181,7 +181,7 @@ class Anime extends BaseObject {
     // process uploaded image.
     $file_array = $_FILES['anime_image'];
     $imagePath = "";
-    if (!empty($file_array['tmp_name']) && is_uploaded_file($file_array['tmp_name'])) {
+    if ($file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
       if ($file_array['error'] != UPLOAD_ERR_OK) {
         return False;
       }
@@ -276,9 +276,9 @@ class Anime extends BaseObject {
   }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id`, `user_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
+    return $this->dbConn->queryAssoc("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
   }
-  public function entries($maxTime=Null, $limit=Null) {
+  public function entries(DateTime $maxTime=Null, $limit=Null) {
     if ($this->entries === Null) {
       $this->entries = $this->getEntries();
     }
@@ -298,7 +298,6 @@ class Anime extends BaseObject {
         if ($entryDate > $maxTime) {
           continue;
         }
-        $entry['anime_id'] = intval($this->id);
         $entry['anime'] = new Anime($this->dbConn, intval($this->id));
         $entry['user'] = new User($this->dbConn, intval($entry['user_id']));
         $returnList[] = $entry;
@@ -358,7 +357,7 @@ class Anime extends BaseObject {
     }
     return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($score*10.0)."%'>".round($score, 1)."/10</div></div>";
   }
-  public function feed($entries, $currentUser) {
+  public function feed(array $entries, User $currentUser) {
     // returns an array of feed entries, keyed by the time of the entry.
     $output = [];
     foreach ($entries as $entry) {
@@ -366,7 +365,7 @@ class Anime extends BaseObject {
     }
     return $output;
   }
-  public function animeFeed($currentUser, $maxTime=Null,$numEntries=50) {
+  public function animeFeed(User $currentUser, DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's anime feed.
     $feedEntries = $this->entries($maxTime, $numEntries);
     $output = "<ul class='userFeed'>\n";
@@ -377,7 +376,7 @@ class Anime extends BaseObject {
     $output .= "</ul>\n";
     return $output;
   }
-  public function tagCloud($currentUser) {
+  public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
     foreach ($this->tags() as $tag) {
       $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
@@ -385,7 +384,7 @@ class Anime extends BaseObject {
     $output .= "</ul>";
     return $output;
   }
-  public function profile($currentUser, $recsEngine=Null) {
+  public function profile(User $currentUser, RecsEngine $recsEngine=Null) {
     // displays an anime's profile.
     // info header.
     $output = "     <div class='row-fluid'>
@@ -468,7 +467,7 @@ class Anime extends BaseObject {
       </div>\n";
     return $output;
   }
-  public function form($currentUser) {
+  public function form(User $currentUser) {
     $animeTags = [];
     $blankTag = new Tag($this->dbConn, 0);
     foreach ($this->tags() as $tag) {

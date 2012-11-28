@@ -17,7 +17,7 @@ function joinPaths() {
     }
 
     $trimmedPaths = array_map(create_function('$p', 'return trim($p, "'.addslashes(DIRECTORY_SEPARATOR).'");'), $paths);
-    if (count($trimmedPaths) > 0) {
+    if ($trimmedPaths) {
       $trimmedPaths[0] = rtrim($paths[0], addslashes(DIRECTORY_SEPARATOR));
     }
     $trimmedPaths = array_filter($trimmedPaths);
@@ -39,7 +39,7 @@ function convert_usermask_to_text($usermask) {
   if ($usermask & 1) {
     $roles[] = "User";
   }
-  if (count($roles) == 0) {
+  if (empty($roles) == 0) {
     return "Unknown";
   }
   return implode(", ", $roles);

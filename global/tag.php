@@ -10,7 +10,7 @@ class Tag extends BaseObject {
   protected $anime;
   protected $manga;
 
-  public function __construct($database, $id=Null) {
+  public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "tags";
     $this->modelPlural = "tags";
@@ -33,7 +33,7 @@ class Tag extends BaseObject {
   public function updatedAt() {
     return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
   }
-  public function allow($authingUser, $action, $params=Null) {
+  public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       // case 'approve':
@@ -60,7 +60,7 @@ class Tag extends BaseObject {
         break;
     }
   }
-  public function create_or_update_tagging($anime_id, $currentUser) {
+  public function create_or_update_tagging($anime_id, User $currentUser) {
     /*
       Creates or updates an existing tagging for the current anime.
       Takes a tag ID.
@@ -83,23 +83,23 @@ class Tag extends BaseObject {
     $this->anime[intval($anime->id)] = array('id' => intval($anime->id), 'title' => $anime->title);
     return True;
   }
-  public function drop_taggings($animus=False) {
+  public function drop_taggings(array $animus=Null) {
     /*
       Deletes tagging relations.
       Takes an array of anime ids as input, defaulting to all anime.
       Returns a boolean.
     */
     $this->anime();
-    if ($animus === False) {
+    if ($animus === Null) {
       $animus = array_keys($this->anime());
     }
-    $animeIDs = array();
+    $animeIDs = [];
     foreach ($animus as $anime) {
       if (is_numeric($anime)) {
         $animeIDs[] = intval($anime);
       }
     }
-    if (count($animeIDs) > 0) {
+    if ($animeIDs) {
       $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
       if (!$drop_taggings) {
         return False;
@@ -110,7 +110,7 @@ class Tag extends BaseObject {
     }
     return True;
   }
-  public function create_or_update($tag, $currentUser=Null) {
+  public function create_or_update(array $tag, User $currentUser=Null) {
     // creates or updates a tag based on the parameters passed in $tag and this object's attributes.
     // returns False if failure, or the ID of the tag if success.
     // make sure this tag name adheres to standards.
@@ -166,7 +166,7 @@ class Tag extends BaseObject {
     }
     return $this->id;
   }
-  public function delete($entries=False) {
+  public function delete(array $entries=Null) {
     // delete this tag from the database.
     // returns a boolean.
     // drop all taggings for this tag first.
@@ -174,7 +174,7 @@ class Tag extends BaseObject {
     if (!$dropTaggings) {
       return False;
     }
-    return parent::delete($this->id);
+    return parent::delete();
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
@@ -229,7 +229,7 @@ class Tag extends BaseObject {
     // displays a tag's profile.
     return;
   }
-  public function form($currentUser) {
+  public function form(User $currentUser) {
     $tagAnime = [];
     foreach ($this->anime() as $anime) {
       $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title);
@@ -278,7 +278,7 @@ class Tag extends BaseObject {
       </fieldset>\n</form>\n";
     return $output;
   }
-  public function link($action="show", $text="Show", $raw=False, $params=Null, $urlParams=Null, $id=Null) {
+  public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
     if (is_array($params)) {

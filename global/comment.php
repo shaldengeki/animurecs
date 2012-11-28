@@ -9,7 +9,7 @@ class Comment extends BaseObject {
   protected $createdAt;
   protected $updatedAt;
 
-  public function __construct($database, $id=Null, $user=Null, $parent=Null) {
+  public function __construct(DbConn $database, $id=Null, User $user=Null, BaseObject $parent=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "comments";
     $this->modelPlural = "comments";
@@ -55,7 +55,7 @@ class Comment extends BaseObject {
   public function updatedAt() {
     return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
   }
-  public function allow($authingUser, $action, $params=Null) {
+  public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'edit':
@@ -97,7 +97,7 @@ class Comment extends BaseObject {
     $output = $this->message();
     return $output;
   }
-  public function form($currentUser, $currentObject) {
+  public function form(User $currentUser, BaseObject $currentObject) {
     $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
       <input type='hidden' name='comment[user_id]' value='".intval($currentUser->id)."' />
       <input type='hidden' name='comment[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
@@ -116,6 +116,15 @@ class Comment extends BaseObject {
         </div>
       </fieldset>\n</form>\n";
     return $output;
+  }
+  public function formatFeedEntry(array $entry, User $currentUser) {
+    /* TODO: make this work for comments posted on anime etc */
+    if ($currentUser->id != $this->parent()->id) {
+      $feedTitle = $this->user()->link("show", $this->user()->username)." to ".$this->parent()->link("show", $this->parent()->username).":";
+    } else {
+      $feedTitle = $this->user()->link("show", $this->user()->username)." to you:";
+    }
+    return array('title' => $feedTitle, 'text' => escape_output($this->message()));
   }
 }
 ?>

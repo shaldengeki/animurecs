@@ -5,7 +5,7 @@ class TagType extends BaseObject {
 
   protected $tags;
   protected $createdUser;
-  public function __construct($database, $id=Null) {
+  public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "tag_types";
     $this->modelPlural = "tagTypes";
@@ -24,7 +24,7 @@ class TagType extends BaseObject {
   public function name() {
     return $this->returnInfo('name');
   }
-  public function allow($authingUser, $action, $params=Null) {
+  public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       // case 'approve':
@@ -45,7 +45,7 @@ class TagType extends BaseObject {
         break;
     }
   }
-  public function create_or_update($tag_type, $currentUser=Null) {
+  public function create_or_update(array $tag_type, User $currentUser=Null) {
     // creates or updates a tag type based on the parameters passed in $tag_type and this object's attributes.
     // returns False if failure, or the ID of the tag type if success.
     // make sure tag type name adheres to standards.
@@ -117,7 +117,7 @@ class TagType extends BaseObject {
     // displays a tag type's profile.
     return;
   }
-  public function form($currentUser) {
+  public function form(User $currentUser) {
     $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>

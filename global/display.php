@@ -36,7 +36,7 @@ function escape_output($input) {
   return htmlspecialchars(html_entity_decode($input, ENT_QUOTES, "UTF-8"), ENT_QUOTES, "UTF-8");
 }
 
-function ago($dateInterval){
+function ago(DateInterval $dateInterval){
   $m = $dateInterval->s;
   if ($dateInterval->y > 0) {
     $o = $dateInterval->y."yr";
@@ -56,14 +56,13 @@ function ago($dateInterval){
   return $o;
 }
 
-function redirect_to($location, $params) {
-  $paramArray = [];
-  foreach ($params as $key=>$val) {
-    $paramArray[] = $key."=".$val;
+function redirect_to($location, array $params=Null) {
+  $paramString = "";
+  if ($params !== Null) {
+    $paramString = "?".http_build_query($params);
   }
-  $paramString = implode("&", $paramArray);
 
-  $redirect = "Location: ".$location."?".$paramString;
+  $redirect = "Location: ".$location.$paramString;
   header($redirect);
   exit;
 }
@@ -148,7 +147,7 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
     return $output;
 }
 
-function start_html($database, $user, $title="Animurecs", $subtitle="", $status="", $statusClass="") {
+function start_html(DbConn $database, User $user, $title="Animurecs", $subtitle="", $status="", $statusClass="") {
   echo "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
         'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>\n<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>\n<head>
 	<meta http-equiv='content-type' content='text/html; charset=utf-8' />
@@ -197,7 +196,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
         <ul class='nav pull-right'>\n";
   if ($user->loggedIn()) {
     echo "<li id='navbar-alerts'>\n";
-    if (count($user->friendRequests) > 0) {
+    if ($user->friendRequests) {
       echo "            <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'>".count($user->friendRequests)."</span></a>
               <ul class='dropdown-menu'>
                 ".$user->friendRequestsList()."
@@ -208,14 +207,14 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
           <li id='navbar-user' class='dropdown'>
             <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
-              ".$user->link("show", "Profile");
+              <li>".$user->link("show", "Profile")."</li>\n";
     if ($user->isAdmin() && !isset($user->switchedUser)) {
-      echo "            ".$user->link("switch_user", "Switch User")."\n";
+      echo "            <li>".$user->link("switch_user", "Switch User")."</li>\n";
     }
     if (isset($user->switchedUser) && is_numeric($user->switchedUser)) {
-      echo "            ".$user->link("switch_back", "Switch Back");
+      echo "            <li>".$user->link("switch_back", "Switch Back")."</li>\n";
     }
-    echo "              <a href='/logout.php'>Sign out</a>
+    echo "              <li><a href='/logout.php'>Sign out</a></li>
             </ul>\n";
   } else {
     echo "          <li>
@@ -287,7 +286,7 @@ function display_ok_notok_dropdown($select_id="ok_notok", $selected=0) {
                     <option value=0".((intval($selected) == 0) ? " selected='selected'" : "").">NOT OK</option>\n</select>\n";
 }
 
-function display_register_form($database, $action=".") {
+function display_register_form(DbConn $database, $action=".") {
   echo "    <form class='form-horizontal' name='register' method='post' action=".$_SERVER['SCRIPT_NAME'].">
       <fieldset>
         <legend>Signing up is easy! Fill in a few things...</legend>
@@ -325,7 +324,7 @@ function display_register_form($database, $action=".") {
     </form>\n";
 }
 
-function display_users($database, $user) {
+function display_users(DbConn $database, User $user) {
   //lists all users.
   $output = "<table class='table table-striped table-bordered dataTable'>
   <thead>
@@ -355,7 +354,7 @@ function display_users($database, $user) {
   return $output;
 }
 
-function display_anime($database, $user) {
+function display_anime(DbConn $database, User $user) {
   // lists all anime.
   $resultsPerPage = 25;
   $newAnime = new Anime($database, 0);
@@ -432,7 +431,7 @@ function tag_list($animes, $n=50) {
   return $output;
 }
 
-function display_recommendations($recsEngine, $user) {
+function display_recommendations(RecsEngine $recsEngine, User $user) {
   $recs = $recsEngine->recommend($user);
 
   $output = "<h1>Your Recs</h1>\n<ul class='recommendations'>\n";
@@ -449,7 +448,7 @@ function display_recommendations($recsEngine, $user) {
   return $output;
 }
 
-function display_tags($database, $user) {
+function display_tags(DbConn $database, User $user) {
   // lists all tags.
   $resultsPerPage = 25;
   $newTag = new Tag($database, 0);
@@ -487,7 +486,7 @@ function display_tags($database, $user) {
   return $output;
 }
 
-function display_tag_types($database, $user) {
+function display_tag_types(DbConn $database, User $user) {
   // lists all tag types.
   $newTagType = new TagType($database, 0);
   $output = "<table class='table table-striped table-bordered dataTable'>
@@ -516,7 +515,7 @@ function display_tag_types($database, $user) {
   return $output;
 }
 
-function display_tag_type_dropdown($database, $select_id="tag[tag_type_id]", $selected=0) {
+function display_tag_type_dropdown(DbConn $database, $select_id="tag[tag_type_id]", $selected=0) {
   $output = "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
   $allTypes = $database->stdQuery("SELECT `id`, `name` FROM `tag_types` ORDER BY `name` ASC");
   while ($type = $allTypes->fetch_assoc()) {
@@ -535,7 +534,7 @@ function display_user_roles_select($select_id="user[usermask][]", $mask=0) {
   return $output;
 }
 
-function display_userlevel_dropdown($database, $select_id="userlevel", $selected=0) {
+function display_userlevel_dropdown(DbConn $database, $select_id="userlevel", $selected=0) {
   $output = "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
   for ($userlevel = 0; $userlevel <= 3; $userlevel++) {
     $output .= "  <option value='".intval($userlevel)."'".(($selected == intval($userlevel)) ? "selected='selected'" : "").">".escape_output(convert_userlevel_to_text($userlevel))."</option>\n";
@@ -544,10 +543,10 @@ function display_userlevel_dropdown($database, $select_id="userlevel", $selected
   return $output;
 }
 
-function display_user_edit_form($database, $user, $id=false) {
+function display_user_edit_form(DbConn $database, User $user, $id=false) {
 }
 
-function display_history_json($database, $user, $fields = array(), $machines=array()) {
+function display_history_json(DbConn $database, User $user, array $fields = array(), array $machines=array()) {
   header('Content-type: application/json');
   $return_array = array();
   
@@ -578,7 +577,7 @@ function display_history_json($database, $user, $fields = array(), $machines=arr
   echo json_encode($return_array);
 }
 
-function display_history_plot($database, $user, $form_id) {
+function display_history_plot(DbConn $database, User $user, $form_id) {
   //displays plot for a particular form.
   $formObject = $database->queryFirstRow("SELECT * FROM `forms` WHERE `id` = ".intval($form_id)." LIMIT 1");
   if (!$formObject) {

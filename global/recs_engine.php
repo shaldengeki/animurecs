@@ -14,7 +14,7 @@ class RecsEngine {
       return $this->$property;
     }
   }
-  public function get($model, $id, $action, $params=Null, $json=True) {
+  public function get($model, $id, $action, array $params=Null, $json=True) {
     if ($params === Null) {
       $requestFields = "";
     } else {
@@ -25,13 +25,13 @@ class RecsEngine {
     // return hitPage($this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$params);
     return $page ? ($json ? json_decode($page) : $page) : False;
   }
-  public function animeAverage($anime) {
+  public function animeAverage(Anime $anime) {
     return $this->get("anime", $anime->id, "average", Null, False);
   }
-  public function animeFeatures($anime) {
+  public function animeFeatures(Anime $anime) {
     return $this->get("anime", $anime->id, "features");
   }
-  public function userFeatures($user) {
+  public function userFeatures(User $user) {
     return $this->get("user", $user->id, "features");
   }
   /*
@@ -54,18 +54,18 @@ class RecsEngine {
     return $this->get("user", $user->id, "updateFeatures", array('ratings' => $ratings));
   }
   */
-  public function predict($user, $anime) {
+  public function predict(User $user, Anime $anime) {
     // fetches the predicted score for user and anime object pairs.
     return floatval($this->get("user", $user->id, "predict", array('anime' => intval($anime->id))));
   }
-  public function recommend($user, $n=20) {
+  public function recommend(User $user, $n=20) {
     return $this->get("user", $user->id, "recommend", array('n' => intval($n)));
   }
-  public function similarAnime($anime, $n=20) {
+  public function similarAnime(Anime $anime, $n=20) {
     // fetches the top n most feature-similar anime for a given anime.
     return $this->get("anime", $anime->id, "similar", array('n' => intval($n)));
   }
-  public function similarUsers($user, $n=20) {
+  public function similarUsers(User $user, $n=20) {
     // fetches the top n most feature-similar users for a given user.
     return $this->get("user", $user->id, "similar", array('n' => intval($n)));
   }

@@ -19,7 +19,7 @@ class User extends BaseObject {
   protected $ownComments;
   protected $profileComments;
 
-  public function __construct($database, $id=Null) {
+  public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "users";
     $this->modelPlural = "users";
@@ -172,7 +172,7 @@ class User extends BaseObject {
     }
     return $this->profileComments;
   }
-  public function allow($authingUser, $action, $params=Null) {
+  public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'mal_import':
@@ -317,7 +317,7 @@ class User extends BaseObject {
     }
     return True;
   }
-  public function requestFriend($requestedUser, $request) {
+  public function requestFriend(User $requestedUser, array $request) {
     // generates a friend request from the current user to requestedUser.
     // returns a boolean.
     $params = [];
@@ -344,7 +344,7 @@ class User extends BaseObject {
       return False;
     }
   }
-  public function confirmFriend($requestedUser) {
+  public function confirmFriend(User $requestedUser) {
     // confirms a friend request from requestedUser directed at the current user.
     // returns a boolean.
     // check to see if this already exists in friends or requests.
@@ -360,7 +360,7 @@ class User extends BaseObject {
       return False;
     }
   }
-  public function create_or_update($user, $currentUser=Null) {
+  public function create_or_update(array $user, User $currentUser=Null) {
     // creates or updates a user based on the parameters passed in $user and this object's attributes.
     // returns False if failure, or the ID of the user if success.
 
@@ -392,7 +392,7 @@ class User extends BaseObject {
       // process uploaded image.
       $file_array = $_FILES['avatar_image'];
       $imagePath = "";
-      if (!empty($file_array['tmp_name']) && is_uploaded_file($file_array['tmp_name'])) {
+      if ($file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
         if ($file_array['error'] != UPLOAD_ERR_OK) {
           return False;
         }
@@ -441,11 +441,11 @@ class User extends BaseObject {
     }
 
     // now process anime entries.
-    // TODO
+    // TODO ?_?
 
     return intval($this->id);
   }
-  public function delete($entries=False) {
+  public function delete(array $entries=Null) {
     // delete this user from the database.
     // returns a boolean.
 
@@ -454,7 +454,7 @@ class User extends BaseObject {
     if (!$deleteList) {
       return False;
     }
-    return parent::delete($this->id);
+    return parent::delete();
   }
   public function isModerator() {
     if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
@@ -507,63 +507,28 @@ class User extends BaseObject {
     } 
     return $output;
   }
-  public function feed($entries, $currentUser) {
-    // returns an array of animeList entries, in time-and-text format.
-    // TODO: rename this to something anime-specific.
-    $output = [];
-    foreach ($entries as $entry) {
-      $output[] = array('time' => strtotime($entry['time']), 'text' => $this->animeList()->feedEntry($entry, $this, $currentUser));
+  public function profileFeed(User $currentUser, DateTime $maxTime=Null, $numEntries=50) {
+    // returns markup for this user's profile feed.
+    $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
+    foreach ($this->profileComments() as $comment) {
+      $feedEntries[] = array('id' => $comment->id, 'object' => $comment, 'user' => $comment->user, 'time' => $comment->createdAt);
     }
-    return $output;
+    return $this->animeList()->feed($feedEntries, $currentUser, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
-  public function globalFeed($maxTime=Null, $numEntries=50) {
+  public function globalFeed(DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's global feed.
 
     // add each user's personal feeds to the total feed.
-    $myEntries = $this->animeList()->entries($maxTime, $numEntries);
-    $feedEntries = $this->feed($myEntries, $this);
-    foreach ($this->friends() as $friend) {
-      $feedEntries = array_merge($feedEntries, $friend['user']->feed($friend['user']->animeList()->entries($maxTime, $numEntries), $this));
-    }
-
-    // sort by key and grab only the latest numEntries.
-    $feedEntries = array_sort_by_key($feedEntries, 'time', 'desc');
-    $feedEntries = array_slice($feedEntries, 0, $numEntries);
-    $output = "<ul class='userFeed'>\n";
-    if (count($feedEntries) == 0) {
-      $output .= "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n";
-    }
-    $feedOutput = [];
-    foreach ($feedEntries as $entry) {
-      $feedOutput[] = $entry['text'];
-    }
-    $output .= implode("\n", $feedOutput);
-    $output .= "</ul>\n";
-    return $output;
-  }
-  public function profileFeed($currentUser, $maxTime=Null,$numEntries=50) {
-    // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
-
-    $output = "<ul class='userFeed'>\n";
-    if (count($feedEntries) == 0 && $currentUser->id === $this->id) {
-      $output .= "<blockquote><p>No entries yet - add some above!</p></blockquote>\n";
+    foreach ($this->friends() as $friend) {
+      $feedEntries = array_merge($feedEntries, $friend['user']->animeList()->entries($maxTime, $numEntries));
+      foreach ($friend['user']->ownComments() as $comment) {
+        $feedEntries[] = array('id' => $comment->id, 'object' => $comment, 'user' => $comment->user, 'time' => $comment->createdAt);
+      }
     }
-    $feedEntries = $this->feed($feedEntries, $currentUser);
-    foreach ($this->profileComments() as $comment) {
-      // TODO: Make this pretty, refactor feedEntry in animeList to more general method.
-      $feedEntries[] = array('time' => $comment->createdAt->format('U'), 'text' => escape_output($comment->user->username())." said: ".escape_output($comment->message));
-    }
-    $feedEntries = array_sort_by_key($feedEntries, 'time', 'desc');
-    $feedOutput = [];
-    foreach ($feedEntries as $entry) {
-      $feedOutput[] = $entry['text'];
-    }
-    $output .= implode("\n", $feedOutput);
-    $output .= "</ul>\n";
-    return $output;
+    return $this->animeList()->feed($feedEntries, $this, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
   }
-  public function animeListSection($status, $currentUser) {
+  public function animeListSection($status, User $currentUser) {
     // returns markup for one status section of a user's anime list.
     $statusStrings = array(1 => array('id' => 'currentlyWatching', 'title' => 'Currently Watching'),
                           2 => array('id' => 'completed', 'title' => 'Completed'),
@@ -605,7 +570,7 @@ class User extends BaseObject {
         </table>      </div>\n";
     return $output;
   }
-  public function displayAnimeList($currentUser) {
+  public function displayAnimeList(User $currentUser) {
     // returns markup for this user's anime list.
     $output = "";
     $output .= $this->animeListSection(1, $currentUser);
@@ -633,7 +598,7 @@ class User extends BaseObject {
         </div>
       </fieldset>\n</form>\n";
   }
-  public function profile($currentUser) {
+  public function profile(User $currentUser) {
     // displays a user's profile.
     // info header.
     $output = "     <div class='row-fluid'>
@@ -650,7 +615,7 @@ class User extends BaseObject {
             </li>
           </ul>
           <div class='friendListBox'>
-            <h3>Friends".((count($this->friends()) > 0) ? " (".count($this->friends()).") " : "")."</h3>
+            <h3>Friends".($this->friends() ? " (".count($this->friends()).") " : "")."</h3>
             <ul class='friendGrid'>\n";
     $friendSlice = $this->friends();
     shuffle($friendSlice);
@@ -734,7 +699,7 @@ class User extends BaseObject {
       </div>\n";
     return $output;
   }
-  public function form($currentUser) {
+  public function form(User $currentUser) {
     $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
       <fieldset>
         <div class='control-group'>

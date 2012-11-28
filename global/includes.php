@@ -5,6 +5,7 @@ include_once("./global/bcrypt.php");
 include_once("./global/database.php");
 include_once("./global/curl.php");
 include_once("./global/base_object.php");
+include_once("./global/feedable.php");
 include_once("./global/base_list.php");
 include_once("./global/tag_type.php");
 include_once("./global/tag.php");
@@ -16,7 +17,6 @@ include_once("./global/recs_engine.php");
 
 include_once("./global/display.php");
 include_once("./global/misc.php");
-
 session_start();
 $database = new DbConn(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE);
 $recsEngine = new RecsEngine(RECS_ENGINE_HOST, RECS_ENGINE_PORT);

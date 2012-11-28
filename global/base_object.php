@@ -5,12 +5,12 @@ class BaseObject {
 
   protected $modelTable;
   protected $modelPlural;
-  protected $className;
+  protected $modelName;
 
-  public function __construct($database, $id=Null) {
+  public function __construct(DbConn $database, $id=Null) {
     $this->dbConn = $database;
     $this->id = intval($id);
-    $this->className = get_class($this);
+    $this->modelName = $this->modelPlural = $this->modelTable = Null;
   }
   public function __get($property) {
     // A property accessor exists
@@ -19,6 +19,12 @@ class BaseObject {
     } elseif (property_exists($this, $property)) {
       return $this->$property;
     }
+  }
+  public function modelName() {
+    if ($this->modelName === Null) {
+      $this->modelName = get_class($this);
+    }
+    return $this->modelName;
   }
   private function humanizeParameter($parameter) {
     // takes a parameter name like created_at
@@ -31,6 +37,7 @@ class BaseObject {
     return $newName;
   }
   public function getInfo() {
+    // retrieves (from the database) all properties of this object in the object's table.
     $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
     if (!$info) {
       throw new Exception('ID Not Found');
@@ -49,14 +56,14 @@ class BaseObject {
     }
     return $this->$param;
   }
-  public function allow($authingUser, $action, $params=Null) {
+  public function allow(User $authingUser, $action, array $params=Null) {
     // by default, don't let anybody do anything unless they're staff, in which case allow them to do everything.
     if ($authingUser->isModerator() || $authingUser->isAdmin()) {
       return True;
     }
     return False;
   }
-  public function create_or_update($object, $currentUser=Null) {
+  public function create_or_update(array $object, User $currentUser=Null) {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.
     // returns False if failure, or the ID of the object if success.
@@ -89,25 +96,25 @@ class BaseObject {
     }
     return $this->id;
   }
-  public function delete($entries=False) {
+  public function delete(array $entries=Null) {
     /*
       Deletes objects from the database.
       Takes an array of objects IDs as the input, defaulting to just this object.
       Returns a boolean.
     */
-    if ($entries === False) {
+    if ($entries === Null) {
       $entries = intval($this->id);
     }
     if (is_numeric($entries)) {
       $entries = [intval($entries)];
     }
-    $entryIDs = array();
+    $entryIDs = [];
     foreach ($entries as $entry) {
       if (is_numeric($entry)) {
         $entryIDs[] = intval($entry);
       }
     }
-    if (count($entryIDs) > 0) {
+    if ($entryIDs) {
       $dropEntries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$dropEntries) {
         return False;
@@ -115,7 +122,7 @@ class BaseObject {
     }
     return True;
   }
-  public function url($action="show", $params=Null, $id=Null) {
+  public function url($action="show", array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
     if ($id === Null) {
       $id = intval($this->id);
@@ -128,7 +135,7 @@ class BaseObject {
     }
     return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".implode("&", $urlParams) : "");
   }
-  public function link($action="show", $text="Show", $raw=False, $params=Null, $urlParams=Null, $id=Null) {
+  public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
     if (is_array($params)) {

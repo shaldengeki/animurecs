@@ -1,6 +1,7 @@
 <?php
 class BaseList extends BaseObject {
   // base list from which anime and manga lists inherit methods and properties.
+  use Feedable;
 
   public $user_id;
   protected $user;
@@ -11,9 +12,9 @@ class BaseList extends BaseObject {
 
   protected $entries, $uniqueList;
 
-  protected $partName, $modelTable, $modelPlural, $listType, $listTypeLower, $typeVerb, $typeID;
+  protected $partName, $modelTable, $modelPlural, $listType, $listTypeLower, $typeVerb, $typeID, $feedType;
 
-  public function __construct($database, $user_id=Null) {
+  public function __construct(DbConn $database, $user_id=Null) {
     parent::__construct($database, $user_id);
     $this->modelTable = "";
     $this->modelPlural = "";
@@ -21,6 +22,7 @@ class BaseList extends BaseObject {
     $this->listType = "";
     $this->typeVerb = "";
     $this->listTypeLower = strtolower($this->listType);
+    $this->feedType = "";
     $this->typeID = $this->listTypeLower.'_id';
     // strings with which to build feed messages.
     // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
@@ -50,7 +52,7 @@ class BaseList extends BaseObject {
       $this->entries = $this->uniqueList = Null;
     }
   }
-  public function create_or_update($entry, $currentUser=Null) {
+  public function create_or_update(array $entry, User $currentUser=Null) {
     /*
       Creates or updates an existing list entry for the current user.
       Takes an array of entry parameters.
@@ -107,25 +109,25 @@ class BaseList extends BaseObject {
     $this->entries[intval($returnValue)] = $entry;
     return $returnValue;
   }
-  public function delete($entries=False) {
+  public function delete(array $entries=Null) {
     /*
       Deletes list entries.
       Takes an array of entry ids as input, defaulting to all entries.
       Returns a boolean.
     */
-    if ($entries === False) {
+    if ($entries === Null) {
       $entries = array_keys($this->entries());
     }
     if (is_numeric($entries)) {
       $entries = [intval($entries)];
     }
-    $entryIDs = array();
+    $entryIDs = [];
     foreach ($entries as $entry) {
       if (is_numeric($entry)) {
         $entryIDs[] = intval($entry);
       }
     }
-    if (count($entryIDs) > 0) {
+    if ($entryIDs) {
       $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$drop_entries) {
         return False;
@@ -158,10 +160,12 @@ class BaseList extends BaseObject {
   }
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
-    $returnList = $this->dbConn->queryAssoc("SELECT `id`, `".$this->typeID."`, `time`, `status`, `score`, `".$this->partName."` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC", "id");
+    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $returnList = $this->dbConn->queryAssoc("SELECT `id`, `".$this->typeID."`, `user_id`, `time`, `status`, `score`, `".$this->partName."` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC", "id");
     $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryCount = count($returnList);
     foreach ($returnList as $key=>$entry) {
+      $returnList[$key]['time'] = new DateTime($entry['time'], $serverTimezone);
       $returnList[$key][$this->listTypeLower] = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
       unset($returnList[$key][$this->typeID]);
       $entrySum += intval($entry['score']);
@@ -175,38 +179,6 @@ class BaseList extends BaseObject {
       $this->entryStdDev = pow($entrySum / ($entryCount - 1), 0.5);
     }
     return $returnList;
-  }
-  public function entries($maxTime=Null, $limit=Null) {
-    if ($this->entries === Null) {
-      $this->entries = $this->getEntries();
-    }
-    if ($maxTime !== Null || $limit !== Null) {
-      // Returns a list of up to $limit entries up to $maxTime.
-      $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-      $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-      if ($maxTime === Null) {
-        $nowTime = new DateTime();
-        $nowTime->setTimezone($outputTimezone);
-        $maxTime = $nowTime;
-      }
-      $returnList = [];
-      $entryCount = 0;
-      foreach ($this->entries() as $entry) {
-        $entryDate = new DateTime($value['time'], $serverTimezone);
-        if ($entryDate > $maxTime) {
-          continue;
-        }
-        $entry['user_id'] = intval($this->user_id);
-        $returnList[] = $entry;
-        $entryCount++;
-        if ($limit !== Null && $entryCount >= $limit) {
-          return $returnList;
-        }
-      }
-      return $returnList;
-    } else {
-      return $this->entries;
-    }
   }
   public function getUniqueList() {
     // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
@@ -257,13 +229,11 @@ class BaseList extends BaseObject {
       return (($status !== Null && intval($value['status']) === $status) || ($score !== Null && intval($value['score']) === $score));
     });
   }
-  public function prevEntry($id, $beforeTime) {
+  public function prevEntry($id, DateTime $beforeTime) {
     // Returns the previous entry in this user's entry list for $this->typeID and before $beforeTime.
     $prevEntry = array('status' => 0, 'score' => 0, $this->partName => 0);
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     foreach ($this->entries() as $entry) {
-      $entryDate = new DateTime($entry['time'], $serverTimezone);
-      if ($entryDate >= $beforeTime) {
+      if ($entry['time'] >= $beforeTime) {
         continue;
       }
       if ($entry[$this->listTypeLower]->id == $id) {
@@ -272,16 +242,15 @@ class BaseList extends BaseObject {
     }
     return $prevEntry;
   }
-  public function feedEntry($entry, $user, $currentUser) {
+  public function formatFeedEntry(array $entry, User $currentUser) {
     // fetch the previous feed entry and compare values against current entry.
 
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
 
-    $entryTime = new DateTime($entry['time'], $serverTimezone);
-    $diffInterval = $nowTime->diff($entryTime);
-    $prevEntry = $this->prevEntry($entry[$this->listTypeLower]->id, $entryTime);
+    $diffInterval = $nowTime->diff($entry['time']);
+    $prevEntry = $this->prevEntry($entry[$this->listTypeLower]->id, $entry['time']);
 
     $statusChanged = (bool) ($entry['status'] != $prevEntry['status']);
     $scoreChanged = (bool) ($entry['score'] != $prevEntry['score']);
@@ -307,30 +276,16 @@ class BaseList extends BaseObject {
     $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
     $statusText = str_replace("[PART]", $entry[$this->partName], $statusText);
     $statusText = str_replace("[TOTAL_PARTS]", $entry[$this->listTypeLower]->{$this->partName."Count"}, $statusText);
-    $statusText = ucfirst($statusText);
+    $statusText = ucfirst($statusText).".";
 
-    $output = "";
-    if ($statusText != '') {
-      $output .= "  <li class='feedEntry row-fluid'>
-        <div class='feedDate' data-time='".$entryTime->format('U')."'>".ago($diffInterval)."</div>
-        <div class='feedAvatar'>".$user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($user->avatarPath))."' />", True)."</div>
-        <div class='feedText'>
-          <div class='feedUser'>".$user->link("show", $user->username)."</div>
-          ".$statusText.".\n";
-      if ($this->allow($currentUser, 'delete')) {
-        $output .= "            <ul class='feedEntryMenu hidden'><li>".$this->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($this->user()->id)), intval($entry['id']))."</li></ul>";
-      }
-      $output .= "          </div>
-      </li>\n";
-    }
-    return $output;
+    return array('title' => $entry['user']->link("show", $entry['user']->username), 'text' => $statusText);
   }
-  public function link($action="show", $text=Null, $raw=False, $params=Null, $urlParams=Null, $id=Null) {
+  public function link($action="show", $text=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.
     $text = ($text === Null) ? "List" : $text;
     return parent::link($action, $text, $raw, $params, $urlParams, $id);
   }
-  public function similarity($currentList) {
+  public function similarity(BaseList $currentList) {
     // calculates pearson's r between this list and the current user's list.
     if ($this->uniqueListStdDev() == 0 || $currentList->uniqueListStdDev() == 0) {
       return False;
@@ -347,7 +302,7 @@ class BaseList extends BaseObject {
     }
     return $similaritySum / ($this->uniqueListStdDev() * $currentList->uniqueListStdDev() * ($similarityCount - 1));
   }
-  public function compatibilityBar($currentList) {
+  public function compatibilityBar(BaseList $currentList) {
     // returns markup for a compatibility bar between this list and the current user's list.
     $compatibility = $this->similarity($currentList);
     if ($compatibility === False) {
