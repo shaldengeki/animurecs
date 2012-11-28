@@ -276,34 +276,32 @@ class User extends BaseObject {
     return array("location" => "/feed.php", "status" => "Successfully logged in.", 'class' => 'success');
   }
   public function register($username, $email, $password, $password_confirmation) {
-    //check if user's passwords match.
+    //check if user's passwords match and are of sufficient length.
     if ($password != $password_confirmation) {
-        $returnArray = array("location" => "/register.php", "status" => "Your passwords do not match. Please try again.");      
-    } else {
-      //check if email is well-formed.
-      $email_regex = "/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/";
-      if (!preg_match($email_regex, $email)) {
-        $returnArray = array("location" => "/register.php", "status" => "The email address you have entered is malformed. Please check it and try again.");
-      } else {
-        //check if user is already registered.
-        $checkNameEmail = intval($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE (`username` = ".$this->dbConn->quoteSmart($username)." || `email` = ".$this->dbConn->quoteSmart($email).")"));
-        if ($checkNameEmail > 0) {
-          $returnArray = array("location" => "/register.php", "status" => "Your username or email has previously been registered. Please try logging in.");
-        } else {
-          //register this user.
-          $bcrypt = new Bcrypt();
-          $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `about` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = NOW(), `created_at` = NOW(), `avatar_path` = ''");
-          if (!$registerUser) {
-            $returnArray = array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
-          } else {
-            $_SESSION['id'] = intval($this->dbConn->insert_id);
-            $this->id = $_SESSION['id'];
-            $returnArray = array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
-          }
-        }
-      }
+        return array("location" => "/register.php", "status" => "Your passwords do not match. Please try again.");      
     }
-    return $returnArray;
+    if (strlen($password) < 6) {
+      return array("location" => "/register.php", "status" => "Your password must be at least 6 characters long.")
+    }
+    //check if email is well-formed.
+    $email_regex = "/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/";
+    if (!preg_match($email_regex, $email)) {
+      return array("location" => "/register.php", "status" => "The email address you have entered is malformed. Please check it and try again.");
+    }
+    //check if user is already registered.
+    $checkNameEmail = intval($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE (`username` = ".$this->dbConn->quoteSmart($username)." || `email` = ".$this->dbConn->quoteSmart($email).")"));
+    if ($checkNameEmail > 0) {
+      return array("location" => "/register.php", "status" => "Your username or email has previously been registered. Please try another username.");
+    }
+    //register this user.
+    $bcrypt = new Bcrypt();
+    $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `about` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = NOW(), `created_at` = NOW(), `avatar_path` = ''");
+    if (!$registerUser) {
+      return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
+    }
+    $_SESSION['id'] = intval($this->dbConn->insert_id);
+    $this->id = $_SESSION['id'];
+    return array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
   }
   public function importMAL($malUsername) {
     // imports a user's MAL lists.
@@ -702,7 +700,7 @@ class User extends BaseObject {
       $animeList = new AnimeList($this->dbConn, 0);
       $anime = new Anime($this->dbConn, 0);
       $output .= "                <div class='addListEntryForm'>
-                  <form class='form-inline' action='".$animeList->url("new", "user_id=".intval($this->id))."' method='POST'>
+                  <form class='form-inline' action='".$animeList->url("new", array("user_id" => intval($this->id)))."' method='POST'>
                     <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
                     <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
                     <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
