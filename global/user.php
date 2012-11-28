@@ -208,7 +208,7 @@ class User extends BaseObject {
         return False;
         break;
       case 'comment':
-        if ($authingUser->loggedIn()) {
+        if ($authingUser->loggedIn() && $authingUser->id != $this->id) {
           return True;
         }
         return False;
@@ -661,7 +661,7 @@ class User extends BaseObject {
             </ul>
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>\n";
-    if ($this->id == $currentUser->id) {
+    if ($this->animeList()->allow($currentUser, 'edit')) {
       $animeList = new AnimeList($this->dbConn, 0);
       $anime = new Anime($this->dbConn, 0);
       $output .= "                <div class='addListEntryForm'>
@@ -681,8 +681,9 @@ class User extends BaseObject {
                     <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
                   </form>
                 </div>\n";
-    } else {
-      $blankComment = new Comment($this->dbConn, 0);
+    }
+    $blankComment = new Comment($this->dbConn, 0, $currentuser, $this);
+    if ($blankComment->allow($currentUser, 'new')) {
       $output .= "                <div class='addListEntryForm'>
                   ".$blankComment->inlineForm($currentUser, $this)."
                 </div>\n";

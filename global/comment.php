@@ -73,7 +73,7 @@ class Comment extends BaseObject {
         return False;
         break;
       case 'new':
-        // if user is logged in, and either this has 
+        // if user is logged in and this user has perms to comment on the parent, allow them to post a new comment.
         if ($authingUser->loggedIn() && $this->parent()->allow($authingUser, 'comment')) {
           return True;
         }
