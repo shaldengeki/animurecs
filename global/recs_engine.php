@@ -23,7 +23,7 @@ class RecsEngine {
     $url = "http://".$this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$requestFields;
     $page = hitPage($url);
     // return hitPage($this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$params);
-    return ($json ? json_decode($page) : $page);
+    return $page ? ($json ? json_decode($page) : $page) : False;
   }
   public function animeAverage($anime) {
     return $this->get("anime", $anime->id, "average", Null, False);

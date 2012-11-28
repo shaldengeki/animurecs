@@ -2,7 +2,7 @@
 include_once("global/includes.php");
 
 if (!$user->loggedIn()) {
-  header("Location: /");
+  header("Location: /?redirect_to=/feed.php");
 }
 start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST['class']);
 ?>

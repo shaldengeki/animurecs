@@ -7,7 +7,7 @@ if (intval($_REQUEST['user_id']) === $user->id) {
   try {
     $targetUser = new User($database, intval($_REQUEST['user_id']));
   } catch (Exception $e) {
-    redirect_to(array('location' => $user->url(), 'status' => "This user ID doesn't exist.", 'class' => 'error'));
+    redirect_to($user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
   }
 }
 $location = $targetUser->url();
@@ -90,5 +90,5 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
       break;
   }
 }
-redirect_to(array('location' => $location, 'status' => $status, 'class' => $class));
+redirect_to($location, array('status' => $status, 'class' => $class));
 ?>

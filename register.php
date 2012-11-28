@@ -5,7 +5,9 @@ if ($user->loggedIn()) {
 }
 if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['password']) && isset($_POST['password_confirmation'])) {
   $registerUser = $user->register($_POST['username'], $_POST['email'], $_POST['password'], $_POST['password_confirmation']);
-  redirect_to($registerUser);
+  $location = $registerUser['location'];
+  unset($registerUser['location']);
+  redirect_to($location, $registerUser);
 } else {
   start_html($database, $user, "Animurecs", "", $_REQUEST['status']);
 ?>

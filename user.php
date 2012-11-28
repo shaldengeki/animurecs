@@ -16,33 +16,33 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
   switch($_REQUEST['action']) {
     case 'request_friend':
       if ($targetUser->id === $user->id) {
-        redirect_to(array('location' => $user->url("show"), 'status' => "You can't befriend yourself, silly!"));
+        redirect_to($user->url("show"), array('status' => "You can't befriend yourself, silly!"));
       }
       $requestFriend = $user->requestFriend($targetUser, $_POST['friend_request']);
       if ($requestFriend) {
-        redirect_to(array('location' => $targetUser->url("show"), 'status' => "Your friend request has been sent to ".urlencode($targetUser->username).".", 'class' => 'success'));
+        redirect_to($targetUser->url("show"), array('status' => "Your friend request has been sent to ".urlencode($targetUser->username).".", 'class' => 'success'));
       } else {
-        redirect_to(array('location' => $targetUser->url("show"), 'status' => 'An error occurred while requesting this friend. Please try again.', 'class' => 'error'));
+        redirect_to($targetUser->url("show"), array('status' => 'An error occurred while requesting this friend. Please try again.', 'class' => 'error'));
       }
       break;
     case 'confirm_friend':
       $confirmFriend = $user->confirmFriend($targetUser);
       if ($confirmFriend) {
-        redirect_to(array('location' => $targetUser->url("show"), 'status' => "Hooray! You're now friends with ".urlencode($targetUser->username).".", 'class' => 'success'));
+        redirect_to($targetUser->url("show"), array('status' => "Hooray! You're now friends with ".urlencode($targetUser->username).".", 'class' => 'success'));
       } else {
-        redirect_to(array('location' => $targetUser->url("show"), 'status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
+        redirect_to($targetUser->url("show"), array('status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
       }
       break;
     case 'mal_import':
       // import a MAL list for this user.
       if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {
-        redirect_to(array('location' => $targetUser->url("edit"), 'status' => 'Please enter a MAL username.'));
+        redirect_to($targetUser->url("edit"), array('status' => 'Please enter a MAL username.'));
       }
       $importMAL = $targetUser->importMAL($_POST['user']['mal_username']);
       if ($importMAL) {
-        redirect_to(array('location' => $targetUser->url("show"), 'status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
+        redirect_to($targetUser->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => $targetUser->url("edit"), 'status' => 'An error occurred while importing your MAL. Please try again.', 'class' => 'error'));
+        redirect_to($targetUser->url("edit"), array('status' => 'An error occurred while importing your MAL. Please try again.', 'class' => 'error'));
       }
       break;
     case 'switch_back':
@@ -69,36 +69,36 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
           $targetUser = new User($database, intval($_POST['user']['id']));
         } catch (Exception $e) {
           // this non-zero userID does not exist.
-          redirect_to(array('location' => '/users/', 'status' => 'This user ID does not exist.', 'class' => 'error'));
+          redirect_to('/users/', array('status' => 'This user ID does not exist.', 'class' => 'error'));
         }
         if ($targetUser->id === 0) {
           // check to ensure this username hasn't already been taken.
           $checkUsername = $database->queryCount("SELECT COUNT(*) FROM `users` WHERE `username` = ".$database->quoteSmart($_POST['user']['username'])." LIMIT 1");
           if ($checkUsername > 0) {
-            redirect_to(array('location' => $targetUser->url("new"), 'status' => "This username has already been taken.", 'class' => 'error'));
+            redirect_to($targetUser->url("new"), array('status' => "This username has already been taken.", 'class' => 'error'));
           }
           // check to ensure this email hasn't already been taken.
           $checkEmail = $database->queryCount("SELECT COUNT(*) FROM `users` WHERE `email` = ".$database->quoteSmart($_POST['user']['email'])." LIMIT 1");
           if ($checkEmail > 0) {
-            redirect_to(array('location' => $targetUser->url("new"), 'status' => "This email has already been taken.", 'class' => 'error'));
+            redirect_to($targetUser->url("new"), array('status' => "This email has already been taken.", 'class' => 'error'));
           }
           $authStatus = $targetUser->allow($user, 'new');
         } else {
           $authStatus = $targetUser->allow($user, 'edit');
         }
         if (!$authStatus) {
-          redirect_to(array('location' => $targetUser->url("new"), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+          redirect_to($targetUser->url("new"), array('status' => "You're not allowed to do this.", 'class' => 'error'));
         }
         // check to ensure userlevels aren't being elevated beyond this user's abilities.
         if (isset($_POST['user']['usermask']) && intval($_POST['user']['usermask']) > 1 && intval($_POST['user']['usermask']) >= $user->usermask) {
-          redirect_to(array('location' => $targetUser->url("new"), 'status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
+          redirect_to($targetUser->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
         }
 
         $updateUser = $targetUser->create_or_update($_POST['user'], $user);
         if ($updateUser) {
-          redirect_to(array('location' => $targetUser->url("show"), 'status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
+          redirect_to($targetUser->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
         } else {
-          redirect_to(array('location' => ($targetUser->id === 0 ? $targetUser->url("new") : $targetUser->url("edit")), 'status' => "An error occurred while creating or updating this user.", 'class' => 'error'));
+          redirect_to(($targetUser->id === 0 ? $targetUser->url("new") : $targetUser->url("edit")), array('status' => "An error occurred while creating or updating this user.", 'class' => 'error'));
         }
       }
       if ($targetUser->id === 0) {
@@ -146,9 +146,9 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
       $username = $targetUser->username;
       $deleteUser = $targetUser->delete();
       if ($deleteUser === True) {
-        redirect_to(array('location' => '/users/', 'status' => 'Successfully deleted '.urlencode($username).'.', 'class' => 'success'));
+        redirect_to('/users/', array('status' => 'Successfully deleted '.urlencode($username).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => $targetUser->url("show"), 'status' => 'An error occurred while deleting '.urlencode($username).'.', 'class' => 'error'));
+        redirect_to($targetUser->url("show"), array('status' => 'An error occurred while deleting '.urlencode($username).'.', 'class' => 'error'));
       }
       break;
     default:

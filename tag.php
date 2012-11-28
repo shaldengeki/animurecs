@@ -7,7 +7,7 @@ if (isset($_POST['tag']) && is_array($_POST['tag'])) {
     $targetTag = new Tag($database, intval($_POST['tag']['id']));
   } catch (Exception $e) {
     // this non-zero tagID does not exist.
-    redirect_to(array('location' => "/tags/", 'status' => 'This tag ID does not exist.', 'class' => 'error'));
+    redirect_to("/tags/", array('status' => 'This tag ID does not exist.', 'class' => 'error'));
   }
   if ($targetTag->id === 0) {
     $authStatus = $targetTag->allow($user, 'new');
@@ -15,13 +15,13 @@ if (isset($_POST['tag']) && is_array($_POST['tag'])) {
     $authStatus = $targetTag->allow($user, 'edit');
   }
   if (!$authStatus) {
-    redirect_to(array('location' => ($targetTag->id === 0 ? $targetTag->url("index") : $targetTag->url("show")), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+    redirect_to(($targetTag->id === 0 ? $targetTag->url("index") : $targetTag->url("show")), array('status' => "You're not allowed to do this.", 'class' => 'error'));
   }
   $updateTag = $targetTag->create_or_update($_POST['tag'], $user);
   if ($updateTag) {
-    redirect_to(array('location' => $targetTag->url("show"), 'status' => "Successfully updated.", 'class' => 'success'));
+    redirect_to($targetTag->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
   } else {
-    redirect_to(array('location' => ($targetTag->id === 0 ? $targetTag->url("new") : $targetTag->url("show")), 'status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
+    redirect_to(($targetTag->id === 0 ? $targetTag->url("new") : $targetTag->url("show")), array('status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
   }
 }
 
@@ -74,9 +74,9 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
       $tagName = $targetTag->name;
       $deleteTag = $targetTag->delete();
       if ($deleteTag) {
-        redirect_to(array('location' => '/tags/', 'status' => 'Successfully deleted '.urlencode($tagName).'.', 'class' => 'success'));
+        redirect_to('/tags/', array('status' => 'Successfully deleted '.urlencode($tagName).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => $targetTag->url("show"), 'status' => 'An error occurred while deleting '.urlencode($tagName).'.', 'class' => 'error'));
+        redirect_to($targetTag->url("show"), array('status' => 'An error occurred while deleting '.urlencode($tagName).'.', 'class' => 'error'));
       }
       break;
     default:

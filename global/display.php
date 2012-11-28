@@ -56,19 +56,14 @@ function ago($dateInterval){
   return $o;
 }
 
-function redirect_to($redirect_array) {
-  $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : '/';
-  $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
-  $class = (isset($redirect_array['class'])) ? $redirect_array['class'] : '';
-  
-  $redirect = "Location: ".$location;
-  if ($status != "") {
-    if (strpos($location, "?") === FALSE) {
-      $redirect .= "?status=".$status."&class=".$class;
-    } else {
-      $redirect .= "&status=".$status."&class=".$class;
-    }
+function redirect_to($location, $params) {
+  $paramArray = [];
+  foreach ($params as $key=>$val) {
+    $paramArray[] = $key."=".$val;
   }
+  $paramString = implode("&", $paramArray);
+
+  $redirect = "Location: ".$location."?".$paramString;
   header($redirect);
   exit;
 }
@@ -224,7 +219,7 @@ function start_html($database, $user, $title="Animurecs", $subtitle="", $status=
             </ul>\n";
   } else {
     echo "          <li>
-          <form class='form-inline' accept-charset='UTF-8' action='/login.php?redirect_to=".urlencode($_SERVER['REQUEST_URI'])."' method='post'>
+          <form class='form-inline' accept-charset='UTF-8' action='/login.php?redirect_to=".(isset($_REQUEST['redirect_to']) ? urlencode($_REQUEST['redirect_to']) : urlencode($_SERVER['REQUEST_URI']))."' method='post'>
             <input name='username' type='text' class='input-small' placeholder='Username'>
             <input name='password' type='password' class='input-small' placeholder='Password'>
             <!--<label class='checkbox'>
@@ -442,10 +437,12 @@ function display_recommendations($recsEngine, $user) {
 
   $output = "<h1>Your Recs</h1>\n<ul class='recommendations'>\n";
   $reccedAnime = [];
-  foreach ($recs as $key=>$rec) {
-    $anime = new Anime($user->dbConn, intval($rec->id));
-    $reccedAnime[] = $anime;
-    $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(array(ROOT_URL, escape_output($anime->imagePath)))."' />", True)."<p><em>Predicted score: ".round($rec->predicted_score, 1)."</em></p></li>\n";
+  if (is_array($recs)) {
+    foreach ($recs as $key=>$rec) {
+      $anime = new Anime($user->dbConn, intval($rec->id));
+      $reccedAnime[] = $anime;
+      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(array(ROOT_URL, escape_output($anime->imagePath)))."' />", True)."<p><em>Predicted score: ".round($rec->predicted_score, 1)."</em></p></li>\n";
+    }
   }
   $output .= "</ul>";
   $output .= tag_list($reccedAnime);

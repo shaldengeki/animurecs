@@ -10,7 +10,9 @@ if (isset($_POST['username'])) {
 	if (isset($_REQUEST['redirect_to'])) {
 		$loginResult['location'] = urldecode($_REQUEST['redirect_to']);
 	}
-	redirect_to($loginResult);
+	$location = $loginResult['location'];
+	unset($loginResult['location']);
+	redirect_to($location, $loginResult);
 }
 
 start_html($database, $user, "Animurecs", "Sign In", $_REQUEST['status'], $_REQUEST['class']);

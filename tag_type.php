@@ -7,7 +7,7 @@ if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
     $targetTagType = new TagType($database, intval($_POST['tag_type']['id']));
   } catch (Exception $e) {
     // this non-zero tag_typeID does not exist.
-    redirect_to(array('location' => "/tag_types/", 'status' => 'This tag type does not exist.', 'class' => 'error'));
+    redirect_to("/tag_types/", array('status' => 'This tag type does not exist.', 'class' => 'error'));
   }
   if ($targetTagType->id === 0) {
     $authStatus = $targetTagType->allow($user, 'new');
@@ -15,13 +15,13 @@ if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
     $authStatus = $targetTagType->allow($user, 'edit');
   }
   if (!$authStatus) {
-    redirect_to(array('location' => ($targetTagType->id === 0 ? $targetTagType->url("index") : $targetTagType->url("show")), 'status' => "You're not allowed to do this.", 'class' => 'error'));
+    redirect_to(($targetTagType->id === 0 ? $targetTagType->url("index") : $targetTagType->url("show")), array('status' => "You're not allowed to do this.", 'class' => 'error'));
   }
   $updateTagType = $targetTagType->create_or_update($_POST['tag_type'], $user);
   if ($updateTagType) {
-    redirect_to(array('location' => $targetTagType->url("show"), 'status' => "Successfully updated.", 'class' => 'success'));
+    redirect_to($targetTagType->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
   } else {
-    redirect_to(array('location' => ($targetTagType->id === 0 ? $targetTagType->url("new") : $targetTagType->url("edit")), 'status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
+    redirect_to(($targetTagType->id === 0 ? $targetTagType->url("new") : $targetTagType->url("edit")), array('status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
   }
 }
 
@@ -65,9 +65,9 @@ if (!$targetTagType->allow($user, $_REQUEST['action'])) {
       }
       $deleteTagType = $targetTagType->delete();
       if ($deleteTagType === True) {
-        redirect_to(array('location' => "/tag_types/", 'status' => 'Successfully deleted '.urlencode($targetTagType->name).'.', 'class' => 'success'));
+        redirect_to("/tag_types/", array('status' => 'Successfully deleted '.urlencode($targetTagType->name).'.', 'class' => 'success'));
       } else {
-        redirect_to(array('location' => "/tag_types/".intval($targetTagType->id)."/show/", 'status' => 'An error occurred while deleting '.urlencode($targetTagType->name).'.', 'class' => 'error'));
+        redirect_to("/tag_types/".intval($targetTagType->id)."/show/", array('status' => 'An error occurred while deleting '.urlencode($targetTagType->name).'.', 'class' => 'error'));
       }
       break;
     default:
