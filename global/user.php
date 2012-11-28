@@ -681,6 +681,11 @@ class User extends BaseObject {
                     <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
                   </form>
                 </div>\n";
+    } else {
+      $blankComment = new Comment($this->dbConn, 0);
+      $output .= "                <div class='addListEntryForm'>
+                  ".$blankComment->inlineForm($currentUser, $this)."
+                </div>\n";
     }
     $output .= "                ".$this->profileFeed($currentUser)."
               </div>

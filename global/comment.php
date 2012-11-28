@@ -98,7 +98,7 @@ class Comment extends BaseObject {
     return $output;
   }
   public function form(User $currentUser, BaseObject $currentObject) {
-    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
+    $output = "    <form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
       <input type='hidden' name='comment[user_id]' value='".intval($currentUser->id)."' />
       <input type='hidden' name='comment[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
       <input type='hidden' name='comment[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
@@ -115,6 +115,16 @@ class Comment extends BaseObject {
           <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
         </div>
       </fieldset>\n</form>\n";
+    return $output;
+  }
+  public function inlineForm(User $currentUser, BaseObject $currentObject) {
+    $output = "    <form class='form-inline' action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
+      <input type='hidden' name='comment[user_id]' value='".intval($currentUser->id)."' />
+      <input type='hidden' name='comment[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
+      <input type='hidden' name='comment[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
+      <input type='text' name='comment[message]'".(($this->id === 0) ? "placeholder='Leave a comment!'" : "value='".escape_output($this->message())."'")." />
+      <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Send" : "Update")."</button>
+    </form>\n";
     return $output;
   }
   public function formatFeedEntry(array $entry, User $currentUser) {
