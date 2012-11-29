@@ -5,14 +5,18 @@ class AnimeEntry extends BaseEntry {
   protected $time;
   protected $status, $score, $episode;
 
-  public function __construct(DbConn $database, $id=Null, $user=Null) {
-    parent::__construct($database, $id, $user);
+  public function __construct(DbConn $database, $id=Null, $params=Null) {
+    parent::__construct($database, $id, $params);
+
     if ($id === 0) {
       $this->anime = new Anime($this->dbConn, 0);
       $this->animeId = $this->userId = 0;
       $this->episode = 0;   
     } else {
-      $this->anime = $this->animeId = $this->episode = Null;
+      if (!is_numeric($this->animeId)) {
+        $this->animeId = Null;
+      }
+      $this->anime = $this->episode = Null;
     }
     $this->modelTable = "anime_lists";
     $this->modelPlural = "animeLists";

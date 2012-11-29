@@ -39,7 +39,7 @@ if (!$targetEntry->allow($user, $_REQUEST['action'])) {
           $class = "error";
           break;
         }
-        $targetEntry = new AnimeEntry($database, intval($_POST['anime_entry']['id']), $targetUser);
+        $targetEntry = new AnimeEntry($database, intval($_POST['anime_entry']['id']), array('user' => $targetUser));
         if (!$targetEntry->allow($user, $_REQUEST['action'])) {
           $location = $targetUser->url();
           $status = "You can't update someone else's anime list.";

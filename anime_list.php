@@ -18,6 +18,12 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
   $class = "error";
 } else {
   switch($_REQUEST['action']) {
+    case 'feed':
+      $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
+      $entries = $targetUser->animeList->entries($maxTime, 50);
+      echo $targetUser->animeList->feed($entries, $user, 50, "");
+      exit;
+      break;
     case 'new':
     case 'edit':
       if (isset($_REQUEST['anime_list']) && is_array($_REQUEST['anime_list'])) {

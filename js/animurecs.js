@@ -279,6 +279,40 @@ $(document).ready(function () {
     });
   });
 
+  /* ajax feed autoloading. */
+  $(window).unbind("scroll");
+  $(window).scroll(function() {
+    $('ul.ajaxFeed:visible').each(function() {
+      if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && typeof $(this).attr('loading') == 'undefined') {
+        //get last-loaded MAL change and load more past this.
+        $(this).attr('loading', 'true');
+        var lastTime = $(this).find('.feedDate:last').attr('data-time');
+        var anime_id = "";
+        if (typeof $(this).attr('anime_id') == 'undefined') {
+          anime_id = $(this).attr('anime_id');
+        }
+        var user_id = "";
+        if (typeof $(this).attr('user_id') == 'undefined') {
+          user_id = $(this).attr('user_id');
+        }
+        if ($(this).attr('data-url').indexOf('?') < 0) {
+          joinChar = '?';
+        } else {
+          joinChar = '&';
+        }
+        var originalElt = this;
+        $.ajax({
+          url: $(this).attr('data-url') + joinChar + "maxTime=" + encodeURIComponent(lastTime) + ((anime_id != "" && !isNaN(parseInt(anime_id))) ? '&anime_id=' + parseInt(anime_id) : "") + ((user_id != "" && !isNaN(parseInt(user_id))) ? '&user_id=' + parseInt(user_id) : ""),
+          data: {},
+          success: function(data) {
+            $(originalElt).append($(data).html());
+            $(originalElt).removeAttr('loading');
+          }
+        });
+      }
+    });
+  });
+
   /* feed entry menu initialization */
   $('.feedEntry').each(function() {
     $(this).hover(function() {

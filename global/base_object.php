@@ -26,7 +26,7 @@ class BaseObject {
     }
     return $this->modelName;
   }
-  private function humanizeParameter($parameter) {
+  protected function humanizeParameter($parameter) {
     // takes a parameter name like created_at
     // returns a human-friendly name like createdAt
     $paramParts = explode("_", $parameter);
@@ -127,13 +127,11 @@ class BaseObject {
     if ($id === Null) {
       $id = intval($this->id);
     }
-    $urlParams = [];
+    $urlParams = "";
     if (is_array($params)) {
-      foreach ($params as $key => $value) {
-        $urlParams[] = urlencode($key)."=".urlencode($value);
-      }
+      $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".implode("&", $urlParams) : "");
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

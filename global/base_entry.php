@@ -5,11 +5,8 @@ class BaseEntry extends BaseObject {
   protected $time;
   protected $status, $score;
 
-  public function __construct(DbConn $database, $id=Null, $user=Null) {
+  public function __construct(DbConn $database, $id=Null, $params=Null) {
     parent::__construct($database, $id);
-    if ($user != Null) {
-      $this->userId = intval($user->id);
-    }
     if ($id === 0) {
       $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
       $this->time = new DateTime("now", $serverTimezone);
@@ -18,6 +15,11 @@ class BaseEntry extends BaseObject {
       $this->user = $this->userId = $this->time = $this->status = $this->score = Null;
     }
     $this->modelTable =  $this->modelPlural = $this->partName = $this->entryType = $this->typeVerb = $this->feedType = $this->entryTypeLower = $this->typeID = "";
+    if (is_array($params)) {
+      foreach ($params as $key=>$value) {
+        $this->{$this->humanizeParameter($key)} = $value;
+      }
+    }
   }
   public function userId() {
     return $this->returnInfo('userId');

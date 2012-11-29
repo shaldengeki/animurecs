@@ -22,7 +22,7 @@ trait Feedable {
       $returnList = [];
       $entryCount = 0;
       foreach ($this->entries() as $entry) {
-        if ($entry->time > $maxTime) {
+        if ($entry->time() >= $maxTime) {
           continue;
         }
         $entry->object = $this;
@@ -70,7 +70,7 @@ trait Feedable {
     // sort by key and grab only the latest numEntries.
     $entries = array_sort_by_property($entries, 'time', 'desc');
     $entries = array_slice($entries, 0, $numEntries);
-    $output = "<ul class='userFeed'>\n";
+    $output = "<ul class='userFeed ajaxFeed' data-url='".$this->url("feed")."'>\n";
     if (!$entries) {
       $output .= $emptyFeedText;
     }

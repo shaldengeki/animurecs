@@ -25,6 +25,7 @@ $database = new DbConn(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABAS
 $recsEngine = new RecsEngine(RECS_ENGINE_HOST, RECS_ENGINE_PORT);
 
 date_default_timezone_set(SERVER_TIMEZONE);
+$serverTimeZone = new DateTimeZone(SERVER_TIMEZONE);
 $outputTimeZone = new DateTimeZone(OUTPUT_TIMEZONE);
 
 if (isset($_SESSION['id'])) {

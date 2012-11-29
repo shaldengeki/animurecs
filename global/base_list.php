@@ -162,11 +162,11 @@ class BaseList extends BaseObject {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $returnList = [];
-    $entries = $this->dbConn->stdQuery("SELECT `id`, `status`, `score` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
+    $entries = $this->dbConn->stdQuery("SELECT * FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryType = $this->listType."Entry";
     while ($entry = $entries->fetch_assoc()) {
-      $returnList[intval($entry['id'])] = new $entryType($this->dbConn, intval($entry['id']));
+      $returnList[intval($entry['id'])] = new $entryType($this->dbConn, intval($entry['id']), $entry);
       $entrySum += intval($entry['score']);
       $entryCount++;
     }
@@ -233,6 +233,7 @@ class BaseList extends BaseObject {
     // Returns the previous entry in this user's entry list for $this->typeID and before $beforeTime.
     $entryType = $this->listType."Entry";
     $prevEntry = new $entryType($this->dbConn, 0);
+
     foreach ($this->entries() as $entry) {
       if ($entry->time >= $beforeTime) {
         continue;
