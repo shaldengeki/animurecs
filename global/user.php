@@ -511,7 +511,9 @@ class User extends BaseObject {
     // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
     foreach ($this->profileComments() as $comment) {
-      $feedEntries[] = array('id' => $comment->id, 'object' => $comment, 'user' => $comment->user, 'time' => $comment->createdAt);
+      $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
+      $commentEntry->object = $comment;
+      $feedEntries[] = $commentEntry;
     }
     return $this->animeList()->feed($feedEntries, $currentUser, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
@@ -523,7 +525,9 @@ class User extends BaseObject {
     foreach ($this->friends() as $friend) {
       $feedEntries = array_merge($feedEntries, $friend['user']->animeList()->entries($maxTime, $numEntries));
       foreach ($friend['user']->ownComments() as $comment) {
-        $feedEntries[] = array('id' => $comment->id, 'object' => $comment, 'user' => $comment->user, 'time' => $comment->createdAt);
+        $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
+        $commentEntry->object = $comment;
+        $feedEntries[] = $commentEntry;
       }
     }
     return $this->animeList()->feed($feedEntries, $this, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
@@ -581,7 +585,7 @@ class User extends BaseObject {
     return $output;
   }
   public function displayStats() {
-
+    /* TODO: user stats. */
   }
   public function switchForm() {
     return "<form action='".$this->url("switch_user")."' method='POST' class='form-horizontal'>

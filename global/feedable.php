@@ -22,14 +22,10 @@ trait Feedable {
       $returnList = [];
       $entryCount = 0;
       foreach ($this->entries() as $entry) {
-        if ($entry['time'] > $maxTime) {
+        if ($entry->time > $maxTime) {
           continue;
         }
-        $entry['object'] = $this;
-        //$entry[strtolower($this->feedType)] = new $this->feedType($this->dbConn, intval($entry[strtolower($this->feedType).'_id']));
-        if ($this->feedType != 'User') {
-          $entry['user'] = new User($this->dbConn, intval($entry['user_id']));
-        }
+        $entry->object = $this;
         $returnList[] = $entry;
         $entryCount++;
         if ($limit !== Null && $entryCount >= $limit) {
@@ -43,24 +39,24 @@ trait Feedable {
   }
 
   // also a way to format feed entry text.
-  abstract protected function formatFeedEntry(array $entry, User $currentUser);
-  public function feedEntry(array $entry, User $currentUser) {
+  abstract protected function formatFeedEntry(BaseEntry $entry, User $currentUser);
+  public function feedEntry(BaseEntry $entry, User $currentUser) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
-    $diffInterval = $nowTime->diff($entry['time']);
+    $diffInterval = $nowTime->diff($entry->time);
 
-    $feedMessage = $entry['object']->formatFeedEntry($entry, $currentUser);
+    $feedMessage = $entry->object->formatFeedEntry($entry, $currentUser);
 
     $output = "  <li class='feedEntry row-fluid'>
-        <div class='feedDate' data-time='".$entry['time']->format('U')."'>".ago($diffInterval)."</div>
-        <div class='feedAvatar'>".$entry['user']->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry['user']->avatarPath))."' />", True)."</div>
+        <div class='feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
+        <div class='feedAvatar'>".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry->user->avatarPath))."' />", True)."</div>
         <div class='feedText'>
           <div class='feedUser'>".$feedMessage['title']."</div>
           ".$feedMessage['text']."\n";
     if ($this->allow($currentUser, 'delete')) {
-      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry['object']->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($entry['user']->id)), intval($entry['id']))."</li></ul>";
+      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->object->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($entry->user->id)), intval($entry->id))."</li></ul>";
     }
     $output .= "          </div>
       </li>\n";
@@ -72,7 +68,7 @@ trait Feedable {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
-    $entries = array_sort_by_key($entries, 'time', 'desc');
+    $entries = array_sort_by_property($entries, 'time', 'desc');
     $entries = array_slice($entries, 0, $numEntries);
     $output = "<ul class='userFeed'>\n";
     if (!$entries) {

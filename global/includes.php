@@ -7,12 +7,15 @@ include_once("./global/curl.php");
 include_once("./global/base_object.php");
 include_once("./global/feedable.php");
 include_once("./global/base_list.php");
+include_once("./global/base_entry.php");
 include_once("./global/tag_type.php");
 include_once("./global/tag.php");
 include_once("./global/anime.php");
 include_once("./global/anime_list.php");
+include_once("./global/anime_entry.php");
 include_once("./global/user.php");
 include_once("./global/comment.php");
+include_once("./global/comment_entry.php");
 include_once("./global/recs_engine.php");
 
 include_once("./global/display.php");

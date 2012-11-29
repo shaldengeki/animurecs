@@ -161,20 +161,20 @@ class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-    $returnList = $this->dbConn->queryAssoc("SELECT `id`, `".$this->typeID."`, `user_id`, `time`, `status`, `score`, `".$this->partName."` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC", "id");
-    $this->entryAvg = $this->entryStdDev = $entrySum = 0;
-    $entryCount = count($returnList);
-    foreach ($returnList as $key=>$entry) {
-      $returnList[$key]['time'] = new DateTime($entry['time'], $serverTimezone);
-      $returnList[$key][$this->listTypeLower] = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
-      unset($returnList[$key][$this->typeID]);
+    $returnList = [];
+    $entries = $this->dbConn->stdQuery("SELECT `id`, `status`, `score` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
+    $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
+    $entryType = $this->listType."Entry";
+    while ($entry = $entries->fetch_assoc()) {
+      $returnList[intval($entry['id'])] = new $entryType($this->dbConn, intval($entry['id']));
       $entrySum += intval($entry['score']);
+      $entryCount++;
     }
     $this->entryAvg = ($entryCount === 0) ? 0 : $entrySum / $entryCount;
     $entrySum = 0;
     if ($entryCount > 1) {
       foreach ($returnList as $entry) {
-        $entrySum += pow(intval($entry['score']) - $this->entryAvg, 2);
+        $entrySum += pow(intval($entry->score) - $this->entryAvg, 2);
       }
       $this->entryStdDev = pow($entrySum / ($entryCount - 1), 0.5);
     }
@@ -231,40 +231,41 @@ class BaseList extends BaseObject {
   }
   public function prevEntry($id, DateTime $beforeTime) {
     // Returns the previous entry in this user's entry list for $this->typeID and before $beforeTime.
-    $prevEntry = array('status' => 0, 'score' => 0, $this->partName => 0);
+    $entryType = $this->listType."Entry";
+    $prevEntry = new $entryType($this->dbConn, 0);
     foreach ($this->entries() as $entry) {
-      if ($entry['time'] >= $beforeTime) {
+      if ($entry->time >= $beforeTime) {
         continue;
       }
-      if ($entry[$this->listTypeLower]->id == $id) {
+      if ($entry->{$this->listTypeLower}->id == $id) {
         return $entry;
       }
     }
     return $prevEntry;
   }
-  public function formatFeedEntry(array $entry, User $currentUser) {
+  public function formatFeedEntry(BaseEntry $entry, User $currentUser) {
     // fetch the previous feed entry and compare values against current entry.
 
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
 
-    $diffInterval = $nowTime->diff($entry['time']);
-    $prevEntry = $this->prevEntry($entry[$this->listTypeLower]->id, $entry['time']);
+    $diffInterval = $nowTime->diff($entry->time);
+    $prevEntry = $this->prevEntry($entry->{$this->listTypeLower}->id, $entry->time);
 
-    $statusChanged = (bool) ($entry['status'] != $prevEntry['status']);
-    $scoreChanged = (bool) ($entry['score'] != $prevEntry['score']);
-    $partChanged = (bool) ($entry[$this->partName] != $prevEntry[$this->partName]);
+    $statusChanged = (bool) ($entry->status != $prevEntry->status);
+    $scoreChanged = (bool) ($entry->score != $prevEntry->score);
+    $partChanged = (bool) ($entry->{$this->partName} != $prevEntry->{$this->partName});
     
     // concatenate appropriate parts of this status text.
     $statusTexts = [];
     if ($statusChanged) {
-      $statusTexts[] = $this->statusStrings[intval((bool)$prevEntry)][intval($entry['status'])];
+      $statusTexts[] = $this->statusStrings[intval((bool)$prevEntry)][intval($entry->status)];
     }
     if ($scoreChanged) {
-      $statusTexts[] = $this->scoreStrings[intval($entry['score'] == 0)][intval($statusChanged)];
+      $statusTexts[] = $this->scoreStrings[intval($entry->score == 0)][intval($statusChanged)];
     }
-    if ($partChanged && ($entry[$this->partName] != $entry[$this->listTypeLower]->{$this->partName."Count"} || $entry['status'] != 2)) {
+    if ($partChanged && ($entry->{$this->partName} != $entry->{$this->listTypeLower}->{$this->partName."Count"} || $entry->status != 2)) {
       $statusTexts[] = $this->partStrings[intval($statusChanged || $scoreChanged)];
     }
     $statusText = implode(" ", $statusTexts);
@@ -272,13 +273,13 @@ class BaseList extends BaseObject {
     // replace placeholders.
     $statusText = str_replace("[TYPE_VERB]", $this->typeVerb, $statusText);
     $statusText = str_replace("[PART_NAME]", $this->partName, $statusText);
-    $statusText = str_replace("[TITLE]", $entry[$this->listTypeLower]->link("show", $entry[$this->listTypeLower]->title), $statusText);
-    $statusText = str_replace("[SCORE]", $entry['score'], $statusText);
-    $statusText = str_replace("[PART]", $entry[$this->partName], $statusText);
-    $statusText = str_replace("[TOTAL_PARTS]", $entry[$this->listTypeLower]->{$this->partName."Count"}, $statusText);
+    $statusText = str_replace("[TITLE]", $entry->{$this->listTypeLower}->link("show", $entry->{$this->listTypeLower}->title), $statusText);
+    $statusText = str_replace("[SCORE]", $entry->score, $statusText);
+    $statusText = str_replace("[PART]", $entry->{$this->partName}, $statusText);
+    $statusText = str_replace("[TOTAL_PARTS]", $entry->{$this->listTypeLower}->{$this->partName."Count"}, $statusText);
     $statusText = ucfirst($statusText).".";
 
-    return array('title' => $entry['user']->link("show", $entry['user']->username), 'text' => $statusText);
+    return array('title' => $entry->user->link("show", $entry->user->username), 'text' => $statusText);
   }
   public function link($action="show", $text=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.

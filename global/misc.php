@@ -152,4 +152,39 @@ function array_sort_by_key($a, $key, $order="desc") {
   uasort($a, buildKeySorter($key, $orderVal));
   return $a;
 }
+
+function buildPropertySorter($property, $order) {
+  // returns a function that sorts two input objects on a property in a given order.
+  // order=1 corresponds to ascending, order=-1 corresponds to descending.
+  return function($a, $b) use ($property, $order) {
+    if (!property_exists($a, $property)) {
+      if (!property_exists($b, $property)) {
+        return 0;
+      } else {
+        return -1*$order;
+      }
+    } else {
+      if (!property_exists($b, $property)) {
+        return 1*$order;
+      } else {
+        return (($a->$property < $b->$property) ? -1 : 1)*$order;
+      }
+    }
+  };
+}
+
+function array_sort_by_property($a, $property, $order="desc") {
+  // sorts a list of associative arrays by a given key in a given order.
+  switch($order) {
+    case 'asc':
+      $orderVal = 1;
+      break;
+    default:
+    case 'desc':
+      $orderVal = -1;
+      break;
+  }
+  uasort($a, buildPropertySorter($property, $orderVal));
+  return $a;
+}
 ?>
