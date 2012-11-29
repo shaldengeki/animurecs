@@ -10,18 +10,22 @@ function dot($a, $b) {
 }
 
 function joinPaths() {
-    $args = func_get_args();
-    $paths = array();
-    foreach ($args as $arg) {
-        $paths = array_merge($paths, (array)$arg);
-    }
+  $args = func_get_args();
+  $paths = array();
 
-    $trimmedPaths = array_map(create_function('$p', 'return trim($p, "'.addslashes(DIRECTORY_SEPARATOR).'");'), $paths);
-    if ($trimmedPaths) {
-      $trimmedPaths[0] = rtrim($paths[0], addslashes(DIRECTORY_SEPARATOR));
-    }
-    $trimmedPaths = array_filter($trimmedPaths);
-    return join(DIRECTORY_SEPARATOR, $trimmedPaths);
+  foreach($args as $arg) {
+    $paths = array_merge($paths, (array)$arg);
+  }
+
+  foreach($paths as &$path) {
+    $path = trim($path, "/");
+  }
+
+  if (substr($args[0], 0, 1) == '/') {
+    $paths[0] = '/' . $paths[0];
+  }
+
+  return join("/", $paths);
 }
 
 function convert_usermask_to_text($usermask) {

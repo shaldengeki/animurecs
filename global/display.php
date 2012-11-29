@@ -448,7 +448,7 @@ function display_recommendations(RecsEngine $recsEngine, User $user) {
     foreach ($recs as $key=>$rec) {
       $anime = new Anime($user->dbConn, intval($rec->id));
       $reccedAnime[] = $anime;
-      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(array(ROOT_URL, escape_output($anime->imagePath)))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($rec->predicted_score, 1)."</em></p></li>\n";
+      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($rec->predicted_score, 1)."</em></p></li>\n";
     }
   }
   $output .= "</ul>";

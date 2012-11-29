@@ -414,6 +414,9 @@ class User extends BaseObject {
         }
         $imagePathInfo = pathinfo($file_array['tmp_name']);
         $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
+        if ($this->avatarPath()) {
+          $removeOldAvatar = unlink(joinPaths(APP_ROOT, $this->avatarPath()));
+        }
         if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
           return False;
         }
@@ -611,7 +614,7 @@ class User extends BaseObject {
             <li class='span12'>
               <div class='thumbnail profileAvatar'>\n";
     if ($this->avatarPath() != '') {
-      $output .= "                <img src='".joinPaths(array(ROOT_URL,escape_output($this->avatarPath())))."' class='img-rounded' alt=''>\n";
+      $output .= "                <img src='".joinPaths(ROOT_URL,escape_output($this->avatarPath()))."' class='img-rounded' alt=''>\n";
     } else {
       $output .= "                <img src='/img/users/blank.png' class='img-rounded' alt=''>\n";
     }
