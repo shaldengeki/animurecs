@@ -1,27 +1,36 @@
 <?php
 include_once("global/includes.php");
 
-$type = isset($_POST['comment']['type']) ? $_POST['comment']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
-try {
-  $targetParent = $type !== Null && (isset($_POST['comment']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($database, intval(isset($_POST['comment']['parent_id']) ? $_POST['comment']['parent_id'] : $_REQUEST['parent_id'])) : Null;
-} catch (Exception $e) {
-  redirect_to($user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
-}
-
-if (intval($_REQUEST['user_id']) === $user->id || intval($_POST['user_id']) === $user->id) {
-  $targetUser = $user;
-} else {
+if (isset($_REQUEST['id']) && intval($_REQUEST['id']) != 0) {
   try {
-    $targetUser = new User($database, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
+    $targetComment = new Comment($database, intval($_REQUEST['id']));
   } catch (Exception $e) {
-    redirect_to($user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+    redirect_to('/feed.php', array('status' => 'This comment does not exist.', 'class' => 'error'));
   }
-}
+  $targetParent = $targetComment->parent;
+  $targetUser = $targetComment->user;
+} else {
+  $type = isset($_POST['comment']['type']) ? $_POST['comment']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
+  try {
+    $targetParent = $type !== Null && (isset($_POST['comment']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($database, intval(isset($_POST['comment']['parent_id']) ? $_POST['comment']['parent_id'] : $_REQUEST['parent_id'])) : Null;
+  } catch (Exception $e) {
+    redirect_to($user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+  }
 
-try {
-  $targetComment = new Comment($database, intval($_REQUEST['id']), $targetUser, $targetParent);
-} catch (Exception $e) {
-  $targetComment = new Comment($database, 0, $targetUser, $targetParent);
+  if (intval($_REQUEST['user_id']) === $user->id || intval($_POST['user_id']) === $user->id) {
+    $targetUser = $user;
+  } else {
+    try {
+      $targetUser = new User($database, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
+    } catch (Exception $e) {
+      redirect_to($user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+    }
+  }
+  try {
+    $targetComment = new Comment($database, intval($_REQUEST['id']), $targetUser, $targetParent);
+  } catch (Exception $e) {
+    $targetComment = new Comment($database, 0, $targetUser, $targetParent);
+  }
 }
 
 if (!$targetComment->allow($user, $_REQUEST['action'])) {

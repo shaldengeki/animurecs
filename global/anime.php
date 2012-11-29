@@ -35,8 +35,8 @@ class Anime extends BaseObject {
   public function title() {
     return $this->returnInfo('title');
   }
-  public function description() {
-    return $this->returnInfo('description');
+  public function description($short=False) {
+    return $short ? shortenText($this->returnInfo('description')) : $this->returnInfo('description');
   }
   public function episodeCount() {
     return $this->returnInfo('episodeCount');
