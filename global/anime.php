@@ -1,5 +1,7 @@
 <?php
 class Anime extends BaseObject {
+  use Feedable;
+
   protected $title;
   protected $description;
   protected $episodeCount;
@@ -276,40 +278,13 @@ class Anime extends BaseObject {
   }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC", "id");
-  }
-  public function entries(DateTime $maxTime=Null, $limit=Null) {
-    if ($this->entries === Null) {
-      $this->entries = $this->getEntries();
+    $returnList = [];
+    $animeEntries = $this->dbConn->stdQuery("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
+    while ($entry = $animeEntries->fetch_assoc()) {
+      $newEntry = new AnimeEntry($this->dbConn, intval($entry['id']), $entry);
+      $returnList[intval($entry['id'])] = $newEntry;
     }
-    if ($maxTime !== Null || $limit !== Null) {
-      // Returns a list of up to $limit entries up to $maxTime.
-      $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-      $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-      if ($maxTime === Null) {
-        $nowTime = new DateTime();
-        $nowTime->setTimezone($outputTimezone);
-        $maxTime = $nowTime;
-      }
-      $returnList = [];
-      $entryCount = 0;
-      foreach ($this->entries() as $entry) {
-        $entryDate = new DateTime($value['time'], $serverTimezone);
-        if ($entryDate > $maxTime) {
-          continue;
-        }
-        $entry['anime'] = new Anime($this->dbConn, intval($this->id));
-        $entry['user'] = new User($this->dbConn, intval($entry['user_id']));
-        $returnList[] = $entry;
-        $entryCount++;
-        if ($limit !== Null && $entryCount >= $limit) {
-          return $returnList;
-        }
-      }
-      return $returnList;
-    } else {
-      return $this->entries;
-    }
+    return $returnList;
   }
   public function getRatings() {
     $ratings = array_filter($this->entries(), function ($value) {
@@ -357,24 +332,13 @@ class Anime extends BaseObject {
     }
     return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($score*10.0)."%'>".round($score, 1)."/10</div></div>";
   }
-  public function feed(array $entries, User $currentUser) {
-    // returns an array of feed entries, keyed by the time of the entry.
-    $output = [];
-    foreach ($entries as $entry) {
-      $output[$entry['time']] = $entry['user']->animeList()->feedEntry($entry, $entry['user'], $currentUser);
-    }
-    return $output;
+  public function formatFeedEntry(BaseEntry $entry, User $currentUser) {
+    return $entry->user->animeList->formatFeedEntry($entry, $currentUser);
   }
   public function animeFeed(User $currentUser, DateTime $maxTime=Null, $numEntries=50) {
-    // returns markup for this user's anime feed.
+    // returns markup for this user's profile feed.
     $feedEntries = $this->entries($maxTime, $numEntries);
-    $output = "<ul class='userFeed'>\n";
-    if (count($feedEntries) == 0) {
-      $output .= "<blockquote><p>No entries yet - ".$currentUser->link("show", "be the first!")."</p></blockquote>\n";
-    }
-    $output .= implode("\n", $this->feed($feedEntries, $currentUser));
-    $output .= "</ul>\n";
-    return $output;
+    return $this->feed($feedEntries, $currentUser, $numEntries, "<blockquote><p>No entries yet - ".$currentUser->link("show", "be the first!")."</p></blockquote>\n");
   }
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
