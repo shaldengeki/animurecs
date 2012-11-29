@@ -39,7 +39,7 @@ function convert_usermask_to_text($usermask) {
   if ($usermask & 1) {
     $roles[] = "User";
   }
-  if (empty($roles) == 0) {
+  if (!$roles) {
     return "Unknown";
   }
   return implode(", ", $roles);
