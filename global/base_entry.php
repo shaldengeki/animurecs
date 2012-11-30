@@ -1,6 +1,6 @@
 <?php
 
-class BaseEntry extends BaseObject {
+abstract class BaseEntry extends BaseObject {
   // feed entry class object.
   use Commentable;
 
@@ -23,7 +23,6 @@ class BaseEntry extends BaseObject {
     } else {
       $this->user = $this->userId = $this->time = $this->status = $this->score = $this->comments = Null;
     }
-    $this->modelTable =  $this->modelPlural = $this->partName = $this->entryType = $this->typeVerb = $this->feedType = $this->entryTypeLower = $this->typeID = "";
     if (is_array($params)) {
       foreach ($params as $key=>$value) {
         $this->{$this->humanizeParameter($key)} = $value;
@@ -123,6 +122,9 @@ class BaseEntry extends BaseObject {
     }
     return $returnValue;
   }
+
+  // all feed entry classes must implement a way to format said feed entries into markup.
+  abstract public function formatFeedEntry(User $currentUser);
 }
 
 ?>

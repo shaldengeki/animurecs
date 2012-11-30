@@ -1,5 +1,5 @@
 <?php
-class BaseList extends BaseObject {
+abstract class BaseList extends BaseObject {
   // base list from which anime and manga lists inherit methods and properties.
   use Feedable;
 
@@ -109,7 +109,7 @@ class BaseList extends BaseObject {
     $this->entries[intval($returnValue)] = $entry;
     return $returnValue;
   }
-  public function delete(array $entries=Null) {
+  public function delete($entries=Null) {
     /*
       Deletes list entries.
       Takes an array of entry ids as input, defaulting to all entries.
@@ -118,8 +118,11 @@ class BaseList extends BaseObject {
     if ($entries === Null) {
       $entries = array_keys($this->entries());
     }
+    if (!is_array($entries) && !is_numeric($entries)) {
+      return False;
+    }
     if (is_numeric($entries)) {
-      $entries = [intval($entries)];
+      $entries = [$entries];
     }
     $entryIDs = [];
     foreach ($entries as $entry) {
@@ -166,6 +169,7 @@ class BaseList extends BaseObject {
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryType = $this->listType."Entry";
     while ($entry = $entries->fetch_assoc()) {
+      $entry['list'] = $this;
       $returnList[intval($entry['id'])] = new $entryType($this->dbConn, intval($entry['id']), $entry);
       $entrySum += intval($entry['score']);
       $entryCount++;
@@ -243,44 +247,6 @@ class BaseList extends BaseObject {
       }
     }
     return $prevEntry;
-  }
-  public function formatFeedEntry(BaseEntry $entry, User $currentUser) {
-    // fetch the previous feed entry and compare values against current entry.
-
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-    $nowTime = new DateTime("now", $outputTimezone);
-
-    $diffInterval = $nowTime->diff($entry->time);
-    $prevEntry = $this->prevEntry($entry->{$this->listTypeLower}->id, $entry->time);
-
-    $statusChanged = (bool) ($entry->status != $prevEntry->status);
-    $scoreChanged = (bool) ($entry->score != $prevEntry->score);
-    $partChanged = (bool) ($entry->{$this->partName} != $prevEntry->{$this->partName});
-    
-    // concatenate appropriate parts of this status text.
-    $statusTexts = [];
-    if ($statusChanged) {
-      $statusTexts[] = $this->statusStrings[intval((bool)$prevEntry)][intval($entry->status)];
-    }
-    if ($scoreChanged) {
-      $statusTexts[] = $this->scoreStrings[intval($entry->score == 0)][intval($statusChanged)];
-    }
-    if ($partChanged && ($entry->{$this->partName} != $entry->{$this->listTypeLower}->{$this->partName."Count"} || $entry->status != 2)) {
-      $statusTexts[] = $this->partStrings[intval($statusChanged || $scoreChanged)];
-    }
-    $statusText = implode(" ", $statusTexts);
-
-    // replace placeholders.
-    $statusText = str_replace("[TYPE_VERB]", $this->typeVerb, $statusText);
-    $statusText = str_replace("[PART_NAME]", $this->partName, $statusText);
-    $statusText = str_replace("[TITLE]", $entry->{$this->listTypeLower}->link("show", $entry->{$this->listTypeLower}->title), $statusText);
-    $statusText = str_replace("[SCORE]", $entry->score, $statusText);
-    $statusText = str_replace("[PART]", $entry->{$this->partName}, $statusText);
-    $statusText = str_replace("[TOTAL_PARTS]", $entry->{$this->listTypeLower}->{$this->partName."Count"}, $statusText);
-    $statusText = ucfirst($statusText).".";
-
-    return array('title' => $entry->user->link("show", $entry->user->username), 'text' => $statusText);
   }
   public function link($action="show", $text=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.

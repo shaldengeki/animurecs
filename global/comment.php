@@ -127,14 +127,5 @@ class Comment extends BaseObject {
     </form>\n";
     return $output;
   }
-  public function formatFeedEntry(BaseEntry $entry, User $currentUser) {
-    /* TODO: make this work for comments posted on anime etc */
-    if ($currentUser->id != $this->parent()->id) {
-      $feedTitle = $this->user()->link("show", $this->user()->username)." to ".$this->parent()->link("show", $this->parent()->username).":";
-    } else {
-      $feedTitle = $this->user()->link("show", $this->user()->username)." to you:";
-    }
-    return array('title' => $feedTitle, 'text' => escape_output($this->message()));
-  }
 }
 ?>

@@ -312,6 +312,9 @@ class Anime extends BaseObject {
     }
     return $this->ratingAvg; 
   }
+  public function predictedRating(RecsEngine $recsEngine, User $user) {
+    return $recsEngine->predict($user, $this);
+  }
   public function scoreBar($score=False) {
     // returns markup for a score bar for a score given to this anime.
     if ($score === False || $score == 0) {
@@ -341,10 +344,18 @@ class Anime extends BaseObject {
     foreach ($this->tags() as $tag) {
       $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
     }
-    $output .= "</ul>";
+    $output .= "</ul>\n";
     return $output;
   }
-  public function profile(User $currentUser, RecsEngine $recsEngine=Null) {
+  public function tagList(User $currentUser) {
+    $output = "<ul class='tagList'>\n";
+    foreach (array_sort_by_property($this->tags(), 'numAnime') as $tag) {
+      $output .= "<li>".$tag->link("show", $tag->name)." ".intval($tag->numAnime)."</li>\n";
+    }
+    $output .= "</ul>\n";
+    return $output;
+  }
+  public function profile(RecsEngine $recsEngine, User $currentUser) {
     // displays an anime's profile.
     // info header.
     $output = "     <div class='row-fluid'>
@@ -374,7 +385,7 @@ class Anime extends BaseObject {
               <li class='span4'>\n";
       if (!isset($currentUser->animeList->uniqueList[$this->id]) || $currentUser->animeList->uniqueList[$this->id]['score'] == 0) {
         $output .= "                <p class='lead'>Predicted score:</p>
-                ".$this->scoreBar($recsEngine->predict($currentUser, $this))."\n";
+                ".$this->scoreBar($recsEngine->predict($currentUser, $this)[$this->id])."\n";
       } else {
         $output .= "                <p>You rated this:</p>
                 ".$this->scoreBar($currentUser->animeList->uniqueList[$this->id]['score'])."\n";
@@ -424,7 +435,8 @@ class Anime extends BaseObject {
     $output .= "                ".$this->animeFeed($currentUser)."
           </div>
         </div>
-      </div>\n";
+      </div>\n
+        ".$this->tagList($currentUser);
     return $output;
   }
   public function form(User $currentUser) {

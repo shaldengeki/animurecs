@@ -7,7 +7,11 @@ class Tag extends BaseObject {
   protected $updatedAt;
 
   protected $createdUser;
+
+  protected $numAnime;
   protected $anime;
+
+  protected $numManga;
   protected $manga;
 
   public function __construct(DbConn $database, $id=Null) {
@@ -166,7 +170,7 @@ class Tag extends BaseObject {
     }
     return $this->id;
   }
-  public function delete(array $entries=Null) {
+  public function delete($entries=Null) {
     // delete this tag from the database.
     // returns a boolean.
     // drop all taggings for this tag first.
@@ -225,9 +229,27 @@ class Tag extends BaseObject {
     }
     return $this->anime;
   }
-  public function profile() {
+  public function getNumAnime() {
+    // retrieves the number of anime tagged with this tag.
+    return $this->dbConn->queryCount("SELECT COUNT(*) FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
+  }
+  public function numAnime() {
+    if ($this->numAnime === Null) {
+      $this->numAnime = $this->getNumAnime();
+    }
+    return $this->numAnime;
+  }
+  public function profile(RecsEngine $recsEngine, User $currentUser) {
     // displays a tag's profile.
-    return;
+    $output = "<h1>".escape_output($this->name()).($this->allow($currentUser, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : "")."</h1>\n<ul class='recommendations'>\n";
+    $predictedRatings = $recsEngine->predict($currentUser, $this->anime());
+    arsort($predictedRatings);
+    foreach ($predictedRatings as $animeID=>$prediction) {
+      $output .= "<li>".$this->anime()[$animeID]->link("show", "<h4>".escape_output($this->anime()[$animeID]->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($this->anime()[$animeID]->imagePath))."' />", True, array('title' => $this->anime()[$animeID]->description(True)))."<p><em>Predicted score: ".round($prediction, 1)."</em></p></li>\n";
+    }
+    $output .= "</ul>";
+    $output .= tag_list($this->anime());
+    return $output;
   }
   public function form(User $currentUser) {
     $tagAnime = [];

@@ -65,7 +65,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetAnime->title);
-      $output = $targetAnime->profile($user, $recsEngine);
+      $output = $targetAnime->profile($recsEngine, $user);
       break;
     case 'delete':
       if ($targetAnime->id == 0) {

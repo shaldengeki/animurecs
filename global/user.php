@@ -431,19 +431,27 @@ class User extends BaseObject {
     }
 
     // now process anime entries.
+    // now process comments.
     // TODO ?_?
 
     return intval($this->id);
   }
-  public function delete(array $entries=Null) {
+  public function delete($entries=Null) {
     // delete this user from the database.
     // returns a boolean.
 
     // delete objects that belong to this user.
+    foreach ($this->comments() as $comment) {
+      if (!$comment->delete()) {
+        return False;
+      }
+    }
     $deleteList = $this->animeList()->delete();
     if (!$deleteList) {
       return False;
     }
+
+    // now delete this user.
     return parent::delete();
   }
   public function isModerator() {
@@ -516,7 +524,6 @@ class User extends BaseObject {
       $feedEntries = array_merge($feedEntries, $friend['user']->animeList()->entries($maxTime, $numEntries));
       foreach ($friend['user']->ownComments() as $comment) {
         $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
-        $commentEntry->object = $comment;
         $feedEntries[] = $commentEntry;
       }
     }

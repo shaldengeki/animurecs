@@ -191,4 +191,39 @@ function array_sort_by_property($a, $property, $order="desc") {
   uasort($a, buildPropertySorter($property, $orderVal));
   return $a;
 }
+
+function buildMethodSorter($method, $methodArgs, $order) {
+  // returns a function that sorts two input objects on a method in a given order.
+  // order=1 corresponds to ascending, order=-1 corresponds to descending.
+  return function($a, $b) use ($method, $methodArgs, $order) {
+    if (!method_exists($a, $method)) {
+      if (!method_exists($b, $method)) {
+        return 0;
+      } else {
+        return -1*$order;
+      }
+    } else {
+      if (!method_exists($b, $method)) {
+        return 1*$order;
+      } else {
+        return ((call_user_func_array(array($a, $method), $methodArgs) < call_user_func_array(array($b, $method), $methodArgs)) ? -1 : 1)*$order;
+      }
+    }
+  };
+}
+
+function array_sort_by_method($a, $method, $methodArgs=array(), $order="desc") {
+  // sorts a list of associative arrays by a given key in a given order.
+  switch($order) {
+    case 'asc':
+      $orderVal = 1;
+      break;
+    default:
+    case 'desc':
+      $orderVal = -1;
+      break;
+  }
+  uasort($a, buildMethodSorter($method, $methodArgs, $orderVal));
+  return $a;
+}
 ?>

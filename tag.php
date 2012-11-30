@@ -64,7 +64,7 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetTag->name);
-      $output = "<h1>".escape_output($targetTag->name).($targetTag->allow($user, "edit") ? " <small>(".$targetTag->link("edit", "edit").")</small>" : "")."</h1>\n".$targetTag->profile();
+      $output = $targetTag->profile($recsEngine, $user);
       break;
     case 'delete':
       if ($targetTag->id == 0) {

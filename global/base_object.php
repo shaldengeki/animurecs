@@ -1,5 +1,7 @@
 <?php
-class BaseObject {
+abstract class BaseObject {
+  // base class for database objects.
+
   public $dbConn;
   public $id;
 
@@ -38,7 +40,11 @@ class BaseObject {
     // retrieves (from the database) all properties of this object in the object's table.
     $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
     if (!$info) {
-      throw new Exception('ID Not Found');
+      if (DEBUG_ON) {
+        throw new Exception($this->modelName().' ID Not Found: '.$this->id);
+      } else {
+        return;
+      }
     }
     foreach ($info as $key=>$value) {
       if (is_numeric($value)) {
@@ -54,13 +60,10 @@ class BaseObject {
     }
     return $this->$param;
   }
-  public function allow(User $authingUser, $action, array $params=Null) {
-    // by default, don't let anybody do anything unless they're staff, in which case allow them to do everything.
-    if ($authingUser->isModerator() || $authingUser->isAdmin()) {
-      return True;
-    }
-    return False;
-  }
+
+  // all classes must implement allow(), which defines user permissions.
+  abstract public function allow(User $authingUser, $action, array $params=Null);
+
   public function create_or_update(array $object, User $currentUser=Null) {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.
@@ -94,7 +97,7 @@ class BaseObject {
     }
     return $this->id;
   }
-  public function delete(array $entries=Null) {
+  public function delete($entries=Null) {
     /*
       Deletes objects from the database.
       Takes an array of objects IDs as the input, defaulting to just this object.
@@ -103,8 +106,11 @@ class BaseObject {
     if ($entries === Null) {
       $entries = [intval($this->id)];
     }
+    if (!is_array($entries) && !is_numeric($entries)) {
+      return False;
+    }
     if (is_numeric($entries)) {
-      $entries = [intval($entries)];
+      $entries = [$entries];
     }
     $entryIDs = [];
     foreach ($entries as $entry) {

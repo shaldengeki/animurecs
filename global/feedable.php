@@ -40,8 +40,6 @@ trait Feedable {
     }
   }
 
-  // also a way to format feed entry text.
-  abstract protected function formatFeedEntry(BaseEntry $entry, User $currentUser);
   public function feedEntry(BaseEntry $entry, User $currentUser) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
@@ -49,7 +47,7 @@ trait Feedable {
     $nowTime = new DateTime("now", $outputTimezone);
     $diffInterval = $nowTime->diff($entry->time);
 
-    $feedMessage = $entry->object->formatFeedEntry($entry, $currentUser);
+    $feedMessage = $entry->formatFeedEntry($currentUser);
 
     $output = "  <li class='feedEntry row-fluid'>
         <div class='feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
@@ -71,16 +69,17 @@ trait Feedable {
     // sort by key and grab only the latest numEntries.
     $entries = array_sort_by_property($entries, 'time', 'desc');
     $entries = array_slice($entries, 0, $numEntries);
-    $output = "<ul class='userFeed ajaxFeed' data-url='".$this->url("feed")."'>\n";
     if (!$entries) {
       $output .= $emptyFeedText;
+    } else {
+      $output = "<ul class='userFeed ajaxFeed' data-url='".$entries[0]->url("feed")."'>\n";
+      $feedOutput = [];
+      foreach ($entries as $entry) {
+        $feedOutput[] = $this->feedEntry($entry, $currentUser);
+      }
+      $output .= implode("\n", $feedOutput);
+      $output .= "</ul>\n";
     }
-    $feedOutput = [];
-    foreach ($entries as $entry) {
-      $feedOutput[] = $this->feedEntry($entry, $currentUser);
-    }
-    $output .= implode("\n", $feedOutput);
-    $output .= "</ul>\n";
     return $output;
   }
 }

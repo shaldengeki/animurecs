@@ -33,6 +33,15 @@ class CommentEntry extends BaseEntry {
   public function time() {
     return $this->comment()->createdAt;
   }
+  public function formatFeedEntry(User $currentUser) {
+    /* TODO: make this work for comments posted on anime etc */
+    if ($currentUser->id != $this->comment()->parent()->id) {
+      $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username)." to ".$this->comment()->parent()->link("show", $this->comment()->parent()->username).":";
+    } else {
+      $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username)." to you:";
+    }
+    return array('title' => $feedTitle, 'text' => escape_output($this->comment()->message()));
+  }
 }
 
 ?>

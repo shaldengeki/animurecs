@@ -48,7 +48,8 @@ class DbConn extends mysqli {
         or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
           Query: ".$query."<br />
           ".$this->error."<br />
-          Time: ".time());
+          Time: ".time()."<br />
+          Stack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>");
     } else {
       $result = $this->query($query)
         or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />

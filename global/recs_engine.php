@@ -22,7 +22,7 @@ class RecsEngine {
     }
     $url = "http://".$this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$requestFields;
     $page = hitPage($url);
-    return $page ? ($json ? json_decode($page) : $page) : False;
+    return $page ? ($json ? json_decode($page, True) : $page) : False;
   }
   public function animeAverage(Anime $anime) {
     return $this->get("anime", $anime->id, "average", Null, False);
@@ -33,9 +33,17 @@ class RecsEngine {
   public function userFeatures(User $user) {
     return $this->get("user", $user->id, "features");
   }
-  public function predict(User $user, Anime $anime) {
-    // fetches the predicted score for user and anime object pairs.
-    return floatval($this->get("user", $user->id, "predict", array('anime' => intval($anime->id))));
+  public function predict(User $user, $anime, $start=0, $n=20) {
+    // fetches the predicted score for a user and a list of (or just one) anime
+    if (is_array($anime)) {
+      $animeIDs = [];
+      foreach ($anime as $a) {
+        $animeIDs[intval($a->id)] = intval($a->id);
+      }
+    } else {
+      $animeIDs = array(intval($anime->id) => intval($anime->id));
+    }
+    return $this->get("user", $user->id, "predict", array('start' => intval($start), 'n' => intval($n), 'anime' => $animeIDs));
   }
   public function recommend(User $user, $n=20) {
     return $this->get("user", $user->id, "recommend", array('n' => intval($n)));
