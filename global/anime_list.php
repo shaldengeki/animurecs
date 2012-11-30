@@ -38,14 +38,5 @@ class AnimeList extends BaseList {
         break;
     }
   }
-  public function url($action="show", array $params=Null, $id=Null) {
-    // returns the url that maps to this object and the given action.
-    if ($id === Null) {
-      $id = intval($this->id);
-    }
-    $params['user_id'] = $this->user()->id;
-    $urlParams = http_build_query($params);
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
-  }
 }
 ?>

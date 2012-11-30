@@ -1,15 +1,26 @@
 <?php
 include_once("global/includes.php");
 
-if (intval($_REQUEST['user_id']) === $user->id) {
-  $targetUser = $user;
+try {
+  $targetEntry = new AnimeEntry($database, intval($_REQUEST['id']));
+} catch (Exception $e) {
+  redirect_to($user->url(), array('status' => "This entry ID doesn't exist.", 'class' => 'error'));
+}
+if ($targetEntry->id !== 0) {
+  $targetUser = $targetEntry->user;
 } else {
   try {
-    $targetUser = new User($database, intval($_REQUEST['user_id']));
+    $targetUser = isset($_POST['anime_list']['user_id']) ? new User($database, intval($_POST['anime_list']['user_id'])) : $user;
   } catch (Exception $e) {
+    // this non-zero userID does not exist.
     redirect_to($user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
   }
 }
+if ($targetUser->id === 0) {
+  // This user does not exist.
+  redirect_to($user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+}
+
 $location = $targetUser->url();
 $status = "";
 $class = "";
@@ -35,25 +46,6 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
           if ($_POST['anime_list'][$key] === '') {
             unset($_POST['anime_list'][$key]);
           }
-        }
-        // check to ensure that the user has perms to create or update an entry.
-        try {
-          $targetUser = new User($database, intval($_POST['anime_list']['user_id']));
-        } catch (Exception $e) {
-          // this non-zero userID does not exist.
-          $location = $user->url();
-          $status = "This user ID doesn't exist.";
-          $class = "error";
-          break;
-        }
-        if ($targetUser->id === 0) {
-          // This user does not exist.
-          $location = $user->url();
-          $status = "This user ID doesn't exist.";
-          $class = "error";
-          break;
-        } else {
-          $location = $targetUser->url();
         }
         if (!isset($_POST['anime_list']['id'])) {
           // fill default values from the last entry for this anime.

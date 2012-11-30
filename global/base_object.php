@@ -134,7 +134,7 @@ class BaseObject {
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
-    if (is_array($params)) {
+    if (is_array($params) && $params) {
       foreach ($params as $key => $value) {
         $linkParams[] = escape_output($key)."='".escape_output($value)."'";
       }
