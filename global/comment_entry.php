@@ -35,11 +35,18 @@ class CommentEntry extends BaseEntry {
   }
   public function formatFeedEntry(User $currentUser) {
     /* TODO: make this work for comments posted on anime etc */
-    if ($currentUser->id != $this->comment()->parent()->id) {
-      $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username)." to ".$this->comment()->parent()->link("show", $this->comment()->parent()->username).":";
+    if ($currentUser->id != $this->comment()->user()->id) {
+      $sendingUser = $this->comment()->user()->link("show", $this->comment()->user()->username);
     } else {
-      $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username)." to you:";
+      $sendingUser = "You";
     }
+    if ($currentUser->id != $this->comment()->parent()->id) {
+      $receivingUser = $this->comment()->parent()->link("show", $this->comment()->parent()->username);
+    } else {
+      $receivingUser = "you";
+    }
+
+    $feedTitle = $sendingUser." to ".$receivingUser.":";
     return array('title' => $feedTitle, 'text' => escape_output($this->comment()->message()));
   }
 }

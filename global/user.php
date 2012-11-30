@@ -30,13 +30,13 @@ class User extends BaseObject {
       $this->name = "Guest";
       $this->usermask = 0;
       $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
-      $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->profileComments = [];
+      $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
       $this->animeList = new AnimeList($this->dbConn, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->profileComments = Null;
+      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
     }
   }
   public function username() {
@@ -508,10 +508,8 @@ class User extends BaseObject {
   public function profileFeed(User $currentUser, DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
-    foreach ($this->profileComments() as $comment) {
-      $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
-      $commentEntry->object = $comment;
-      $feedEntries[] = $commentEntry;
+    foreach ($this->comments() as $comment) {
+      $feedEntries[] = new CommentEntry($this->dbConn, intval($comment->id));
     }
     return $this->animeList()->feed($feedEntries, $currentUser, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }

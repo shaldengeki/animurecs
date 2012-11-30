@@ -27,7 +27,6 @@ trait Feedable {
         if ($entry->time() >= $maxTime) {
           continue;
         }
-        $entry->object = $this;
         $returnList[] = $entry;
         $entryCount++;
         if ($limit !== Null && $entryCount >= $limit) {
@@ -56,7 +55,15 @@ trait Feedable {
           <div class='feedUser'>".$feedMessage['title']."</div>
           ".$feedMessage['text']."\n";
     if ($this->allow($currentUser, 'delete')) {
-      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True, Null, Null, intval($entry->id))."</li></ul>";
+      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>";
+    }
+    if ($entry->comments) {
+      $output .= "<ul class='userFeed'>";
+      foreach ($entry->comments as $comment) {
+        $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
+        $output .= $this->feedEntry($commentEntry, $currentUser);
+      }
+      $output .= "</ul>";
     }
     $output .= "          </div>
       </li>\n";
@@ -72,7 +79,7 @@ trait Feedable {
     if (!$entries) {
       $output .= $emptyFeedText;
     } else {
-      $output = "<ul class='userFeed ajaxFeed' data-url='".$entries[0]->url("feed")."'>\n";
+      $output = "<ul class='userFeed ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
       foreach ($entries as $entry) {
         $feedOutput[] = $this->feedEntry($entry, $currentUser);

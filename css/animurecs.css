@@ -1045,7 +1045,7 @@ ul.userFeed{margin:0;}ul.userFeed li.feedEntry{list-style:none;padding:10px 0;bo
 ul.userFeed li.feedEntry .feedAvatar{float:left;width:40px;height:40px;margin:0 0 0 5px;text-align:center;}ul.userFeed li.feedEntry .feedAvatar img{max-width:40px;max-height:40px;}
 ul.userFeed li.feedEntry .feedText{padding:0px 50px;font-size:10pt;}ul.userFeed li.feedEntry .feedText .feedUser{font-size:11pt;font-weight:bold;padding-bottom:3px;}ul.userFeed li.feedEntry .feedText .feedUser a:link,ul.userFeed li.feedEntry .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
 ul.userFeed li.feedEntry .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
-ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;}
+ul.userFeed li.feedEntry .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.userFeed li.feedEntry .feedText .feedEntryMenu li{display:inline;white-space:nowrap;}
 ul.tagList{position:absolute;top:80px;left:-150px;width:140px;list-style:none;}ul.tagList li{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;}
 .tag-general{color:#006ffa;}
 .tag-studio{color:#aa0000;}

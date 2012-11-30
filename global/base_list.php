@@ -248,6 +248,21 @@ abstract class BaseList extends BaseObject {
     }
     return $prevEntry;
   }
+  public function url($action="show", array $params=Null, $id=Null) {
+    // returns the url that maps to this object and the given action.
+    if ($id === Null) {
+      if ($this->entries()) {
+        $id = current($this->entries())->id;
+      } else {
+        $id = intval($this->id);
+      }
+    }
+    $urlParams = "";
+    if (is_array($params)) {
+      $urlParams = http_build_query($params);
+    }
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+  }
   public function link($action="show", $text=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.
     $text = ($text === Null) ? "List" : $text;

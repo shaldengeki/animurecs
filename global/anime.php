@@ -88,6 +88,7 @@ class Anime extends BaseObject {
         }
         return False;
         break;
+      case 'feed':
       case 'show':
         if ($this->isApproved() || $authingUser->isModerator() || $authingUser->isAdmin()) {
           return True;

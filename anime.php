@@ -37,6 +37,12 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
   $output = display_error("Error: Insufficient privileges", "You're not allowed to do this.");
 } else {
   switch($_REQUEST['action']) {
+    case 'feed':
+      $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
+      $entries = $targetAnime->entries($maxTime, 50);
+      echo $targetAnime->feed($entries, $user, 50, "");
+      exit;
+      break;
     case 'token_search':
       $animus = [];
       if (isset($_REQUEST['term'])) {

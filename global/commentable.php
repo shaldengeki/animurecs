@@ -4,9 +4,9 @@ trait Commentable {
   // allows an object to have comments on its profile.
   // you'll also need to provide a 'comment' case in the class's allow() method.
   
-  protected $profileComments;
+  protected $comments;
 
-  public function getProfileComments() {
+  public function getComments() {
     // returns a list of comment objects sent by this user.
     $profileComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = '".$this->modelName()."' && `parent_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
     $comments = [];
@@ -15,11 +15,11 @@ trait Commentable {
     }
     return $comments;
   }
-  public function profileComments() {
-    if ($this->profileComments === Null) {
-      $this->profileComments = $this->getProfileComments();
+  public function comments() {
+    if ($this->comments === Null) {
+      $this->comments = $this->getComments();
     }
-    return $this->profileComments;
+    return $this->comments;
   }
 }
 
