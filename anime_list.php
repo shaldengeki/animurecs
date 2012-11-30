@@ -83,7 +83,7 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
       if (!isset($_REQUEST['id'])) {
         $_REQUEST['id'] = False;
       }
-      $deleteList = $targetUser->animeList->delete(intval($_REQUEST['id']));
+      $deleteList = $targetUser->animeList->delete([intval($_REQUEST['id'])]);
       if ($deleteList) {
         $status = "Successfully updated your anime list.";
         $class = "success";
