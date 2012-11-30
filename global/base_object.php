@@ -3,9 +3,7 @@ class BaseObject {
   public $dbConn;
   public $id;
 
-  protected $modelTable;
-  protected $modelPlural;
-  protected $modelName;
+  protected $modelTable, $modelPlural, $modelName;
 
   public function __construct(DbConn $database, $id=Null) {
     $this->dbConn = $database;
@@ -103,7 +101,7 @@ class BaseObject {
       Returns a boolean.
     */
     if ($entries === Null) {
-      $entries = intval($this->id);
+      $entries = [intval($this->id)];
     }
     if (is_numeric($entries)) {
       $entries = [intval($entries)];

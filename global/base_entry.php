@@ -1,18 +1,27 @@
 <?php
 
 class BaseEntry extends BaseObject {
+  // feed entry class object.
+  use Commentable;
+
   protected $user, $userId;
   protected $time;
   protected $status, $score;
+
+  // this is the parent object to which the entry belongs.
+  // e.g. for an animelist entry on a user's page, it'd be the animelist
+  // and for a comment entry on the user's page, it'd be the comment
+  public $object;
 
   public function __construct(DbConn $database, $id=Null, $params=Null) {
     parent::__construct($database, $id);
     if ($id === 0) {
       $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
       $this->time = new DateTime("now", $serverTimezone);
-      $this->status = $this->score = 0;   
+      $this->status = $this->score = 0;
+      $this->comments = [];
     } else {
-      $this->user = $this->userId = $this->time = $this->status = $this->score = Null;
+      $this->user = $this->userId = $this->time = $this->status = $this->score = $this->comments = Null;
     }
     $this->modelTable =  $this->modelPlural = $this->partName = $this->entryType = $this->typeVerb = $this->feedType = $this->entryTypeLower = $this->typeID = "";
     if (is_array($params)) {
@@ -53,6 +62,12 @@ class BaseEntry extends BaseObject {
         break;
       case 'index':
         if ($authingUser->isAdmin()) {
+          return True;
+        }
+        return False;
+        break;
+      case 'comment':
+        if ($authingUser->loggedIn()) {
           return True;
         }
         return False;
@@ -107,32 +122,6 @@ class BaseEntry extends BaseObject {
       $returnValue = intval($this->dbConn->insert_id);
     }
     return $returnValue;
-  }
-  public function delete(array $entries=Null) {
-    /*
-      Deletes list entries.
-      Takes an array of entry ids as input, defaulting to just this entry.
-      Returns a boolean.
-    */
-    if ($entries === Null) {
-      $entries = array_keys($this->entries());
-    }
-    if (is_numeric($entries)) {
-      $entries = [intval($entries)];
-    }
-    $entryIDs = [];
-    foreach ($entries as $entry) {
-      if (is_numeric($entry)) {
-        $entryIDs[] = intval($entry);
-      }
-    }
-    if ($entryIDs) {
-      $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
-      if (!$drop_entries) {
-        return False;
-      }
-    }
-    return True;
   }
 }
 

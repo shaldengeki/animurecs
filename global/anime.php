@@ -1,6 +1,6 @@
 <?php
 class Anime extends BaseObject {
-  use Feedable;
+  use Feedable, Commentable;
 
   protected $title;
   protected $description;
@@ -19,7 +19,7 @@ class Anime extends BaseObject {
   protected $regularizedAvg;
 
   protected $tags;
-  protected $comments;
+
   public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "anime";
@@ -272,10 +272,6 @@ class Anime extends BaseObject {
     }
     return $this->tags;
   }
-  public function getComments() {
-    // retrieves a list of id entries corresponding to comments belonging to this anime.
-    return $this->dbConn->queryAssoc("SELECT `id` FROM `comments` WHERE `type` = 'anime' && `type_id` = ".intval($this->id)." ORDER BY `comments`.`created_at` DESC", "id");
-  }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     $returnList = [];
@@ -357,7 +353,7 @@ class Anime extends BaseObject {
             <li class='span12'>
               <div class='thumbnail profileAvatar'>\n";
     if ($this->imagePath() != '') {
-      $output .= "                <img src='".joinPaths(array(ROOT_URL,escape_output($this->imagePath())))."' class='img-rounded' alt=''>\n";
+      $output .= "                <img src='".joinPaths(ROOT_URL,escape_output($this->imagePath()))."' class='img-rounded' alt=''>\n";
     } else {
       $output .= "                <img src='/img/anime/blank.png' class='img-rounded' alt=''>\n";
     }

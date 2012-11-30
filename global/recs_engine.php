@@ -22,7 +22,6 @@ class RecsEngine {
     }
     $url = "http://".$this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$requestFields;
     $page = hitPage($url);
-    // return hitPage($this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$params);
     return $page ? ($json ? json_decode($page) : $page) : False;
   }
   public function animeAverage(Anime $anime) {
@@ -34,26 +33,6 @@ class RecsEngine {
   public function userFeatures(User $user) {
     return $this->get("user", $user->id, "features");
   }
-  /*
-  public function predictUserFeatures($user) {
-    $ratings = [];
-    foreach ($user->animeList->uniqueList as $id => $rating) {
-      if (intval($rating['score']) != 0) {
-        $ratings[intval($id)] = intval($rating['score']);
-      }
-    }
-    return $this->get("user", $user->id, "predictFeatures", array('ratings' => $ratings));
-  }
-  public function updateUserFeatures($user) {
-    $ratings = [];
-    foreach ($user->animeList->uniqueList as $id => $rating) {
-      if (intval($rating['score']) != 0) {
-        $ratings[intval($id)] = intval($rating['score']);
-      }
-    }
-    return $this->get("user", $user->id, "updateFeatures", array('ratings' => $ratings));
-  }
-  */
   public function predict(User $user, Anime $anime) {
     // fetches the predicted score for user and anime object pairs.
     return floatval($this->get("user", $user->id, "predict", array('anime' => intval($anime->id))));

@@ -1,6 +1,8 @@
 <?php
 
 trait Feedable {
+  // allows an object to assemble and display a formatted feed of entries belonging to this object.
+
   // any feedable class must define a way to retrieve entries (from the database, presumably)
   abstract protected function getEntries();
   public function entries(DateTime $maxTime=Null, $limit=Null) {
@@ -56,13 +58,12 @@ trait Feedable {
           <div class='feedUser'>".$feedMessage['title']."</div>
           ".$feedMessage['text']."\n";
     if ($this->allow($currentUser, 'delete')) {
-      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->object->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($entry->user->id)), intval($entry->id))."</li></ul>";
+      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True, Null, array('user_id' => intval($entry->user->id)), intval($entry->id))."</li></ul>";
     }
     $output .= "          </div>
       </li>\n";
     return $output;
   }
-
 
   public function feed(array $entries, User $currentUser, $numEntries=50, $emptyFeedText="") {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.

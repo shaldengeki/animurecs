@@ -1,5 +1,7 @@
 <?php
 class User extends BaseObject {
+  use Commentable;
+
   protected $username;
   protected $name;
   protected $email;
@@ -17,7 +19,7 @@ class User extends BaseObject {
   protected $friendRequests;
   protected $requestedFriends;
   protected $ownComments;
-  protected $profileComments;
+
 
   public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
@@ -156,21 +158,6 @@ class User extends BaseObject {
       $this->ownComments = $this->getOwnComments();
     }
     return $this->ownComments;
-  }
-  public function getProfileComments() {
-    // returns a list of comment objects sent by this user.
-    $profileComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = 'User' && `parent_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
-    $comments = [];
-    while ($comment = $profileComments->fetch_assoc()) {
-      $comments[] = new Comment($this->dbConn, intval($comment['id']));
-    }
-    return $comments;
-  }
-  public function profileComments() {
-    if ($this->profileComments === Null) {
-      $this->profileComments = $this->getProfileComments();
-    }
-    return $this->profileComments;
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.

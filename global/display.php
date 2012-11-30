@@ -262,8 +262,8 @@ function display_status_dropdown($select_id="anime_list[status]", $class="", $se
       1 => "Currently Watching",
       2 => "Completed",
       3 => "On Hold",
-      4 => "Plan to Watch",
-      6 => "Dropped"
+      4 => "Dropped",
+      6 => "Plan to Watch"
   );
   $output = "<select class='".escape_output($class)."' id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
   foreach ($statuses as $id => $text) {

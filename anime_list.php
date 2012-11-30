@@ -52,6 +52,8 @@ if (!$targetUser->animeList->allow($user, $_REQUEST['action'])) {
           $status = "This user ID doesn't exist.";
           $class = "error";
           break;
+        } else {
+          $location = $targetUser->url();
         }
         if (!isset($_POST['anime_list']['id'])) {
           // fill default values from the last entry for this anime.
