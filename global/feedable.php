@@ -54,7 +54,7 @@ trait Feedable {
         <div class='feedText'>
           <div class='feedUser'>".$feedMessage['title']."</div>
           ".$feedMessage['text']."\n";
-    if ($this->allow($currentUser, 'delete')) {
+    if ($entry->allow($currentUser, 'delete')) {
       $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>";
     }
     if ($entry->comments) {
