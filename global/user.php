@@ -203,6 +203,10 @@ class User extends BaseObject {
       case 'switch_back':
       case 'show':
       case 'index':
+      case 'feed':
+      case 'list':
+      case 'stats':
+      case 'achievements':
         return True;
         break;
       default:
@@ -597,6 +601,27 @@ class User extends BaseObject {
         </div>
       </fieldset>\n</form>\n";
   }
+  public function addEntryInlineForm() {
+    $anime = new Anime($this->dbConn, 0);
+    $output .= "                <div class='addListEntryForm'>
+                  <form class='form-inline' action='".$this->animeList()->url("new")."' method='POST'>
+                    <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
+                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
+                    <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
+                    ".display_status_dropdown("anime_list[status]", "span2")."
+                    <div class='input-append'>
+                      <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='0' />
+                      <span class='add-on'>/10</span>
+                    </div>
+                    <div class='input-prepend'>
+                      <span class='add-on'>Ep</span>
+                      <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' />
+                    </div>
+                    <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
+                  </form>
+                </div>\n";
+    return $output;
+  }
   public function profile(User $currentUser) {
     // displays a user's profile.
     // info header.
@@ -653,50 +678,33 @@ class User extends BaseObject {
     $output .= "          </div>
           <div class='profileTabs'>
             <ul class='nav nav-tabs'>
-              <li class='active'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
-              <li><a href='#userList' data-toggle='tab'>List</a></li>
-              <li><a href='#userStats' data-toggle='tab'>Stats</a></li>
-              <li><a href='#userAchieves' data-toggle='tab'>Achievements</a></li>
+              <li class='active ajaxTab' data-url='".$this->url("feed")."'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
+              <li class='ajaxTab' data-url='".$this->url("list")."'><a href='#userList' data-toggle='tab'>List</a></li>
+              <li class='ajaxTab' data-url='".$this->url("stats")."'><a href='#userStats' data-toggle='tab'>Stats</a></li>
+              <li class='ajaxTab' data-url='".$this->url("achievements")."'><a href='#userAchievements' data-toggle='tab'>Achievements</a></li>
             </ul>
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>\n";
     if ($this->animeList()->allow($currentUser, 'edit')) {
-      $animeList = new AnimeList($this->dbConn, 0);
-      $anime = new Anime($this->dbConn, 0);
-      $output .= "                <div class='addListEntryForm'>
-                  <form class='form-inline' action='".$animeList->url("new", array("user_id" => intval($this->id)))."' method='POST'>
-                    <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
-                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
-                    <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
-                    ".display_status_dropdown("anime_list[status]", "span2")."
-                    <div class='input-append'>
-                      <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='0' />
-                      <span class='add-on'>/10</span>
-                    </div>
-                    <div class='input-prepend'>
-                      <span class='add-on'>Ep</span>
-                      <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' />
-                    </div>
-                    <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
-                  </form>
-                </div>\n";
+      $output .= $this->addEntryInlineForm();
     }
-    $blankComment = new Comment($this->dbConn, 0, $currentuser, $this);
-    if ($blankComment->allow($currentUser, 'new')) {
+    if ($this->allow($currentUser, 'comment')) {
+      $blankComment = new Comment($this->dbConn, 0, $currentuser, $this);
       $output .= "                <div class='addListEntryForm'>
                   ".$blankComment->inlineForm($currentUser, $this)."
                 </div>\n";
+
     }
     $output .= "                ".$this->profileFeed($currentUser)."
               </div>
               <div class='tab-pane' id='userList'>
-                ".$this->displayAnimeList($currentUser)."
+                Loading...
               </div>
               <div class='tab-pane' id='userStats'>
-                Stats coming soon!
+                Loading...
               </div>
-              <div class='tab-pane' id='userAchieves'>
-                Achievements coming soon!
+              <div class='tab-pane' id='userAchievements'>
+                Loading...
               </div>
             </div>
           </div>

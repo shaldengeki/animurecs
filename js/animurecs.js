@@ -93,6 +93,38 @@ $.extend( $.fn.dataTableExt.oPagination, {
   }
 } );
 
+function initDataTable(elt) {
+  // see if there's a default-sort column. if not, default to the first column.
+  defaultSortColumn = $(elt).find('thead > tr > th').index($(elt).find('thead > tr > th.dataTable-default-sort'));
+  if (defaultSortColumn == -1) {
+    defaultSortColumn = 0;
+    defaultSortOrder = "asc";
+  } else {
+    if (typeof $(elt).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order") != 'undefined') {
+      defaultSortOrder = $(elt).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order");
+    } else {
+      defaultSortOrder = "asc";
+    }
+  }
+  if(typeof $(elt).attr('data-recordsPerPage') != 'undefined') {
+    recordsPerPage = $(elt).attr('data-recordsPerPage');
+  } else {
+    recordsPerPage = 25;
+  }
+  $(elt).dataTable({
+    "sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    "sPaginationType": "bootstrap",
+    "oLanguage": {
+      "sLengthMenu": "_MENU_ records per page"
+    },
+    "iDisplayLength": recordsPerPage,
+    "bPaginate": false,
+    "bFilter": false,
+    "bInfo": false,
+    "aaSorting": [[ defaultSortColumn, defaultSortOrder ]]
+  });
+}
+
 function displayListEditForm(elt) {
   // converts a normal table list entry into a list edit form.
   // is called on the last cell of a list entry row, on the icon's link.
@@ -172,49 +204,21 @@ function submitListUpdate(elt) {
   });
 }
 
-$(document).ready(function () {
-  $('.dropdown-toggle').dropdown();
+function initInterface(elt) {
+  $(elt).find('.dropdown-toggle').dropdown();
 
   /* Datatable initialisation */
-  $('.dataTable').each(function() {
-    // see if there's a default-sort column. if not, default to the first column.
-    defaultSortColumn = $(this).find('thead > tr > th').index($(this).find('thead > tr > th.dataTable-default-sort'));
-    if (defaultSortColumn == -1) {
-      defaultSortColumn = 0;
-      defaultSortOrder = "asc";
-    } else {
-      if (typeof $(this).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order") != 'undefined') {
-        defaultSortOrder = $(this).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order");
-      } else {
-        defaultSortOrder = "asc";
-      }
-    }
-    if(typeof $(this).attr('data-recordsPerPage') != 'undefined') {
-      recordsPerPage = $(this).attr('data-recordsPerPage');
-    } else {
-      recordsPerPage = 25;
-    }
-    $(this).dataTable({
-      "sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
-      "sPaginationType": "bootstrap",
-      "oLanguage": {
-        "sLengthMenu": "_MENU_ records per page"
-      },
-      "iDisplayLength": recordsPerPage,
-      "bPaginate": false,
-      "bFilter": false,
-      "bInfo": false,
-      "aaSorting": [[ defaultSortColumn, defaultSortOrder ]]
-    });
+  $(elt).find('.dataTable').each(function() {
+    initDataTable(this);
   });
 
   /* D3 plot initialization */
-  if ($('#vis').length > 0) {
+  if ($(elt).find('#vis').length > 0) {
     drawLargeD3Plot();
   }
 
   /* Disable buttons on click */
-  $('.btn').each(function() {
+  $(elt).find('.btn').each(function() {
     $(this).click( function() {
       $(this).off('click');
       $(this).addClass("disabled");
@@ -223,7 +227,7 @@ $(document).ready(function () {
   });
 
   /* token input initialization */
-  $('.token-input').each(function() {
+  $(elt).find('.token-input').each(function() {
     if(typeof $(this).attr('data-tokenLimit') != 'undefined') {
       tokenLimit = $(this).attr('data-tokenLimit');
     } else {
@@ -246,7 +250,7 @@ $(document).ready(function () {
   });
 
   /* autocomplete initialization */
-  $('.autocomplete').each(function() {
+  $(elt).find('.autocomplete').each(function() {
     if(typeof $(this).attr('data-valueField') != 'undefined') {
       valueField = $(this).attr('data-valueField');
     } else {
@@ -282,7 +286,7 @@ $(document).ready(function () {
   /* ajax feed autoloading. */
   $(window).unbind("scroll");
   $(window).scroll(function() {
-    $('ul.ajaxFeed:visible').each(function() {
+    $(elt).find('ul.ajaxFeed:visible').each(function() {
       if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && typeof $(this).attr('loading') == 'undefined') {
         //get last-loaded MAL change and load more past this.
         $(this).attr('loading', 'true');
@@ -313,8 +317,31 @@ $(document).ready(function () {
     });
   });
 
+  /* ajax tab autoloading. */
+  $(elt).find('.nav-tabs li.ajaxTab:visible').each(function() {
+    $(this).click(function(e) {
+      var thisTab = e.target // activated tab
+
+      var remoteTarget = $(thisTab).parent().attr('data-url');
+      var pageTarget = $(thisTab).attr('href');
+
+      $(pageTarget).parent().children('.tab-pane').each(function() {
+        $(this).removeClass('active');
+      });
+
+      if (typeof $(thisTab).parent().attr('loaded') == 'undefined' && typeof $(thisTab).parent().attr('loading') == 'undefined') {
+        $(thisTab).parent().attr('loading', true);
+        $(pageTarget).load(remoteTarget, function() {
+          $(thisTab).parent().removeAttr('loading');
+          $(thisTab).parent().attr('loaded', true);
+          initInterface(pageTarget);
+        }).addClass('active');
+      }
+    });
+  });
+
   /* feed entry menu initialization */
-  $('.feedEntry').each(function() {
+  $(elt).find('.feedEntry').each(function() {
     $(this).hover(function() {
       $(this).find('.feedEntryMenu').removeClass('hidden');
     }, function() {
@@ -323,7 +350,7 @@ $(document).ready(function () {
   });
 
   /* animelist edit link events */
-  $(".listEdit").each(function() {
+  $(elt).find(".listEdit").each(function() {
     // allows users to update entries from their list.
     $(this).click(function(event) {
       displayListEditForm(this);
@@ -334,6 +361,10 @@ $(document).ready(function () {
   /* Load a specific tab if url contains a hash */
   var url = document.location.toString();
   if (url.match('#')) {
-      $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
+      $(elt).find('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
   }
+}
+
+$(document).ready(function () {
+  initInterface(document);
 });

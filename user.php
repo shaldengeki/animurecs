@@ -138,6 +138,29 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
       $title = escape_output($targetUser->username)."'s Profile";
       $output = $targetUser->profile($user);
       break;
+    case 'feed':
+      if ($targetUser->animeList()->allow($user, 'edit')) {
+        $output .= $targetUser->addEntryInlineForm();
+      }
+      if ($targetUser->allow($user, 'comment')) {
+        $blankComment = new Comment($targetUser->dbConn, 0, $currentuser, $targetUser);
+        $output .= "                <div class='addListEntryForm'>
+                    ".$blankComment->inlineForm($user, $targetUser)."
+                  </div>\n";
+
+      }
+      $output .= $targetUser->profileFeed($user);
+      echo $output;
+      exit;
+    case 'list':
+      echo $targetUser->displayAnimeList($user);
+      exit;
+    case 'stats':
+      echo "Stats coming soon!";
+      exit;
+    case 'achievements':
+      echo "Achievements coming soon!";
+      exit;
     case 'delete':
       if ($targetUser->id == 0) {
         $output = display_error("Error: Invalid user", "The given user doesn't exist.");

@@ -170,7 +170,7 @@ function start_html(DbConn $database, User $user, $title="Animurecs", $subtitle=
   <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js'></script>
   <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js'></script>
 
-  <script type='text/javascript' src='".ROOT_URL."/jquery-ui-timepicker-addon.js'></script>
+  <!--<script type='text/javascript' src='".ROOT_URL."/jquery-ui-timepicker-addon.js'></script>-->
 	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.dropdownPlain.js'></script>
 	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.dataTables.min.js'></script>
   <script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.tokeninput.js'></script>
