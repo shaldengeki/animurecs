@@ -6,8 +6,6 @@ class Anime extends BaseObject {
   protected $description;
   protected $episodeCount;
   protected $episodeLength;
-  protected $createdAt;
-  protected $updatedAt;
   protected $approvedUser;
   protected $approvedOn;
   protected $imagePath;
@@ -152,18 +150,48 @@ class Anime extends BaseObject {
     }
     return True;
   }
-  public function create_or_update(array $anime, User $currentUser=Null) {
+  public function validate(array $anime) {
+    if (!parent::validate($anime)) {
+      return False;
+    }
+    if (!isset($anime['title']) || strlen($anime['title']) < 1) {
+      return False;
+    }
+    if (isset($anime['description']) && (strlen($anime['description']) < 1 || strlen($anime['description']) > 600)) {
+      return False;
+    }
+    if (isset($anime['episode_count']) && ( !is_numeric($anime['episode_count']) || intval($anime['episode_count']) != $anime['episode_count'] || intval($anime['episode_count']) < 0) ) {
+      return False;
+    }
+    if (isset($anime['episode_length']) && ( !is_numeric($anime['episode_length']) || intval($anime['episode_length']) != $anime['episode_length'] || intval($anime['episode_length']) < 0) ) {
+      return False;
+    }
+    if (isset($anime['approved_on']) && !strtotime($anime['approved_on'])) {
+      return False;
+    }
+    if (isset($anime['approved_user_id'])) {
+      if (!is_numeric($anime['approved_user_id']) || intval($anime['approved_user_id']) != $anime['approved_user_id'] || intval($anime['approved_user_id']) <= 0) {
+        return False;
+      } else {
+        try {
+          $approvedUser = new User($this->dbConn, intval($anime['approved_user_id']));
+        } catch (Exception $e) {
+          return False;
+        }
+      }
+    }
+    return True;
+  }
+  public function create_or_update(array $anime, array $whereConditions=Null) {
     // creates or updates a anime based on the parameters passed in $anime and this object's attributes.
     // returns False if failure, or the ID of the anime if success.
-
     // filter some parameters out first and replace them with their corresponding db fields.
     if (isset($anime['anime_tags']) && !is_array($anime['anime_tags'])) {
       $anime['anime_tags'] = explode(",", $anime['anime_tags']);
     }
     if ((isset($anime['approved']) && intval($anime['approved']) == 1 && !$this->isApproved())) {
       $anime['approved_on'] = unixToMySQLDateTime();
-      $anime['approved_user_id'] = $currentUser->id;
-    } elseif ((!isset($anime['approved']) || intval($anime['approved']) == 0) && $this->isApproved()) {
+    } elseif ((!isset($anime['approved']) || intval($anime['approved']) == 0)) {
       $anime['approved_on'] = Null;
       $anime['approved_user_id'] = 0;
     }
@@ -173,6 +201,10 @@ class Anime extends BaseObject {
       $anime['episode_length'] = intval($anime['episode_minutes']) * 60;
     }
     unset($anime['episode_minutes']);
+
+    if (!$this->validate($anime)) {
+      return False;
+    }
 
     $params = array();
     foreach ($anime as $parameter => $value) {
@@ -487,6 +519,7 @@ class Anime extends BaseObject {
           <div class='controls'>
             <input name='anime[approved]' type='checkbox' value=1 ".($this->isApproved() ? "checked=checked" : "")."/>
           </div>
+          <input name='anime[approved_user_id]' type='hidden' value='".($this->isApproved() ? intval($this->approvedUser()->id) : $currentUser->id)."' />
         </div>\n";
         }
         $output .= "    <div class='form-actions'>

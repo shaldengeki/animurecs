@@ -56,7 +56,7 @@ if (!$targetComment->allow($user, $_REQUEST['action'])) {
         if (($targetUser->id != $user->id && !$user->isModerator() && !$user->isAdmin()) || !$targetComment->allow($user, 'new')) {
           redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
         }
-        $createComment = $targetComment->create_or_update($_POST['comment'], $user);
+        $createComment = $targetComment->create_or_update($_POST['comment']);
         if ($createComment) {
           redirect_to($targetParent->url(), array('status' => "Succesfully commented.", 'class' => 'success'));
         } else {
@@ -95,7 +95,7 @@ if (!$targetComment->allow($user, $_REQUEST['action'])) {
         if (($targetUser->id != $user->id && !$user->isModerator() && !$user->isAdmin()) || !$targetComment->allow($user, 'edit')) {
           redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
         }
-        $updateComment = $targetComment->create_or_update($_POST['comment'], $user);
+        $updateComment = $targetComment->create_or_update($_POST['comment']);
         if ($updateComment) {
           redirect_to($targetParent->url(), array('status' => "Comment successfully updated.", 'class' => 'success'));
         } else {

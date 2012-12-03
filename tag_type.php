@@ -17,7 +17,7 @@ if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
   if (!$authStatus) {
     redirect_to(($targetTagType->id === 0 ? $targetTagType->url("index") : $targetTagType->url("show")), array('status' => "You're not allowed to do this.", 'class' => 'error'));
   }
-  $updateTagType = $targetTagType->create_or_update($_POST['tag_type'], $user);
+  $updateTagType = $targetTagType->create_or_update($_POST['tag_type']);
   if ($updateTagType) {
     redirect_to($targetTagType->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
   } else {

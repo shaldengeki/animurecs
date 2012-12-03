@@ -35,7 +35,7 @@ if (isset($_SESSION['id'])) {
   $user = new User($database, $_SESSION['id']);
   // if user's last action was 5 or more minutes ago, update his/her last-active time.
   if ($user->lastActive->diff(new DateTime("now", new DateTimeZone(SERVER_TIMEZONE)))->i >= 5) {
-    $user->create_or_update(array());
+    $user->updateLastActive();
   }
 } else {
   $user = new User($database, 0, "Guest");

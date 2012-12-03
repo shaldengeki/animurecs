@@ -17,7 +17,7 @@ if (isset($_POST['anime']) && is_array($_POST['anime'])) {
   if (!$authStatus) {
     redirect_to(($targetAnime->id === 0 ? $targetAnime->url("index") : $targetAnime->url("show")), array('status' => "You're not allowed to do this.", 'class' => 'error'));
   }
-  $updateAnime = $targetAnime->create_or_update($_POST['anime'], $user);
+  $updateAnime = $targetAnime->create_or_update($_POST['anime']);
   if ($updateAnime) {
     redirect_to($targetAnime->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
   } else {

@@ -79,7 +79,7 @@ abstract class BaseEntry extends BaseObject {
         break;
     }
   }
-  public function create_or_update(array $entry, User $currentUser=Null) {
+  public function create_or_update(array $entry, array $whereConditions=Null) {
     /*
       Creates or updates an existing list entry for the current user.
       Takes an array of entry parameters.
@@ -92,6 +92,10 @@ abstract class BaseEntry extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
+    if (!parent::validate($entry)) {
+      return False;
+    }
+
     $params = [];
     foreach ($entry as $parameter => $value) {
       if (!is_array($value)) {

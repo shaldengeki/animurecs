@@ -5,9 +5,8 @@ class Comment extends BaseObject {
   protected $type;
   protected $parentId;
   protected $parent;
+  protected $depth;
   protected $message;
-  protected $createdAt;
-  protected $updatedAt;
 
   public function __construct(DbConn $database, $id=Null, User $user=Null, BaseObject $parent=Null) {
     parent::__construct($database, $id);
@@ -17,11 +16,17 @@ class Comment extends BaseObject {
       $this->message = $this->createdAt = $this->updatedAt = "";
       $this->parent = $parent;
       $this->parentId = $parent->id;
+      $this->depth = 0;
+      $currObj = $parent;
+      while (method_exists($currObj, 'parent')) {
+        $this->depth++;
+        $currObj = $currObj->parent();
+      }
       $this->type = get_class($this->parent);
       $this->user = $user;
       $this->userId = $user->id;
     } else {
-      $this->message = $this->createdAt = $this->updatedAt = $this->userId = $this->parent = $this->parentId = $this->type = Null;
+      $this->message = $this->createdAt = $this->updatedAt = $this->userId = $this->parent = $this->parentId = $this->depth = $this->type = Null;
     }
   }
   public function userId() {
@@ -32,6 +37,17 @@ class Comment extends BaseObject {
       $this->user = new User($this->dbConn, $this->userId());
     }
     return $this->user;
+  }
+  public function depth() {
+    if ($this->depth === Null) {
+      $this->depth = 0;
+      $currObj = $this->parent();
+      while (method_exists($currObj, 'parent')) {
+        $this->depth++;
+        $currObj = $currObj->parent();
+      }    
+    }
+    return $this->depth;
   }
   public function type() {
     return $this->returnInfo('type');
@@ -48,12 +64,6 @@ class Comment extends BaseObject {
   }
   public function message() {
     return $this->returnInfo('message');
-  }
-  public function createdAt() {
-    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
-  }
-  public function updatedAt() {
-    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -91,6 +101,39 @@ class Comment extends BaseObject {
         return False;
         break;
     }
+  }
+  public function validate(array $comment) {
+    if (!parent::validate($comment)) {
+      return False;
+    }
+    if (!isset($comment['user_id'])) {
+      return False;
+    }
+    if (!is_numeric($comment['user_id']) || intval($comment['user_id']) != $comment['user_id'] || intval($comment['user_id']) <= 0) {
+      return False;
+    } else {
+      try {
+        $createdUser = new User($this->dbConn, intval($comment['user_id']));
+      } catch (Exception $e) {
+        return False;
+      }
+    }
+    if (!isset($comment['type']) || !isset($comment['parent_id'])) {
+      return False;
+    }
+    if (!is_numeric($comment['parent_id']) || intval($comment['parent_id']) != $comment['parent_id'] || intval($comment['parent_id']) <= 0) {
+      return False;
+    } else {
+      try {
+        $parent = new $comment['type']($this->dbConn, intval($comment['parent_id']));
+      } catch (Exception $e) {
+        return False;
+      }
+    }
+    if (isset($comment['message']) && strlen($comment['message']) < 1 || strlen($comment['message']) > 300) {
+      return False;
+    }
+    return True;
   }
   public function profile() {
     // displays an comment's profile.

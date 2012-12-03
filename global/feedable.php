@@ -44,6 +44,7 @@ trait Feedable {
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
+
     $diffInterval = $nowTime->diff($entry->time);
 
     $feedMessage = $entry->formatFeedEntry($currentUser);

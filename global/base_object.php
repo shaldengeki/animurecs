@@ -6,6 +6,7 @@ abstract class BaseObject {
   public $id;
 
   protected $modelTable, $modelPlural, $modelName;
+  protected $createdAt, $updatedAt;
 
   public function __construct(DbConn $database, $id=Null) {
     $this->dbConn = $database;
@@ -60,28 +61,65 @@ abstract class BaseObject {
     }
     return $this->$param;
   }
+  public function createdAt() {
+    if ($this->createdAt === Null) {
+      $this->createdAt = new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
+    }
+    return $this->createdAt;
+  }
+  public function updatedAt() {
+    if ($this->updatedAt === Null) {
+      $this->updatedAt = new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
+    }
+    return $this->updatedAt;
+  }
 
   // all classes must implement allow(), which defines user permissions.
   abstract public function allow(User $authingUser, $action, array $params=Null);
 
-  public function create_or_update(array $object, User $currentUser=Null) {
+  // also should implement validate(), which takes an array of parameters and ensures that they are valid. returns a bool.
+  public function validate(array $object) {
+    if (isset($object['id']) && ( !is_numeric($object['id']) || intval($object['id']) != $object['id'] || intval($object['id']) < 0) ) {
+      return False;
+    }
+    if (isset($object['created_at']) && !strtotime($object['created_at'])) {
+      return False;
+    }
+    if (isset($object['updated_at']) && !strtotime($object['updated_at'])) {
+      return False;
+    }
+    return True;
+  }
+  public function create_or_update(array $object, array $whereConditions=Null) {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.
     // returns False if failure, or the ID of the object if success.
+    if (!$this->validate($object)) {
+      return False;
+    }
+
     $params = array();
     foreach ($object as $parameter => $value) {
       if (!is_array($value)) {
         $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
       }
     }
-    if ($currentUser !== Null) {
-      $whereClause = "`user_id` = ".intval($currentUser->id)." && ";
-    }
     $params[] = '`updated_at` = NOW()';
+
     //go ahead and create or update this object.
     if ($this->id != 0) {
+      $whereParams = array();
+      if ($whereConditions !== Null && is_array($whereConditions)) {
+        foreach ($whereConditions as $parameter => $value) {
+          if (!is_array($value)) {
+            $whereParams[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
+          }
+        }
+      }
+      $whereParams[] = "`id` = ".intval($this->id);
+
       //update this object.
-      $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".$whereClause."`id` = ".intval($this->id)." LIMIT 1");
+      $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1");
       if (!$updateObject) {
         return False;
       }

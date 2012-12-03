@@ -205,6 +205,8 @@ function submitListUpdate(elt) {
 }
 
 function initInterface(elt) {
+  // initializes all interface elements and events within a given element.
+
   $(elt).find('.dropdown-toggle').dropdown();
 
   /* Datatable initialisation */

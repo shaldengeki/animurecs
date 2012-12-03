@@ -94,7 +94,7 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
           redirect_to($targetUser->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
         }
 
-        $updateUser = $targetUser->create_or_update($_POST['user'], $user);
+        $updateUser = $targetUser->create_or_update($_POST['user']);
         if ($updateUser) {
           redirect_to($targetUser->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
         } else {

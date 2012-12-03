@@ -46,6 +46,20 @@ if (!$targetEntry->allow($user, $_REQUEST['action'])) {
           $class = "error";
           break;
         }
+        try {
+          $targetAnime = new Anime($database, intval($_POST['anime_entry']['anime_id'])));
+        } catch (Exception $e) {
+          $location = $targetUser->url();
+          $status = "This anime ID doesn't exist.";
+          $class = "error";
+          break;
+        }
+        if ($targetAnime->id === 0) {
+          $location = $targetUser->url();
+          $status = "This anime ID doesn't exist.";
+          $class = "error";
+          break;
+        }
         if (!isset($_POST['anime_entry']['id'])) {
           // fill default values from the last entry for this anime.
           $lastEntry = $targetUser->animeList->uniqueList[intval($_POST['anime_entry']['anime_id'])];

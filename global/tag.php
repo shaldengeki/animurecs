@@ -3,8 +3,6 @@ class Tag extends BaseObject {
   protected $name;
   protected $description;
   protected $type;
-  protected $createdAt;
-  protected $updatedAt;
 
   protected $createdUser;
 
@@ -114,7 +112,43 @@ class Tag extends BaseObject {
     }
     return True;
   }
-  public function create_or_update(array $tag, User $currentUser=Null) {
+  public function validate(array $tag) {
+    if (!parent::validate($tag)) {
+      return False;
+    }
+    if (!isset($tag['name']) || strlen($tag['name']) < 1 || strlen($tag['name']) > 50) {
+      return False;
+    }
+    if (isset($tag['description']) && (strlen($tag['description']) < 1 || strlen($tag['description']) > 600)) {
+      return False;
+    }
+    if (!isset($tag['created_user_id'])) {
+      return False;
+    }
+    if (!is_numeric($tag['created_user_id']) || intval($tag['created_user_id']) != $tag['created_user_id'] || intval($tag['created_user_id']) <= 0) {
+      return False;
+    } else {
+      try {
+        $createdUser = new User($this->dbConn, intval($tag['created_user_id']));
+      } catch (Exception $e) {
+        return False;
+      }
+    }
+    if (!isset($tag['tag_type_id'])) {
+      return False;
+    }
+    if (!is_numeric($tag['tag_type_id']) || intval($tag['tag_type_id']) != $tag['tag_type_id'] || intval($tag['tag_type_id']) <= 0) {
+      return False;
+    } else {
+      try {
+        $parent = new TagType($this->dbConn, intval($tag['tag_type_id']));
+      } catch (Exception $e) {
+        return False;
+      }
+    }
+    return True;
+  }
+  public function create_or_update(array $tag, array $whereConditions=Null) {
     // creates or updates a tag based on the parameters passed in $tag and this object's attributes.
     // returns False if failure, or the ID of the tag if success.
     // make sure this tag name adheres to standards.
@@ -125,27 +159,9 @@ class Tag extends BaseObject {
       $tag['anime_tags'] = explode(",", $tag['anime_tags']);
     }
 
-    $params = array();
-    foreach ($tag as $parameter => $value) {
-      if (!is_array($value)) {
-        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
-      }
-    }
     //go ahead and create or update this tag.
-    if ($this->id != 0) {
-      //update this tag.
-      $updateTag = $this->dbConn->stdQuery("UPDATE `tags` SET ".implode(", ", $params).", `updated_at` = NOW() WHERE `id` = ".intval($this->id)." LIMIT 1");
-      if (!$updateTag) {
-        return False;
-      }
-    } else {
-      // add this tag.
-      $insertTag = $this->dbConn->stdQuery("INSERT INTO `tags` SET ".implode(",", $params).", `created_at` = NOW(), `updated_at` = NOW(), `approved_on` = NULL, `approved_user_id` = 0, `created_user_id` = ".intval($currentUser->id));
-      if (!$insertTag) {
-        return False;
-      } else {
-        $this->id = intval($this->dbConn->insert_id);
-      }
+    if (!parent::create_or_update($tag)) {
+      return False;
     }
 
     // now process any taggings.
@@ -243,9 +259,20 @@ class Tag extends BaseObject {
     // displays a tag's profile.
     $output = "<h1>".escape_output($this->name()).($this->allow($currentUser, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : "")."</h1>\n<ul class='recommendations'>\n";
     $predictedRatings = $recsEngine->predict($currentUser, $this->anime());
-    arsort($predictedRatings);
-    foreach ($predictedRatings as $animeID=>$prediction) {
-      $output .= "<li>".$this->anime()[$animeID]->link("show", "<h4>".escape_output($this->anime()[$animeID]->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($this->anime()[$animeID]->imagePath))."' />", True, array('title' => $this->anime()[$animeID]->description(True)))."<p><em>Predicted score: ".round($prediction, 1)."</em></p></li>\n";
+    if (is_array($predictedRatings)) {
+      arsort($predictedRatings);
+      foreach ($predictedRatings as $animeID=>$prediction) {
+        $output .= "<li>".$this->anime()[$animeID]->link("show", "<h4>".escape_output($this->anime()[$animeID]->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($this->anime()[$animeID]->imagePath))."' />", True, array('title' => $this->anime()[$animeID]->description(True)))."<p><em>Predicted score: ".round($prediction, 1)."</em></p></li>\n";
+      }
+    } else {
+      $i = 0;
+      foreach ($this->anime() as $anime) {
+        $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."</li>\n";
+        $i++;
+        if ($i >= 20) {
+          break;
+        }
+      }
     }
     $output .= "</ul>";
     $output .= tag_list($this->anime());
@@ -258,9 +285,10 @@ class Tag extends BaseObject {
     }
     $anime = new Anime($this->dbConn, 0);
     $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />")."
+      <input name='tag[created_user_id]' type='hidden' value=".($this->id === 0 ? intval($currentUser->id) : $this->createdUser()->id)." />
       <fieldset>
         <div class='control-group'>
-          <label class='control-label' for='tag[name]'>Tag Name</label>
+          <label class='control-label' for='tag[name]'>Name</label>
           <div class='controls'>
             <input name='tag[name]' type='text' class='input-xlarge' id='tag[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name())."'")." />
           </div>
@@ -272,7 +300,7 @@ class Tag extends BaseObject {
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='tag[tag_type_id]'>Type</label>
+          <label class='control-label' for='tag[tag_type_id]'>Tag Type</label>
           <div class='controls'>
             ".display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type()->id)))."
           </div>
@@ -308,11 +336,8 @@ class Tag extends BaseObject {
         $linkParams[] = escape_output($key)."='".escape_output($value)."'";
       }
     }
-    $linkClass = "";
-    $linkTitle = "";
-    if ($this->id != 0) {
-      $linkClass = " class='tag-".escape_output($this->type()->name)."'";
-      $linkTitle = " title='".escape_output($this->name())."'";
+    $linkClass = $this->id != 0 ? " class='tag-".escape_output($this->type()->name)."'" : "";
+    $linkTitle = $this->id != 0 ? " title='".escape_output($this->name())."'" : "";
     }
     return "<a".$linkClass.$linkTitle." href='".$this->url($action, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
   }

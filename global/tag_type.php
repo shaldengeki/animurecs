@@ -45,34 +45,35 @@ class TagType extends BaseObject {
         break;
     }
   }
-  public function create_or_update(array $tag_type, User $currentUser=Null) {
+  public function validate(array $tag_type) {
+    if (!parent::validate($tag_type)) {
+      return False;
+    }
+    if (!isset($tag_type['name']) || strlen($tag_type['name']) < 1) {
+      return False;
+    }
+    if (isset($tag_type['description']) && (strlen($tag_type['description']) < 1 || strlen($tag_type['description']) > 600)) {
+      return False;
+    }
+    if (isset($tag_type['created_user_id'])) {
+      if (!is_numeric($tag_type['created_user_id']) || intval($tag_type['created_user_id']) != $tag_type['created_user_id'] || intval($tag_type['created_user_id']) <= 0) {
+        return False;
+      } else {
+        try {
+          $approvedUser = new User($this->dbConn, intval($tag_type['created_user_id']));
+        } catch (Exception $e) {
+          return False;
+        }
+      }
+    }
+    return True;
+  }
+  public function create_or_update(array $tag_type, array $whereConditions=Null) {
     // creates or updates a tag type based on the parameters passed in $tag_type and this object's attributes.
     // returns False if failure, or the ID of the tag type if success.
     // make sure tag type name adheres to standards.
     $tag_type['name'] = str_replace("_", " ", strtolower($tag_type['name']));
-    $params = array();
-    foreach ($tag_type as $parameter => $value) {
-      if (!is_array($value)) {
-        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
-      }
-    }
-    //go ahead and create or update this tag type.
-    if ($this->id != 0) {
-      //update this tag_type.
-      $updateTagType = $this->dbConn->stdQuery("UPDATE `tag_types` SET ".implode(", ", $params)." WHERE `id` = ".intval($this->id)." LIMIT 1");
-      if (!$updateTagType) {
-        return False;
-      }
-    } else {
-      // add this tag type.
-      $insertTagType = $this->dbConn->stdQuery("INSERT INTO `tag_types` SET ".implode(",", $params).", `created_user_id` = ".intval($currentUser->id));
-      if (!$insertTagType) {
-        return False;
-      } else {
-        $this->id = intval($this->dbConn->insert_id);
-      }
-    }
-    return $this->id;
+    return parent::create_or_update($tag_type);
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
@@ -119,6 +120,7 @@ class TagType extends BaseObject {
   }
   public function form(User $currentUser) {
     $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />")."
+      <input name='tag_type[created_user_id]' type='hidden' value=".($this->id === 0 ? intval($currentUser->id) : $this->createdUser()->id)." />
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag_type[name]'>Name</label>

@@ -52,7 +52,7 @@ abstract class BaseList extends BaseObject {
       $this->entries = $this->uniqueList = Null;
     }
   }
-  public function create_or_update(array $entry, User $currentUser=Null) {
+  public function create_or_update(array $entry, array $whereConditions=Null) {
     /*
       Creates or updates an existing list entry for the current user.
       Takes an array of entry parameters.

@@ -7,7 +7,6 @@ class User extends BaseObject {
   protected $email;
   protected $about;
   protected $usermask;
-  protected $createdAt;
   protected $lastActive;
   protected $lastIP;
   protected $avatarPath;
@@ -351,10 +350,49 @@ class User extends BaseObject {
       return False;
     }
   }
-  public function create_or_update(array $user, User $currentUser=Null) {
+  public function validate(array $user) {
+    if (!parent::validate($user)) {
+      return False;
+    }
+    if (!isset($user['username']) || strlen($user['username']) < 1 || strlen($user['username']) > 40) {
+      return False;
+    }
+    if (isset($user['password']) && ($this->id === 0 || $user['password'] != '')) {
+     if (strlen($user['password']) < 6) {
+        return False;
+      }
+      if (!isset($user['password_confirmation']) || $user['password_confirmation'] != $user['password']) {
+        return False;
+      }
+    }
+    if (!isset($user['email']) || strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email'])) {
+      return False;
+    }
+    if (isset($user['about']) && (strlen($user['about']) < 1 || strlen($user['about']) > 600)) {
+      return False;
+    }
+    if (isset($user['usermask']) && ( !is_numeric($user['usermask']) || intval($user['usermask']) != $user['usermask'] || intval($user['usermask']) < 0) ) {
+      return False;
+    }
+    if (isset($user['last_active']) && !strtotime($user['last_active'])) {
+      return False;
+    }
+    if (isset($user['last_ip']) && !preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $user['last_ip'])) {
+      return False;
+    }
+    return True;
+  }
+  public function create_or_update(array $user, array $whereConditions=Null) {
     // creates or updates a user based on the parameters passed in $user and this object's attributes.
     // returns False if failure, or the ID of the user if success.
-
+    if (isset($user['usermask']) && intval(@array_sum($user['usermask'])) != 0) {
+      $user['usermask'] = intval(@array_sum($user['usermask']));
+    } else {
+      unset($user['usermask']);
+    }
+    if (!$this->validate($user)) {
+      return False;
+    }
     // filter some parameters out first and replace them with their corresponding db fields.
     if (isset($user['password']) && $user['password'] != '') {
       $bcrypt = new Bcrypt();
@@ -362,11 +400,6 @@ class User extends BaseObject {
     }
     unset($user['password']);
     unset($user['password_confirmation']);
-    if (isset($user['usermask']) && intval(@array_sum($user['usermask'])) != 0) {
-      $user['usermask'] = intval(@array_sum($user['usermask']));
-    } else {
-      unset($user['usermask']);
-    }
     if (isset($user['username']) && $this->id != 0) {
       unset($user['username']);
     }
@@ -457,6 +490,18 @@ class User extends BaseObject {
 
     // now delete this user.
     return parent::delete();
+  }
+  public function updateLastActive($time=Null) {
+    if ($time === Null) {
+      $time = "NOW()";
+    } else {
+      $time = $this->dbConn->quoteSmart($time->format("Y-m-d H:i:s"));
+    }
+    $updateLastActive = $this->dbConn->stdQuery("UPDATE `users` SET `last_active` = ".$time." WHERE `id` = ".intval($this->id));
+    if (!$updateLastActive) {
+      return False;
+    }
+    return True;
   }
   public function isModerator() {
     if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
@@ -718,16 +763,18 @@ class User extends BaseObject {
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>
           <div class='controls'>
-            <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name())."'").">
+            <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name())."'")." />
           </div>
         </div>";
     if ($this->id === 0) {
       $output .= "        <div class='control-group'>
           <label class='control-label' for='user[username]'>Username</label>
           <div class='controls'>
-            <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username())."'").">
+            <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username())."'")." />
           </div>
         </div>\n";
+    } else {
+      $output .= "            <input name='user[username]' type='hidden' value='".escape_output($this->username())."' />\n";
     }
     $output .= "        <div class='control-group'>
           <label class='control-label' for='user[password]'>Password</label>
