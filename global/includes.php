@@ -5,12 +5,14 @@ include_once("./global/bcrypt.php");
 include_once("./global/database.php");
 include_once("./global/curl.php");
 
+include_once("./global/aliasable.php");
 include_once("./global/commentable.php");
 include_once("./global/feedable.php");
 
 include_once("./global/base_object.php");
 include_once("./global/base_list.php");
 include_once("./global/base_entry.php");
+include_once("./global/alias.php");
 include_once("./global/tag_type.php");
 include_once("./global/tag.php");
 include_once("./global/anime.php");

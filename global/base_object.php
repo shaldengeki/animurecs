@@ -12,6 +12,11 @@ abstract class BaseObject {
     $this->dbConn = $database;
     $this->id = intval($id);
     $this->modelName = $this->modelPlural = $this->modelTable = Null;
+    if ($id === 0) {
+      $this->createdAt = $this->updatedAt = "";
+    } else {
+      $this->createdAt = $this->updatedAt = Null;
+    }
   }
   public function __get($property) {
     // A property accessor exists

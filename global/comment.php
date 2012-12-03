@@ -13,7 +13,7 @@ class Comment extends BaseObject {
     $this->modelTable = "comments";
     $this->modelPlural = "comments";
     if ($id === 0) {
-      $this->message = $this->createdAt = $this->updatedAt = "";
+      $this->message = "";
       $this->parent = $parent;
       $this->parentId = $parent->id;
       $this->depth = Null;
@@ -21,7 +21,7 @@ class Comment extends BaseObject {
       $this->user = $user;
       $this->userId = $user->id;
     } else {
-      $this->message = $this->createdAt = $this->updatedAt = $this->userId = $this->parent = $this->parentId = $this->depth = $this->type = Null;
+      $this->message = $this->userId = $this->parent = $this->parentId = $this->depth = $this->type = Null;
     }
   }
   public function userId() {
@@ -35,7 +35,7 @@ class Comment extends BaseObject {
   }
   public function depth() {
     if ($this->depth === Null) {
-      $this->depth = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" ? $this->parent()->depth() + 1 : 1;
+      $this->depth = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" && $this->parent()->type() != "Anime" ? $this->parent()->depth() + 1 : 1;
     }
     return $this->depth;
   }

@@ -17,10 +17,10 @@ class Tag extends BaseObject {
     $this->modelTable = "tags";
     $this->modelPlural = "tags";
     if ($id === 0) {
-      $this->name = $this->description = $this->createdAt = $this->updatedAt = "";
+      $this->name = $this->description = "";
       $this->type = $this->anime = $this->manga = $this->createdUser = [];
     } else {
-      $this->name = $this->description = $this->createdAt = $this->updatedAt = $this->type = $this->anime = $this->manga = $this->createdUser = Null;
+      $this->name = $this->description = $this->type = $this->anime = $this->manga = $this->createdUser = Null;
     }
   }
   public function name() {

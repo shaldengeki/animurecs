@@ -52,9 +52,6 @@ class User extends BaseObject {
   public function usermask() {
     return $this->returnInfo('usermask');
   }
-  public function createdAt() {
-    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
-  }
   public function lastActive() {
     return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(SERVER_TIMEZONE));
   }

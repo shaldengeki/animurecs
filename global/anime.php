@@ -1,6 +1,6 @@
 <?php
 class Anime extends BaseObject {
-  use Feedable, Commentable;
+  use Aliasable, Feedable, Commentable;
 
   protected $title;
   protected $description;
@@ -23,11 +23,11 @@ class Anime extends BaseObject {
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
     if ($id === 0) {
-      $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = "";
+      $this->title = $this->description = $this->imagePath = $this->approvedOn = "";
       $this->episodeCount = $this->episodeLength = $this->ratingAvg = $this->regularizedAvg = 0;
       $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->entries = $this->ratings = [];
     } else {
-      $this->title = $this->description = $this->createdAt = $this->updatedAt = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = $this->ratings = $this->ratingAvg = $this->regularizedAvg = Null;
+      $this->title = $this->description = $this->imagePath = $this->approvedOn = $this->episodeCount = $this->episodeLength = $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->comments = $this->entries = $this->ratings = $this->ratingAvg = $this->regularizedAvg = Null;
     }
   }
   public function title() {
