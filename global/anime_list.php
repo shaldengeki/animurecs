@@ -18,7 +18,7 @@ class AnimeList extends BaseList {
       case 'new':
       case 'edit':
       case 'delete':
-        if ($authingUser->id == $this->user_id || ($authingUser->isModerator() || $authingUser->isAdmin()) ) {
+        if ($authingUser->id == $this->user_id || $authingUser->isStaff()) {
           return True;
         }
         return False;

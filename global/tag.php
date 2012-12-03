@@ -42,7 +42,7 @@ class Tag extends BaseObject {
       case 'new':
       case 'edit':
       case 'delete':
-        if ($authingUser->isModerator() || $authingUser->isAdmin()) {
+        if ($authingUser->isStaff()) {
           return True;
         }
         return False;
@@ -338,7 +338,6 @@ class Tag extends BaseObject {
     }
     $linkClass = $this->id != 0 ? " class='tag-".escape_output($this->type()->name)."'" : "";
     $linkTitle = $this->id != 0 ? " title='".escape_output($this->name())."'" : "";
-    }
     return "<a".$linkClass.$linkTitle." href='".$this->url($action, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
   }
 }

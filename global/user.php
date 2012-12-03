@@ -19,7 +19,6 @@ class User extends BaseObject {
   protected $requestedFriends;
   protected $ownComments;
 
-
   public function __construct(DbConn $database, $id=Null) {
     parent::__construct($database, $id);
     $this->modelTable = "users";
@@ -163,7 +162,7 @@ class User extends BaseObject {
     switch($action) {
       case 'mal_import':
       case 'edit':
-        if ($authingUser->id == $this->id || ( ($authingUser->isModerator() || $authingUser->isAdmin()) && $authingUser->usermask > $this->usermask) ) {
+        if ($authingUser->id == $this->id || ( ($authingUser->isStaff()) && $authingUser->usermask > $this->usermask) ) {
           return True;
         }
         return False;
@@ -515,6 +514,9 @@ class User extends BaseObject {
     }
     return true;
   }
+  public function isStaff() {
+    return $this->isModerator() || $this->isAdmin();
+  }
   public function switchUser($username, $switch_back=True) {
     /*
       Switches the current user's session out for another user (provided by $username) in the etiStats db.
@@ -808,7 +810,7 @@ class User extends BaseObject {
           </div>
         </div>\n";
         }
-        if ($currentUser->isAdmin()) {
+        if ($this->allow($currentUser, $this->id === 0 ? 'new' : 'edit')) {
           $output .= "      <div class='control-group'>
           <label class='control-label' for='user[usermask]'>Role(s)</label>
           <div class='controls'>\n".display_user_roles_select("user[usermask][]", ($this->id === 0) ? 0 : intval($this->usermask()))."      </div>

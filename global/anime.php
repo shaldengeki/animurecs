@@ -74,7 +74,7 @@ class Anime extends BaseObject {
       case 'approve':
       case 'edit':
       case 'delete':
-        if ($authingUser->isModerator() || $authingUser->isAdmin()) {
+        if ($authingUser->isStaff()) {
           return True;
         }
         return False;
@@ -88,7 +88,7 @@ class Anime extends BaseObject {
         break;
       case 'feed':
       case 'show':
-        if ($this->isApproved() || $authingUser->isModerator() || $authingUser->isAdmin()) {
+        if ($this->isApproved() || $authingUser->isStaff()) {
           return True;
         }
         return False;
@@ -513,7 +513,7 @@ class Anime extends BaseObject {
           </div>
         </div>\n";
         }
-        if ($currentUser->isModerator() || $currentUser->isAdmin()) {
+        if ($this->allow($currentUser, $this->id === 0 ? 'new' : 'edit')) {
           $output .= "        <div class='control-group'>
           <label class='control-label' for='anime[approved]'>Approved</label>
           <div class='controls'>

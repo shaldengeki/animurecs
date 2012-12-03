@@ -54,7 +54,7 @@ abstract class BaseEntry extends BaseObject {
       case 'new':
       case 'edit':
       case 'delete':
-        if ($authingUser->id == $this->userId() || ($authingUser->isModerator() || $authingUser->isAdmin()) ) {
+        if ($authingUser->id == $this->userId() || $authingUser->isStaff()) {
           return True;
         }
         return False;

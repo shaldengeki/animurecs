@@ -70,14 +70,14 @@ class Comment extends BaseObject {
     switch($action) {
       case 'edit':
         // if this user is the owner of the comment, allow them to edit this comment.
-        if ($authingUser->id === $this->user()->id || $authingUser->isModerator() || $authingUser->isAdmin()) {
+        if ($authingUser->id === $this->user()->id || $authingUser->isStaff()) {
           return True;
         }
         return False;
         break;
       case 'delete':
         // if this user is the owner, or if they're the owner of the thing that the comment is posted on, allow them to delete this comment.
-        if ($authingUser->id === $this->user()->id || $this->parent()->allow($authingUser, $action) || $authingUser->isModerator() || $authingUser->isAdmin()) {
+        if ($authingUser->id === $this->user()->id || $this->parent()->allow($authingUser, $action) || $authingUser->isStaff()) {
           return True;
         }
         return False;
