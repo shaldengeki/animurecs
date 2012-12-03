@@ -49,6 +49,8 @@ trait Feedable {
 
     $feedMessage = $entry->formatFeedEntry($currentUser);
 
+    $blankEntryComment = new Comment($this->dbConn, 0, $currentUser, $entry);
+
     $output = "  <li class='feedEntry row-fluid'>
         <div class='feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
         <div class='feedAvatar'>".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry->user->avatarPath))."' />", True)."</div>
@@ -65,6 +67,9 @@ trait Feedable {
         $output .= $this->feedEntry($commentEntry, $currentUser);
       }
       $output .= "</ul>";
+    }
+    if ($blankEntryComment->depth() < 2) {
+      $output .= "<div class='entryComment'>".$blankEntryComment->inlineForm($currentUser, $entry)."</div>\n";
     }
     $output .= "          </div>
       </li>\n";

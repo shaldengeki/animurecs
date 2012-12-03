@@ -16,12 +16,7 @@ class Comment extends BaseObject {
       $this->message = $this->createdAt = $this->updatedAt = "";
       $this->parent = $parent;
       $this->parentId = $parent->id;
-      $this->depth = 0;
-      $currObj = $parent;
-      while (method_exists($currObj, 'parent')) {
-        $this->depth++;
-        $currObj = $currObj->parent();
-      }
+      $this->depth = Null;
       $this->type = get_class($this->parent);
       $this->user = $user;
       $this->userId = $user->id;
@@ -40,12 +35,7 @@ class Comment extends BaseObject {
   }
   public function depth() {
     if ($this->depth === Null) {
-      $this->depth = 0;
-      $currObj = $this->parent();
-      while (method_exists($currObj, 'parent')) {
-        $this->depth++;
-        $currObj = $currObj->parent();
-      }    
+      $this->depth = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" ? $this->parent()->depth() + 1 : 1;
     }
     return $this->depth;
   }
@@ -169,6 +159,21 @@ class Comment extends BaseObject {
       <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Send" : "Update")."</button>
     </form>\n";
     return $output;
+  }
+  public function url($action="show", array $params=Null, $id=Null) {
+    // returns the url that maps to this comment and the given action.
+    // if we're showing this comment, show its parent instead.
+    if ($action == "show") {
+      return $this->parent()->url($action, $params);
+    }
+    if ($id === Null) {
+      $id = intval($this->id);
+    }
+    $urlParams = "";
+    if (is_array($params)) {
+      $urlParams = http_build_query($params);
+    }
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>
