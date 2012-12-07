@@ -54,7 +54,7 @@ trait Feedable {
     $entryType = $nested ? "div" : "li";
 
     $output = "      <".$entryType." class='media'>
-        <div class='pull-right feedDate' data=time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
+        <div class='pull-right feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
         ".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry->user->avatarPath))."' />", True, array('class' => 'feedAvatar pull-left'))."
         <div class='media-body feedText'>
           <div class='feedEntry'>
