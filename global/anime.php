@@ -13,6 +13,7 @@ class Anime extends BaseObject {
   protected $entries;
   protected $ratings;
 
+  protected $ratingCount;
   protected $ratingAvg;
   protected $regularizedAvg;
 
@@ -317,7 +318,7 @@ class Anime extends BaseObject {
   }
   public function getRatings() {
     $ratings = array_filter($this->entries(), function ($value) {
-      if (intval($value['score']) != 0) {
+      if (intval($value->score) != 0) {
         return True;
       }
       return False;
@@ -330,18 +331,28 @@ class Anime extends BaseObject {
     }
     return $this->ratings;    
   }
+  public function calcRatingStats() {
+    $ratingSum = $ratingCount = 0;
+    foreach ($this->ratings() as $rating) {
+      $ratingSum += $rating->score;
+      $ratingCount++;
+    }
+    $this->ratingCount = $ratingCount;
+    if ($ratingCount != 0) {
+      $this->ratingAvg = $ratingSum / $ratingCount;
+    } else {
+      $this->ratingAvg = 0;
+    }
+  }
+  public function ratingCount() {
+    if ($this->ratingAvg === Null) {
+      $this->calcRatingStats();
+    }
+    return $this->ratingAvg;
+  }
   public function ratingAvg() {
     if ($this->ratingAvg === Null) {
-      $ratingSum = $ratingCount = 0;
-      foreach ($this->ratings() as $rating) {
-        $ratingSum += $rating['score'];
-        $ratingCount++;
-      }
-      if ($ratingCount != 0) {
-        $this->ratingAvg = $ratingSum / $ratingCount;
-      } else {
-        $this->ratingAvg = 0;
-      }
+      $this->calcRatingStats();
     }
     return $this->ratingAvg; 
   }
@@ -409,7 +420,8 @@ class Anime extends BaseObject {
           <div class='profileUserInfo'>
             <h1>
               ".escape_output($this->title())." 
-              ".($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "")."</h1>
+              ".($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "")."
+            </h1>
             <p>
               ".escape_output($this->description())."
             </p>\n";
@@ -417,11 +429,16 @@ class Anime extends BaseObject {
       $output .= "            <ul class='thumbnails'>
               <li class='span4'>\n";
       if (!isset($currentUser->animeList->uniqueList[$this->id]) || $currentUser->animeList->uniqueList[$this->id]['score'] == 0) {
+        $userRating = $recsEngine->predict($currentUser, $this)[$this->id];
         $output .= "                <p class='lead'>Predicted score:</p>
-                ".$this->scoreBar($recsEngine->predict($currentUser, $this)[$this->id])."\n";
+                ".$this->scoreBar($userRating)."\n";
       } else {
-        $output .= "                <p>You rated this:</p>
-                ".$this->scoreBar($currentUser->animeList->uniqueList[$this->id]['score'])."\n";
+        $userRating = $currentUser->animeList->uniqueList[$this->id]['score'];
+        $output .= "                <p class='lead'>You rated this:</p>
+                ".$this->scoreBar($userRating)."\n";
+      }
+      if ($userRating != 0) {
+        $output .= "(which is ".abs(round($userRating - $currentUser->animeList->uniqueListAvg, 2))." points ".($userRating > $currentUser->animeList->uniqueListAvg ? "higher" : "lower")." than your average score and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score)";
       }
     } else {
       $output .= "            <ul class='thumbnails'>

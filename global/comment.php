@@ -5,6 +5,7 @@ class Comment extends BaseObject {
   protected $type;
   protected $parentId;
   protected $parent;
+  protected $ancestor;
   protected $depth;
   protected $message;
 
@@ -16,13 +17,13 @@ class Comment extends BaseObject {
       $this->message = "";
       $this->parent = $parent;
       $this->parentId = $parent->id;
-      $this->depth = Null;
       $this->type = get_class($this->parent);
       $this->user = $user;
       $this->userId = $user->id;
     } else {
-      $this->message = $this->userId = $this->parent = $this->parentId = $this->depth = $this->type = Null;
+      $this->message = $this->userId = $this->parent = $this->parentId = $this->type = Null;
     }
+    $this->depth = $this->ancestor = Null;
   }
   public function userId() {
     return $this->returnInfo('userId');
@@ -35,9 +36,15 @@ class Comment extends BaseObject {
   }
   public function depth() {
     if ($this->depth === Null) {
-      $this->depth = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" && $this->parent()->type() != "Anime" ? $this->parent()->depth() + 1 : 1;
+      $this->depth = method_exists($this->parent(), 'depth') ? $this->parent()->depth() + 1 : ($this->parent->modelName() == "User" ? 0 : 1);
     }
     return $this->depth;
+  }
+  public function ancestor() {
+    if ($this->ancestor === Null) {
+      $this->ancestor = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" && $this->parent()->type() != "Anime" ? $this->parent()->ancestor() + 1 : $this->parent();
+    }
+    return $this->ancestor;
   }
   public function type() {
     return $this->returnInfo('type');

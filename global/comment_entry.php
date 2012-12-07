@@ -37,6 +37,9 @@ class CommentEntry extends BaseEntry {
   public function depth() {
     return $this->comment()->depth;
   }
+  public function ancestor() {
+    return $this->comment()->ancestor;
+  }
   public function type() {
     return $this->comment()->type;
   }
@@ -46,17 +49,18 @@ class CommentEntry extends BaseEntry {
   public function formatFeedEntry(User $currentUser) {
     /* TODO: make this work for comments posted on anime etc */
     if ($currentUser->id != $this->comment()->user()->id) {
-      $sendingUser = $this->comment()->user()->link("show", $this->comment()->user()->username);
+      $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username);
     } else {
-      $sendingUser = "You";
+      $feedTitle = "You";
     }
-    if ($currentUser->id != $this->comment()->parent()->id) {
-      $receivingUser = $this->comment()->parent()->link("show", $this->comment()->parent()->username);
-    } else {
-      $receivingUser = "you";
+    if ($this->depth() < 2) {
+      if ($currentUser->id != $this->comment()->parent()->id) {
+        $receivingUser = $this->comment()->parent()->link("show", $this->comment()->parent()->username);
+      } else {
+        $receivingUser = "you";
+      }
+      $feedTitle .= " to ".$receivingUser.":";
     }
-
-    $feedTitle = $sendingUser." to ".$receivingUser.":";
     return array('title' => $feedTitle, 'text' => escape_output($this->comment()->message()));
   }
   public function url($action="show", array $params=Null, $id=Null) {

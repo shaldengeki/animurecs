@@ -39,7 +39,7 @@ trait Feedable {
     }
   }
 
-  public function feedEntry(BaseEntry $entry, User $currentUser) {
+  public function feedEntry(BaseEntry $entry, User $currentUser, $nested=False) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
     $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
@@ -51,28 +51,30 @@ trait Feedable {
 
     $blankEntryComment = new Comment($this->dbConn, 0, $currentUser, $entry);
 
-    $output = "  <li class='feedEntry row-fluid'>
-        <div class='feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
-        <div class='feedAvatar'>".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry->user->avatarPath))."' />", True)."</div>
-        <div class='feedText'>
-          <div class='feedUser'>".$feedMessage['title']."</div>
-          ".$feedMessage['text']."\n";
+    $entryType = $nested ? "div" : "li";
+
+    $output = "      <".$entryType." class='media'>
+        <div class='pull-right feedDate' data=time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
+        ".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry->user->avatarPath))."' />", True, array('class' => 'feedAvatar pull-left'))."
+        <div class='media-body feedText'>
+          <div class='feedEntry'>
+            <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>
+            ".$feedMessage['text']."\n";
     if ($entry->allow($currentUser, 'delete')) {
-      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>";
+      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>\n";
     }
+    $output .= "          </div>\n";
     if ($entry->comments) {
-      $output .= "<ul class='userFeed'>";
       foreach ($entry->comments as $comment) {
         $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
-        $output .= $this->feedEntry($commentEntry, $currentUser);
+        $output .= $this->feedEntry($commentEntry, $currentUser, True);
       }
-      $output .= "</ul>";
     }
-    if ($blankEntryComment->depth() < 2) {
+    if ($entry->allow($currentUser, 'comment') && $blankEntryComment->depth() < 2) {
       $output .= "<div class='entryComment'>".$blankEntryComment->inlineForm($currentUser, $entry)."</div>\n";
     }
     $output .= "          </div>
-      </li>\n";
+      </".$entryType.">\n";
     return $output;
   }
 
@@ -85,7 +87,7 @@ trait Feedable {
     if (!$entries) {
       $output .= $emptyFeedText;
     } else {
-      $output = "<ul class='userFeed ajaxFeed' data-url='".$this->url("feed")."'>\n";
+      $output = "<ul class='media-list ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
       foreach ($entries as $entry) {
         $feedOutput[] = $this->feedEntry($entry, $currentUser);

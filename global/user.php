@@ -701,7 +701,7 @@ class User extends BaseObject {
               ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").
               ($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "").
               ($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "").
-              (($this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
+              ((!$this->allow($currentUser, 'request_friend') || $this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
             <p class='lead'>
               ".escape_output($this->about())."
             </p>\n";

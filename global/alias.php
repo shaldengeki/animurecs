@@ -80,9 +80,13 @@ class Alias extends BaseObject {
       $terms[$key] = "+".$term;
     }
     $text = implode(" ", $terms);
-    $search = $this->dbConn->stdQuery("SELECT `parent_id` FROM `".$this->modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+    $search = $this->dbConn->stdQuery("SELECT `type`, `parent_id` FROM `".$this->modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
     $objects = [];
-    $objType = $this->type();
+    if ($this->id === 0) {
+      $objType = $this->parent()->modelName();
+    } else {
+      $objType = $this->type();
+    }
     while ($result = $search->fetch_assoc()) {
       try {
         $objects[intval($result['parent_id'])] = new $objType($this->dbConn, intval($result['parent_id']));
@@ -91,10 +95,6 @@ class Alias extends BaseObject {
       }
     }
     return $objects;
-  }
-  public function profile() {
-    // displays an alias's profile.
-    return "";
   }
   public function form(User $currentUser, BaseObject $currentObject) {
     $output = "    <form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
