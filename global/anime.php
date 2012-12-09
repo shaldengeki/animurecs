@@ -117,10 +117,14 @@ class Anime extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
+    $this->before_update();
+    $tag->before_update();
     $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertDependency) {
       return False;
     }
+    $this->after_update();
+    $tag->after_update();
     $this->tags[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
     return True;
   }
@@ -253,18 +257,22 @@ class Anime extends BaseObject {
     //go ahead and create or update this anime.
     if ($this->id != 0) {
       //update this anime.
+      $this->before_update();
       $updateUser = $this->dbConn->stdQuery("UPDATE `anime` SET ".implode(", ", $params).", `image_path` = ".$this->dbConn->quoteSmart($imagePath).", `updated_at` = NOW() WHERE `id` = ".intval($this->id)." LIMIT 1");
       if (!$updateUser) {
         return False;
       }
+      $this->after_update();
     } else {
       // add this anime.
+      $this->before_create();
       $insertUser = $this->dbConn->stdQuery("INSERT INTO `anime` SET ".implode(",", $params).", `image_path` = ".$this->dbConn->quoteSmart($imagePath).", `created_at` = NOW(), `updated_at` = NOW()");
       if (!$insertUser) {
         return False;
       } else {
         $this->id = intval($this->dbConn->insert_id);
       }
+      $this->after_create();
     }
 
     // now process any taggings.

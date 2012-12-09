@@ -7,6 +7,7 @@ abstract class BaseObject {
 
   protected $modelTable, $modelPlural, $modelName;
   protected $createdAt, $updatedAt;
+  protected $_callbacks = array();
 
   public function __construct(DbConn $database, $id=Null) {
     $this->dbConn = $database;
@@ -95,6 +96,73 @@ abstract class BaseObject {
     }
     return True;
   }
+
+  // event handlers for objects.
+  public function bind($event, $callback) {
+    // binds a function to an event.
+    // can be either anonymous function or string name of class method.
+    if (!is_callable($callback, true)) {
+      if (DEBUG_ON) {
+        throw new InvalidArgumentException(sprintf('Invalid callback: %s.', print_r($callback, true)));
+      } else {
+        return False;
+      }
+    }
+    if (!isset($this->_callbacks[$event])) {
+      $this->_callbacks[$event] = array($callback);
+    } else {
+      $this->_callbacks[$event][] = $callback;
+    }
+    return array($event, count($this->_callbacks[$event])-1);
+  }
+  public function unbind($callback) {
+    // callback is array of form [event_name, position]
+    // alternatively, also accepts a string for event name.
+    if (is_array($callback)) {
+      if (count($callback) < 2) {
+        return False;
+      } elseif (!isset($this->_callbacks[$callback[0]])) {
+        return True;
+      }
+      unset($this->_callbacks[$callback[0]][$callback[1]]);
+      return !isset($this->_callbacks[$callback[0]][$callback[1]]);
+    } else {
+      if (!isset($this->_callbacks[$callback])) {
+        return True;
+      }
+      unset($this->_callbacks[$callback]);
+      return !isset($this->_callbacks[$callback]);
+    }
+  }
+  public function fire($event) {
+    if (!isset($this->_callbacks[$event])) {
+      return;
+    }
+    foreach ($this->_callbacks[$event] as $callback) {
+      if (!is_callable($callback)) {
+        continue;
+      }
+      call_user_func($callback);
+    }
+  }
+  public function before_create() {
+    $this->fire('beforeCreate');
+  }
+  public function after_create() {
+    $this->fire('afterCreate');
+  }
+  public function before_update() {
+    $this->fire('beforeUpdate');
+  }
+  public function after_update() {
+    $this->fire('afterUpdate');
+  }
+  public function before_delete() {
+    $this->fire('beforeDelete');
+  }
+  public function after_delete() {
+    $this->fire('afterDelete');
+  }
   public function create_or_update(array $object, array $whereConditions=Null) {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.
@@ -124,19 +192,24 @@ abstract class BaseObject {
       $whereParams[] = "`id` = ".intval($this->id);
 
       //update this object.
+      $this->before_update();
       $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1");
       if (!$updateObject) {
         return False;
       }
+      $this->after_update();
     } else {
       // add this object.
       $params[] = '`created_at` = NOW()';
+
+      $this->before_create();
       $insertUser = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
       if (!$insertUser) {
         return False;
       } else {
         $this->id = intval($this->dbConn->insert_id);
       }
+      $this->after_create();
     }
     return $this->id;
   }
@@ -161,12 +234,14 @@ abstract class BaseObject {
         $entryIDs[] = intval($entry);
       }
     }
+    $this->before_delete();
     if ($entryIDs) {
       $dropEntries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$dropEntries) {
         return False;
       }
     }
+    $this->after_delete();
     return True;
   }
   public function url($action="show", array $params=Null, $id=Null) {

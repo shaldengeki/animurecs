@@ -78,10 +78,14 @@ class Tag extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
+    $this->before_update();
+    $anime->before_update();
     $insertTagging = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertTagging) {
       return False;
     }
+    $this->after_update();
+    $anime->after_update();
     $this->anime[intval($anime->id)] = array('id' => intval($anime->id), 'title' => $anime->title);
     return True;
   }
@@ -102,10 +106,12 @@ class Tag extends BaseObject {
       }
     }
     if ($animeIDs) {
+      $this->before_update();
       $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
       if (!$drop_taggings) {
         return False;
       }
+      $this->after_update();
     }
     foreach ($animeIDs as $animeID) {
       unset($this->anime[intval($animeID)]);
@@ -189,6 +195,7 @@ class Tag extends BaseObject {
   public function delete($entries=Null) {
     // delete this tag from the database.
     // returns a boolean.
+
     // drop all taggings for this tag first.
     $dropTaggings = $this->drop_taggings();
     if (!$dropTaggings) {

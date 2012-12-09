@@ -78,6 +78,7 @@ abstract class BaseList extends BaseObject {
 
     // check to see if this is an update.
     if (isset($this->entries()[intval($entry['id'])])) {
+      $this->before_update();
       $updateDependency = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
@@ -91,8 +92,10 @@ abstract class BaseList extends BaseObject {
         }
       }
       $returnValue = intval($entry['id']);
+      $this->after_update();
     } else {
       $timeString = (isset($entry['time']) ? "" : ", `time` = NOW()");
+      $this->before_create();
       $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params).$timeString);
       if (!$insertDependency) {
         return False;
@@ -105,6 +108,7 @@ abstract class BaseList extends BaseObject {
       } else {
         $this->uniqueList[intval($entry[$this->typeID])] = array($this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName]));
       }
+      $this->after_create();
     }
     $this->entries[intval($returnValue)] = $entry;
     return $returnValue;
@@ -131,10 +135,12 @@ abstract class BaseList extends BaseObject {
       }
     }
     if ($entryIDs) {
+      $this->before_delete();
       $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$drop_entries) {
         return False;
       }
+      $this->after_delete();
     }
     foreach ($entryIDs as $entryID) {
       unset($this->entries[intval($entryID)]);

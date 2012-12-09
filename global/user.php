@@ -250,7 +250,8 @@ class User extends BaseObject {
     }
     
     //update last IP address and last active.
-    $updateLastIP = $this->dbConn->stdQuery("UPDATE `users` SET `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = NOW() WHERE `id` = ".intval($findUsername['id'])." LIMIT 1");
+    $updateUser = array('last_ip' => $_SERVER['REMOTE_ADDR']);
+    $this->create_or_update($updateUser);
     $_SESSION['id'] = $findUsername['id'];
     $_SESSION['name'] = $findUsername['name'];
     $_SESSION['username'] = $findUsername['username'];
@@ -323,8 +324,12 @@ class User extends BaseObject {
       return True;
     }
     // otherwise, go ahead and create a request.
+    $this->before_update();
+    $requestedUser->before_update();
     $createRequest = $this->dbConn->stdQuery("INSERT INTO `users_friends` SET ".implode(", ",$params));
     if ($createRequest) {
+      $this->after_update();
+      $requestedUser->after_update();
       return True;
     } else {
       return False;
@@ -339,8 +344,12 @@ class User extends BaseObject {
       return True;
     }
     // otherwise, go ahead and update this request.
+    $this->before_update();
+    $requestedUser->before_update();
     $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = 1 WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." && `status` = 0 LIMIT 1");
     if ($updateRequest) {
+      $this->after_update();
+      $requestedUser->after_update();
       return True;
     } else {
       return False;
@@ -447,20 +456,24 @@ class User extends BaseObject {
       $params[] = "`avatar_path` = ".$this->dbConn->quoteSmart($imagePath);
       $params[] = "`last_active` = NOW()";
 
+      $this->before_update();
       $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params)." WHERE `id` = ".intval($this->id)." LIMIT 1");
       if (!$updateUser) {
         return False;
       }
+      $this->after_update();
     } else {
       // add this user.
       $params[] = "`created_at` = NOW()";
       $params[] = "`last_active` = NOW()";
+      $this->before_create();
       $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params));
       if (!$insertUser) {
         return False;
       } else {
         $this->id = intval($this->dbConn->insert_id);
       }
+      $this->after_create();
     }
 
     // now process anime entries.
@@ -473,6 +486,7 @@ class User extends BaseObject {
     // delete this user from the database.
     // returns a boolean.
 
+    $this->before_update();
     // delete objects that belong to this user.
     foreach ($this->comments() as $comment) {
       if (!$comment->delete()) {
@@ -483,6 +497,7 @@ class User extends BaseObject {
     if (!$deleteList) {
       return False;
     }
+    $this->after_update();
 
     // now delete this user.
     return parent::delete();
@@ -493,10 +508,12 @@ class User extends BaseObject {
     } else {
       $time = $this->dbConn->quoteSmart($time->format("Y-m-d H:i:s"));
     }
+    $this->before_update();
     $updateLastActive = $this->dbConn->stdQuery("UPDATE `users` SET `last_active` = ".$time." WHERE `id` = ".intval($this->id));
     if (!$updateLastActive) {
       return False;
     }
+    $this->after_update();
     return True;
   }
   public function isModerator() {
