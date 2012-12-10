@@ -15,7 +15,7 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
   <div class="span4">&nbsp;</div>
   <div class="span4">
 <?php
-  display_register_form("register.php");
+  display_register_form($database, "register.php");
 ?>
   </div>
   <div class="span4">&nbsp;</div>
