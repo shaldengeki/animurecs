@@ -249,9 +249,6 @@ class User extends BaseObject {
       return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     
-    //update last IP address and last active.
-    $updateUser = array('last_ip' => $_SERVER['REMOTE_ADDR']);
-    $this->create_or_update($updateUser);
     $_SESSION['id'] = $findUsername['id'];
     $_SESSION['name'] = $findUsername['name'];
     $_SESSION['username'] = $findUsername['username'];
@@ -260,6 +257,9 @@ class User extends BaseObject {
     $this->username = $findUsername['username'];
     $this->name = $findUsername['name'];
     $this->usermask = intval($findUsername['usermask']);
+
+    //update last IP address and last active.
+    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
     return array("location" => "/feed.php", "status" => "Successfully logged in.", 'class' => 'success');
   }
   public function register($username, $email, $password, $password_confirmation) {
