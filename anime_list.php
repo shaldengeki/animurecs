@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 try {
   $targetEntry = new AnimeEntry($database, intval($_REQUEST['id']));

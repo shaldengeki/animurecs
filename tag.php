@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 if (isset($_POST['tag']) && is_array($_POST['tag'])) {
   // check to ensure that the user has perms to create or update an tag.

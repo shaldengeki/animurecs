@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 if (!$user->loggedIn()) {
 	redirect_to('/index.php', array('status' => 'You must be logged in to view recommendations.', 'redirect_to' => '/discover/'));

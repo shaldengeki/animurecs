@@ -118,6 +118,12 @@ function display_http_error($code=500, $contents="") {
   exit;
 }
 
+function check_partial_include($filename) {
+  if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
+    display_http_error(404);
+  }
+}
+
 function display_error($title="Error", $text="An unknown error occurred. Please try again.") {
   return "<h1>".escape_output($title)."</h1>
   <p>".escape_output($text)."</p>";

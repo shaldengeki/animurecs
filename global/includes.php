@@ -1,37 +1,37 @@
 <?php
-include_once("./global/config.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/config.php");
 
-include_once("./global/bcrypt.php");
-include_once("./global/database.php");
-include_once("./global/curl.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/bcrypt.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/database.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/curl.php");
 
-include_once("./global/aliasable.php");
-include_once("./global/commentable.php");
-include_once("./global/feedable.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/aliasable.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/commentable.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/feedable.php");
 
-include_once("./global/base_object.php");
-include_once("./global/base_list.php");
-include_once("./global/base_entry.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/base_object.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/base_list.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/base_entry.php");
 
-include_once("./global/alias.php");
-include_once("./global/tag_type.php");
-include_once("./global/tag.php");
-include_once("./global/anime.php");
-include_once("./global/anime_list.php");
-include_once("./global/anime_entry.php");
-include_once("./global/user.php");
-include_once("./global/comment.php");
-include_once("./global/comment_entry.php");
-include_once("./global/recs_engine.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/alias.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/tag_type.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/tag.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/anime.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/anime_list.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/anime_entry.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/user.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/comment.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/comment_entry.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/recs_engine.php");
 
 // include all achievements.
-include_once("./global/base_achievement.php");
-foreach (glob("./global/achievements/*.php") as $filename) {
-  include_once($filename);
+require_once($_SERVER['DOCUMENT_ROOT']."/global/base_achievement.php");
+foreach (glob($_SERVER['DOCUMENT_ROOT']."/global/achievements/*.php") as $filename) {
+  require_once($filename);
 }
 
-include_once("./global/display.php");
-include_once("./global/misc.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/display.php");
+require_once($_SERVER['DOCUMENT_ROOT']."/global/misc.php");
 session_start();
 $database = new DbConn(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD, MYSQL_DATABASE);
 $recsEngine = new RecsEngine(RECS_ENGINE_HOST, RECS_ENGINE_PORT);

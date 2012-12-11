@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 if (isset($_POST['anime']) && is_array($_POST['anime'])) {
   // check to ensure that the user has perms to create or update an anime.

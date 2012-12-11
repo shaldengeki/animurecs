@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 if (!$user->loggedIn()) {
   header("Location: /?redirect_to=/feed.php");

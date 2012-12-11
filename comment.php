@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 if (isset($_REQUEST['id']) && intval($_REQUEST['id']) != 0) {
   try {

@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 
 if (isset($_POST['username'])) {
 	// username and password sent from form 

@@ -1,5 +1,5 @@
 <?php
-include_once("global/includes.php");
+require_once("global/includes.php");
 if (intval($_REQUEST['id']) === $user->id) {
   $targetUser = $user;
 } else {

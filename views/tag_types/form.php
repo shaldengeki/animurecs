@@ -1,8 +1,6 @@
 <?php
-  if ($_SERVER['DOCUMENT_URI'] === $_SERVER['REQUEST_URI']) {
-    echo "This partial cannot be viewed on its own.";
-    exit;
-  }
+  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  check_partial_include(__FILE__);
 ?>
     <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' class='form-horizontal'>
       <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />"; ?>
