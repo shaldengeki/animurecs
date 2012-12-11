@@ -1,5 +1,7 @@
 <?php
 class Comment extends BaseObject {
+  use Feedable;
+
   protected $userId;
   protected $user;
   protected $type;
@@ -8,6 +10,8 @@ class Comment extends BaseObject {
   protected $ancestor;
   protected $depth;
   protected $message;
+
+  protected $entries;
 
   public function __construct(DbConn $database, $id=Null, User $user=Null, BaseObject $parent=Null) {
     parent::__construct($database, $id);
@@ -42,7 +46,7 @@ class Comment extends BaseObject {
   }
   public function ancestor() {
     if ($this->ancestor === Null) {
-      $this->ancestor = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" && $this->parent()->type() != "Anime" ? $this->parent()->ancestor() + 1 : $this->parent();
+      $this->ancestor = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" && $this->parent()->type() != "Anime" ? $this->parent()->ancestor() : $this->parent();
     }
     return $this->ancestor;
   }
@@ -61,6 +65,16 @@ class Comment extends BaseObject {
   }
   public function message() {
     return $this->returnInfo('message');
+  }
+  public function getEntries() {
+    // retrieves a list of id arrays corresponding to the comments belonging to this comment.
+    $returnList = [];
+    $commentEntries = $this->dbConn->stdQuery("SELECT * FROM `comments` WHERE `type` = 'Comment' && `parent_id` = ".intval($this->id)." ORDER BY `time` ASC");
+    while ($entry = $commentEntries->fetch_assoc()) {
+      $newEntry = new CommentEntry($this->dbConn, intval($entry['id']), $entry);
+      $returnList[intval($entry['id'])] = $newEntry;
+    }
+    return $returnList;
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -131,41 +145,6 @@ class Comment extends BaseObject {
       return False;
     }
     return True;
-  }
-  public function profile() {
-    // displays an comment's profile.
-    $output = $this->message();
-    return $output;
-  }
-  public function form(User $currentUser, BaseObject $currentObject) {
-    $output = "    <form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
-      <input type='hidden' name='comment[user_id]' value='".intval($currentUser->id)."' />
-      <input type='hidden' name='comment[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
-      <input type='hidden' name='comment[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
-      <fieldset>
-        <div class='control-group'>
-          <label class='control-label' for='comment[message]'>Comment</label>
-          <div class='controls'>
-            <textarea class='field span4' name='comment[message]' rows='3' id='comment[message]'>".(($this->id === 0) ? "" : escape_output($this->message()))."</textarea>
-          </div>
-        </div>
-
-        <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add Comment" : "Save changes")."</button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
-        </div>
-      </fieldset>\n</form>\n";
-    return $output;
-  }
-  public function inlineForm(User $currentUser, BaseObject $currentObject) {
-    $output = "    <form class='form-inline' action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />")."
-      <input type='hidden' name='comment[user_id]' value='".intval($currentUser->id)."' />
-      <input type='hidden' name='comment[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
-      <input type='hidden' name='comment[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
-      <input type='text' name='comment[message]'".(($this->id === 0) ? "placeholder='Leave a comment!'" : "value='".escape_output($this->message())."'")." />
-      <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Send" : "Update")."</button>
-    </form>\n";
-    return $output;
   }
   public function url($action="show", array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.

@@ -47,7 +47,7 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
     case 'new':
       $title = "Create a Tag";
       $output = "<h1>Add an tag</h1>\n";
-      $output .= $targetTag->form($user);
+      $output .= $targetTag->view('form', $user);
       break;
     case 'edit':
       if ($targetTag->id == 0) {
@@ -56,7 +56,7 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
       }
       $title = "Editing ".escape_output($targetTag->name);
       $output = "<h1>".escape_output($targetTag->name)."</h1>\n";
-      $output .= $targetTag->form($user);
+      $output .= $targetTag->view('form', $user);
       break;
     case 'show':
       if ($targetTag->id == 0) {
@@ -64,7 +64,7 @@ if (!$targetTag->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetTag->name);
-      $output = $targetTag->profile($recsEngine, $user);
+      $output = $targetTag->view('show', $user, array('recsEngine' => $recsEngine));
       break;
     case 'delete':
       if ($targetTag->id == 0) {

@@ -254,6 +254,15 @@ abstract class BaseObject {
     $this->after_delete();
     return True;
   }
+  public function view($view="index", $currentUser=Null, $params=Null) {
+    $file = joinPaths(APP_ROOT, 'views', $this->modelTable, "$view.php");
+    if (file_exists($file)) {
+      ob_start();
+      include($file);
+      return ob_get_clean();
+    }
+    return False;
+  }
   public function url($action="show", array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
     if ($id === Null) {

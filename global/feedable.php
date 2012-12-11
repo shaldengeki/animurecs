@@ -5,6 +5,7 @@ trait Feedable {
 
   // any feedable class must define a way to retrieve entries (from the database, presumably)
   abstract protected function getEntries();
+  
   public function entries(DateTime $maxTime=Null, $limit=Null) {
     // returns a list of feed entries, up to $maxTime and with at most $limit entries.
     // feed entries contain at a minimum an object, time and user field.
@@ -71,7 +72,7 @@ trait Feedable {
       }
     }
     if ($entry->allow($currentUser, 'comment') && $blankEntryComment->depth() < 2) {
-      $output .= "<div class='entryComment'>".$blankEntryComment->inlineForm($currentUser, $entry)."</div>\n";
+      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', $currentUser, array('currentObject' => $entry))."</div>\n";
     }
     $output .= "          </div>
       </".$entryType.">\n";

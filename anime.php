@@ -60,7 +60,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
     case 'new':
       $title = "Add an anime";
       $output = "<h1>Add an anime</h1>\n";
-      $output .= $targetAnime->form($user);
+      $output .= $targetAnime->view('form', $user);
       break;
     case 'edit':
       if ($targetAnime->id == 0) {
@@ -69,7 +69,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
       }
       $title = "Editing ".escape_output($targetAnime->title);
       $output = "<h1>".escape_output($targetAnime->title)."</h1>\n";
-      $output .= $targetAnime->form($user);
+      $output .= $targetAnime->view('form', $user);
       break;
     case 'show':
       if ($targetAnime->id == 0) {
@@ -77,7 +77,7 @@ if (!$targetAnime->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetAnime->title);
-      $output = $targetAnime->profile($recsEngine, $user);
+      $output = $targetAnime->view("show", $user, array('recsEngine' => $recsEngine));
       break;
     case 'delete':
       if ($targetAnime->id == 0) {

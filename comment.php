@@ -65,7 +65,7 @@ if (!$targetComment->allow($user, $_REQUEST['action'])) {
       }
       $title = "Add a comment";
       $output = "<h1>Add a comment</h1>\n";
-      $output .= $targetComment->form($user, $targetParent);
+      $output .= $targetComment->view('form', $user, array('currentObject' => $targetParent));
       break;
     case 'edit':
       if ($targetComment->id == 0) {
@@ -104,7 +104,7 @@ if (!$targetComment->allow($user, $_REQUEST['action'])) {
       }
       $title = "Editing comment";
       $output = "<h1>Editing comment</h1>\n";
-      $output .= $targetComment->form($user, $targetParent);
+      $output .= $targetComment->view('form', $user, array('currentObject' => $targetParent));
       break;
     case 'show':
       if ($targetComment->id == 0) {
@@ -112,7 +112,7 @@ if (!$targetComment->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = "Showing comment";
-      $output = $targetComment->profile($user);
+      $output = $targetComment->view('show', $user);
       break;
     case 'delete':
       if ($targetComment->id == 0) {

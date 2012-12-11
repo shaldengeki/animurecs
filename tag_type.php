@@ -39,7 +39,7 @@ if (!$targetTagType->allow($user, $_REQUEST['action'])) {
     case 'new':
       $title = "Create a Tag Type";
       $output = "<h1>Add a tag type</h1>\n";
-      $output .= $targetTagType->form($user);
+      $output .= $targetTagType->view('form', $user);
       break;
     case 'edit':
       if ($targetTagType->id == 0) {
@@ -48,7 +48,7 @@ if (!$targetTagType->allow($user, $_REQUEST['action'])) {
       }
       $title = "Editing ".escape_output($targetTagType->name);
       $output = "<h1>".escape_output($targetTagType->name)."</h1>\n";
-      $output .= $targetTagType->form($user);
+      $output .= $targetTagType->view('form', $user);
       break;
     case 'show':
       if ($targetTagType->id == 0) {
@@ -56,7 +56,7 @@ if (!$targetTagType->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetTagType->name);
-      $output = "<h1>".escape_output($targetTagType->name).($targetTagType->allow($user, "edit") ? " <small>(".$targetTagType->link("edit", "edit").")</small>" : "")."</h1>\n".$targetTagType->profile();
+      $output = $targetTagType->view('show', $user);
       break;
     case 'delete':
       if ($targetTagType->id == 0) {

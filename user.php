@@ -52,15 +52,15 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
     case 'switch_user':
       if (isset($_POST['switch_username'])) {
         $switchUser = $user->switchUser($_POST['switch_username']);
-        redirect_to($switchUser);
+        redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
       }
       $title = "Switch Users";
-      $output = "<h1>Switch Users</h1>\n".$user->switchForm();
+      $output = "<h1>Switch Users</h1>\n".$user->view("switchForm");
       break;
     case 'new':
       $title = "Sign Up";
       $output = "<h1>Sign Up</h1>\n";
-      $output .= $targetUser->form($user);
+      $output .= $targetUser->view("form", $user);
       break;
     case 'edit':
       if (isset($_POST['user']) && is_array($_POST['user'])) {
@@ -115,7 +115,7 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
               </ul>
               <div class='tab-content'>
                 <div class='tab-pane active' id='generalSettings'>
-                  ".$targetUser->form($user)."
+                  ".$targetUser->view("form", $user)."
                 </div>
                 <div class='tab-pane' id='malImport'>
                   <p>To import your list, we'll need your MAL username:</p>
@@ -136,14 +136,14 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
         break;
       }
       $title = escape_output($targetUser->username)."'s Profile";
-      $output = $targetUser->profile($user);
+      $output = $targetUser->view("show", $user);
       break;
     case 'feed':
       if ($targetUser->animeList()->allow($user, 'edit')) {
-        $output .= $targetUser->addEntryInlineForm();
+        $output .= $targetUser->view('addEntryInlineForm');
       }
       if ($targetUser->allow($user, 'comment')) {
-        $blankComment = new Comment($targetUser->dbConn, 0, $currentuser, $targetUser);
+        $blankComment = new Comment($targetUser->dbConn, 0, $user, $targetUser);
         $output .= "                <div class='addListEntryForm'>
                     ".$blankComment->inlineForm($user, $targetUser)."
                   </div>\n";
@@ -152,14 +152,14 @@ if (!$targetUser->allow($user, $_REQUEST['action'])) {
       $output .= $targetUser->profileFeed($user);
       echo $output;
       exit;
-    case 'list':
-      echo $targetUser->displayAnimeList($user);
+    case 'anime_list':
+      echo $targetUser->animeList->view("show", $user);
       exit;
     case 'stats':
-      echo "Stats coming soon!";
+      echo $targetUser->view('stats', $user);
       exit;
     case 'achievements':
-      echo "Achievements coming soon!";
+      echo $targetUser->view('achievements', $user);
       exit;
     case 'delete':
       if ($targetUser->id == 0) {

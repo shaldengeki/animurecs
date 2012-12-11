@@ -203,7 +203,7 @@ class User extends BaseObject {
       case 'show':
       case 'index':
       case 'feed':
-      case 'list':
+      case 'anime_list':
       case 'stats':
       case 'achievements':
         return True;
@@ -218,11 +218,11 @@ class User extends BaseObject {
     return $this->id === $_SESSION['id'];
   }
   public function loggedIn() {
-    //if userID is not proper, or if user's last IP was not the requester's IP, return false.
+    //if userID is not proper, or if user's last IP was not the requester's IP, return False.
     if (intval($this->id) <= 0) {
       return False;
     }
-    if (($this->id == $_SESSION['id']) && $_SESSION['lastLoginCheckTime'] > microtime(true) - 1) {
+    if (($this->id == $_SESSION['id']) && $_SESSION['lastLoginCheckTime'] > microtime(True) - 1) {
       return True;
     } elseif (isset($_SESSION['switched_user'])) {
       $checkID = $_SESSION['switched_user'];
@@ -233,7 +233,7 @@ class User extends BaseObject {
     if (!$thisUserInfo || $thisUserInfo['last_ip'] != $_SERVER['REMOTE_ADDR']) {
       return False;
     }
-    $_SESSION['lastLoginCheckTime'] = microtime(true);
+    $_SESSION['lastLoginCheckTime'] = microtime(True);
     return True;
   }
   public function log_failed_login($username, $password) {
@@ -268,7 +268,8 @@ class User extends BaseObject {
 
     //update last IP address and last active.
     $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
-    return array("location" => "/feed.php", "status" => "Successfully logged in.", 'class' => 'success');
+    $this->create_or_update($updateUser);
+    return array("/feed.php", array("status" => "Successfully logged in.", 'class' => 'success'));
   }
   public function register($username, $email, $password, $password_confirmation) {
     //check if user's passwords match and are of sufficient length.
@@ -503,20 +504,19 @@ class User extends BaseObject {
     if (!$updateLastActive) {
       return False;
     }
-    $this->after_update();
     return True;
   }
   public function isModerator() {
     if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
-      return false;
+      return False;
     }
-    return true;
+    return True;
   }
   public function isAdmin() {
     if (!$this->usermask() or !(intval($this->usermask()) & 4)) {
-      return false;
+      return False;
     }
-    return true;
+    return True;
   }
   public function isStaff() {
     return $this->isModerator() || $this->isAdmin();
@@ -524,7 +524,7 @@ class User extends BaseObject {
   public function switchUser($username, $switch_back=True) {
     /*
       Switches the current user's session out for another user (provided by $username) in the etiStats db.
-      If $switch_back is true, packs the current session into $_SESSION['switched_user'] before switching.
+      If $switch_back is True, packs the current session into $_SESSION['switched_user'] before switching.
       If not, then retrieves the packed session and overrides current session with that info.
       Returns a redirect_to array.
     */
@@ -536,14 +536,14 @@ class User extends BaseObject {
       }
       $newUser = new User($this->dbConn, $findUserID);
       $newUser->switchedUser = $_SESSION['id'];
-      $_SESSION['lastLoginCheckTime'] = microtime(true);
+      $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
       return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username()).".", 'class' => 'success');
     } else {
       $newUser = new User($this->dbConn, $username);
       $_SESSION['id'] = $newUser->id;
-      $_SESSION['lastLoginCheckTime'] = microtime(true);
+      $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
       return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
     }
@@ -581,253 +581,6 @@ class User extends BaseObject {
       }
     }
     return $this->animeList()->feed($feedEntries, $this, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
-  }
-  public function animeListSection($status, User $currentUser) {
-    // returns markup for one status section of a user's anime list.
-    $statusStrings = array(1 => array('id' => 'currentlyWatching', 'title' => 'Currently Watching'),
-                          2 => array('id' => 'completed', 'title' => 'Completed'),
-                          3 => array('id' => 'onHold', 'title' => 'On Hold'),
-                          4 => array('id' => 'dropped', 'title' => 'Dropped'),
-                          6 => array('id' => 'planToWatch', 'title' => 'Plan to Watch'));
-    $relevantEntries = $this->animeList()->listSection($status);
-
-    $output = "      <div class='".escape_output($statusStrings[$status]['id'])."'>
-        <h2>".escape_output($statusStrings[$status]['title'])."</h2>
-        <table class='table table-bordered table-striped dataTable' data-id='".intval($this->id)."'>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th class='dataTable-default-sort' data-sort-order='desc'>Score</th>
-              <th>Episodes</th>\n";
-    if ($currentUser->id == $this->id) {
-      $output .= "              <th></th>\n";
-    }
-    $output .= "            </tr>
-          </thead>
-          <tbody>\n";
-    foreach ($relevantEntries as $entry) {
-          $output .= "          <tr data-id='".intval($entry['anime']->id)."'>
-              <td class='listEntryTitle'>
-                ".$entry['anime']->link("show", $entry['anime']->title)."
-                <span class='pull-right hidden listEntryStatus'>
-                  ".display_status_dropdown("anime_list[status]", "span12", intval($entry['status']))."
-                </span>
-              </td>
-              <td class='listEntryScore'>".(intval($entry['score']) > 0 ? intval($entry['score'])."/10" : "")."</td>
-              <td class='listEntryEpisode'>".intval($entry['episode'])."/".(intval($entry['anime']->episodeCount) == 0 ? "?" : intval($entry['anime']->episodeCount))."</td>\n";
-          if ($currentUser->id == $this->id) {
-            $output .= "              <td><a href='#' class='listEdit' data-url='/anime_lists/'><i class='icon-pencil'></i></td>\n";
-          }
-          $output .="            </tr>\n";
-    }
-    $output .= "          <tbody>
-        </table>      </div>\n";
-    return $output;
-  }
-  public function displayAnimeList(User $currentUser) {
-    // returns markup for this user's anime list.
-    $output = "";
-    $output .= $this->animeListSection(1, $currentUser);
-    $output .= $this->animeListSection(2, $currentUser);
-    $output .= $this->animeListSection(3, $currentUser);
-    $output .= $this->animeListSection(4, $currentUser);
-    $output .= $this->animeListSection(6, $currentUser);
-    return $output;
-  }
-  public function displayStats() {
-    /* TODO: user stats. */
-  }
-  public function switchForm() {
-    return "<form action='".$this->url("switch_user")."' method='POST' class='form-horizontal'>
-      <fieldset>
-        <div class='control-group'>
-          <label class='control-label' for='switch_username'>Username</label>
-          <div class='controls'>
-            <input name='switch_username' type='text' class='input-xlarge' id='switch_username' />
-          </div>
-        </div>
-        <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>Switch</button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>Back</a>
-        </div>
-      </fieldset>\n</form>\n";
-  }
-  public function addEntryInlineForm() {
-    $anime = new Anime($this->dbConn, 0);
-    $output .= "                <div class='addListEntryForm'>
-                  <form class='form-inline' action='".$this->animeList()->url("new")."' method='POST'>
-                    <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='".intval($this->id)."' />
-                    <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='".$anime->url("token_search")."' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
-                    <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />
-                    ".display_status_dropdown("anime_list[status]", "span2")."
-                    <div class='input-append'>
-                      <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='0' />
-                      <span class='add-on'>/10</span>
-                    </div>
-                    <div class='input-prepend'>
-                      <span class='add-on'>Ep</span>
-                      <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' />
-                    </div>
-                    <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
-                  </form>
-                </div>\n";
-    return $output;
-  }
-  public function profile(User $currentUser) {
-    // displays a user's profile.
-    // info header.
-    $output = "     <div class='row-fluid'>
-        <div class='span3 userProfileColumn leftColumn'>
-          <ul class='thumbnails avatarContainer'>
-            <li class='span12'>
-              <div class='thumbnail profileAvatar'>\n";
-    if ($this->avatarPath() != '') {
-      $output .= "                <img src='".joinPaths(ROOT_URL,escape_output($this->avatarPath()))."' class='img-rounded' alt=''>\n";
-    } else {
-      $output .= "                <img src='/img/users/blank.png' class='img-rounded' alt=''>\n";
-    }
-    $output .= "          </div>
-            </li>
-          </ul>
-          <div class='friendListBox'>
-            <h3>Friends".($this->friends() ? " (".count($this->friends()).") " : "")."</h3>
-            <ul class='friendGrid'>\n";
-    $friendSlice = $this->friends();
-    shuffle($friendSlice);
-    $friendSlice = array_slice($friendSlice, 0, 4);
-    foreach ($friendSlice as $friendEntry) {
-      $output .= "            <li class='friendGridEntry'>".$friendEntry['user']->link("show", "<img class='friendGridImage' src='/".$friendEntry['user']->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True)."</li>\n";
-    }
-    $output .= "            </ul>
-          </div>
-        </div>
-        <div class='span9 userProfileColumn rightColumn'>
-          <div class='profileUserInfo'>
-            <h1>
-              ".escape_output($this->username())." 
-              ".($this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : "").
-              ($this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : "").
-              ($this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "").
-              ((!$this->allow($currentUser, 'request_friend') || $this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"))."</h1>
-            <p class='lead'>
-              ".escape_output($this->about())."
-            </p>\n";
-    if ($this->id !== $currentUser->id) {
-      $output .= "            <ul class='thumbnails'>
-              <li class='span4'>
-                <p>Anime compatibility:</p>
-                ".$this->animeList()->compatibilityBar($currentUser->animeList())."
-              </li>
-              <li class='span4'>
-                
-              </li>
-              <li class='span4'>
-                
-              </li>
-            </ul>\n";
-    }
-    $output .= "          </div>
-          <div class='profileTabs'>
-            <ul class='nav nav-tabs'>
-              <li class='active ajaxTab' data-url='".$this->url("feed")."'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
-              <li class='ajaxTab' data-url='".$this->url("list")."'><a href='#userList' data-toggle='tab'>List</a></li>
-              <li class='ajaxTab' data-url='".$this->url("stats")."'><a href='#userStats' data-toggle='tab'>Stats</a></li>
-              <li class='ajaxTab' data-url='".$this->url("achievements")."'><a href='#userAchievements' data-toggle='tab'>Achievements</a></li>
-            </ul>
-            <div class='tab-content'>
-              <div class='tab-pane active' id='userFeed'>\n";
-    if ($this->animeList()->allow($currentUser, 'edit')) {
-      $output .= $this->addEntryInlineForm();
-    }
-    if ($this->allow($currentUser, 'comment')) {
-      $blankComment = new Comment($this->dbConn, 0, $currentuser, $this);
-      $output .= "                <div class='addListEntryForm'>
-                  ".$blankComment->inlineForm($currentUser, $this)."
-                </div>\n";
-
-    }
-    $output .= "                ".$this->profileFeed($currentUser)."
-              </div>
-              <div class='tab-pane' id='userList'>
-                Loading...
-              </div>
-              <div class='tab-pane' id='userStats'>
-                Loading...
-              </div>
-              <div class='tab-pane' id='userAchievements'>
-                Loading...
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>\n";
-    return $output;
-  }
-  public function form(User $currentUser) {
-    $output = "<form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' enctype='multipart/form-data' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />")."
-      <fieldset>
-        <div class='control-group'>
-          <label class='control-label' for='user[name]'>Name</label>
-          <div class='controls'>
-            <input name='user[name]' type='text' class='input-xlarge' id='user[name]'".(($this->id === 0) ? "" : " value='".escape_output($this->name())."'")." />
-          </div>
-        </div>";
-    if ($this->id === 0) {
-      $output .= "        <div class='control-group'>
-          <label class='control-label' for='user[username]'>Username</label>
-          <div class='controls'>
-            <input name='user[username]' type='text' class='input-xlarge' id='user[username]'".(($this->id === 0) ? "" : " value='".escape_output($this->username())."'")." />
-          </div>
-        </div>\n";
-    } else {
-      $output .= "            <input name='user[username]' type='hidden' value='".escape_output($this->username())."' />\n";
-    }
-    $output .= "        <div class='control-group'>
-          <label class='control-label' for='user[password]'>Password</label>
-          <div class='controls'>
-            <input name='user[password]' type='password' class='input-xlarge' id='user[password]' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label' for='user[password_confirmation]'>Confirm Password</label>
-          <div class='controls'>
-            <input name='user[password_confirmation]' type='password' class='input-xlarge' id='user[password_confirmation]' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label' for='user[email]'>Email</label>
-          <div class='controls'>
-            <input name='user[email]' type='email' class='input-xlarge' id='user[email]'".(($this->id === 0) ? "" : " value='".escape_output($this->email())."'").">
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label' for='user[about]'>About</label>
-          <div class='controls'>
-            <textarea name='user[about]' id='user[about]' rows='5'>".(($this->id === 0) ? "" : escape_output($this->about()))."</textarea>
-          </div>
-        </div>\n";
-        if ($this->id != 0) {
-          $output .= "        <div class='control-group'>
-          <label class='control-label' for='avatar_image'>Avatar</label>
-          <div class='controls'>
-            <input name='avatar_image' class='input-file' type='file' onChange='displayImagePreview(this.files);' /><span class='help-inline'>Max size 300x300, JPEG/PNG/GIF.</span>
-          </div>
-        </div>\n";
-        }
-        if ($this->allow($currentUser, $this->id === 0 ? 'new' : 'edit')) {
-          $output .= "      <div class='control-group'>
-          <label class='control-label' for='user[usermask]'>Role(s)</label>
-          <div class='controls'>\n".display_user_roles_select("user[usermask][]", ($this->id === 0) ? 0 : intval($this->usermask()))."      </div>
-        </div>\n";
-        } else {
-          $output .= "      <input type='hidden' name='user[usermask][]' value='".($this->id === 0 ? 1 : intval($this->usermask()))."' />\n";
-        }
-        $output .= "    <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Sign Up" : "Save changes")."</button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
-        </div>
-      </fieldset>\n</form>\n";
-    return $output;
   }
 }
 ?>
