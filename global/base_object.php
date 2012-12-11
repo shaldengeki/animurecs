@@ -7,7 +7,7 @@ abstract class BaseObject {
 
   protected $modelTable, $modelPlural, $modelName;
   protected $createdAt, $updatedAt;
-  protected $_callbacks = array();
+  protected $_observers = array();
 
   public function __construct(DbConn $database, $id=Null) {
     $this->dbConn = $database;
@@ -98,51 +98,62 @@ abstract class BaseObject {
   }
 
   // event handlers for objects.
-  public function bind($event, $callback) {
+  public function bind($event, $observer) {
     // binds a function to an event.
     // can be either anonymous function or string name of class method.
-    if (!is_callable($callback, true)) {
+    if (!method_exists($observer, 'update')) {
       if (DEBUG_ON) {
-        throw new InvalidArgumentException(sprintf('Invalid callback: %s.', print_r($callback, true)));
+        throw new InvalidArgumentException(sprintf('Invalid observer: %s.', print_r($observer, True)));
       } else {
         return False;
       }
     }
-    if (!isset($this->_callbacks[$event])) {
-      $this->_callbacks[$event] = array($callback);
+    if (!isset($this->_observers[$event])) {
+      $this->_observers[$event] = array($observer);
     } else {
-      $this->_callbacks[$event][] = $callback;
+      $elements = array_keys($this->_observers[$event], $o);
+      $notinarray = True;
+      foreach ($elements as $value) {
+        if ($observer === $this->_observers[$event][$value]) {
+            $notinarray = False;
+            break;
+          }
+        }
+      //check if there already
+      if ($notinarray) {
+        $this->_observers[$event][] = $observer;
+      }
     }
-    return array($event, count($this->_callbacks[$event])-1);
+    return array($event, count($this->_observers[$event])-1);
   }
-  public function unbind($callback) {
+  public function unbind($observer) {
     // callback is array of form [event_name, position]
     // alternatively, also accepts a string for event name.
-    if (is_array($callback)) {
-      if (count($callback) < 2) {
+    if (is_array($observer)) {
+      if (count($observer) < 2) {
         return False;
-      } elseif (!isset($this->_callbacks[$callback[0]])) {
+      } elseif (!isset($this->_observers[$observer[0]])) {
         return True;
       }
-      unset($this->_callbacks[$callback[0]][$callback[1]]);
-      return !isset($this->_callbacks[$callback[0]][$callback[1]]);
+      unset($this->_observers[$observer[0]][$observer[1]]);
+      return !isset($this->_observers[$observer[0]][$observer[1]]);
     } else {
-      if (!isset($this->_callbacks[$callback])) {
+      if (!isset($this->_observers[$observer])) {
         return True;
       }
-      unset($this->_callbacks[$callback]);
-      return !isset($this->_callbacks[$callback]);
+      unset($this->_observers[$observer]);
+      return !isset($this->_observers[$observer]);
     }
   }
-  public function fire($event) {
-    if (!isset($this->_callbacks[$event])) {
+  public function fire($event, $updateParams=Null) {
+    if (!isset($this->_observers[$event])) {
       return;
     }
-    foreach ($this->_callbacks[$event] as $callback) {
-      if (!is_callable($callback)) {
+    foreach ($this->_observers[$event] as $observer) {
+      if (!method_exists($observer, 'update')) {
         continue;
       }
-      call_user_func($callback);
+      $observer->update($event, $this, $updateParams);
     }
   }
   public function before_create() {
@@ -151,11 +162,11 @@ abstract class BaseObject {
   public function after_create() {
     $this->fire('afterCreate');
   }
-  public function before_update() {
-    $this->fire('beforeUpdate');
+  public function before_update($updateParams=Null) {
+    $this->fire('beforeUpdate', $updateParams);
   }
-  public function after_update() {
-    $this->fire('afterUpdate');
+  public function after_update($updateParams=Null) {
+    $this->fire('afterUpdate', $updateParams);
   }
   public function before_delete() {
     $this->fire('beforeDelete');
@@ -170,7 +181,6 @@ abstract class BaseObject {
     if (!$this->validate($object)) {
       return False;
     }
-
     $params = array();
     foreach ($object as $parameter => $value) {
       if (!is_array($value)) {
@@ -192,12 +202,12 @@ abstract class BaseObject {
       $whereParams[] = "`id` = ".intval($this->id);
 
       //update this object.
-      $this->before_update();
+      $this->before_update($object);
       $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1");
       if (!$updateObject) {
         return False;
       }
-      $this->after_update();
+      $this->after_update($object);
     } else {
       // add this object.
       $params[] = '`created_at` = NOW()';

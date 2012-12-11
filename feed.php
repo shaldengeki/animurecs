@@ -19,10 +19,10 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li><s>List model, add/delete/update list entries</s></li>
       <li><s>Import list from MAL</s></li>
       <li><s>Friends</s></li>
-      <li>Posts/comments/+1/props/upvote/likes</li>
-      <li><s>Fe</s>ed</li>
+      <li><s>Posts/comment/</s>+1/props/upvote/likes</li>
+      <li><s>Fee</s>d</li>
       <li><s>Recommend</s>ations</li>
-      <li>Achieves</li>
+      <li><s>Achi</s>eves</li>
       <li>Groups</li>
       <li>Groupwatches, contests</li>
     </ol>

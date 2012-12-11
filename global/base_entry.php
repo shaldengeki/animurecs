@@ -109,7 +109,7 @@ abstract class BaseEntry extends BaseObject {
 
     // check to see if this is an update.
     if (isset($this->entries()[intval($entry['id'])])) {
-      $this->before_update();
+      $this->before_update($entry);
       $updateDependency = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;

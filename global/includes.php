@@ -12,6 +12,7 @@ include_once("./global/feedable.php");
 include_once("./global/base_object.php");
 include_once("./global/base_list.php");
 include_once("./global/base_entry.php");
+
 include_once("./global/alias.php");
 include_once("./global/tag_type.php");
 include_once("./global/tag.php");
@@ -22,6 +23,12 @@ include_once("./global/user.php");
 include_once("./global/comment.php");
 include_once("./global/comment_entry.php");
 include_once("./global/recs_engine.php");
+
+// include all achievements.
+include_once("./global/base_achievement.php");
+foreach (glob("./global/achievements/*.php") as $filename) {
+  include_once($filename);
+}
 
 include_once("./global/display.php");
 include_once("./global/misc.php");

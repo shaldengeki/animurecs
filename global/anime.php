@@ -162,7 +162,7 @@ class Anime extends BaseObject {
     if (!isset($anime['title']) || strlen($anime['title']) < 1) {
       return False;
     }
-    if (isset($anime['description']) && (strlen($anime['description']) < 1 || strlen($anime['description']) > 600)) {
+    if (isset($anime['description']) && (strlen($anime['description']) < 1 || strlen($anime['description']) > 1000)) {
       return False;
     }
     if (isset($anime['episode_count']) && ( !is_numeric($anime['episode_count']) || intval($anime['episode_count']) != $anime['episode_count'] || intval($anime['episode_count']) < 0) ) {
@@ -171,10 +171,10 @@ class Anime extends BaseObject {
     if (isset($anime['episode_length']) && ( !is_numeric($anime['episode_length']) || intval($anime['episode_length']) != $anime['episode_length'] || intval($anime['episode_length']) < 0) ) {
       return False;
     }
-    if (isset($anime['approved_on']) && !strtotime($anime['approved_on'])) {
+    if (isset($anime['approved_on']) && $anime['approved_on'] && !strtotime($anime['approved_on'])) {
       return False;
     }
-    if (isset($anime['approved_user_id'])) {
+    if (isset($anime['approved_user_id']) && intval($anime['approved_user_id'])) {
       if (!is_numeric($anime['approved_user_id']) || intval($anime['approved_user_id']) != $anime['approved_user_id'] || intval($anime['approved_user_id']) <= 0) {
         return False;
       } else {
@@ -190,6 +190,7 @@ class Anime extends BaseObject {
   public function create_or_update(array $anime, array $whereConditions=Null) {
     // creates or updates a anime based on the parameters passed in $anime and this object's attributes.
     // returns False if failure, or the ID of the anime if success.
+    
     // filter some parameters out first and replace them with their corresponding db fields.
     if (isset($anime['anime_tags']) && !is_array($anime['anime_tags'])) {
       $anime['anime_tags'] = explode(",", $anime['anime_tags']);
@@ -206,17 +207,6 @@ class Anime extends BaseObject {
       $anime['episode_length'] = intval($anime['episode_minutes']) * 60;
     }
     unset($anime['episode_minutes']);
-
-    if (!$this->validate($anime)) {
-      return False;
-    }
-
-    $params = array();
-    foreach ($anime as $parameter => $value) {
-      if (!is_array($value)) {
-        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
-      }
-    }
 
     // process uploaded image.
     $file_array = $_FILES['anime_image'];
@@ -253,26 +243,10 @@ class Anime extends BaseObject {
         $imagePath = "";  
       }
     }
-
-    //go ahead and create or update this anime.
-    if ($this->id != 0) {
-      //update this anime.
-      $this->before_update();
-      $updateUser = $this->dbConn->stdQuery("UPDATE `anime` SET ".implode(", ", $params).", `image_path` = ".$this->dbConn->quoteSmart($imagePath).", `updated_at` = NOW() WHERE `id` = ".intval($this->id)." LIMIT 1");
-      if (!$updateUser) {
-        return False;
-      }
-      $this->after_update();
-    } else {
-      // add this anime.
-      $this->before_create();
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `anime` SET ".implode(",", $params).", `image_path` = ".$this->dbConn->quoteSmart($imagePath).", `created_at` = NOW(), `updated_at` = NOW()");
-      if (!$insertUser) {
-        return False;
-      } else {
-        $this->id = intval($this->dbConn->insert_id);
-      }
-      $this->after_create();
+    $anime['image_path'] = $imagePath;
+    $result = parent::create_or_update($anime, $whereConditions);
+    if (!$result) {
+      return False;
     }
 
     // now process any taggings.

@@ -19,8 +19,8 @@ function shortenText($text, $maxLen=100) {
   }
 }
 
-function unixToMySQLDateTime($timestamp=False) {
-  if ($timestamp === False) {
+function unixToMySQLDateTime($timestamp=Null, $timezone=OUTPUT_TIMEZONE) {
+  if ($timestamp === Null) {
     $timestamp = time();
   }
   $dateObject = new DateTime('@'.$timestamp);
@@ -215,7 +215,8 @@ function start_html(DbConn $database, User $user, $title="Animurecs", $subtitle=
           <li id='navbar-user' class='dropdown'>
             <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
             <ul class='dropdown-menu'>
-              <li>".$user->link("show", "Profile")."</li>\n";
+              <li>".$user->link("show", "Profile")."</li>
+              <li>".$user->link("edit", "Settings")."</li>\n";
     if ($user->isAdmin() && !isset($user->switchedUser)) {
       echo "            <li>".$user->link("switch_user", "Switch User")."</li>\n";
     }

@@ -35,6 +35,10 @@ class User extends BaseObject {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
       $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
+      if ($this->currentUser()) {
+        // toy example of an achievement listener.
+        $this->bind("afterUpdate", new TestAchievement($this->dbConn));
+      }
     }
   }
   public function username() {
@@ -209,6 +213,10 @@ class User extends BaseObject {
         break;
     }
   }
+  public function currentUser() {
+    // returns bool if this object is the currently logged-in user.
+    return $this->id === $_SESSION['id'];
+  }
   public function loggedIn() {
     //if userID is not proper, or if user's last IP was not the requester's IP, return false.
     if (intval($this->id) <= 0) {
@@ -249,7 +257,7 @@ class User extends BaseObject {
       return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     
-    $_SESSION['id'] = $findUsername['id'];
+    $_SESSION['id'] = intval($findUsername['id']);
     $_SESSION['name'] = $findUsername['name'];
     $_SESSION['username'] = $findUsername['username'];
     $_SESSION['usermask'] = $findUsername['usermask'];
@@ -359,9 +367,19 @@ class User extends BaseObject {
     if (!parent::validate($user)) {
       return False;
     }
-    if (!isset($user['username']) || strlen($user['username']) < 1 || strlen($user['username']) > 40) {
-      return False;
+
+    if ($this->id === 0) {
+      if (!isset($user['username']) || !isset($user['email'])) {
+        return False;
+      }
+    } else {
+      if (isset($user['username'])) {
+        if (strlen($user['username']) < 1 || strlen($user['username']) > 40) {
+          return False;
+        }
+      }
     }
+
     if (isset($user['password']) && ($this->id === 0 || $user['password'] != '')) {
      if (strlen($user['password']) < 6) {
         return False;
@@ -370,7 +388,7 @@ class User extends BaseObject {
         return False;
       }
     }
-    if (!isset($user['email']) || strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email'])) {
+    if (isset($user['email']) && (strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email']))) {
       return False;
     }
     if (isset($user['about']) && (strlen($user['about']) < 1 || strlen($user['about']) > 600)) {
@@ -409,71 +427,45 @@ class User extends BaseObject {
       unset($user['username']);
     }
 
-    $params = array();
-    foreach ($user as $parameter => $value) {
-      if (!is_array($value)) {
-        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
-      }
-    }
-    //go ahead and register or update this user.
-    if ($this->id != 0) {
-      //update this user.
-      // process uploaded image.
-      $file_array = $_FILES['avatar_image'];
-      $imagePath = "";
-      if ($file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
-        if ($file_array['error'] != UPLOAD_ERR_OK) {
-          return False;
-        }
-        $file_contents = file_get_contents($file_array['tmp_name']);
-        if (!$file_contents) {
-          return False;
-        }
-        $newIm = @imagecreatefromstring($file_contents);
-        if (!$newIm) {
-          return False;
-        }
-        $imageSize = getimagesize($file_array['tmp_name']);
-        if ($imageSize[0] > 300 || $imageSize[1] > 300) {
-          return False;
-        }
-        // move file to destination and save path in db.
-        if (!is_dir(joinPaths(APP_ROOT, "img", "users", intval($this->id)))) {
-          mkdir(joinPaths(APP_ROOT, "img", "users", intval($this->id)));
-        }
-        $imagePathInfo = pathinfo($file_array['tmp_name']);
-        $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
-        if ($this->avatarPath()) {
-          $removeOldAvatar = unlink(joinPaths(APP_ROOT, $this->avatarPath()));
-        }
-        if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
-          return False;
-        }
-      } else {
-        $imagePath = $this->avatarPath();
-      }
-
-      $params[] = "`avatar_path` = ".$this->dbConn->quoteSmart($imagePath);
-      $params[] = "`last_active` = NOW()";
-
-      $this->before_update();
-      $updateUser = $this->dbConn->stdQuery("UPDATE `users` SET ".implode(", ", $params)." WHERE `id` = ".intval($this->id)." LIMIT 1");
-      if (!$updateUser) {
+    // process uploaded image.
+    $file_array = $_FILES['avatar_image'];
+    $imagePath = "";
+    if ($file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
+      if ($file_array['error'] != UPLOAD_ERR_OK) {
         return False;
       }
-      $this->after_update();
+      $file_contents = file_get_contents($file_array['tmp_name']);
+      if (!$file_contents) {
+        return False;
+      }
+      $newIm = @imagecreatefromstring($file_contents);
+      if (!$newIm) {
+        return False;
+      }
+      $imageSize = getimagesize($file_array['tmp_name']);
+      if ($imageSize[0] > 300 || $imageSize[1] > 300) {
+        return False;
+      }
+      // move file to destination and save path in db.
+      if (!is_dir(joinPaths(APP_ROOT, "img", "users", intval($this->id)))) {
+        mkdir(joinPaths(APP_ROOT, "img", "users", intval($this->id)));
+      }
+      $imagePathInfo = pathinfo($file_array['tmp_name']);
+      $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
+      if ($this->avatarPath()) {
+        $removeOldAvatar = unlink(joinPaths(APP_ROOT, $this->avatarPath()));
+      }
+      if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
+        return False;
+      }
     } else {
-      // add this user.
-      $params[] = "`created_at` = NOW()";
-      $params[] = "`last_active` = NOW()";
-      $this->before_create();
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `users` SET ".implode(",", $params));
-      if (!$insertUser) {
-        return False;
-      } else {
-        $this->id = intval($this->dbConn->insert_id);
-      }
-      $this->after_create();
+      $imagePath = $this->avatarPath();
+    }
+    $user['avatar_path'] = $imagePath;
+    $user['last_active'] = unixToMySQLDateTime(Null, SERVER_TIMEZONE);
+    $result = parent::create_or_update($user, $whereConditions);
+    if (!$result) {
+      return False;
     }
 
     // now process anime entries.
@@ -503,13 +495,11 @@ class User extends BaseObject {
     return parent::delete();
   }
   public function updateLastActive($time=Null) {
-    if ($time === Null) {
-      $time = "NOW()";
-    } else {
-      $time = $this->dbConn->quoteSmart($time->format("Y-m-d H:i:s"));
+    $params = array();
+    if ($time !== Null) {
+      $params['last_active'] = $time->format("Y-m-d H:i:s");
     }
-    $this->before_update();
-    $updateLastActive = $this->dbConn->stdQuery("UPDATE `users` SET `last_active` = ".$time." WHERE `id` = ".intval($this->id));
+    $updateLastActive = $this->create_or_update($params);
     if (!$updateLastActive) {
       return False;
     }
