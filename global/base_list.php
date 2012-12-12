@@ -229,6 +229,12 @@ abstract class BaseList extends BaseObject {
     }
     return $this->uniqueList;
   }
+  public function uniqueListAvg() {
+    if ($this->uniqueListAvg === Null) {
+      $this->uniqueList();
+    }
+    return $this->uniqueListAvg;
+  }
   public function uniqueListStdDev() {
     if ($this->uniqueListStdDev === Null) {
       $this->uniqueList();

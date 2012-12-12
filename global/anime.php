@@ -301,8 +301,10 @@ class Anime extends BaseObject {
     return $returnList;
   }
   public function getRatings() {
-    $ratings = array_filter($this->entries(), function ($value) {
-      if (intval($value->score) != 0) {
+    $users = [];
+    $ratings = array_filter($this->entries(), function ($value) use (&$users) {
+      if (!isset($users[$value->user()->id]) && intval($value->score) != 0) {
+        $users[$value->user()->id] = 1;
         return True;
       }
       return False;

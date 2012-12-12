@@ -33,19 +33,19 @@
 ?>            <ul class='thumbnails'>
               <li class='span4'>
 <?php
-    if (!isset($app->user->animeList->uniqueList[$this->id]) || $app->user->animeList->uniqueList[$this->id]['score'] == 0) {
+    if (!isset($app->user->animeList()->uniqueList()[$this->id]) || $app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
       $userRating = $app->recsEngine->predict($app->user, $this)[$this->id];
 ?>                <p class='lead'>Predicted score:</p>
                 <?php echo $this->scoreBar($userRating); ?>
 <?php
     } else {
-      $userRating = $app->user->animeList->uniqueList[$this->id]['score'];
+      $userRating = $app->user->animeList()->uniqueList()[$this->id]['score'];
 ?>                <p class='lead'>You rated this:</p>
                 <?php echo $this->scoreBar($userRating); ?>
 <?php
     }
     if ($userRating != 0) {
-?>(which is <?php echo abs(round($userRating - $app->user->animeList->uniqueListAvg, 2))." points ".($userRating > $app->user->animeList->uniqueListAvg ? "higher" : "lower")." than your average score and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score)";
+?>(which is <?php echo abs(round($userRating - $app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average score and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score)";
     }
   } else {
 ?>            <ul class='thumbnails'>
@@ -66,8 +66,8 @@
   if ($app->user->loggedIn()) {
     $animeList = new AnimeList($this->dbConn, 0);
     $anime = new Anime($this->dbConn, 0);
-    if (isset($app->user->animeList->uniqueList[$this->id])) {
-      $thisEntry = $app->user->animeList->uniqueList[$this->id];
+    if (isset($app->user->animeList()->uniqueList()[$this->id])) {
+      $thisEntry = $app->user->animeList()->uniqueList()[$this->id];
       $addText = "Update this anime in your list: ";
     } else {
       $thisEntry = [];
