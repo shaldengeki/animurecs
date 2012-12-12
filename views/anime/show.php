@@ -45,7 +45,7 @@
 <?php
     }
     if ($userRating != 0) {
-?>(which is <?php echo abs(round($userRating - $app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average score and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score)";
+?>(which is <?php echo abs(round($userRating - $app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average score".($this->ratingCount() !== 0 ? " and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score" : "").")";
     }
   } else {
 ?>            <ul class='thumbnails'>
