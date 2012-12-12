@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
 ?>
     <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' enctype='multipart/form-data' class='form-horizontal'><?php echo ($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />"; ?>
       <fieldset>
@@ -57,7 +57,7 @@
         </div>
 <?php
   }
-  if ($this->allow($currentUser, $this->id === 0 ? 'new' : 'edit') && $currentUser->isStaff()) {
+  if ($this->allow($app->user, $this->id === 0 ? 'new' : 'edit') && $app->user->isStaff()) {
 ?>      <div class='control-group'>
           <label class='control-label' for='user[usermask]'>Role(s)</label>
           <div class='controls'>

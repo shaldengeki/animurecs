@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
   $anime = new Anime($this->dbConn, 0);
 ?>
                 <div class='addListEntryForm'>

@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
   $params['status'] = isset($params['status']) ? $params['status'] : 1;
   // returns markup for one status section of a user's anime list.
   $statusStrings = array(1 => array('id' => 'currentlyWatching', 'title' => 'Currently Watching'),
@@ -19,7 +19,7 @@
               <th class='dataTable-default-sort' data-sort-order='desc'>Score</th>
               <th>Episodes</th>
 <?php
-  if ($currentUser->id == $this->user()->id) {
+  if ($app->user->id == $this->user()->id) {
 ?>              <th></th>
 <?php
   }
@@ -38,7 +38,7 @@
               <td class='listEntryScore'><?php echo intval($entry['score']) > 0 ? intval($entry['score'])."/10" : ""; ?></td>
               <td class='listEntryEpisode'><?php echo intval($entry['episode'])."/".(intval($entry['anime']->episodeCount()) == 0 ? "?" : intval($entry['anime']->episodeCount())); ?></td>
 <?php
-      if ($currentUser->id == $this->user()->id) {
+      if ($app->user->id == $this->user()->id) {
 ?>              <td><a href='#' class='listEdit' data-url='<?php echo $this->url("new"); ?>'><i class='icon-pencil'></i></td>
 <?php
       }

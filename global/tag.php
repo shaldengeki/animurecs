@@ -286,7 +286,7 @@ class Tag extends BaseObject {
         break;
       case 'new':
         $title = "Create a Tag";
-        $output = $this->view('new', $app->user);
+        $output = $this->view('new', $app);
         break;
       case 'edit':
         if ($this->id == 0) {
@@ -294,15 +294,15 @@ class Tag extends BaseObject {
           break;
         }
         $title = "Editing ".escape_output($this->name());
-        $output = $this->view('edit', $app->user);
+        $output = $this->view('edit', $app);
         break;
       case 'show':
         if ($this->id == 0) {
           $output = $app->display_error(404);
           break;
         }
-        $title = escape_output($this->name());
-        $output = $this->view('show', $app->user, array('recsEngine' => $app->recsEngine));
+        $title = "Tag: ".escape_output($this->name());
+        $output = $this->view('show', $app, array('recsEngine' => $app->recsEngine));
         break;
       case 'delete':
         if ($this->id == 0) {
@@ -320,10 +320,10 @@ class Tag extends BaseObject {
       default:
       case 'index':
         $title = "All Tags";
-        $output = $this->view('index', $app->user, get_object_vars($app));
+        $output = $this->view('index', $app);
         break;
     }
-    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+    $app->render($output, array('title' => $title));
   }
 
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {

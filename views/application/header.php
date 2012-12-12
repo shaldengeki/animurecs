@@ -1,6 +1,8 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  if (str_replace("\\", "/", __FILE__) === $_SERVER['SCRIPT_FILENAME']) {
+    echo "This partial cannot be rendered by itself.";
+    exit;
+  }
 ?>
 <!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
 <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
@@ -113,11 +115,11 @@
     </div>
     <div class='container-fluid'>
 <?php
-  if ($params['status'] != '') {
+  if ($this->status != '') {
 ?>
-      <div class='alert alert-<?php echo isset($params['class']) ? escape_output($params['class']) : ""; ?>'>
+      <div class='alert alert-<?php echo isset($this->class) ? escape_output($this->class) : ""; ?>'>
     <button class='close' data-dismiss='alert' href='#'>×</button>
-  <?php echo escape_output($params['status']); ?></div>
+  <?php echo escape_output($this->status); ?></div>
 <?php
   }
 ?>

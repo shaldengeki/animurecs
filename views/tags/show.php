@@ -1,13 +1,12 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
 ?>
-<h1><?php echo escape_output($this->name()).($this->allow($currentUser, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
+<h1><?php echo escape_output($this->name()).($this->allow($app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
   <ul class='recommendations'>
 <?php
-  $predictedRatings = $params['recsEngine']->predict($currentUser, $this->anime());
+  $predictedRatings = $app->recsEngine->predict($app->user, $this->anime());
   if (is_array($predictedRatings)) {
-    echo "SIP";
     arsort($predictedRatings);
     foreach ($predictedRatings as $animeID=>$prediction) {
 ?>

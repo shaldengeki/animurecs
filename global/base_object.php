@@ -260,7 +260,7 @@ abstract class BaseObject {
     $this->after_delete();
     return True;
   }
-  public function view($view="index", $currentUser=Null, $params=Null) {
+  public function view($view="index", Application $app, array $params=Null) {
     $file = joinPaths(Config::APP_ROOT, 'views', $this->modelTable, "$view.php");
     if (file_exists($file)) {
       ob_start();
@@ -270,9 +270,7 @@ abstract class BaseObject {
     return False;
   }
   public function render(Application $app) {
-    echo $app->view('header', $app->user, get_object_vars($app));
-    echo $this->view($app->action, $app->user, get_object_vars($app));
-    echo $app->view('footer', $app->user, get_object_vars($app));
+    echo $app->render($this->view($app->action, $app));
     exit;
   }
   public function url($action="show", array $params=Null, $id=Null) {

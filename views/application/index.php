@@ -1,3 +1,9 @@
+<?php
+  if (str_replace("\\", "/", __FILE__) === $_SERVER['SCRIPT_FILENAME']) {
+    echo "This partial cannot be rendered by itself.";
+    exit;
+  }
+?>
       <div class="front-bg">
         <img class="front-image" src=<?php echo joinPaths(Config::ROOT_URL,"img/front-bg.jpg"); ?> />
       </div>

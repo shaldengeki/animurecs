@@ -131,27 +131,27 @@ class TagType extends BaseObject {
     switch($app->action) {
       case 'new':
         $title = "Create a Tag Type";
-        $output = $this->view('new', $app->user);
+        $output = $this->view('new', $app);
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = display_error("Error: Invalid tag type", "The given tag type doesn't exist.");
+          $output = $app->display_error(404);
           break;
         }
         $title = "Editing ".escape_output($this->name());
-        $output = $this->view('edit', $app->user);
+        $output = $this->view('edit', $app);
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = display_error("Error: Invalid tag type", "The given tag type doesn't exist.");
+          $output = $app->display_error(404);
           break;
         }
         $title = escape_output($this->name());
-        $output = $this->view('show', $app->user);
+        $output = $this->view('show', $app);
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = display_error("Error: Invalid tag type", "The given tag type doesn't exist.");
+          $output = $app->display_error(404);
           break;
         }
         $deleteTagType = $this->delete();
@@ -164,10 +164,10 @@ class TagType extends BaseObject {
       default:
       case 'index':
         $title = "All Tag Types";
-        $output = $this->view('index', $app->user, get_object_vars($app));
+        $output = $this->view('index', $app);
         break;
     }
-    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+    $app->render($output, array('title' => $title));
   }
 }
 ?>

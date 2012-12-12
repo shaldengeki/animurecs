@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -42,18 +42,18 @@ if ($this->avatarPath() != '') {
               <?php echo escape_output($this->username()); ?>
               <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
               <?php echo $this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : ""; ?>
-              <?php echo $this->allow($currentUser, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
-              <?php echo (!$this->allow($currentUser, 'request_friend') || $this->id === $currentUser->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $currentUser->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"); ?>
+              <?php echo $this->allow($app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
+              <?php echo (!$this->allow($app->user, 'request_friend') || $this->id === $app->user->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $app->user->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"); ?>
             </h1>
             <p class='lead'>
               <?php echo escape_output($this->about()); ?>
             </p>
 <?php
-  if ($this->id !== $currentUser->id) {
+  if ($this->id !== $app->user->id) {
 ?>            <ul class='thumbnails'>
               <li class='span4'>
                 <p>Anime compatibility:</p>
-                <?php echo $this->animeList()->compatibilityBar($currentUser->animeList()); ?>
+                <?php echo $this->animeList()->compatibilityBar($app->user->animeList()); ?>
               </li>
               <li class='span4'>
                 
@@ -76,19 +76,19 @@ if ($this->avatarPath() != '') {
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>
 <?php
-  if ($this->animeList()->allow($currentUser, 'edit')) {
-    echo $this->view('addEntryInlineForm');
+  if ($this->animeList()->allow($app->user, 'edit')) {
+    echo $this->view('addEntryInlineForm', $app);
   }
-  if ($this->allow($currentUser, 'comment')) {
-    $blankComment = new Comment($this->dbConn, 0, $currentUser, $this);
+  if ($this->allow($app->user, 'comment')) {
+    $blankComment = new Comment($this->dbConn, 0, $app->user, $this);
 ?>
                 <div class='addListEntryForm'>
-                  <?php echo $blankComment->view('inlineForm', $currentUser, array('currentObject' => $this)); ?>
+                  <?php echo $blankComment->view('inlineForm', $app, array('currentObject' => $this)); ?>
                 </div>
 <?php
   }
 ?>
-                <?php echo $this->profileFeed($currentUser); ?>
+                <?php echo $this->profileFeed($app); ?>
               </div>
               <div class='tab-pane' id='userList'>
                 Loading...

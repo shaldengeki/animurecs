@@ -1,6 +1,8 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  if (str_replace("\\", "/", __FILE__) === $_SERVER['SCRIPT_FILENAME']) {
+    echo "This partial cannot be rendered by itself.";
+    exit;
+  }
 ?>
       <hr />
       <p>Created and maintained by <a href='<?php echo Config::ROOT_URL; ?>/users/1/show/'>shaldengeki</a>.</p>

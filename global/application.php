@@ -14,21 +14,18 @@ class Application {
     // e.g. /global/config.php
     require_once($_SERVER['DOCUMENT_ROOT'].$relPath);
   }
-
-  private function connectDB() {
+  private function _connectDB() {
     if ($this->dbConn === Null) {
       $this->dbConn = new DbConn(Config::MYSQL_HOST, Config::MYSQL_USERNAME, Config::MYSQL_PASSWORD, Config::MYSQL_DATABASE);
     }
     return $this->dbConn;
   }
-
-  private function connectRecsEngine() {
+  private function _connectRecsEngine() {
     if ($this->recsEngine === Null) {
       $this->recsEngine = new RecsEngine(Config::RECS_ENGINE_HOST, Config::RECS_ENGINE_PORT);
     }
     return $this->recsEngine;
   }
-
   private function _loadDependencies() {
     $this->_loadDependency("/global/config.php");
 
@@ -62,8 +59,8 @@ class Application {
     $this->_loadDependency("/global/comment_entry.php");
 
     session_start();
-    $this->dbConn = $this->connectDB();
-    $this->recsEngine = $this->connectRecsEngine();
+    $this->dbConn = $this->_connectDB();
+    $this->recsEngine = $this->_connectRecsEngine();
     
     date_default_timezone_set(Config::SERVER_TIMEZONE);
     $this->serverTimeZone = new DateTimeZone(Config::SERVER_TIMEZONE);
@@ -94,9 +91,15 @@ class Application {
   }
 
   public function display_error($code) {
-    return $this->view('header').$this->view(403, $this->user, get_object_vars($this)).$this->view('footer');
+    return $this->view('header').$this->view(intval($code)).$this->view('footer');
   }
-
+  public function check_partial_include($filename) {
+    // displays the standard 404 page if the user is requesting a partial directly.
+    if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
+      echo $this->display_error(404);
+      exit;
+    }
+  }
   public function init() {
     $this->_loadDependencies();
 
@@ -136,7 +139,6 @@ class Application {
     } else {
       $this->page = max(1, intval($_REQUEST['page']));
     }
-
     if (isset($this->model) && $this->model !== "") {
       if (!class_exists($this->model)) {
         redirect_to($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
@@ -163,8 +165,8 @@ class Application {
       }
     }
   }
-
-  public function view($view="index", $currentUser=Null, $params=Null) {
+  public function view($view="index", $params=Null) {
+    // includes a provided application-level view.
     $file = joinPaths(Config::APP_ROOT, 'views', 'application', "$view.php");
     if (file_exists($file)) {
       ob_start();
@@ -174,15 +176,17 @@ class Application {
     return False;
   }
   public function render($text, $params=Null) {
+    // renders the given HTML text surrounded by the standard application header and footer.
+    // passes $params into the header and footer views.
     $appVars = get_object_vars($this);
     if ($params !== Null && is_array($params)) {
       foreach ($params as $key=>$value) {
         $appVars[$key] = $value;
       }
     }
-    echo $this->view('header', $this->user, $appVars);
+    echo $this->view('header', $appVars);
     echo $text;
-    echo $this->view('footer', $this->user, $appVars);
+    echo $this->view('footer', $appVars);
     exit;
   }
 }

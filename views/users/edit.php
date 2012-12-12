@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
 ?>
             <h1><?php echo escape_output($this->username()); ?></h1>
             <div class='editUserTabs'>
@@ -11,7 +11,7 @@
               </ul>
               <div class='tab-content'>
                 <div class='tab-pane active' id='generalSettings'>
-                  <?php echo $this->view("form", $currentUser, $params); ?>
+                  <?php echo $this->view("form", $app, $params); ?>
                 </div>
                 <div class='tab-pane' id='malImport'>
                   <p>To import your list, we'll need your MAL username:</p>

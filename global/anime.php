@@ -356,7 +356,7 @@ class Anime extends BaseObject {
       case 'feed':
         $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
         $entries = $this->entries($maxTime, 50);
-        echo $this->feed($entries, $app->user, 50, "");
+        echo $this->feed($entries, $app, 50, "");
         exit;
         break;
       case 'token_search':
@@ -371,27 +371,27 @@ class Anime extends BaseObject {
         break;
       case 'new':
         $title = "Add an anime";
-        $output = $this->view('new', $app->user, get_object_vars($app));
+        $output = $this->view('new', $app);
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
+          $output = $app->display_error(404);
           break;
         }
         $title = "Editing ".escape_output($this->title());
-        $output .= $this->view('edit', $app->user);
+        $output .= $this->view('edit', $app);
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
+          $output = $app->display_error(404);
           break;
         }
         $title = escape_output($this->title());
-        $output = $this->view("show", $app->user, get_object_vars($app));
+        $output = $this->view("show", $app);
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
+          $output = $app->display_error(404);
           break;
         }
         $animeTitle = $this->title();
@@ -405,10 +405,10 @@ class Anime extends BaseObject {
       default:
       case 'index':
         $title = "All Anime";
-        $output = $this->view("index", $app->user, get_object_vars($app));
+        $output = $this->view("index", $app);
         break;
     }
-    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+    $app->render($output, array('title' => $title));
   }
   public function scoreBar($score=False) {
     // returns markup for a score bar for a score given to this anime.
@@ -429,10 +429,10 @@ class Anime extends BaseObject {
   public function formatFeedEntry(BaseEntry $entry, User $currentUser) {
     return $entry->user->animeList->formatFeedEntry($entry, $currentUser);
   }
-  public function animeFeed(User $currentUser, DateTime $maxTime=Null, $numEntries=50) {
+  public function animeFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->entries($maxTime, $numEntries);
-    return $this->feed($feedEntries, $currentUser, $numEntries, "<blockquote><p>No entries yet - ".$currentUser->link("show", "be the first!")."</p></blockquote>\n");
+    return $this->feed($feedEntries, $app, $numEntries, "<blockquote><p>No entries yet - ".$app->user->link("show", "be the first!")."</p></blockquote>\n");
   }
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";

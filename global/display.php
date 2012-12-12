@@ -97,43 +97,6 @@ function js_redirect_to($redirect_array) {
   exit;
 }
 
-function display_http_error($code=500, $contents="") {
-  switch (intval($code)) {
-    case 301:
-      $subtitle = "Moved Permanently";
-      $bodyText = $contents;
-      break;
-    case 403:
-      $subtitle = "Forbidden";
-      $bodyText = "I'm sorry, Dave. I'm afraid I can't do that.";
-      break;
-    case 404:
-      $subtitle = "Not Found";
-      $bodyText = "Oh geez. We couldn't find the page you were looking for; please check your URL and try again.";
-      break;
-    default:
-    case 500:
-      $subtitle = "Internal Server Error";
-      $bodyText = "Whoops! We had problems processing your request. Please go back and try again!";
-      break;
-  }
-
-  header('HTTP/1.0 '.intval($code).' '.$subtitle);
-  echo $bodyText;
-  exit;
-}
-
-function check_partial_include($filename) {
-  if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
-    display_http_error(404);
-  }
-}
-
-function display_error($title="Error", $text="An unknown error occurred. Please try again.") {
-  return "<h1>".escape_output($title)."</h1>
-  <p>".escape_output($text)."</p>";
-}
-
 function paginate($baseLink, $currPage=1, $maxPages=1) {
   // displays a pagination bar.
   //baseLink should be everything up to, say, &page=
@@ -205,12 +168,6 @@ function display_month_year_dropdown($select_id="", $select_name_prefix="form_en
   echo "</select>\n";
 }
 
-function display_ok_notok_dropdown($select_id="ok_notok", $selected=0) {
-  echo "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>
-                    <option value=1".((intval($selected) == 1) ? " selected='selected'" : "").">OK</option>
-                    <option value=0".((intval($selected) == 0) ? " selected='selected'" : "").">NOT OK</option>\n</select>\n";
-}
-
 function display_register_form(DbConn $database, $action=".") {
   $output = "    <form class='form-horizontal' name='register' method='post' action=".$_SERVER['SCRIPT_NAME'].">
       <fieldset>
@@ -247,52 +204,6 @@ function display_register_form(DbConn $database, $action=".") {
         </div>
       </fieldset>
     </form>\n";
-  return $output;
-}
-
-function display_anime(DbConn $database, User $user) {
-  // lists all anime.
-  $resultsPerPage = 25;
-  $newAnime = new Anime($database, 0);
-  if ($user->isAdmin()) {
-    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
-    $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime`")/$resultsPerPage);
-  } else {
-    $anime = $database->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
-    $animePages = ceil($database->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
-  }
-  $output = paginate($newAnime->url("index", array('page' => '')), intval($_REQUEST['page']), $animePages);
-  $output .= "<table class='table table-striped table-bordered dataTable' data-recordsPerPage='25'>
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Description</th>
-      <th>Length</th>\n";
-  if ($newAnime->allow($user, 'edit')) {
-    $output .= "      <th></th>\n";
-  }
-  if ($newAnime->allow($user, 'delete')) {
-    $output .= "      <th></th>\n";
-  }
-  $output .= "    </tr>
-  </thead>
-  <tbody>\n";
-  while ($thisID = $anime->fetch_assoc()) {
-    $thisAnime = new Anime($database, intval($thisID['id']));
-    $output .= "    <tr>
-      <td>".$thisAnime->link("show", $thisAnime->title)."</td>
-      <td>".escape_output($thisAnime->description)."</td>
-      <td>".intval($thisAnime->episodeCount * $thisAnime->episodeLength)." minutes</td>\n";
-    if ($newAnime->allow($user, 'edit')) { 
-      $output .= "      <td>".$thisAnime->link("edit", "Edit")."</td>\n";
-    }
-    if ($newAnime->allow($user, 'delete')) { 
-      $output .= "      <td>".$thisAnime->link("delete", "Delete")."</td>\n";
-    }
-    $output .= "    </tr>\n";
-  }
-  $output .= "  </tbody>\n</table>\n".($newAnime->allow($user, 'new') ? $newAnime->link("new", "Add an anime") : "")."\n";
-  $output .= paginate($newAnime->url("index", array('page' => '')), intval($_REQUEST['page']), $animePages)."\n";
   return $output;
 }
 
@@ -370,9 +281,6 @@ function display_userlevel_dropdown(DbConn $database, $select_id="userlevel", $s
   }
   $output .= "</select>\n";
   return $output;
-}
-
-function display_user_edit_form(DbConn $database, User $user, $id=false) {
 }
 
 function display_history_json(DbConn $database, User $user, array $fields = array(), array $machines=array()) {
@@ -457,15 +365,5 @@ function display_history_plot(DbConn $database, User $user, $form_id) {
     </div>
   </form>\n";
   }
-}
-
-function display_footer() {
-  echo "    <hr />
-    <p>Created and maintained by <a href='".Config::ROOT_URL."/users/1/show/'>shaldengeki</a>.</p>\n";
-  if (Config::DEBUG_ON) {
-    echo "<pre>".escape_output(print_r($GLOBALS['database']->queryLog, True))."</pre>\n";
-    echo "<pre>".escape_output(print_r($GLOBALS, True))."</pre>\n";
-  }
-  echo "  </div>\n</body>\n</html>";
 }
 ?>

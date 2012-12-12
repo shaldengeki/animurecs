@@ -599,11 +599,11 @@ class User extends BaseObject {
           redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
         }
         $title = "Switch Users";
-        $output = "<h1>Switch Users</h1>\n".$app->user->view("switchForm");
+        $output = "<h1>Switch Users</h1>\n".$app->user->view("switchForm", $app);
         break;
       case 'new':
         $title = "Sign Up";
-        $output = $this->view('new', $app->user, get_object_vars($app));
+        $output = $this->view('new', $app);
         break;
       case 'edit':
         if (isset($_POST['user']) && is_array($_POST['user'])) {
@@ -623,7 +623,7 @@ class User extends BaseObject {
           break;
         }
         $title = "Editing ".escape_output($this->username());
-        $output = $this->view("edit", $app->user);
+        $output = $this->view("edit", $app);
         break;
       case 'show':
         if ($this->id === 0) {
@@ -631,30 +631,30 @@ class User extends BaseObject {
           break;
         }
         $title = escape_output($this->username())."'s Profile";
-        $output = $this->view("show", $app->user);
+        $output = $this->view("show", $app);
         break;
       case 'feed':
         if ($this->animeList()->allow($app->user, 'edit')) {
-          $output .= $this->view('addEntryInlineForm');
+          $output .= $this->view('addEntryInlineForm', $app);
         }
         if ($this->allow($app->user, 'comment')) {
           $blankComment = new Comment($this->dbConn, 0, $app->user, $this);
           $output .= "                <div class='addListEntryForm'>
-                      ".$blankComment->view('inlineForm', $app->user, array('currentObject' => $this))."
+                      ".$blankComment->view('inlineForm', $app, array('currentObject' => $this))."
                     </div>\n";
 
         }
-        $output .= $this->profileFeed($app->user);
+        $output .= $this->profileFeed($app);
         echo $output;
         exit;
       case 'anime_list':
-        echo $this->animeList()->view("show", $app->user);
+        echo $this->animeList()->view("show", $app);
         exit;
       case 'stats':
-        echo $this->view('stats', $app->user);
+        echo $this->view('stats', $app);
         exit;
       case 'achievements':
-        echo $this->view('achievements', $app->user);
+        echo $this->view('achievements', $app);
         exit;
       case 'delete':
         if ($this->id == 0) {
@@ -672,10 +672,10 @@ class User extends BaseObject {
       default:
       case 'index':
         $title = "All Users";
-        $output = $app->user->view('index', $app->user, get_object_vars($app));
+        $output = $app->user->view('index', $app);
         break;
     }
-    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+    $app->render($output, array('title' => $title));
   }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
@@ -689,15 +689,15 @@ class User extends BaseObject {
     } 
     return $output;
   }
-  public function profileFeed(User $currentUser, DateTime $maxTime=Null, $numEntries=50) {
+  public function profileFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
     foreach ($this->comments() as $comment) {
       $feedEntries[] = new CommentEntry($this->dbConn, intval($comment->id));
     }
-    return $this->animeList()->feed($feedEntries, $currentUser, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
+    return $this->animeList()->feed($feedEntries, $app, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
-  public function globalFeed(DateTime $maxTime=Null, $numEntries=50) {
+  public function globalFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's global feed.
 
     // add each user's personal feeds to the total feed.
@@ -709,7 +709,7 @@ class User extends BaseObject {
         $feedEntries[] = $commentEntry;
       }
     }
-    return $this->animeList()->feed($feedEntries, $this, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
+    return $this->animeList()->feed($feedEntries, $app, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
   }
 }
 ?>

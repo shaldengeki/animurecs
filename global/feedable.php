@@ -40,7 +40,7 @@ trait Feedable {
     }
   }
 
-  public function feedEntry(BaseEntry $entry, User $currentUser, $nested=False) {
+  public function feedEntry(BaseEntry $entry, Application $app, $nested=False) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
     $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
@@ -48,9 +48,9 @@ trait Feedable {
 
     $diffInterval = $nowTime->diff($entry->time);
 
-    $feedMessage = $entry->formatFeedEntry($currentUser);
+    $feedMessage = $entry->formatFeedEntry($app->user);
 
-    $blankEntryComment = new Comment($this->dbConn, 0, $currentUser, $entry);
+    $blankEntryComment = new Comment($this->dbConn, 0, $app->user, $entry);
 
     $entryType = $nested ? "div" : "li";
 
@@ -61,25 +61,25 @@ trait Feedable {
           <div class='feedEntry'>
             <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>
             ".$feedMessage['text']."\n";
-    if ($entry->allow($currentUser, 'delete')) {
+    if ($entry->allow($app->user, 'delete')) {
       $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>\n";
     }
     $output .= "          </div>\n";
     if ($entry->comments) {
       foreach ($entry->comments as $comment) {
         $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
-        $output .= $this->feedEntry($commentEntry, $currentUser, True);
+        $output .= $this->feedEntry($commentEntry, $app, True);
       }
     }
-    if ($entry->allow($currentUser, 'comment') && $blankEntryComment->depth() < 2) {
-      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', $currentUser, array('currentObject' => $entry))."</div>\n";
+    if ($entry->allow($app->user, 'comment') && $blankEntryComment->depth() < 2) {
+      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', $app, array('currentObject' => $entry))."</div>\n";
     }
     $output .= "          </div>
       </".$entryType.">\n";
     return $output;
   }
 
-  public function feed(array $entries, User $currentUser, $numEntries=50, $emptyFeedText="") {
+  public function feed(array $entries, Application $app, $numEntries=50, $emptyFeedText="") {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
@@ -91,7 +91,7 @@ trait Feedable {
       $output = "<ul class='media-list ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
       foreach ($entries as $entry) {
-        $feedOutput[] = $this->feedEntry($entry, $currentUser);
+        $feedOutput[] = $this->feedEntry($entry, $app);
       }
       $output .= implode("\n", $feedOutput);
       $output .= "</ul>\n";

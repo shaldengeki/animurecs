@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  check_partial_include(__FILE__);
+  $app->check_partial_include(__FILE__);
   $tagAnime = [];
   foreach ($this->anime() as $anime) {
     $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title());
@@ -8,7 +8,7 @@
   $anime = new Anime($this->dbConn, 0);
 ?>
     <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' class='form-horizontal'><?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />"; ?>
-      <input name='tag[created_user_id]' type='hidden' value=<?php echo $this->id === 0 ? intval($currentUser->id) : $this->createdUser()->id; ?> />
+      <input name='tag[created_user_id]' type='hidden' value=<?php echo $this->id === 0 ? intval($app->user->id) : $this->createdUser()->id; ?> />
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag[name]'>Name</label>

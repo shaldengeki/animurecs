@@ -220,7 +220,7 @@ class Comment extends BaseObject {
           }
         }
         $title = "Add a comment";
-        $output .= $targetComment->view('new', $app->user, array('currentObject' => $targetParent));
+        $output .= $targetComment->view('new', $app, array('currentObject' => $targetParent));
         break;
       case 'edit':
         if ($targetComment->id == 0) {
@@ -258,7 +258,7 @@ class Comment extends BaseObject {
           }
         }
         $title = "Editing comment";
-        $output = $targetComment->view('edit', $app->user, array('currentObject' => $targetParent));
+        $output = $targetComment->view('edit', $app, array('currentObject' => $targetParent));
         break;
       case 'show':
         if ($targetComment->id == 0) {
@@ -266,7 +266,7 @@ class Comment extends BaseObject {
           break;
         }
         $title = "Showing comment";
-        $output = $targetComment->view('show', $app->user);
+        $output = $targetComment->view('show', $app);
         break;
       case 'delete':
         if ($targetComment->id == 0) {
@@ -283,10 +283,10 @@ class Comment extends BaseObject {
       default:
       case 'index':
         $title = "All Comments";
-        $output = $this->view('index', $app->user);
+        $output = $this->view('index', $app);
         break;
     }
-    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+    $app->render($output, array('title' => $title));
   }
 }
 ?>
