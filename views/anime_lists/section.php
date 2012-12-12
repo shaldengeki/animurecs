@@ -39,7 +39,7 @@
               <td class='listEntryEpisode'><?php echo intval($entry['episode'])."/".(intval($entry['anime']->episodeCount()) == 0 ? "?" : intval($entry['anime']->episodeCount())); ?></td>
 <?php
       if ($currentUser->id == $this->user()->id) {
-?>              <td><a href='#' class='listEdit' data-url='/anime_lists/'><i class='icon-pencil'></i></td>
+?>              <td><a href='#' class='listEdit' data-url='<?php echo $this->url("new"); ?>'><i class='icon-pencil'></i></td>
 <?php
       }
 ?>            </tr>

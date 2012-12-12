@@ -61,7 +61,9 @@ abstract class BaseList extends BaseObject {
     // ensure that this user and list type exist.
     try {
       $user = new User($this->dbConn, intval($entry['user_id']));
+      $user->getInfo();
       $type = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
+      $type->getInfo();
     } catch (Exception $e) {
       return False;
     }
@@ -169,7 +171,7 @@ abstract class BaseList extends BaseObject {
   }
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $returnList = [];
     $entries = $this->dbConn->stdQuery("SELECT * FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
@@ -257,11 +259,7 @@ abstract class BaseList extends BaseObject {
   public function url($action="show", array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
     if ($id === Null) {
-      if ($this->entries()) {
-        $id = current($this->entries())->id;
-      } else {
-        $id = intval($this->id);
-      }
+      $id = $this->user_id;
     }
     $urlParams = "";
     if (is_array($params)) {

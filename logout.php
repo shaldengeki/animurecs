@@ -1,6 +1,6 @@
 <?php
 require_once("global/includes.php");
-if (!$user->loggedIn()) {
+if (!$app->user->loggedIn()) {
 header("Location: index.php");
 }
 session_destroy();

@@ -199,7 +199,7 @@ function submitListUpdate(elt) {
   episode = parseInt($(rowNode).find('.listEntryEpisode').find('input').val());
 
   url = $(elt).attr('data-url');
-  $.post(url + "?action=new&user_id=" + user_id, { "anime_list[user_id]": user_id, "anime_list[anime_id]": anime_id, "anime_list[status]": status, "anime_list[score]": score, "anime_list[episode]": episode}).complete(function() {
+  $.post(url, { "anime_list[user_id]": user_id, "anime_list[anime_id]": anime_id, "anime_list[status]": status, "anime_list[score]": score, "anime_list[episode]": episode}).complete(function() {
     revertListEditForm(elt);
   });
 }

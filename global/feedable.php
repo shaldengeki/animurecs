@@ -15,8 +15,8 @@ trait Feedable {
     }
     if ($maxTime !== Null || $limit !== Null) {
       // Returns a list of up to $limit entries up to $maxTime.
-      $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-      $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+      $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
+      $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
       if ($maxTime === Null) {
         $nowTime = new DateTime();
         $nowTime->setTimezone($outputTimezone);
@@ -42,8 +42,8 @@ trait Feedable {
 
   public function feedEntry(BaseEntry $entry, User $currentUser, $nested=False) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
+    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
 
     $diffInterval = $nowTime->diff($entry->time);
@@ -56,7 +56,7 @@ trait Feedable {
 
     $output = "      <".$entryType." class='media'>
         <div class='pull-right feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
-        ".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(ROOT_URL, escape_output($entry->user->avatarPath))."' />", True, array('class' => 'feedAvatar pull-left'))."
+        ".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(Config::ROOT_URL, escape_output($entry->user->avatarPath))."' />", True, array('class' => 'feedAvatar pull-left'))."
         <div class='media-body feedText'>
           <div class='feedEntry'>
             <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>

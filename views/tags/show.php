@@ -11,14 +11,14 @@
     arsort($predictedRatings);
     foreach ($predictedRatings as $animeID=>$prediction) {
 ?>
-    <li><?php echo $this->anime()[$animeID]->link("show", "<h4>".escape_output($this->anime()[$animeID]->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($this->anime()[$animeID]->imagePath))."' />", True, array('title' => $this->anime()[$animeID]->description(True)))."<p><em>Predicted score: ".round($prediction, 1); ?></em></p></li>
+    <li><?php echo $this->anime()[$animeID]->link("show", "<h4>".escape_output($this->anime()[$animeID]->title)."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($this->anime()[$animeID]->imagePath))."' />", True, array('title' => $this->anime()[$animeID]->description(True)))."<p><em>Predicted score: ".round($prediction, 1); ?></em></p></li>
 <?php
     }
   } else {
     $i = 0;
     foreach ($this->anime() as $anime) {
 ?>
-    <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4><img src='".joinPaths(ROOT_URL, escape_output($anime->imagePath()))."' />", True, array('title' => $anime->description(True))); ?></li>
+    <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath()))."' />", True, array('title' => $anime->description(True))); ?></li>
 <?php
       $i++;
       if ($i >= 20) {

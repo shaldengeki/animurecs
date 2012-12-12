@@ -16,7 +16,7 @@ abstract class BaseEntry extends BaseObject {
   public function __construct(DbConn $database, $id=Null, $params=Null) {
     parent::__construct($database, $id);
     if ($id === 0) {
-      $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+      $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
       $this->time = new DateTime("now", $serverTimezone);
       $this->status = $this->score = 0;
       $this->comments = [];
@@ -39,7 +39,7 @@ abstract class BaseEntry extends BaseObject {
     return $this->user;
   }
   public function time() {
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     return new DateTime($this->returnInfo('time'), $serverTimezone);
   }
   public function status() {
@@ -88,7 +88,9 @@ abstract class BaseEntry extends BaseObject {
     // ensure that this user and list type exist.
     try {
       $user = new User($this->dbConn, intval($entry['user_id']));
+      $user->getInfo();
       $type = new $this->entryType($this->dbConn, intval($entry[$this->typeID]));
+      $type->getInfo();
     } catch (Exception $e) {
       return False;
     }

@@ -64,6 +64,7 @@ class Alias extends BaseObject {
     } else {
       try {
         $parent = new $alias['type']($this->dbConn, intval($alias['parent_id']));
+        $parent->getInfo();
       } catch (Exception $e) {
         return False;
       }
@@ -89,7 +90,9 @@ class Alias extends BaseObject {
     }
     while ($result = $search->fetch_assoc()) {
       try {
-        $objects[intval($result['parent_id'])] = new $objType($this->dbConn, intval($result['parent_id']));
+        $tempObject = new $objType($this->dbConn, intval($result['parent_id']));
+        $tempObject->getInfo();
+        $objects[intval($result['parent_id'])] = $tempObject;
       } catch (Exception $e) {
         // ignore dangling aliases.
       }

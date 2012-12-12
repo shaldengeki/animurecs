@@ -30,10 +30,10 @@ class Tag extends BaseObject {
     return $this->returnInfo('description');
   }
   public function createdAt() {
-    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
   }
   public function updatedAt() {
-    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -75,6 +75,7 @@ class Tag extends BaseObject {
     }
     try {
       $anime = new Anime($this->dbConn, intval($anime_id));
+      $anime->getInfo();
     } catch (Exception $e) {
       return False;
     }
@@ -125,7 +126,7 @@ class Tag extends BaseObject {
     if (!isset($tag['name']) || strlen($tag['name']) < 1 || strlen($tag['name']) > 50) {
       return False;
     }
-    if (isset($tag['description']) && (strlen($tag['description']) < 1 || strlen($tag['description']) > 600)) {
+    if (isset($tag['description']) && (strlen($tag['description']) < 0 || strlen($tag['description']) > 600)) {
       return False;
     }
     if (!isset($tag['created_user_id'])) {
@@ -136,6 +137,7 @@ class Tag extends BaseObject {
     } else {
       try {
         $createdUser = new User($this->dbConn, intval($tag['created_user_id']));
+        $createdUser->getInfo();
       } catch (Exception $e) {
         return False;
       }
@@ -148,6 +150,7 @@ class Tag extends BaseObject {
     } else {
       try {
         $parent = new TagType($this->dbConn, intval($tag['tag_type_id']));
+        $parent->getInfo();
       } catch (Exception $e) {
         return False;
       }
@@ -262,6 +265,67 @@ class Tag extends BaseObject {
     }
     return $this->numAnime;
   }
+
+  public function render(Application $app) {
+    if (isset($_POST['tag']) && is_array($_POST['tag'])) {
+      $updateTag = $this->create_or_update($_POST['tag']);
+      if ($updateTag) {
+        redirect_to($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
+      } else {
+        redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
+      }
+    }
+    switch($app->action) {
+      case 'token_search':
+        $tags = [];
+        if (isset($_REQUEST['term'])) {
+          $tags = $this->dbConn->queryAssoc("SELECT `id`, `name` FROM `tags` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($_REQUEST['term'])." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+        }
+        echo json_encode($tags);
+        exit;
+        break;
+      case 'new':
+        $title = "Create a Tag";
+        $output = $this->view('new', $app->user);
+        break;
+      case 'edit':
+        if ($this->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $title = "Editing ".escape_output($this->name());
+        $output = $this->view('edit', $app->user);
+        break;
+      case 'show':
+        if ($this->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $title = escape_output($this->name());
+        $output = $this->view('show', $app->user, array('recsEngine' => $app->recsEngine));
+        break;
+      case 'delete':
+        if ($this->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $tagName = $this->name();
+        $deleteTag = $this->delete();
+        if ($deleteTag) {
+          redirect_to('/tags/', array('status' => 'Successfully deleted '.$tagName.'.', 'class' => 'success'));
+        } else {
+          redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$tagName.'.', 'class' => 'error'));
+        }
+        break;
+      default:
+      case 'index':
+        $title = "All Tags";
+        $output = $this->view('index', $app->user, get_object_vars($app));
+        break;
+    }
+    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+  }
+
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];

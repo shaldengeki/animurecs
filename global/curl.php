@@ -1,5 +1,5 @@
 <?php
-function hitPage($page, $cookieString="", $ssl=False, $referer=ROOT_URL) {
+function hitPage($page, $cookieString="", $ssl=False, $referer=Config::ROOT_URL) {
 	$ch = curl_init();
 	if ($ssl) {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE); 
@@ -16,7 +16,7 @@ function hitPage($page, $cookieString="", $ssl=False, $referer=ROOT_URL) {
 	// curl_setopt($ch, CURLOPT_TIMEOUT_MS, 500);
 	$ret = curl_exec($ch);
 	if (curl_error($ch)) {
-		if (DEBUG_ON) {
+		if (Config::DEBUG_ON) {
 			print_r(curl_error($ch));
 		}
 		curl_close($ch);
@@ -27,7 +27,7 @@ function hitPage($page, $cookieString="", $ssl=False, $referer=ROOT_URL) {
 	}
 }
 
-function hitForm($url, $formFields, $cookieString="", $ssl=False, $referer=ROOT_URL) {
+function hitForm($url, $formFields, $cookieString="", $ssl=False, $referer=Config::ROOT_URL) {
 	$ch = curl_init();
 	if ($ssl) {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE); 
@@ -135,8 +135,8 @@ function parseMALList($username, $type="anime") {
 	// hits a MAL list of the given type for the given username.
 	// returns an associative array containing the resultant XML, or False if an error occurred.
 
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
+    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $serverTimezone);
 
 	$xmlPage = hitPage("http://myanimelist.net/malappinfo.php?u=".urlencode($username)."&status=all&type=".urlencode($type));

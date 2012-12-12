@@ -44,10 +44,10 @@ class Anime extends BaseObject {
     return $this->returnInfo('episodeLength');
   }
   public function createdAt() {
-    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
   }
   public function updatedAt() {
-    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
   }
   public function imagePath() {
     return $this->returnInfo('imagePath');
@@ -114,6 +114,7 @@ class Anime extends BaseObject {
     }
     try {
       $tag = new Tag($this->dbConn, intval($tag_id));
+      $tag->getInfo();
     } catch (Exception $e) {
       return False;
     }
@@ -180,6 +181,7 @@ class Anime extends BaseObject {
       } else {
         try {
           $approvedUser = new User($this->dbConn, intval($anime['approved_user_id']));
+          $approvedUser->getInfo();
         } catch (Exception $e) {
           return False;
         }
@@ -228,8 +230,8 @@ class Anime extends BaseObject {
         return False;
       }
       // move file to destination and save path in db.
-      if (!is_dir(joinPaths(APP_ROOT, "img", "anime", intval($this->id)))) {
-        mkdir(joinPaths(APP_ROOT, "img", "anime", intval($this->id)));
+      if (!is_dir(joinPaths(Config::APP_ROOT, "img", "anime", intval($this->id)))) {
+        mkdir(joinPaths(Config::APP_ROOT, "img", "anime", intval($this->id)));
       }
       $imagePathInfo = pathinfo($file_array['tmp_name']);
       $imagePath = joinPaths("img", "anime", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
@@ -340,6 +342,73 @@ class Anime extends BaseObject {
   }
   public function predictedRating(RecsEngine $recsEngine, User $user) {
     return $recsEngine->predict($user, $this);
+  }
+  public function render(Application $app) {
+    if (isset($_POST['anime']) && is_array($_POST['anime'])) {
+      $updateAnime = $this->create_or_update($_POST['anime']);
+      if ($updateAnime) {
+        redirect_to($this->url("show"), array('status' => "Successfully created or updated ".$this->title().".", 'class' => 'success'));
+      } else {
+        redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error'));
+      }
+    }
+    switch($app->action) {
+      case 'feed':
+        $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
+        $entries = $this->entries($maxTime, 50);
+        echo $this->feed($entries, $app->user, 50, "");
+        exit;
+        break;
+      case 'token_search':
+        $blankAlias = new Alias($app->dbConn, 0, $this);
+        $searchResults = $blankAlias->search($_REQUEST['term']);
+        $animus = [];
+        foreach ($searchResults as $anime) {
+          $animus[] = array('id' => $anime->id, 'title' => $anime->title());
+        }
+        echo json_encode($animus);
+        exit;
+        break;
+      case 'new':
+        $title = "Add an anime";
+        $output = $this->view('new', $app->user, get_object_vars($app));
+        break;
+      case 'edit':
+        if ($this->id == 0) {
+          $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
+          break;
+        }
+        $title = "Editing ".escape_output($this->title());
+        $output .= $this->view('edit', $app->user);
+        break;
+      case 'show':
+        if ($this->id == 0) {
+          $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
+          break;
+        }
+        $title = escape_output($this->title());
+        $output = $this->view("show", $app->user, get_object_vars($app));
+        break;
+      case 'delete':
+        if ($this->id == 0) {
+          $output = display_error("Error: Invalid anime", "The given anime doesn't exist.");
+          break;
+        }
+        $animeTitle = $this->title();
+        $deleteAnime = $this->delete();
+        if ($deleteAnime) {
+          redirect_to("/anime/", array('status' => 'Successfully deleted '.$animeTitle.'.', 'class' => 'success'));
+        } else {
+          redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
+        }
+        break;
+      default:
+      case 'index':
+        $title = "All Anime";
+        $output = $this->view("index", $app->user, get_object_vars($app));
+        break;
+    }
+    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
   }
   public function scoreBar($score=False) {
     // returns markup for a score bar for a score given to this anime.

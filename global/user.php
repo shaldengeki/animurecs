@@ -57,7 +57,7 @@ class User extends BaseObject {
     return $this->returnInfo('usermask');
   }
   public function lastActive() {
-    return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(Config::SERVER_TIMEZONE));
   }
   public function lastIP() {
     return $this->returnInfo('lastIP');
@@ -260,7 +260,7 @@ class User extends BaseObject {
     $_SESSION['id'] = intval($findUsername['id']);
     $_SESSION['name'] = $findUsername['name'];
     $_SESSION['username'] = $findUsername['username'];
-    $_SESSION['usermask'] = $findUsername['usermask'];
+    $_SESSION['usermask'] = intval($findUsername['usermask']);
     $this->id = intval($findUsername['id']);
     $this->username = $findUsername['username'];
     $this->name = $findUsername['name'];
@@ -272,31 +272,26 @@ class User extends BaseObject {
     return array("/feed.php", array("status" => "Successfully logged in.", 'class' => 'success'));
   }
   public function register($username, $email, $password, $password_confirmation) {
-    //check if user's passwords match and are of sufficient length.
-    if ($password != $password_confirmation) {
-        return array("location" => "/register.php", "status" => "Your passwords do not match. Please try again.");      
-    }
-    if (strlen($password) < 6) {
-      return array("location" => "/register.php", "status" => "Your password must be at least 6 characters long.");
-    }
-    //check if email is well-formed.
-    $email_regex = "/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/";
-    if (!preg_match($email_regex, $email)) {
-      return array("location" => "/register.php", "status" => "The email address you have entered is malformed. Please check it and try again.");
-    }
-    //check if user is already registered.
-    $checkNameEmail = intval($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE (`username` = ".$this->dbConn->quoteSmart($username)." || `email` = ".$this->dbConn->quoteSmart($email).")"));
-    if ($checkNameEmail > 0) {
-      return array("location" => "/register.php", "status" => "Your username or email has previously been registered. Please try another username.");
-    }
-    //register this user.
-    $bcrypt = new Bcrypt();
-    $registerUser = $this->dbConn->stdQuery("INSERT INTO `users` SET `username` = ".$this->dbConn->quoteSmart($username).", `name` = '', `about` = '', `email` = ".$this->dbConn->quoteSmart($email).", `password_hash` = ".$this->dbConn->quoteSmart($bcrypt->hash($password)).", `usermask` = 1, `last_ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR']).", `last_active` = NOW(), `created_at` = NOW(), `avatar_path` = ''");
+    // shorthand for create_or_update.
+    $user = array('username' => $username, 'about' => '', 'usermask' => array(1), 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation);
+    $registerUser = $this->create_or_update($user);
     if (!$registerUser) {
       return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
     }
-    $_SESSION['id'] = intval($this->dbConn->insert_id);
+    $_SESSION['id'] = intval($registerUser);
+    $_SESSION['username'] = $user['username'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['usermask'] = intval($user['usermask']);
+
     $this->id = $_SESSION['id'];
+    $this->username = $user['username'];
+    $this->email = $user['email'];
+    $this->usermask = intval($user['usermask']);
+
+    //update last IP address and last active.
+    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
+    $this->create_or_update($updateUser);
+
     return array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
   }
   public function importMAL($malUsername) {
@@ -373,9 +368,16 @@ class User extends BaseObject {
       if (!isset($user['username']) || !isset($user['email'])) {
         return False;
       }
+      if ($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`username`) = ".$this->dbConn->quoteSmart(strtolower($user['username']))) > 0) {
+        return False;
+      }
     } else {
       if (isset($user['username'])) {
         if (strlen($user['username']) < 1 || strlen($user['username']) > 40) {
+          return False;
+        }
+        // username must be unique if we're changing.
+        if ($user['username'] != $this->username() && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`username`) = ".$this->dbConn->quoteSmart(strtolower($user['username']))) > 0) {
           return False;
         }
       }
@@ -389,10 +391,16 @@ class User extends BaseObject {
         return False;
       }
     }
-    if (isset($user['email']) && (strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email']))) {
-      return False;
+    if (isset($user['email'])) {
+      if (strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email'])) {
+        return False;
+      }
+      // email must be unique if we're changing.
+      if (($this->id === 0 || $user['email'] != $this->email()) && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`email`) = ".$this->dbConn->quoteSmart(strtolower($user['email']))) > 0) {
+        return False;
+      }
     }
-    if (isset($user['about']) && (strlen($user['about']) < 1 || strlen($user['about']) > 600)) {
+    if (isset($user['about']) && (strlen($user['about']) < 0 || strlen($user['about']) > 600)) {
       return False;
     }
     if (isset($user['usermask']) && ( !is_numeric($user['usermask']) || intval($user['usermask']) != $user['usermask'] || intval($user['usermask']) < 0) ) {
@@ -448,13 +456,13 @@ class User extends BaseObject {
         return False;
       }
       // move file to destination and save path in db.
-      if (!is_dir(joinPaths(APP_ROOT, "img", "users", intval($this->id)))) {
-        mkdir(joinPaths(APP_ROOT, "img", "users", intval($this->id)));
+      if (!is_dir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)))) {
+        mkdir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)));
       }
       $imagePathInfo = pathinfo($file_array['tmp_name']);
       $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
       if ($this->avatarPath()) {
-        $removeOldAvatar = unlink(joinPaths(APP_ROOT, $this->avatarPath()));
+        $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
       }
       if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
         return False;
@@ -463,7 +471,7 @@ class User extends BaseObject {
       $imagePath = $this->avatarPath();
     }
     $user['avatar_path'] = $imagePath;
-    $user['last_active'] = unixToMySQLDateTime(Null, SERVER_TIMEZONE);
+    $user['last_active'] = unixToMySQLDateTime(Null, Config::SERVER_TIMEZONE);
     $result = parent::create_or_update($user, $whereConditions);
     if (!$result) {
       return False;
@@ -548,10 +556,131 @@ class User extends BaseObject {
       return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
     }
   }
+  public function render(Application $app) {
+    switch($app->action) {
+      case 'request_friend':
+        if ($this->id === $app->user->id) {
+          redirect_to($app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
+        }
+        $requestFriend = $app->user->requestFriend($this, $_POST['friend_request']);
+        if ($requestFriend) {
+          redirect_to($this->url("show"), array('status' => "Your friend request has been sent to ".urlencode($this->username()).".", 'class' => 'success'));
+        } else {
+          redirect_to($this->url("show"), array('status' => 'An error occurred while requesting this friend. Please try again.', 'class' => 'error'));
+        }
+        break;
+      case 'confirm_friend':
+        $confirmFriend = $app->user->confirmFriend($this);
+        if ($confirmFriend) {
+          redirect_to($this->url("show"), array('status' => "Hooray! You're now friends with ".urlencode($this->username()).".", 'class' => 'success'));
+        } else {
+          redirect_to($this->url("show"), array('status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
+        }
+        break;
+      case 'mal_import':
+        // import a MAL list for this user.
+        if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {
+          redirect_to($this->url("edit"), array('status' => 'Please enter a MAL username.'));
+        }
+        $importMAL = $this->importMAL($_POST['user']['mal_username']);
+        if ($importMAL) {
+          redirect_to($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
+        } else {
+          redirect_to($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please try again.', 'class' => 'error'));
+        }
+        break;
+      case 'switch_back':
+        $switchUser = $app->user->switchUser($_SESSION['switched_user'], False);
+        redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
+        break;
+      case 'switch_user':
+        if (isset($_POST['switch_username'])) {
+          $switchUser = $app->user->switchUser($_POST['switch_username']);
+          redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
+        }
+        $title = "Switch Users";
+        $output = "<h1>Switch Users</h1>\n".$app->user->view("switchForm");
+        break;
+      case 'new':
+        $title = "Sign Up";
+        $output = $this->view('new', $app->user, get_object_vars($app));
+        break;
+      case 'edit':
+        if (isset($_POST['user']) && is_array($_POST['user'])) {
+          // check to ensure userlevels aren't being elevated beyond this user's abilities.
+          if (isset($_POST['user']['usermask']) && intval($_POST['user']['usermask']) > 1 && intval($_POST['user']['usermask']) >= $this->usermask()) {
+            redirect_to($this->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
+          }
+          $updateUser = $this->create_or_update($_POST['user']);
+          if ($updateUser) {
+            redirect_to($this->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
+          } else {
+            redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this user.", 'class' => 'error'));
+          }
+        }
+        if ($this->id === 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $title = "Editing ".escape_output($this->username());
+        $output = $this->view("edit", $app->user);
+        break;
+      case 'show':
+        if ($this->id === 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $title = escape_output($this->username())."'s Profile";
+        $output = $this->view("show", $app->user);
+        break;
+      case 'feed':
+        if ($this->animeList()->allow($app->user, 'edit')) {
+          $output .= $this->view('addEntryInlineForm');
+        }
+        if ($this->allow($app->user, 'comment')) {
+          $blankComment = new Comment($this->dbConn, 0, $app->user, $this);
+          $output .= "                <div class='addListEntryForm'>
+                      ".$blankComment->view('inlineForm', $app->user, array('currentObject' => $this))."
+                    </div>\n";
+
+        }
+        $output .= $this->profileFeed($app->user);
+        echo $output;
+        exit;
+      case 'anime_list':
+        echo $this->animeList()->view("show", $app->user);
+        exit;
+      case 'stats':
+        echo $this->view('stats', $app->user);
+        exit;
+      case 'achievements':
+        echo $this->view('achievements', $app->user);
+        exit;
+      case 'delete':
+        if ($this->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $username = $this->username();
+        $deleteUser = $this->delete();
+        if ($deleteUser) {
+          redirect_to('/users/', array('status' => 'Successfully deleted '.$username.'.', 'class' => 'success'));
+        } else {
+          redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
+        }
+        break;
+      default:
+      case 'index':
+        $title = "All Users";
+        $output = $app->user->view('index', $app->user, get_object_vars($app));
+        break;
+    }
+    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
+  }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
+    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
+    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
     $output = "";
     foreach ($this->friendRequests() as $request) {
       $entryTime = new DateTime($request['time'], $serverTimezone);

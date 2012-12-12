@@ -95,7 +95,7 @@ class Comment extends BaseObject {
         break;
       case 'new':
         // if user is logged in and this user has perms to comment on the parent, allow them to post a new comment.
-        if ($authingUser->loggedIn() && $this->parent()->allow($authingUser, 'comment')) {
+        if ($authingUser->loggedIn() && ($this->parent === Null || $this->parent()->allow($authingUser, 'comment'))) {
           return True;
         }
         return False;
@@ -160,6 +160,133 @@ class Comment extends BaseObject {
       $urlParams = http_build_query($params);
     }
     return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+  }
+  public function render(Application $app) {
+    if ($app->id != 0) {
+      try {
+        $this->getInfo();
+      } catch (Exception $e) {
+        redirect_to('/feed.php', array('status' => 'This comment does not exist.', 'class' => 'error'));
+      }
+      $targetParent = $this->parent();
+      $targetUser = $this->user();
+    } else {
+      $type = isset($_POST['comment']['type']) ? $_POST['comment']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
+      try {
+        $targetParent = $type !== Null && (isset($_POST['comment']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($app->dbConn, intval(isset($_POST['comment']['parent_id']) ? $_POST['comment']['parent_id'] : $_REQUEST['parent_id'])) : Null;
+        if ($targetParent !== Null) {
+          $targetParent->getInfo();
+        }
+      } catch (Exception $e) {
+        redirect_to($app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+      }
+
+      if (intval($_REQUEST['user_id']) === $app->user->id || intval($_POST['user_id']) === $app->user->id) {
+        $targetUser = $app->user;
+      } else {
+        try {
+          $targetUser = new User($app->dbConn, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
+          $targetUser->getInfo();
+        } catch (Exception $e) {
+          redirect_to($app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+        }
+      }
+    }
+    try {
+      $targetComment = new Comment($app->dbConn, intval($app->id), $targetUser, $targetParent);
+      if ($targetComment->id !== 0) {
+        $targetComment->getInfo();
+      }
+    } catch (Exception $e) {
+      $targetComment = new Comment($app->dbConn, 0, $targetUser, $targetParent);
+    }
+    switch($app->action) {
+      case 'new':
+        if (isset($_POST['comment']) && is_array($_POST['comment']) && isset($_POST['comment']['type']) && isset($_POST['comment']['parent_id']) && is_numeric($_POST['comment']['parent_id'])) {
+          // ensure that the thing to which this comment is going to belong exists.
+          if ($targetParent === Null) {
+            redirect_to($app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+          }
+
+          // ensure that the user has perms to create a comment for this user under this object.
+          if (($targetUser->id != $app->user->id && !$app->user->isModerator() && !$app->user->isAdmin()) || !$targetComment->allow($app->user, 'new')) {
+            redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
+          }
+          $createComment = $targetComment->create_or_update($_POST['comment']);
+          if ($createComment) {
+            redirect_to($targetParent->url(), array('status' => "Succesfully commented.", 'class' => 'success'));
+          } else {
+            redirect_to($targetParent->url(), array('status' => "An error occurred while commenting on this.", 'class' => 'error'));
+          }
+        }
+        $title = "Add a comment";
+        $output .= $targetComment->view('new', $app->user, array('currentObject' => $targetParent));
+        break;
+      case 'edit':
+        if ($targetComment->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        if (isset($_POST['comment']) && is_array($_POST['comment'])) {
+          // ensure that the thing to which this comment belongs exists.
+          $commentType = !isset($_POST['comment']['type']) ? $targetComment->type : $_POST['comment']['type'];
+          $commentParentID = !isset($_POST['comment']['parent_id']) ? $targetComment->parent->id : $_POST['comment']['parent_id'];
+          try {
+            $targetParent = new $commentType($app->dbConn, intval($commentParentID));
+          } catch (Exception $e) {
+            redirect_to('/feed.php', array('status' => "The thing you're trying to comment on doesn't exist anymore.", 'class' => 'error'));
+          }
+          if ($targetParent->id === 0) {
+            redirect_to($app->user->url(), array('status' => "Please provide something to comment on.", 'class' => 'error'));
+          }
+
+          // ensure that the user has perms to update a comment.
+          try {
+            $targetComment = new Comment($app->dbConn, $app->id);
+          } catch (Exception $e) {
+            // this non-zero commentID does not exist.
+            redirect_to($targetParent->url(), array('status' => 'This comment does not exist.', 'class' => 'error'));
+          }
+          if (($targetUser->id != $app->user->id && !$app->user->isModerator() && !$app->user->isAdmin()) || !$targetComment->allow($app->user, 'edit')) {
+            redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
+          }
+          $updateComment = $targetComment->create_or_update($_POST['comment']);
+          if ($updateComment) {
+            redirect_to($targetParent->url(), array('status' => "Comment successfully updated.", 'class' => 'success'));
+          } else {
+            redirect_to($targetParent->url(), array('status' => "An error occurred while creating or updating this comment.", 'class' => 'error'));
+          }
+        }
+        $title = "Editing comment";
+        $output = $targetComment->view('edit', $app->user, array('currentObject' => $targetParent));
+        break;
+      case 'show':
+        if ($targetComment->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $title = "Showing comment";
+        $output = $targetComment->view('show', $app->user);
+        break;
+      case 'delete':
+        if ($targetComment->id == 0) {
+          $output = $app->display_error(404);
+          break;
+        }
+        $deleteComment = $targetComment->delete();
+        if ($deleteComment) {
+          redirect_to($targetParent->url(), array('status' => 'Successfully deleted a comment.', 'class' => 'success'));
+        } else {
+          redirect_to($targetParent->url(), array('status' => 'An error occurred while deleting a comment.', 'class' => 'error'));
+        }
+        break;
+      default:
+      case 'index':
+        $title = "All Comments";
+        $output = $this->view('index', $app->user);
+        break;
+    }
+    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
   }
 }
 ?>

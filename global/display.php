@@ -19,12 +19,12 @@ function shortenText($text, $maxLen=100) {
   }
 }
 
-function unixToMySQLDateTime($timestamp=Null, $timezone=OUTPUT_TIMEZONE) {
+function unixToMySQLDateTime($timestamp=Null, $timezone=Config::OUTPUT_TIMEZONE) {
   if ($timestamp === Null) {
     $timestamp = time();
   }
   $dateObject = new DateTime('@'.$timestamp);
-  $outputTimeZone = new DateTimeZone(OUTPUT_TIMEZONE);
+  $outputTimeZone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
   $dateObject->setTimeZone($outputTimeZone);
   return $dateObject->format("Y-m-d H:i:s");
 }
@@ -66,8 +66,13 @@ function ago(DateInterval $dateInterval){
 
 function redirect_to($location, array $params=Null) {
   $paramString = "";
+  if (strpos($location, "?") === False) {
+    $connector = "?";
+  } else {
+    $connector = "&";
+  }
   if ($params !== Null) {
-    $paramString = "?".http_build_query($params);
+    $paramString = $connector.http_build_query($params);
   }
 
   $redirect = "Location: ".$location.$paramString;
@@ -80,7 +85,7 @@ function js_redirect_to($redirect_array) {
   $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
   $class = (isset($redirect_array['class'])) ? $redirect_array['class'] : '';
   
-  $redirect = ROOT_URL."/".$location;
+  $redirect = Config::ROOT_URL."/".$location;
   if ($status != "") {
     if (strpos($location, "?") === FALSE) {
       $redirect .= "?status=".urlencode($status)."&class=".urlencode($class);
@@ -161,101 +166,6 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
     return $output;
 }
 
-function start_html(DbConn $database, User $user, $title="Animurecs", $subtitle="", $status="", $statusClass="") {
-  echo "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN'
-        'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>\n<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>\n<head>
-	<meta http-equiv='content-type' content='text/html; charset=utf-8' />
-	<title>".escape_output($title).($subtitle != '' ? ' - '.escape_output($subtitle) : '')."</title>
-	<link rel='shortcut icon' href='/favicon.ico' />
-
-	<link rel='stylesheet' href='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' type='text/css' />
-  <link rel='stylesheet' href='".ROOT_URL."/css/jquery.dataTables.css' type='text/css' />
-  <link rel='stylesheet' href='".ROOT_URL."/css/token-input.css' type='text/css' />
-  <link rel='stylesheet' href='".ROOT_URL."/css/animurecs.css' type='text/css' />
-
-  <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js'></script>
-  <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js'></script>
-
-  <!--<script type='text/javascript' src='".ROOT_URL."/jquery-ui-timepicker-addon.js'></script>-->
-	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.dropdownPlain.js'></script>
-	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.dataTables.min.js'></script>
-  <script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.tokeninput.js'></script>
-  <script type='text/javascript' language='javascript' src='".ROOT_URL."/js/jquery.json-2.3.min.js'></script>
-
-  <script type='text/javascript' src='https://www.google.com/jsapi'></script>
-  <script type='text/javascript' src='".ROOT_URL."/js/d3.v2.min.js'></script>
-  <script type='text/javascript' src='".ROOT_URL."/js/d3-helpers.js'></script>
-
-	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/bootstrap.min.js'></script>
-	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/bootstrap-dropdown.js'></script>
-
-	<script type='text/javascript' language='javascript' src='".ROOT_URL."/js/animurecs.js'></script>\n</head>\n<body>
-  <div class='navbar navbar-inverse navbar-fixed-top'>
-    <div class='navbar-inner'>
-      <div class='container-fluid'>
-        <a href='/' class='brand'>Animurecs</a>
-        <ul class='nav'>\n";
-  if ($user->loggedIn()) {
-    echo "          <li class='divider-vertical'></li>
-          <li><a href='/feed.php'><i class='icon-th-list icon-white'></i> Feed</a></li>
-          <li class='divider-vertical'></li>
-          <li>".$user->link("show", "<i class='icon-home icon-white'></i> You", True)."</li>
-          <li class='divider-vertical'></li>
-          <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
-          <li class='divider-vertical'></li>
-          <li><a href='/discover/'><i class='icon-star icon-white'></i> Discover</a></li>
-          <li class='divider-vertical'></li>\n";
-  }
-  echo "        </ul>
-        <ul class='nav pull-right'>\n";
-  if ($user->loggedIn()) {
-    echo "<li id='navbar-alerts'>\n";
-    if ($user->friendRequests) {
-      echo "            <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'>".count($user->friendRequests)."</span></a>
-              <ul class='dropdown-menu'>
-                ".$user->friendRequestsList()."
-              </ul>
-            </span>\n";
-    }
-    echo "          </li>
-          <li id='navbar-user' class='dropdown'>
-            <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i>".escape_output($user->username)."<b class='caret'></b></a>
-            <ul class='dropdown-menu'>
-              <li>".$user->link("show", "Profile")."</li>
-              <li>".$user->link("edit", "Settings")."</li>\n";
-    if ($user->isAdmin() && !isset($user->switchedUser)) {
-      echo "            <li>".$user->link("switch_user", "Switch User")."</li>\n";
-    }
-    if (isset($user->switchedUser) && is_numeric($user->switchedUser)) {
-      echo "            <li>".$user->link("switch_back", "Switch Back")."</li>\n";
-    }
-    echo "              <li><a href='/logout.php'>Sign out</a></li>
-            </ul>\n";
-  } else {
-    echo "          <li>
-          <form class='form-inline' accept-charset='UTF-8' action='/login.php?redirect_to=".(isset($_REQUEST['redirect_to']) ? urlencode($_REQUEST['redirect_to']) : urlencode($_SERVER['REQUEST_URI']))."' method='post'>
-            <input name='username' type='text' class='input-small' placeholder='Username'>
-            <input name='password' type='password' class='input-small' placeholder='Password'>
-            <!--<label class='checkbox'>
-              <input type='checkbox'> Remember me
-            </label>-->
-            <button type='submit' class='btn btn-primary btn-small'>Sign in</button>
-          </form></li>
-        </ul>\n";
-  }
-  echo "          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class='container-fluid'>\n";
-  if ($status != '') {
-    echo "<div class='alert alert-".escape_output($statusClass)."'>
-  <button class='close' data-dismiss='alert' href='#'>×</button>
-  ".escape_output($status)."\n</div>\n";
-  }
-}
-
 function display_login_form() {
   echo "<form id='login_form' class='form' accept-charset='UTF-8' action='/login.php' method='post'>
   <input id='username' name='username' size='30' type='text' placeholder='Username' />
@@ -302,7 +212,7 @@ function display_ok_notok_dropdown($select_id="ok_notok", $selected=0) {
 }
 
 function display_register_form(DbConn $database, $action=".") {
-  echo "    <form class='form-horizontal' name='register' method='post' action=".$_SERVER['SCRIPT_NAME'].">
+  $output = "    <form class='form-horizontal' name='register' method='post' action=".$_SERVER['SCRIPT_NAME'].">
       <fieldset>
         <legend>Signing up is easy! Fill in a few things...</legend>
         <div class='control-group'>
@@ -337,35 +247,6 @@ function display_register_form(DbConn $database, $action=".") {
         </div>
       </fieldset>
     </form>\n";
-}
-
-function display_users(DbConn $database, User $user) {
-  //lists all users.
-  $output = "<table class='table table-striped table-bordered dataTable'>
-  <thead>
-    <tr>
-      <th>Username</th>
-      <th>Role</th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>\n";
-  if ($user->isAdmin()) {
-    $users = $database->stdQuery("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC");
-  } else {
-    $users = $database->stdQuery("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC");
-  }
-  while ($thisID = $users->fetch_assoc()) {
-    $thisUser = new User($database, intval($thisID['id']));
-    $output .= "    <tr>
-      <td>".$thisUser->link("show", $thisUser->username)."</td>
-      <td>".escape_output(convert_usermask_to_text($thisUser->usermask))."</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisUser->link("edit", "Edit"); } $output .= "</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisUser->link("delete", "Delete"); } $output .= "</td>
-    </tr>\n";
-  }
-  $output .= "  </tbody>\n</table>\n";
   return $output;
 }
 
@@ -455,78 +336,11 @@ function display_recommendations(RecsEngine $recsEngine, User $user) {
     foreach ($recs as $key=>$rec) {
       $anime = new Anime($user->dbConn, intval($rec['id']));
       $reccedAnime[] = $anime;
-      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($rec['predicted_score'], 1)."</em></p></li>\n";
+      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($rec['predicted_score'], 1)."</em></p></li>\n";
     }
   }
   $output .= "</ul>";
   $output .= tag_list($reccedAnime);
-  return $output;
-}
-
-function display_tags(DbConn $database, User $user) {
-  // lists all tags.
-  $resultsPerPage = 25;
-  $newTag = new Tag($database, 0);
-  if ($user->isAdmin()) {
-    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` ORDER BY `tags`.`name` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
-    $tagPages = ceil($database->queryCount("SELECT COUNT(*) FROM `tags`")/$resultsPerPage);
-  } else {
-    $tag = $database->stdQuery("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC LIMIT ".((intval($_REQUEST['page'])-1)*$resultsPerPage).",".intval($resultsPerPage));
-    $tagPages = ceil($database->queryCount("SELECT COUNT(*) FROM `tags` WHERE `approved_on` != ''")/$resultsPerPage);
-  }
-  $output = paginate($newTag->url("index", "page="), intval($_REQUEST['page']), $tagPages);
-  $output .= "<table class='table table-striped table-bordered dataTable'>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Description</th>
-      <th>Type</th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>\n";
-  while ($thisID = $tag->fetch_assoc()) {
-    $thisTag = new Tag($database, intval($thisID['id']));
-    $output .= "    <tr>
-      <td>".$thisTag->link("show", $thisTag->name)."</td>
-      <td>".escape_output($thisTag->description)."</td>
-      <td>".$thisTag->type->link("show", $thisTag->type->name)."</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("edit", "Edit"); } $output .= "</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisTag->link("delete", "Delete"); } $output .= "</td>
-    </tr>\n";
-  }
-  $output .= "  </tbody>\n</table>\n".$newTag->link("new", "Add a tag");
-  $output .= paginate($newTag->url("index", "page="), intval($_REQUEST['page']), $tagPages)."\n";
-  return $output;
-}
-
-function display_tag_types(DbConn $database, User $user) {
-  // lists all tag types.
-  $newTagType = new TagType($database, 0);
-  $output = "<table class='table table-striped table-bordered dataTable'>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Description</th>
-      <th>Created By</th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>\n";
-  $tagTypes = $database->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` ORDER BY `tag_types`.`name` ASC");
-  while ($thisID = $tagTypes->fetch_assoc()) {
-    $thisTagType = new TagType($database, intval($thisID['id']));
-    $output .= "    <tr>
-      <td>".$thisTagType->link("show", $thisTagType->name)."</td>
-      <td>".escape_output($thisTagType->description)."</td>
-      <td>".$thisTagType->createdUser->link("show", $thisTagType->createdUser->username)."</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisTagType->link("edit", "Edit"); } $output .= "</td>
-      <td>"; if ($user->isAdmin()) { $output .= $thisTagType->link("delete", "Delete"); } $output .= "</td>
-    </tr>\n";
-  }
-  $output .= "  </tbody>\n</table>\n".$newTagType->link("new", "Add a tag type");
   return $output;
 }
 
@@ -647,8 +461,8 @@ function display_history_plot(DbConn $database, User $user, $form_id) {
 
 function display_footer() {
   echo "    <hr />
-    <p>Created and maintained by <a href='".ROOT_URL."/users/1/show/'>shaldengeki</a>.</p>\n";
-  if (DEBUG_ON) {
+    <p>Created and maintained by <a href='".Config::ROOT_URL."/users/1/show/'>shaldengeki</a>.</p>\n";
+  if (Config::DEBUG_ON) {
     echo "<pre>".escape_output(print_r($GLOBALS['database']->queryLog, True))."</pre>\n";
     echo "<pre>".escape_output(print_r($GLOBALS, True))."</pre>\n";
   }

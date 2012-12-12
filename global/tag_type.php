@@ -24,6 +24,9 @@ class TagType extends BaseObject {
   public function name() {
     return $this->returnInfo('name');
   }
+  public function description() {
+    return $this->returnInfo('description');
+  }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
@@ -61,6 +64,7 @@ class TagType extends BaseObject {
       } else {
         try {
           $approvedUser = new User($this->dbConn, intval($tag_type['created_user_id']));
+          $approvedUser->getInfo();
         } catch (Exception $e) {
           return False;
         }
@@ -113,6 +117,57 @@ class TagType extends BaseObject {
       $this->tags = $this->getTags();
     }
     return $this->tags;
+  }
+
+  public function render(Application $app) {
+    if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
+      $updateTagType = $this->create_or_update($_POST['tag_type']);
+      if ($updateTagType) {
+        redirect_to($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
+      } else {
+        redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
+      }
+    }
+    switch($app->action) {
+      case 'new':
+        $title = "Create a Tag Type";
+        $output = $this->view('new', $app->user);
+        break;
+      case 'edit':
+        if ($this->id == 0) {
+          $output = display_error("Error: Invalid tag type", "The given tag type doesn't exist.");
+          break;
+        }
+        $title = "Editing ".escape_output($this->name());
+        $output = $this->view('edit', $app->user);
+        break;
+      case 'show':
+        if ($this->id == 0) {
+          $output = display_error("Error: Invalid tag type", "The given tag type doesn't exist.");
+          break;
+        }
+        $title = escape_output($this->name());
+        $output = $this->view('show', $app->user);
+        break;
+      case 'delete':
+        if ($this->id == 0) {
+          $output = display_error("Error: Invalid tag type", "The given tag type doesn't exist.");
+          break;
+        }
+        $deleteTagType = $this->delete();
+        if ($deleteTagType) {
+          redirect_to("/tag_types/", array('status' => 'Successfully deleted '.$this->name().'.', 'class' => 'success'));
+        } else {
+          redirect_to("/tag_types/".intval($this->id)."/show/", array('status' => 'An error occurred while deleting '.$this->name().'.', 'class' => 'error'));
+        }
+        break;
+      default:
+      case 'index':
+        $title = "All Tag Types";
+        $output = $this->view('index', $app->user, get_object_vars($app));
+        break;
+    }
+    $app->render($output, array('title' => $title, 'status' => $_REQUEST['status'], 'class' => $_REQUEST['class']));
   }
 }
 ?>

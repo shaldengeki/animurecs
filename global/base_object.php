@@ -5,14 +5,14 @@ abstract class BaseObject {
   public $dbConn;
   public $id;
 
-  protected $modelTable, $modelPlural, $modelName;
+  protected $modelTable, $modelUrl, $modelPlural, $modelName;
   protected $createdAt, $updatedAt;
   protected $_observers = array();
 
   public function __construct(DbConn $database, $id=Null) {
     $this->dbConn = $database;
     $this->id = intval($id);
-    $this->modelName = $this->modelPlural = $this->modelTable = Null;
+    $this->modelName = $this->modelPlural = $this->modelTable = $this->modelUrl = Null;
     if ($id === 0) {
       $this->createdAt = $this->updatedAt = "";
     } else {
@@ -33,6 +33,12 @@ abstract class BaseObject {
     }
     return $this->modelName;
   }
+  public function modelUrl() {
+    if ($this->modelUrl === Null) {
+      $this->modelUrl = $this->modelTable;
+    }
+    return $this->modelUrl;
+  }
   protected function humanizeParameter($parameter) {
     // takes a parameter name like created_at
     // returns a human-friendly name like createdAt
@@ -47,7 +53,7 @@ abstract class BaseObject {
     // retrieves (from the database) all properties of this object in the object's table.
     $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
     if (!$info) {
-      if (DEBUG_ON) {
+      if (Config::DEBUG_ON) {
         throw new Exception($this->modelName().' ID Not Found: '.$this->id);
       } else {
         return;
@@ -69,13 +75,13 @@ abstract class BaseObject {
   }
   public function createdAt() {
     if ($this->createdAt === Null) {
-      $this->createdAt = new DateTime($this->returnInfo('createdAt'), new DateTimeZone(SERVER_TIMEZONE));
+      $this->createdAt = new DateTime($this->returnInfo('createdAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
     }
     return $this->createdAt;
   }
   public function updatedAt() {
     if ($this->updatedAt === Null) {
-      $this->updatedAt = new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(SERVER_TIMEZONE));
+      $this->updatedAt = new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
     }
     return $this->updatedAt;
   }
@@ -102,7 +108,7 @@ abstract class BaseObject {
     // binds a function to an event.
     // can be either anonymous function or string name of class method.
     if (!method_exists($observer, 'update')) {
-      if (DEBUG_ON) {
+      if (Config::DEBUG_ON) {
         throw new InvalidArgumentException(sprintf('Invalid observer: %s.', print_r($observer, True)));
       } else {
         return False;
@@ -255,13 +261,19 @@ abstract class BaseObject {
     return True;
   }
   public function view($view="index", $currentUser=Null, $params=Null) {
-    $file = joinPaths(APP_ROOT, 'views', $this->modelTable, "$view.php");
+    $file = joinPaths(Config::APP_ROOT, 'views', $this->modelTable, "$view.php");
     if (file_exists($file)) {
       ob_start();
       include($file);
       return ob_get_clean();
     }
     return False;
+  }
+  public function render(Application $app) {
+    echo $app->view('header', $app->user, get_object_vars($app));
+    echo $this->view($app->action, $app->user, get_object_vars($app));
+    echo $app->view('footer', $app->user, get_object_vars($app));
+    exit;
   }
   public function url($action="show", array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
@@ -272,7 +284,7 @@ abstract class BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

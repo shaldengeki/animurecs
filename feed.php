@@ -1,11 +1,10 @@
 <?php
 require_once("global/includes.php");
 
-if (!$user->loggedIn()) {
+if (!$app->user->loggedIn()) {
   header("Location: /?redirect_to=/feed.php");
 }
-start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST['class']);
-?>
+$pageHTML = <<<EOD
 <div class="row-fluid">
   <div class="span6">
     <h1>Welcome!</h1>
@@ -27,11 +26,11 @@ start_html($database, $user, "Animurecs", "Home", $_REQUEST['status'], $_REQUEST
       <li>Groupwatches, contests</li>
     </ol>
   </div>
-<?php
-echo "  <div class='span6'>
+  <div class='span6'>
     <h2>My Feed</h2>
-    ".$user->globalFeed()."
+    {$app->user->globalFeed()}
   </div>
-</div>";
-display_footer();
+</div>
+EOD;
+$app->render($pageHTML);
 ?>

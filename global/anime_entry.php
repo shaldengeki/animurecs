@@ -8,6 +8,7 @@ class AnimeEntry extends BaseEntry {
   public function __construct(DbConn $database, $id=Null, $params=Null) {
     parent::__construct($database, $id, $params);
     $this->modelTable = "anime_lists";
+    $this->modelUrl = "anime_entries";
     $this->modelPlural = "animeLists";
     $this->entryType = "Anime";
     if ($id === 0) {
@@ -40,8 +41,8 @@ class AnimeEntry extends BaseEntry {
   public function formatFeedEntry(User $currentUser) {
     // fetch the previous feed entry and compare values against current entry.
 
-    $outputTimezone = new DateTimeZone(OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(SERVER_TIMEZONE);
+    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
+    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
 
     $diffInterval = $nowTime->diff($this->time());
@@ -75,7 +76,87 @@ class AnimeEntry extends BaseEntry {
 
     return array('title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText);
   }
-
+  public function render(Application $app) {
+    $location = $app->user->url();
+    $status = "";
+    $class = "";
+    switch($app->action) {
+      case 'new':
+      case 'edit':
+        if (isset($_POST['anime_entry']) && is_array($_POST['anime_entry'])) {
+          // filter out any blank values to fill them with the previous entry's values.
+          foreach ($_POST['anime_entry'] as $key=>$value) {
+            if ($_POST['anime_entry'][$key] === '') {
+              unset($_POST['anime_entry'][$key]);
+            }
+          }
+          // check to ensure that the user has perms to create or update an entry.
+          try {
+            $targetUser = new User($this->dbConn, intval($_POST['anime_entry']['user_id']));
+            $targetUser->getInfo();
+          } catch (Exception $e) {
+            // this non-zero userID does not exist.
+            $status = "This user doesn't exist.";
+            $class = "error";
+            break;
+          }
+          $targetEntry = new AnimeEntry($this->dbConn, intval($app->id), array('user' => $targetUser));
+          if (!$targetEntry->allow($app->user, $app->action)) {
+            $location = $targetUser->url();
+            $status = "You can't update someone else's anime list.";
+            $class = "error";
+            break;
+          }
+          try {
+            $targetAnime = new Anime($this->dbConn, intval($_POST['anime_entry']['anime_id']));
+            $targetAnime->getInfo();
+          } catch (Exception $e) {
+            $location = $targetUser->url();
+            $status = "This anime ID doesn't exist.";
+            $class = "error";
+            break;
+          }
+          if (!isset($_POST['anime_entry']['id'])) {
+            // fill default values from the last entry for this anime.
+            $lastEntry = $targetUser->animeList->uniqueList[intval($_POST['anime_entry']['anime_id'])];
+            if (!$lastEntry) {
+              $lastEntry = [];
+            } else {
+              unset($lastEntry['id'], $lastEntry['time'], $lastEntry['anime']);
+            }
+            $_POST['anime_entry'] = array_merge($lastEntry, $_POST['anime_entry']);
+          }
+          $updateList = $targetEntry->create_or_update($_POST['anime_entry']);
+          if ($updateList) {
+            $status = "Successfully updated your anime list.";
+            $class = "success";
+            break;
+          } else {
+            $status = "An error occurred while changing your anime list.";
+            $class = "error";
+            break;
+          }
+        }
+        break;
+      case 'show':
+        break;
+      case 'delete':
+        $deleteList = $this->delete();
+        if ($deleteList) {
+          $status = "Successfully removed an entry your anime list.";
+          $class = "success";
+          break;
+        } else {
+          $status = "An error occurred while removing an entry from your anime list.";
+          $class = "error";
+          break;
+        }
+        break;
+      default:
+        break;
+    }
+    redirect_to($location, array('status' => $status, 'class' => $class));
+  }
 }
 
 ?>

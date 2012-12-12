@@ -18,7 +18,7 @@ class DbConn extends mysqli {
     $this->set_charset("utf8");
     if (class_exists("Memcached")) {
       $this->memcached = new Memcached();
-      $this->memcached->addServer(MEMCACHED_HOST, intval(MEMCACHED_PORT));
+      $this->memcached->addServer(Config::MEMCACHED_HOST, intval(Config::MEMCACHED_PORT));
     } else {
       // memcached isn't running. don't cache anything.
       $this->memcached = False;
@@ -42,7 +42,7 @@ class DbConn extends mysqli {
   }
   public function stdQuery($query) {
     // executes a query with standardized error message.
-    if (DEBUG_ON) {
+    if (Config::DEBUG_ON) {
       $this->queryLog[] = $query;
       $result = $this->query($query)
         or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
@@ -75,7 +75,7 @@ class DbConn extends mysqli {
     $result->free();
     // store in memcached if it's up.
     if (!($this->memcached === False)) {
-      $this->memcached->set($queryKey, $returnValue, MEMCACHED_DEFAULT_LIFESPAN);
+      $this->memcached->set($queryKey, $returnValue, Config::MEMCACHED_DEFAULT_LIFESPAN);
     }
     return $returnValue;
   }
@@ -96,7 +96,7 @@ class DbConn extends mysqli {
     $resultKeys = array_keys($result);
     // store in memcached if it's up.
     if (!($this->memcached === False)) {
-      $this->memcached->set($queryKey, $result, MEMCACHED_DEFAULT_LIFESPAN);
+      $this->memcached->set($queryKey, $result, Config::MEMCACHED_DEFAULT_LIFESPAN);
     }
     return $result[$resultKeys[0]];
   }
@@ -127,7 +127,7 @@ class DbConn extends mysqli {
     $result->free();
     // store in memcached if it's up.
     if (!($this->memcached === False)) {
-      $this->memcached->set($queryKey, $returnValue, MEMCACHED_DEFAULT_LIFESPAN);
+      $this->memcached->set($queryKey, $returnValue, Config::MEMCACHED_DEFAULT_LIFESPAN);
     }
     return $returnValue;
   }

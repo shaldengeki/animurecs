@@ -1,23 +1,25 @@
 <?php
-define('MYSQL_HOST', 'localhost');
-define('MYSQL_USERNAME', 'MYSQL_USERNAME');
-define('MYSQL_PASSWORD', 'MYSQL_PASSWORD');
-define('MYSQL_DATABASE', 'MYSQL_DATABASE');
+class Config {
+  const MYSQL_HOST = 'localhost';
+  const MYSQL_USERNAME = 'MYSQL_USERNAME';
+  const MYSQL_PASSWORD = 'MYSQL_PASSWORD';
+  const MYSQL_DATABASE = 'MYSQL_DATABASE';
 
-define('MEMCACHED_HOST', 'localhost');
-define('MEMCACHED_PORT', 11211);
-define('MEMCACHED_DEFAULT_LIFESPAN', 20); // in seconds.
+  const MEMCACHED_HOST = 'localhost';
+  const MEMCACHED_PORT = 11211;
+  const MEMCACHED_DEFAULT_LIFESPAN = 20; // in seconds.
 
-define('RECS_ENGINE_HOST', 'localhost');
-define('RECS_ENGINE_PORT', 6275);
+  const RECS_ENGINE_HOST = 'localhost';
+  const RECS_ENGINE_PORT = 6275;
 
-define('APP_ROOT', '/var/www'); 				// no trailing backslash!
-define('ROOT_URL', 'http://your.domain.here'); 	// no trailing backslashes!
+  const APP_ROOT = '/var/www';         // no trailing backslash!
+  const ROOT_URL = 'http://your.domain.here';  // no trailing backslashes!
 
-define('SERVER_TIMEZONE', 'Your/timezone');
-define('OUTPUT_TIMEZONE', 'Timezone/to/output');
+  const SERVER_TIMEZONE = 'Your/timezone';
+  const OUTPUT_TIMEZONE = 'Timezone/to/output';
 
-// settings for debugging in development environments.
-define('DEBUG_ON', False);
+  // settings for debugging in development environments.
+  const DEBUG_ON = False;
+}
 error_reporting(E_ALL ^ E_NOTICE);
 ?>

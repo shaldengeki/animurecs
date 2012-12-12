@@ -57,7 +57,7 @@
         </div>
 <?php
   }
-  if ($this->allow($currentUser, $this->id === 0 ? 'new' : 'edit')) {
+  if ($this->allow($currentUser, $this->id === 0 ? 'new' : 'edit') && $currentUser->isStaff()) {
 ?>      <div class='control-group'>
           <label class='control-label' for='user[usermask]'>Role(s)</label>
           <div class='controls'>

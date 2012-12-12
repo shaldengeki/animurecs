@@ -15,6 +15,7 @@ class CommentEntry extends BaseEntry {
       $this->comment = $this->commentId = $this->episode = Null;
     }
     $this->modelTable = "comments";
+    $this->modelUrl = "comment_entries";
     $this->modelPlural = "comments";
     $this->entryType = "Comment";
     $this->typeVerb = "watching";

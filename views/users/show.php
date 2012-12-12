@@ -10,7 +10,7 @@
 <?php
 if ($this->avatarPath() != '') {
 ?>
-                <img src='<?php echo joinPaths(ROOT_URL,escape_output($this->avatarPath())); ?>' class='img-rounded' alt=''>
+                <img src='<?php echo joinPaths(Config::ROOT_URL,escape_output($this->avatarPath())); ?>' class='img-rounded' alt=''>
 <?php
 } else {
 ?>
