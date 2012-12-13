@@ -280,13 +280,13 @@ class Anime extends BaseObject {
     $tags = [];
     $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
-      $tags[] = new Tag($this->dbConn, intval($tagID['tag_id']));
+      $tags[intval($tagID['tag_id'])] = new Tag($this->dbConn, intval($tagID['tag_id']));
     }
     return $tags;
   }
   public function tags() {
     if ($this->tags === Null) {
-      $this->tags = $this->getTags();
+      $this->tags = new TagGroup($this->dbConn, $this->getTags());
     }
     return $this->tags;
   }
@@ -438,7 +438,8 @@ class Anime extends BaseObject {
   }
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
-    foreach ($this->tags() as $tag) {
+    $this->tags()->info();
+    foreach ($this->tags()->tags() as $tag) {
       $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
     }
     $output .= "</ul>\n";
@@ -446,8 +447,10 @@ class Anime extends BaseObject {
   }
   public function tagList(User $currentUser) {
     $output = "<ul class='tagList'>\n";
-    foreach (array_sort_by_property($this->tags(), 'numAnime') as $tag) {
-      $output .= "<li>".$tag->link("show", $tag->name)." ".intval($tag->numAnime)."</li>\n";
+    $this->tags()->info();
+    $tagCounts = $this->tags()->tagCounts();
+    foreach ($tagCounts as $tagID => $count) {
+      $output .= "<li>".$this->tags()->tags()[$tagID]->link("show", $this->tags()->tags()[$tagID]->name)." ".intval($count)."</li>\n";
     }
     $output .= "</ul>\n";
     return $output;

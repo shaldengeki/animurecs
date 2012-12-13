@@ -110,7 +110,7 @@ class TagType extends BaseObject {
   }
   public function tags() {
     if ($this->tags === Null) {
-      $this->tags = $this->getTags();
+      $this->tags = new TagGroup($this->dbConn, $this->getTags());
     }
     return $this->tags;
   }

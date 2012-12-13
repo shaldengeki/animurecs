@@ -29,6 +29,13 @@ class TagGroup extends BaseGroup {
     parent::_getInfo();
     $this->_getTypes();
   }
+  protected function _getTagCounts() {
+    $inclusion = [];
+    foreach ($this->_objects as $object) {
+      $inclusion[] = $object->id;
+    }
+    return $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `anime_tags` WHERE  `tag_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)');
+  }
   public function tags() {
     return $this->objects();
   }

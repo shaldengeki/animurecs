@@ -16,9 +16,9 @@ class BaseGroup {
       foreach ($objects as $key=>$object) {
         $this->intKeys = $this->intKeys && is_int($key);
       }
-      if ($objects[0] instanceof $this->_groupObject) {
+      if (current($objects) instanceof $this->_groupObject) {
         $this->_objects = $objects;
-      } elseif (is_numeric($objects[0])) {
+      } elseif (is_numeric(current($objects))) {
         foreach ($objects as $key=>$objectID) {
           $this->_objects[$key] = new $this->_groupObject($this->dbConn, intval($objectID));
         }

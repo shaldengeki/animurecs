@@ -7,11 +7,11 @@ trait Commentable {
   protected $comments;
 
   public function getComments() {
-    // returns a list of comment objects sent by this user.
+    // returns a list of commentEntry objects sent by this user.
     $profileComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = '".$this->modelName()."' && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC");
     $comments = [];
     while ($comment = $profileComments->fetch_assoc()) {
-      $comments[intval($comment['id'])] = new Comment($this->dbConn, intval($comment['id']));
+      $comments[intval($comment['id'])] = new CommentEntry($this->dbConn, intval($comment['id']));
     }
     return $comments;
   }

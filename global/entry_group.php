@@ -84,21 +84,24 @@ class EntryGroup extends BaseGroup {
     }
     $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
     foreach ($getComments as $comment) {
-      $newComment = new Comment($this->dbConn, intval($comment['id']));
-      $newComment->set($comment);
-      if (!isset($comments[$comment['type']."||".$comment['parent_id']])) {
-        $comments[$comment['type']."||".$comment['parent_id']] = array($newComment->id => $newComment);
+      $newComment = new CommentEntry($this->dbConn, intval($comment['id']));
+      $newComment->comment()->set($comment);
+      if (!isset($comments[$comment['type']])) {
+        $comments[$comment['type']] = array();
+      }
+      if (!isset($comments[$comment['type']][$comment['parent_id']])) {
+        $comments[$comment['type']][$comment['parent_id']] = array($newComment->id => $newComment);
       } else {
-        $comments[$comment['type']."||".$comment['parent_id']][$newComment->id] = $newComment;
+        $comments[$comment['type']][$comment['parent_id']][$newComment->id] = $newComment;
       }
       $comments[$comment['id']] = $newComment;
     }
     foreach ($this->entries() as $entry) {
       if (method_exists($entry, 'comment')) {
-        $entry->set(array('comment' => $comments[$entry->commentId]));
+        $entry->set(array('comment' => $comments[$entry->commentId]->comment()));
       }
-      if (isset($comments[$entry->modelName()."||".$entry->id])) {
-        $entry->set(array('comments' => $comments[$entry->modelName()."||".$entry->id]));
+      if (isset($comments[$entry->modelName()][$entry->id])) {
+        $entry->set(array('comments' => $comments[$entry->modelName()][$entry->id]));
       } else {
         $entry->set(array('comments' => []));
       }

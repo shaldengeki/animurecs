@@ -66,8 +66,11 @@ trait Feedable {
     }
     $output .= "          </div>\n";
     if ($entry->comments) {
-      foreach ($entry->comments as $comment) {
-        $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
+      $commentGroup = new EntryGroup($app->dbConn, $entry->comments);
+      $commentGroup->info();
+      $commentGroup->users();
+      $commentGroup->comments();
+      foreach ($commentGroup->entries() as $commentEntry) {
         $output .= $this->feedEntry($commentEntry, $app, True);
       }
     }
@@ -83,6 +86,7 @@ trait Feedable {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
+    $entries->comments();
     $entries = array_sort_by_method($entries->entries(), 'time', array(), 'desc');
     $entries = array_slice($entries, 0, $numEntries);
     if (!$entries) {
