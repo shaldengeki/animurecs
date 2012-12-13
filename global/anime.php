@@ -109,7 +109,8 @@ class Anime extends BaseObject {
       Returns a boolean.
     */
     // check to see if this is an update.
-    if (isset($this->tags()[intval($tag_id)])) {
+    $tags = $this->tags()->tags();
+    if (isset($tags[intval($tag_id)])) {
       return True;
     }
     try {
@@ -137,7 +138,7 @@ class Anime extends BaseObject {
     */
     $this->tags();
     if ($tags === Null) {
-      $tags = array_keys($this->tags());
+      $tags = array_keys($this->tags()->tags());
     }
     $tagIDs = [];
     foreach ($tags as $tag) {
@@ -255,7 +256,7 @@ class Anime extends BaseObject {
     if (isset($anime['anime_tags'])) {
       // drop any unneeded  tags.
       $tagsToDrop = array();
-      foreach ($this->tags() as $tag) {
+      foreach ($this->tags()->tags() as $tag) {
         if (!in_array($tag->id, $anime['anime_tags'])) {
           $tagsToDrop[] = intval($tag->id);
         }
@@ -263,7 +264,7 @@ class Anime extends BaseObject {
       $drop_tags = $this->drop_taggings($tagsToDrop);
       foreach ($anime['anime_tags'] as $tagToAdd) {
         // add any needed tags.
-        if (!array_filter_by_property($this->tags(), 'id', $tagToAdd)) {
+        if (!array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
           $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {
