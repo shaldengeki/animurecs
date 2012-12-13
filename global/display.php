@@ -209,26 +209,24 @@ function display_register_form(DbConn $database, $action=".") {
 
 function tag_list($animes, $n=50) {
   // displays a list of tags for a list of anime, sorted by frequency of tag.
-  if (!is_array($animes)) {
+  if ($animes instanceof Anime) {
     $animes = array($animes);
   }
-  $tagCounts = [];
-  $tags = [];
-  foreach ($animes as $anime) {
-    foreach ($anime->tags as $tag) {
-      if (!isset($tagCounts[$tag->id])) {
-        $tagCounts[$tag->id] = 1;
-        $tags[$tag->id] = $tag;
-      } else {
-        $tagCounts[$tag->id]++;
-      }
+  if (!($animes instanceof AnimeGroup)) {
+    if (count($animes) > 0) {
+      $dbConn = current($animes)->dbConn;
+    } else {
+      return;
     }
+    $animes = new AnimeGroup($dbConn, $animes);
   }
-  arsort($tagCounts);
+  $tagCounts = $animes->tagCounts();
   $output = "<ul class='tagList'>\n";
   $i = 1;
-  foreach ($tagCounts as $tagID=>$count) {
-    $output .= "<li>".$tags[$tagID]->link("show", $tags[$tagID]->name)." ".intval($count)."</li>\n";
+  $tagGroup = new TagGroup($animes->dbConn, array_keys($tagCounts));
+  $tagGroup->info();
+  foreach ($tagGroup->tags() as $tag) {
+    $output .= "<li>".$tag->link("show", $tag->name)." ".intval($tagCounts[$tag->id])."</li>\n";
     if ($i >= $n) {
       break;
     }
@@ -242,16 +240,21 @@ function display_recommendations(RecsEngine $recsEngine, User $user) {
   $recs = $recsEngine->recommend($user);
 
   $output = "<h1>Your Recs</h1>\n<ul class='recommendations'>\n";
-  $reccedAnime = [];
   if (is_array($recs)) {
-    foreach ($recs as $key=>$rec) {
-      $anime = new Anime($user->dbConn, intval($rec['id']));
-      $reccedAnime[] = $anime;
-      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($rec['predicted_score'], 1)."</em></p></li>\n";
+    $animeIDs = [];
+    $recScores = [];
+    foreach ($recs as $rec) {
+      $recScores[intval($rec['id'])] = $rec['predicted_score'];
+      $animeIDs[] = $rec['id'];
+    }
+    $animeGroup = new AnimeGroup($user->dbConn, $animeIDs);
+    $animeGroup->info();
+    foreach ($animeGroup->anime() as $anime) {
+      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($recScores[$anime->id], 1)."</em></p></li>\n";
     }
   }
   $output .= "</ul>";
-  $output .= tag_list($reccedAnime);
+  $output .= tag_list($animeGroup->anime());
   return $output;
 }
 

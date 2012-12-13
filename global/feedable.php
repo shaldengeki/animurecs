@@ -24,19 +24,19 @@ trait Feedable {
       }
       $returnList = [];
       $entryCount = 0;
-      foreach ($this->entries() as $entry) {
+      foreach ($this->entries()->entries() as $entry) {
         if ($entry->time() >= $maxTime) {
           continue;
         }
         $returnList[] = $entry;
         $entryCount++;
         if ($limit !== Null && $entryCount >= $limit) {
-          return $returnList;
+          return new EntryGroup($this->dbConn, $returnList);
         }
       }
-      return $returnList;
+      return new EntryGroup($this->dbConn, $returnList);
     } else {
-      return $this->entries;
+      return new EntryGroup($this->dbConn, $this->entries);
     }
   }
 
@@ -46,7 +46,7 @@ trait Feedable {
     $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $nowTime = new DateTime("now", $outputTimezone);
 
-    $diffInterval = $nowTime->diff($entry->time);
+    $diffInterval = $nowTime->diff($entry->time());
 
     $feedMessage = $entry->formatFeedEntry($app->user);
 
@@ -55,7 +55,7 @@ trait Feedable {
     $entryType = $nested ? "div" : "li";
 
     $output = "      <".$entryType." class='media'>
-        <div class='pull-right feedDate' data-time='".$entry->time->format('U')."'>".ago($diffInterval)."</div>
+        <div class='pull-right feedDate' data-time='".$entry->time()->format('U')."'>".ago($diffInterval)."</div>
         ".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(Config::ROOT_URL, escape_output($entry->user->avatarPath))."' />", True, array('class' => 'feedAvatar pull-left'))."
         <div class='media-body feedText'>
           <div class='feedEntry'>
@@ -79,18 +79,25 @@ trait Feedable {
     return $output;
   }
 
-  public function feed(array $entries, Application $app, $numEntries=50, $emptyFeedText="") {
+  public function feed(EntryGroup $entries, Application $app, $numEntries=50, $emptyFeedText="") {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
-    $entries = array_sort_by_property($entries, 'time', 'desc');
+    $entries = array_sort_by_method($entries->entries(), 'time', array(), 'desc');
     $entries = array_slice($entries, 0, $numEntries);
     if (!$entries) {
       $output .= $emptyFeedText;
     } else {
+      // now pull info en masse for these entries.
+      $entryGroup = new EntryGroup($app->dbConn, $entries);
+      $entryGroup->info();
+      $entryGroup->users();
+      $entryGroup->anime();
+      $entryGroup->comments();
+
       $output = "<ul class='media-list ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
-      foreach ($entries as $entry) {
+      foreach ($entryGroup->entries() as $entry) {
         $feedOutput[] = $this->feedEntry($entry, $app);
       }
       $output .= implode("\n", $feedOutput);

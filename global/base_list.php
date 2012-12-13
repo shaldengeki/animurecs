@@ -12,7 +12,7 @@ abstract class BaseList extends BaseObject {
 
   protected $entries, $uniqueList;
 
-  protected $partName, $modelTable, $modelPlural, $listType, $listTypeLower, $typeVerb, $typeID, $feedType;
+  protected $partName, $listType, $listTypeLower, $typeVerb, $typeID, $feedType;
 
   public function __construct(DbConn $database, $user_id=Null) {
     parent::__construct($database, $user_id);
@@ -79,7 +79,8 @@ abstract class BaseList extends BaseObject {
     }
 
     // check to see if this is an update.
-    if (isset($this->entries()[intval($entry['id'])])) {
+    $entryGroup = $this->entries();
+    if (isset($entryGroup->entries()[intval($entry['id'])])) {
       $this->before_update($entry);
       $updateDependency = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
@@ -122,7 +123,7 @@ abstract class BaseList extends BaseObject {
       Returns a boolean.
     */
     if ($entries === Null) {
-      $entries = array_keys($this->entries());
+      $entries = array_keys($this->entries()->entries());
     }
     if (!is_array($entries) && !is_numeric($entries)) {
       return False;
@@ -252,7 +253,7 @@ abstract class BaseList extends BaseObject {
     $entryType = $this->listType."Entry";
     $prevEntry = new $entryType($this->dbConn, 0);
 
-    foreach ($this->entries() as $entry) {
+    foreach ($this->entries()->entries() as $entry) {
       if ($entry->time >= $beforeTime) {
         continue;
       }

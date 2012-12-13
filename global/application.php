@@ -2,7 +2,7 @@
 
 class Application {
   private $_config, $_achievements, $_classes=[];
-  public $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target=Null;
+  public $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender=Null;
 
   public $model,$action="";
   public $id=0;
@@ -43,6 +43,12 @@ class Application {
     $this->_loadDependency("/global/base_entry.php");
     $this->_loadDependency("/global/base_achievement.php");
 
+    $this->_loadDependency("/global/base_group.php");
+    $this->_loadDependency("/global/anime_group.php");
+    $this->_loadDependency("/global/tag_group.php");
+    $this->_loadDependency("/global/user_group.php");
+    $this->_loadDependency("/global/entry_group.php");
+
     $nonLinkedClasses = count(get_declared_classes());
 
     $this->_loadDependency("/global/tag_type.php");
@@ -69,7 +75,7 @@ class Application {
     // _classes is a modelUrl:modelName mapping for classes that are to be linked.
     foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $className) {
       $blankClass = new $className($this->dbConn, 0);
-      if (!isset($this->_classes[$blankClass->modelUrl])) {
+      if (!isset($this->_classes[$blankClass->modelUrl()])) {
         $this->_classes[$blankClass->modelUrl] = $className;
       }
     }
@@ -101,6 +107,7 @@ class Application {
     }
   }
   public function init() {
+    $this->startRender = microtime(true);
     $this->_loadDependencies();
 
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {

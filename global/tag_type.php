@@ -14,10 +14,6 @@ class TagType extends BaseObject {
       $this->tags = [];
       $this->createdUser = Null;
     } else {
-      $fetchID = $this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types` WHERE `id` = ".intval($this->id));
-      if ($fetchID < 1) {
-        throw new Exception('ID Not Found');
-      }
       $this->name = $this->description = $this->tags = $this->createdUser = Null;
     }
   }

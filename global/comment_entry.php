@@ -1,18 +1,16 @@
 <?php
 
 class CommentEntry extends BaseEntry {
-  protected $comment, $commentId, $user, $userId;
-  protected $time;
-  protected $status, $score, $episode;
+  protected $comment, $commentId;
   protected $parent;
 
   public function __construct(DbConn $database, $id=Null, $params=Null) {
     parent::__construct($database, $id, $params);
     if ($id === 0) {
       $this->comment = new Comment($this->dbConn, 0);
-      $this->commentId = $this->userId = 0;
+      $this->commentId = 0;
     } else {
-      $this->comment = $this->commentId = $this->episode = Null;
+      $this->comment = $this->commentId = Null;
     }
     $this->modelTable = "comments";
     $this->modelUrl = "comment_entries";
@@ -33,16 +31,16 @@ class CommentEntry extends BaseEntry {
     return $this->comment;
   }
   public function parent() {
-    return $this->comment()->parent;
+    return $this->comment()->parent();
   }
   public function depth() {
-    return $this->comment()->depth;
+    return $this->comment()->depth();
   }
   public function ancestor() {
-    return $this->comment()->ancestor;
+    return $this->comment()->ancestor();
   }
   public function type() {
-    return $this->comment()->type;
+    return $this->comment()->type();
   }
   public function time() {
     return $this->comment()->createdAt();

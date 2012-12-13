@@ -153,7 +153,7 @@ function array_sort_by_key($a, $key, $order="desc") {
       $orderVal = -1;
       break;
   }
-  uasort($a, buildKeySorter($key, $orderVal));
+  @uasort($a, buildKeySorter($key, $orderVal));
   return $a;
 }
 
@@ -188,7 +188,7 @@ function array_sort_by_property($a, $property, $order="desc") {
       $orderVal = -1;
       break;
   }
-  uasort($a, buildPropertySorter($property, $orderVal));
+  @uasort($a, buildPropertySorter($property, $orderVal));
   return $a;
 }
 
@@ -223,7 +223,7 @@ function array_sort_by_method($a, $method, $methodArgs=array(), $order="desc") {
       $orderVal = -1;
       break;
   }
-  uasort($a, buildMethodSorter($method, $methodArgs, $orderVal));
+  @uasort($a, buildMethodSorter($method, $methodArgs, $orderVal));
   return $a;
 }
 ?>

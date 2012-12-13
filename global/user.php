@@ -692,9 +692,11 @@ class User extends BaseObject {
   public function profileFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
+    $commentEntries = [];
     foreach ($this->comments() as $comment) {
-      $feedEntries[] = new CommentEntry($this->dbConn, intval($comment->id));
+      $commentEntries[] = new CommentEntry($this->dbConn, intval($comment->id));
     }
+    $feedEntries->append(new EntryGroup($app->dbConn, $commentEntries));
     return $this->animeList()->feed($feedEntries, $app, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
   public function globalFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
@@ -703,11 +705,12 @@ class User extends BaseObject {
     // add each user's personal feeds to the total feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
     foreach ($this->friends() as $friend) {
-      $feedEntries = array_merge($feedEntries, $friend['user']->animeList()->entries($maxTime, $numEntries));
+      $feedEntries->append($friend['user']->animeList()->entries($maxTime, $numEntries));
+      $comments = [];
       foreach ($friend['user']->ownComments() as $comment) {
-        $commentEntry = new CommentEntry($this->dbConn, intval($comment->id));
-        $feedEntries[] = $commentEntry;
+        $comments[] = new CommentEntry($this->dbConn, intval($comment->id));
       }
+      $feedEntries->append(new EntryGroup($app->dbConn, $comments));
     }
     return $this->animeList()->feed($feedEntries, $app, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
   }

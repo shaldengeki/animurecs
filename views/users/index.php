@@ -14,9 +14,10 @@
         </thead>
         <tbody>
 <?php
-  $users = $this->dbConn->stdQuery("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC");
-  while ($thisID = $users->fetch_assoc()) {
-    $thisUser = new User($this->dbConn, intval($thisID['id']));
+  $users = array_keys($this->dbConn->queryAssoc("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC", 'id'));
+  $userGroup = new UserGroup($this->dbConn, $users);
+  $userGroup->info();
+  foreach ($userGroup->users() as $thisUser) {
 ?>          <tr>
             <td><?php echo $thisUser->link("show", $thisUser->username()); ?></td>
             <td><?php echo escape_output(convert_usermask_to_text($thisUser->usermask())); ?></td>

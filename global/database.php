@@ -43,7 +43,7 @@ class DbConn extends mysqli {
   public function stdQuery($query) {
     // executes a query with standardized error message.
     if (Config::DEBUG_ON) {
-      $this->queryLog[] = $query;
+      $this->queryLog[] = $query;      
       $result = $this->query($query)
         or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
           Query: ".$query."<br />
@@ -100,7 +100,7 @@ class DbConn extends mysqli {
     }
     return $result[$resultKeys[0]];
   }
-  public function queryAssoc($query, $idKey=False) {
+  public function queryAssoc($query, $idKey=Null, $valKey=Null) {
     // pull from memcached if it's up.
     $queryKey = md5("queryAssoc".$idKey.$query);
     if (!($this->memcached === False)) {
@@ -118,10 +118,14 @@ class DbConn extends mysqli {
     }
     $returnValue = array();
     while ($row = $result->fetch_assoc()) {
-      if ($idKey === False) {
+      if ($idKey === Null && $valKey === Null) {
         $returnValue[] = $row;
-      } else {
+      } elseif ($idKey !== Null && $valKey === Null) {
         $returnValue[intval($row[$idKey])] = $row;
+      } elseif ($idKey === Null && $valKey !== Null) {
+        $returnValue[] = $row[$valKey];
+      } else {
+         $returnValue[intval($row[$idKey])] = $row[$valKey];
       }
     }
     $result->free();

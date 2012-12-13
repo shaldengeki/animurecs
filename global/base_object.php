@@ -5,7 +5,7 @@ abstract class BaseObject {
   public $dbConn;
   public $id;
 
-  protected $modelTable, $modelUrl, $modelPlural, $modelName;
+  public $modelTable, $modelUrl, $modelPlural, $modelName;
   protected $createdAt, $updatedAt;
   protected $_observers = array();
 
@@ -49,6 +49,18 @@ abstract class BaseObject {
     }
     return $newName;
   }
+  public function set(array $params) {
+    // generic setter. humanizes parameter names.
+    foreach ($params as $key=>$value) {
+      if (is_numeric($value)) {
+        $value = ( (int) $value == $value ? (int) $value : (float) $value);
+      }
+      if (($key == 'created_at' || $key == 'updated_at') && !($value instanceof DateTime)) {
+        $value = new DateTime($value, new DateTimeZone(Config::SERVER_TIMEZONE));
+      }
+      $this->{$this->humanizeParameter($key)} = $value;
+    }
+  }
   public function getInfo() {
     // retrieves (from the database) all properties of this object in the object's table.
     $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
@@ -59,12 +71,7 @@ abstract class BaseObject {
         return;
       }
     }
-    foreach ($info as $key=>$value) {
-      if (is_numeric($value)) {
-        $value = ( (int) $value == $value ? (int) $value : (float) $value);
-      }
-      $this->{$this->humanizeParameter($key)} = $value;
-    }
+    $this->set($info);
   }
   public function returnInfo($param) {
     // sets object property if not set, then returns requested property.
@@ -75,13 +82,13 @@ abstract class BaseObject {
   }
   public function createdAt() {
     if ($this->createdAt === Null) {
-      $this->createdAt = new DateTime($this->returnInfo('createdAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
+      $this->createdAt = $this->returnInfo('createdAt');
     }
     return $this->createdAt;
   }
   public function updatedAt() {
     if ($this->updatedAt === Null) {
-      $this->updatedAt = new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
+      $this->updatedAt = $this->returnInfo('updatedAt');
     }
     return $this->updatedAt;
   }
