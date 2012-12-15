@@ -13,6 +13,7 @@ class EntryGroup extends BaseGroup {
     // preserves keys of input array.
     $this->dbConn = $dbConn;
     $this->_objects = [];
+    $this->intKeys = True;
     if (count($entries) > 0) {
       foreach ($entries as $key=>$object) {
         $this->intKeys = $this->intKeys && is_int($key);
@@ -23,19 +24,22 @@ class EntryGroup extends BaseGroup {
   }
   private function _getAnime() {
     $animeDict = [];
+    $animes = [];
     foreach ($this->entries() as $entry) {
       if (method_exists($entry, 'anime') && $entry->animeId !== Null) {
         $animeDict[$entry->animeId] = 1;
       }
     }
-    $getAnime = $this->dbConn->queryAssoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
-    foreach ($getAnime as $anime) {
-      $animes[$anime['id']] = new Anime($this->dbConn, intval($anime['id']));
-      $animes[$anime['id']]->set($anime);
-    }
-    foreach ($this->entries() as $entry) {
-      if (method_exists($entry, 'anime') && $entry->animeId !== Null) {
-        $entry->set(array('anime' => $animes[$entry->animeId]));
+    if (count($animeDict) > 0) {
+      $getAnime = $this->dbConn->queryAssoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
+      foreach ($getAnime as $anime) {
+        $animes[$anime['id']] = new Anime($this->dbConn, intval($anime['id']));
+        $animes[$anime['id']]->set($anime);
+      }
+      foreach ($this->entries() as $entry) {
+        if (method_exists($entry, 'anime') && $entry->animeId !== Null) {
+          $entry->set(array('anime' => $animes[$entry->animeId]));
+        }
       }
     }
     return $animes;
@@ -48,23 +52,26 @@ class EntryGroup extends BaseGroup {
   }
   private function _getUsers() {
     $userDict = [];
+    $users = [];
     foreach ($this->entries() as $entry) {
       if ($entry->parentId !== Null && method_exists($entry, 'parent')) {
         $userDict[$entry->parentId] = 1;
       }
       $userDict[$entry->userId] = 1;
     }
-    $getUsers = $this->dbConn->queryAssoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
-    foreach ($getUsers as $user) {
-      $users[$user['id']] = new User($this->dbConn, intval($user['id']));
-      $users[$user['id']]->set($user);
-    }
-    foreach ($this->entries() as $entry) {
-      $setArray = array('user' => $users[$entry->userId]);
-      if ($entry->parentId !== Null && method_exists($entry, 'parent')) {
-        $setArray['parent'] = $users[$entry->parentId];
+    if (count($userDict) > 0) {
+      $getUsers = $this->dbConn->queryAssoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
+      foreach ($getUsers as $user) {
+        $users[$user['id']] = new User($this->dbConn, intval($user['id']));
+        $users[$user['id']]->set($user);
       }
-      $entry->set($setArray);
+      foreach ($this->entries() as $entry) {
+        $setArray = array('user' => $users[$entry->userId]);
+        if ($entry->parentId !== Null && method_exists($entry, 'parent')) {
+          $setArray['parent'] = $users[$entry->parentId];
+        }
+        $entry->set($setArray);
+      }
     }
     return $users;
   }
@@ -82,28 +89,30 @@ class EntryGroup extends BaseGroup {
       }
       $commentDict["(`type` = '".$entry->modelName()."' && `parent_id` = ".$entry->id.")"] = 1;
     }
-    $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
-    foreach ($getComments as $comment) {
-      $newComment = new CommentEntry($this->dbConn, intval($comment['id']));
-      $newComment->comment()->set($comment);
-      if (!isset($comments[$comment['type']])) {
-        $comments[$comment['type']] = array();
+    if (count($commentDict) > 0) {
+      $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
+      foreach ($getComments as $comment) {
+        $newComment = new CommentEntry($this->dbConn, intval($comment['id']));
+        $newComment->comment()->set($comment);
+        if (!isset($comments[$comment['type']])) {
+          $comments[$comment['type']] = array();
+        }
+        if (!isset($comments[$comment['type']][$comment['parent_id']])) {
+          $comments[$comment['type']][$comment['parent_id']] = array($newComment->id => $newComment);
+        } else {
+          $comments[$comment['type']][$comment['parent_id']][$newComment->id] = $newComment;
+        }
+        $comments[$comment['id']] = $newComment;
       }
-      if (!isset($comments[$comment['type']][$comment['parent_id']])) {
-        $comments[$comment['type']][$comment['parent_id']] = array($newComment->id => $newComment);
-      } else {
-        $comments[$comment['type']][$comment['parent_id']][$newComment->id] = $newComment;
-      }
-      $comments[$comment['id']] = $newComment;
-    }
-    foreach ($this->entries() as $entry) {
-      if (method_exists($entry, 'comment')) {
-        $entry->set(array('comment' => $comments[$entry->commentId]->comment()));
-      }
-      if (isset($comments[$entry->modelName()][$entry->id])) {
-        $entry->set(array('comments' => $comments[$entry->modelName()][$entry->id]));
-      } else {
-        $entry->set(array('comments' => []));
+      foreach ($this->entries() as $entry) {
+        if (method_exists($entry, 'comment')) {
+          $entry->set(array('comment' => $comments[$entry->commentId]->comment()));
+        }
+        if (isset($comments[$entry->modelName()][$entry->id])) {
+          $entry->set(array('comments' => $comments[$entry->modelName()][$entry->id]));
+        } else {
+          $entry->set(array('comments' => []));
+        }
       }
     }
   }

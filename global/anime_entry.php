@@ -4,6 +4,7 @@ class AnimeEntry extends BaseEntry {
   protected $anime, $animeId;
   protected $episode;
   protected $list;
+  protected $comments;
 
   public function __construct(DbConn $database, $id=Null, $params=Null) {
     parent::__construct($database, $id, $params);
@@ -37,6 +38,16 @@ class AnimeEntry extends BaseEntry {
   }
   public function episode() {
     return $this->returnInfo('episode');
+  }
+  private function _getComments() {
+    $comments = $this->dbConn->queryAssoc("SELECT `id` FROM `comments` WHERE `type` = 'AnimeEntry` && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC", 'id', 'id');
+    return new CommentGroup($this->dbConn, array_keys($comments));
+  }
+  public function comments() {
+    if ($this->comments === Null) {
+      $this->comments = $this->_getComments();
+    }
+    return $this->comments;
   }
   public function formatFeedEntry(User $currentUser) {
     // fetch the previous feed entry and compare values against current entry.

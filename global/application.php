@@ -45,6 +45,7 @@ class Application {
 
     $this->_loadDependency("/global/base_group.php");
     $this->_loadDependency("/global/anime_group.php");
+    $this->_loadDependency("/global/comment_group.php");
     $this->_loadDependency("/global/tag_group.php");
     $this->_loadDependency("/global/user_group.php");
     $this->_loadDependency("/global/entry_group.php");

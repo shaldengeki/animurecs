@@ -708,7 +708,10 @@ class User extends BaseObject {
       $feedEntries->append($friend['user']->animeList()->entries($maxTime, $numEntries));
       $comments = [];
       foreach ($friend['user']->ownComments() as $comment) {
-        $comments[] = new CommentEntry($this->dbConn, intval($comment->id));
+        // only append top-level comments.
+        if ($comment->depth() === 0) {
+          $comments[] = new CommentEntry($this->dbConn, intval($comment->id));
+        }
       }
       $feedEntries->append(new EntryGroup($app->dbConn, $comments));
     }

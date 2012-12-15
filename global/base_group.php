@@ -5,7 +5,7 @@ class BaseGroup {
   protected $_objects,$_objectGroups = [];
   protected $_tagCounts=Null;
   protected $_pulledInfo=False;
-  public $intKeys=False;
+  public $intKeys=True;
   public $dbConn=Null;
   protected $_groupTable,$_groupTableSingular,$_groupObject,$_nameField = Null;
 
