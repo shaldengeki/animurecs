@@ -5,7 +5,7 @@ class DbConn extends mysqli {
   public $queryLog;
   private $host, $username, $password, $database, $memcached;
 
-  public function __construct($host, $username, $password, $database) {
+  public function __construct($host=Config::MYSQL_HOST, $username=Config::MYSQL_USERNAME, $password=Config::MYSQL_PASSWORD, $database=Config::MYSQL_DATABASE) {
     $this->host = $host;
     $this->username = $username;
     $this->password = $password;

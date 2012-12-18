@@ -13,8 +13,8 @@ class Comment extends BaseObject {
 
   protected $entries;
 
-  public function __construct(DbConn $database, $id=Null, User $user=Null, BaseObject $parent=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null, User $user=Null, BaseObject $parent=Null) {
+    parent::__construct($app, $id);
     $this->modelTable = "comments";
     $this->modelPlural = "comments";
     if ($id === 0) {
@@ -34,7 +34,7 @@ class Comment extends BaseObject {
   }
   public function user() {
     if ($this->user === Null) {
-      $this->user = new User($this->dbConn, $this->userId());
+      $this->user = new User($this->app, $this->userId());
     }
     return $this->user;
   }
@@ -59,7 +59,7 @@ class Comment extends BaseObject {
   public function parent() {
     if ($this->parent === Null) {
       $type = $this->type();
-      $this->parent = new $type($this->dbConn, $this->parentId());
+      $this->parent = new $type($this->app, $this->parentId());
     }
     return $this->parent;
   }
@@ -71,7 +71,7 @@ class Comment extends BaseObject {
     $returnList = [];
     $commentEntries = $this->dbConn->stdQuery("SELECT * FROM `comments` WHERE `type` = 'Comment' && `parent_id` = ".intval($this->id)." ORDER BY `time` ASC");
     while ($entry = $commentEntries->fetch_assoc()) {
-      $newEntry = new CommentEntry($this->dbConn, intval($entry['id']), $entry);
+      $newEntry = new CommentEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;
     }
     return $returnList;
@@ -124,7 +124,7 @@ class Comment extends BaseObject {
       return False;
     } else {
       try {
-        $createdUser = new User($this->dbConn, intval($comment['user_id']));
+        $createdUser = new User($this->app, intval($comment['user_id']));
       } catch (Exception $e) {
         return False;
       }
@@ -136,7 +136,7 @@ class Comment extends BaseObject {
       return False;
     } else {
       try {
-        $parent = new $comment['type']($this->dbConn, intval($comment['parent_id']));
+        $parent = new $comment['type']($this->app, intval($comment['parent_id']));
       } catch (Exception $e) {
         return False;
       }
@@ -161,8 +161,8 @@ class Comment extends BaseObject {
     }
     return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
-  public function render(Application $app) {
-    if ($app->id != 0) {
+  public function render() {
+    if ($this->app->id != 0) {
       try {
         $this->getInfo();
       } catch (Exception $e) {
@@ -173,43 +173,43 @@ class Comment extends BaseObject {
     } else {
       $type = isset($_POST['comment']['type']) ? $_POST['comment']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
       try {
-        $targetParent = $type !== Null && (isset($_POST['comment']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($app->dbConn, intval(isset($_POST['comment']['parent_id']) ? $_POST['comment']['parent_id'] : $_REQUEST['parent_id'])) : Null;
+        $targetParent = $type !== Null && (isset($_POST['comment']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($this->app, intval(isset($_POST['comment']['parent_id']) ? $_POST['comment']['parent_id'] : $_REQUEST['parent_id'])) : Null;
         if ($targetParent !== Null) {
           $targetParent->getInfo();
         }
       } catch (Exception $e) {
-        redirect_to($app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+        redirect_to($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
       }
 
-      if (intval($_REQUEST['user_id']) === $app->user->id || intval($_POST['user_id']) === $app->user->id) {
-        $targetUser = $app->user;
+      if (intval($_REQUEST['user_id']) === $this->app->user->id || intval($_POST['user_id']) === $this->app->user->id) {
+        $targetUser = $this->app->user;
       } else {
         try {
-          $targetUser = new User($app->dbConn, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
+          $targetUser = new User($this->app, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
           $targetUser->getInfo();
         } catch (Exception $e) {
-          redirect_to($app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+          redirect_to($this->app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
         }
       }
     }
     try {
-      $targetComment = new Comment($app->dbConn, intval($app->id), $targetUser, $targetParent);
+      $targetComment = new Comment($this->app, intval($this->app->id), $targetUser, $targetParent);
       if ($targetComment->id !== 0) {
         $targetComment->getInfo();
       }
     } catch (Exception $e) {
-      $targetComment = new Comment($app->dbConn, 0, $targetUser, $targetParent);
+      $targetComment = new Comment($this->app, 0, $targetUser, $targetParent);
     }
-    switch($app->action) {
+    switch($this->app->action) {
       case 'new':
         if (isset($_POST['comment']) && is_array($_POST['comment']) && isset($_POST['comment']['type']) && isset($_POST['comment']['parent_id']) && is_numeric($_POST['comment']['parent_id'])) {
           // ensure that the thing to which this comment is going to belong exists.
           if ($targetParent === Null) {
-            redirect_to($app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+            redirect_to($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
           }
 
           // ensure that the user has perms to create a comment for this user under this object.
-          if (($targetUser->id != $app->user->id && !$app->user->isModerator() && !$app->user->isAdmin()) || !$targetComment->allow($app->user, 'new')) {
+          if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'new')) {
             redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
           }
           $createComment = $targetComment->create_or_update($_POST['comment']);
@@ -220,11 +220,11 @@ class Comment extends BaseObject {
           }
         }
         $title = "Add a comment";
-        $output .= $targetComment->view('new', $app, array('currentObject' => $targetParent));
+        $output .= $targetComment->view('new', array('currentObject' => $targetParent));
         break;
       case 'edit':
         if ($targetComment->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         if (isset($_POST['comment']) && is_array($_POST['comment'])) {
@@ -232,22 +232,22 @@ class Comment extends BaseObject {
           $commentType = !isset($_POST['comment']['type']) ? $targetComment->type : $_POST['comment']['type'];
           $commentParentID = !isset($_POST['comment']['parent_id']) ? $targetComment->parent->id : $_POST['comment']['parent_id'];
           try {
-            $targetParent = new $commentType($app->dbConn, intval($commentParentID));
+            $targetParent = new $commentType($this->app, intval($commentParentID));
           } catch (Exception $e) {
             redirect_to('/feed.php', array('status' => "The thing you're trying to comment on doesn't exist anymore.", 'class' => 'error'));
           }
           if ($targetParent->id === 0) {
-            redirect_to($app->user->url(), array('status' => "Please provide something to comment on.", 'class' => 'error'));
+            redirect_to($this->app->user->url(), array('status' => "Please provide something to comment on.", 'class' => 'error'));
           }
 
           // ensure that the user has perms to update a comment.
           try {
-            $targetComment = new Comment($app->dbConn, $app->id);
+            $targetComment = new Comment($this->app, $this->app->id);
           } catch (Exception $e) {
             // this non-zero commentID does not exist.
             redirect_to($targetParent->url(), array('status' => 'This comment does not exist.', 'class' => 'error'));
           }
-          if (($targetUser->id != $app->user->id && !$app->user->isModerator() && !$app->user->isAdmin()) || !$targetComment->allow($app->user, 'edit')) {
+          if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'edit')) {
             redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
           }
           $updateComment = $targetComment->create_or_update($_POST['comment']);
@@ -258,19 +258,19 @@ class Comment extends BaseObject {
           }
         }
         $title = "Editing comment";
-        $output = $targetComment->view('edit', $app, array('currentObject' => $targetParent));
+        $output = $targetComment->view('edit', array('currentObject' => $targetParent));
         break;
       case 'show':
         if ($targetComment->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = "Showing comment";
-        $output = $targetComment->view('show', $app);
+        $output = $targetComment->view('show');
         break;
       case 'delete':
         if ($targetComment->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $deleteComment = $targetComment->delete();
@@ -283,10 +283,10 @@ class Comment extends BaseObject {
       default:
       case 'index':
         $title = "All Comments";
-        $output = $this->view('index', $app);
+        $output = $this->view('index');
         break;
     }
-    $app->render($output, array('title' => $title));
+    $this->app->render($output, array('title' => $title));
   }
 }
 ?>

@@ -7,9 +7,6 @@ class TagGroup extends BaseGroup {
   protected $_groupObject = "Tag";
   protected $_nameField = "name";
 
-  public function __construct(DbConn $dbConn, array $tag) {
-    parent::__construct($dbConn, $tag);
-  }
   protected function _getTypes() {
     $tagTypeDict = [];
     foreach ($this->tags() as $tag) {
@@ -17,7 +14,7 @@ class TagGroup extends BaseGroup {
     }
     $getTagTypes = $this->dbConn->queryAssoc("SELECT * FROM `tag_types` WHERE `id` IN (".implode(",", array_keys($tagTypeDict)).")");
     foreach ($getTagTypes as $tagType) {
-      $tagTypes[$tagType['id']] = new TagType($this->dbConn, intval($tagType['id']));
+      $tagTypes[$tagType['id']] = new TagType($this->app, intval($tagType['id']));
       $tagTypes[$tagType['id']]->set($tagType);
     }
     foreach ($this->tags() as $tag) {

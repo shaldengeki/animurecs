@@ -12,8 +12,8 @@ class Tag extends BaseObject {
   protected $numManga;
   protected $manga;
 
-  public function __construct(DbConn $database, $id=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null) {
+    parent::__construct($app, $id);
     $this->modelTable = "tags";
     $this->modelPlural = "tags";
     if ($id === 0) {
@@ -74,7 +74,7 @@ class Tag extends BaseObject {
       return True;
     }
     try {
-      $anime = new Anime($this->dbConn, intval($anime_id));
+      $anime = new Anime($this->app, intval($anime_id));
       $anime->getInfo();
     } catch (Exception $e) {
       return False;
@@ -136,7 +136,7 @@ class Tag extends BaseObject {
       return False;
     } else {
       try {
-        $createdUser = new User($this->dbConn, intval($tag['created_user_id']));
+        $createdUser = new User($this->app, intval($tag['created_user_id']));
         $createdUser->getInfo();
       } catch (Exception $e) {
         return False;
@@ -149,7 +149,7 @@ class Tag extends BaseObject {
       return False;
     } else {
       try {
-        $parent = new TagType($this->dbConn, intval($tag['tag_type_id']));
+        $parent = new TagType($this->app, intval($tag['tag_type_id']));
         $parent->getInfo();
       } catch (Exception $e) {
         return False;
@@ -222,7 +222,7 @@ class Tag extends BaseObject {
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag.
-    return new User($this->dbConn, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tags` WHERE `id` = ".intval($this->id))));
+    return new User($this->app, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tags` WHERE `id` = ".intval($this->id))));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -232,7 +232,7 @@ class Tag extends BaseObject {
   }
   public function getType() {
     // retrieves the tag type that this tag belongs to.
-    return new TagType($this->dbConn, intval($this->dbConn->queryFirstValue("SELECT `tag_type_id` FROM `tags` WHERE `id` = ".intval($this->id))));
+    return new TagType($this->app, intval($this->dbConn->queryFirstValue("SELECT `tag_type_id` FROM `tags` WHERE `id` = ".intval($this->id))));
   }
   public function type() {
     if ($this->type === Null) {
@@ -245,7 +245,7 @@ class Tag extends BaseObject {
     $animes = [];
     $animeIDs = $this->dbConn->stdQuery("SELECT `anime_id` FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
     while ($animeID = $animeIDs->fetch_assoc()) {
-      $animes[intval($animeID['anime_id'])] = new Anime($this->dbConn, intval($animeID['anime_id']));
+      $animes[intval($animeID['anime_id'])] = new Anime($this->app, intval($animeID['anime_id']));
     }
     return $animes;
   }
@@ -266,7 +266,7 @@ class Tag extends BaseObject {
     return $this->numAnime;
   }
 
-  public function render(Application $app) {
+  public function render() {
     if (isset($_POST['tag']) && is_array($_POST['tag'])) {
       $updateTag = $this->create_or_update($_POST['tag']);
       if ($updateTag) {
@@ -275,7 +275,7 @@ class Tag extends BaseObject {
         redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
       }
     }
-    switch($app->action) {
+    switch($this->app->action) {
       case 'token_search':
         $tags = [];
         if (isset($_REQUEST['term'])) {
@@ -286,27 +286,27 @@ class Tag extends BaseObject {
         break;
       case 'new':
         $title = "Create a Tag";
-        $output = $this->view('new', $app);
+        $output = $this->view('new');
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = "Editing ".escape_output($this->name());
-        $output = $this->view('edit', $app);
+        $output = $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = "Tag: ".escape_output($this->name());
-        $output = $this->view('show', $app, array('recsEngine' => $app->recsEngine));
+        $output = $this->view('show', array('recsEngine' => $this->app->recsEngine));
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $tagName = $this->name();
@@ -320,10 +320,10 @@ class Tag extends BaseObject {
       default:
       case 'index':
         $title = "All Tags";
-        $output = $this->view('index', $app);
+        $output = $this->view('index');
         break;
     }
-    $app->render($output, array('title' => $title));
+    $this->app->render($output, array('title' => $title));
   }
 
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {

@@ -13,8 +13,8 @@ abstract class BaseEntry extends BaseObject {
   // and for a comment entry on the user's page, it'd be the comment
   public $object;
 
-  public function __construct(DbConn $database, $id=Null, $params=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null, $params=Null) {
+    parent::__construct($app, $id);
     if ($id === 0) {
       $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
       $this->time = new DateTime("now", $serverTimezone);
@@ -34,7 +34,7 @@ abstract class BaseEntry extends BaseObject {
   }
   public function user() {
     if ($this->user === Null) {
-      $this->user = new User($this->dbConn, $this->userId());
+      $this->user = new User($this->app, $this->userId());
     }
     return $this->user;
   }
@@ -87,9 +87,9 @@ abstract class BaseEntry extends BaseObject {
     */
     // ensure that this user and list type exist.
     try {
-      $user = new User($this->dbConn, intval($entry['user_id']));
+      $user = new User($this->app, intval($entry['user_id']));
       $user->getInfo();
-      $type = new $this->entryType($this->dbConn, intval($entry[$this->typeID]));
+      $type = new $this->entryType($this->app, intval($entry[$this->typeID]));
       $type->getInfo();
     } catch (Exception $e) {
       return False;
@@ -135,7 +135,7 @@ abstract class BaseEntry extends BaseObject {
   }
 
   // all feed entry classes must implement a way to format said feed entries into markup.
-  abstract public function formatFeedEntry(User $currentUser);
+  abstract public function formatFeedEntry();
 }
 
 ?>

@@ -6,17 +6,17 @@ class AnimeEntry extends BaseEntry {
   protected $list;
   protected $comments;
 
-  public function __construct(DbConn $database, $id=Null, $params=Null) {
-    parent::__construct($database, $id, $params);
+  public function __construct(Application $app, $id=Null, $params=Null) {
+    parent::__construct($app, $id, $params);
     $this->modelTable = "anime_lists";
     $this->modelUrl = "anime_entries";
     $this->modelPlural = "animeLists";
     $this->entryType = "Anime";
     if ($id === 0) {
-      $this->anime = new Anime($this->dbConn, 0);
+      $this->anime = new Anime($this->app, 0);
       $this->animeId = $this->userId = 0;
       $this->episode = 0;
-      $this->list = new AnimeList($database, 0);
+      $this->list = new AnimeList($this->app, 0);
     } else {
       if (!is_numeric($this->animeId)) {
         $this->animeId = Null;
@@ -32,7 +32,7 @@ class AnimeEntry extends BaseEntry {
   }
   public function anime() {
     if ($this->anime === Null) {
-      $this->anime = new Anime($this->dbConn, $this->animeId());
+      $this->anime = new Anime($this->app, $this->animeId());
     }
     return $this->anime;
   }
@@ -41,7 +41,7 @@ class AnimeEntry extends BaseEntry {
   }
   private function _getComments() {
     $comments = $this->dbConn->queryAssoc("SELECT `id` FROM `comments` WHERE `type` = 'AnimeEntry` && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC", 'id', 'id');
-    return new CommentGroup($this->dbConn, array_keys($comments));
+    return new CommentGroup($this->app, array_keys($comments));
   }
   public function comments() {
     if ($this->comments === Null) {
@@ -49,7 +49,7 @@ class AnimeEntry extends BaseEntry {
     }
     return $this->comments;
   }
-  public function formatFeedEntry(User $currentUser) {
+  public function formatFeedEntry() {
     // fetch the previous feed entry and compare values against current entry.
 
     $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
@@ -87,11 +87,11 @@ class AnimeEntry extends BaseEntry {
 
     return array('title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText);
   }
-  public function render(Application $app) {
-    $location = $app->user->url();
+  public function render() {
+    $location = $this->app->user->url();
     $status = "";
     $class = "";
-    switch($app->action) {
+    switch($this->app->action) {
       case 'new':
       case 'edit':
         if (isset($_POST['anime_entry']) && is_array($_POST['anime_entry'])) {
@@ -103,7 +103,7 @@ class AnimeEntry extends BaseEntry {
           }
           // check to ensure that the user has perms to create or update an entry.
           try {
-            $targetUser = new User($this->dbConn, intval($_POST['anime_entry']['user_id']));
+            $targetUser = new User($this->app, intval($_POST['anime_entry']['user_id']));
             $targetUser->getInfo();
           } catch (Exception $e) {
             // this non-zero userID does not exist.
@@ -111,15 +111,15 @@ class AnimeEntry extends BaseEntry {
             $class = "error";
             break;
           }
-          $targetEntry = new AnimeEntry($this->dbConn, intval($app->id), array('user' => $targetUser));
-          if (!$targetEntry->allow($app->user, $app->action)) {
+          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), array('user' => $targetUser));
+          if (!$targetEntry->allow($this->app->user, $this->app->action)) {
             $location = $targetUser->url();
             $status = "You can't update someone else's anime list.";
             $class = "error";
             break;
           }
           try {
-            $targetAnime = new Anime($this->dbConn, intval($_POST['anime_entry']['anime_id']));
+            $targetAnime = new Anime($this->app, intval($_POST['anime_entry']['anime_id']));
             $targetAnime->getInfo();
           } catch (Exception $e) {
             $location = $targetUser->url();
@@ -154,7 +154,7 @@ class AnimeEntry extends BaseEntry {
       case 'delete':
         $deleteList = $this->delete();
         if ($deleteList) {
-          $status = "Successfully removed an entry your anime list.";
+          $status = "Successfully removed an entry from your anime list.";
           $class = "success";
           break;
         } else {

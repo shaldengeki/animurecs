@@ -2,15 +2,15 @@
 abstract class BaseObject {
   // base class for database objects.
 
-  public $dbConn;
-  public $id;
-
+  public $app, $dbConn, $id=Null;
   public $modelTable, $modelUrl, $modelPlural, $modelName;
-  protected $createdAt, $updatedAt;
-  protected $_observers = array();
 
-  public function __construct(DbConn $database, $id=Null) {
-    $this->dbConn = $database;
+  protected $createdAt, $updatedAt;
+  protected $observers = array();
+
+  public function __construct(Application $app, $id=Null) {
+    $this->app = $app;
+    $this->dbConn = $app->dbConn;
     $this->id = intval($id);
     $this->modelName = $this->modelPlural = $this->modelTable = $this->modelUrl = Null;
     if ($id === 0) {
@@ -121,23 +121,23 @@ abstract class BaseObject {
         return False;
       }
     }
-    if (!isset($this->_observers[$event])) {
-      $this->_observers[$event] = array($observer);
+    if (!isset($this->observers[$event])) {
+      $this->observers[$event] = array($observer);
     } else {
-      $elements = array_keys($this->_observers[$event], $o);
+      $elements = array_keys($this->observers[$event], $o);
       $notinarray = True;
       foreach ($elements as $value) {
-        if ($observer === $this->_observers[$event][$value]) {
+        if ($observer === $this->observers[$event][$value]) {
             $notinarray = False;
             break;
           }
         }
       //check if there already
       if ($notinarray) {
-        $this->_observers[$event][] = $observer;
+        $this->observers[$event][] = $observer;
       }
     }
-    return array($event, count($this->_observers[$event])-1);
+    return array($event, count($this->observers[$event])-1);
   }
   public function unbind($observer) {
     // callback is array of form [event_name, position]
@@ -145,24 +145,24 @@ abstract class BaseObject {
     if (is_array($observer)) {
       if (count($observer) < 2) {
         return False;
-      } elseif (!isset($this->_observers[$observer[0]])) {
+      } elseif (!isset($this->observers[$observer[0]])) {
         return True;
       }
-      unset($this->_observers[$observer[0]][$observer[1]]);
-      return !isset($this->_observers[$observer[0]][$observer[1]]);
+      unset($this->observers[$observer[0]][$observer[1]]);
+      return !isset($this->observers[$observer[0]][$observer[1]]);
     } else {
-      if (!isset($this->_observers[$observer])) {
+      if (!isset($this->observers[$observer])) {
         return True;
       }
-      unset($this->_observers[$observer]);
-      return !isset($this->_observers[$observer]);
+      unset($this->observers[$observer]);
+      return !isset($this->observers[$observer]);
     }
   }
   public function fire($event, $updateParams=Null) {
-    if (!isset($this->_observers[$event])) {
+    if (!isset($this->observers[$event])) {
       return;
     }
-    foreach ($this->_observers[$event] as $observer) {
+    foreach ($this->observers[$event] as $observer) {
       if (!method_exists($observer, 'update')) {
         continue;
       }
@@ -267,7 +267,7 @@ abstract class BaseObject {
     $this->after_delete();
     return True;
   }
-  public function view($view="index", Application $app, array $params=Null) {
+  public function view($view="index", array $params=Null) {
     $file = joinPaths(Config::APP_ROOT, 'views', $this->modelTable, "$view.php");
     if (file_exists($file)) {
       ob_start();
@@ -276,8 +276,8 @@ abstract class BaseObject {
     }
     return False;
   }
-  public function render(Application $app) {
-    echo $app->render($this->view($app->action, $app));
+  public function render() {
+    echo $this->app->render($this->view($this->app->action));
     exit;
   }
   public function url($action="show", array $params=Null, $id=Null) {

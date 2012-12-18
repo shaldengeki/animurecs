@@ -10,7 +10,7 @@ trait Aliasable {
     $aliasQuery = $this->dbConn->stdQuery("SELECT `id` FROM `aliases` WHERE `type` = '".$this->modelName()."' && `parent_id` = ".intval($this->id)." ORDER BY `name` ASC");
     $aliases = [];
     while ($alias = $aliasQuery->fetch_assoc()) {
-      $aliases[intval($alias['id'])] = new Alias($this->dbConn, intval($alias['id']));
+      $aliases[intval($alias['id'])] = new Alias($this->app, intval($alias['id']));
     }
     return $aliases;
   }

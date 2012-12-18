@@ -11,7 +11,7 @@ trait Commentable {
     $profileComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `type` = '".$this->modelName()."' && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC");
     $comments = [];
     while ($comment = $profileComments->fetch_assoc()) {
-      $comments[intval($comment['id'])] = new CommentEntry($this->dbConn, intval($comment['id']));
+      $comments[intval($comment['id'])] = new CommentEntry($this->app, intval($comment['id']));
     }
     return $comments;
   }

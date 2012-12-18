@@ -4,10 +4,10 @@ class CommentEntry extends BaseEntry {
   protected $comment, $commentId;
   protected $parent;
 
-  public function __construct(DbConn $database, $id=Null, $params=Null) {
-    parent::__construct($database, $id, $params);
+  public function __construct(Application $app, $id=Null, $params=Null) {
+    parent::__construct($app, $id, $params);
     if ($id === 0) {
-      $this->comment = new Comment($this->dbConn, 0);
+      $this->comment = new Comment($this->app, 0);
       $this->commentId = 0;
     } else {
       $this->comment = $this->commentId = Null;
@@ -26,7 +26,7 @@ class CommentEntry extends BaseEntry {
   }
   public function comment() {
     if ($this->comment === Null) {
-      $this->comment = new Comment($this->dbConn, $this->commentId());
+      $this->comment = new Comment($this->app, $this->commentId());
     }
     return $this->comment;
   }
@@ -48,15 +48,15 @@ class CommentEntry extends BaseEntry {
   public function time() {
     return $this->comment()->createdAt();
   }
-  public function formatFeedEntry(User $currentUser) {
+  public function formatFeedEntry() {
     /* TODO: make this work for comments posted on anime etc */
-    if ($currentUser->id != $this->comment()->user()->id) {
+    if ($this->app->user->id != $this->comment()->user()->id) {
       $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username);
     } else {
       $feedTitle = "You";
     }
     if ($this->depth() < 2) {
-      if ($currentUser->id != $this->comment()->parent()->id) {
+      if ($this->app->user->id != $this->comment()->parent()->id) {
         $receivingUser = $this->comment()->parent()->link("show", $this->comment()->parent()->username);
       } else {
         $receivingUser = "you";

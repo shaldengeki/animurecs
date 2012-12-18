@@ -6,12 +6,13 @@ class BaseGroup {
   protected $_tagCounts=Null;
   protected $_pulledInfo=False;
   public $intKeys=True;
-  public $dbConn=Null;
+  public $dbConn,$app=Null;
   protected $_groupTable,$_groupTableSingular,$_groupObject,$_nameField = Null;
 
-  public function __construct(DbConn $dbConn, array $objects) {
+  public function __construct(Application $app, array $objects) {
     // preserves keys of input array.
-    $this->dbConn = $dbConn;
+    $this->app = $app;
+    $this->dbConn = $app->dbConn;
     if (count($objects) > 0) {
       foreach ($objects as $key=>$object) {
         $this->intKeys = $this->intKeys && is_int($key);
@@ -20,7 +21,7 @@ class BaseGroup {
         $this->_objects = $objects;
       } elseif (is_numeric(current($objects))) {
         foreach ($objects as $key=>$objectID) {
-          $this->_objects[$key] = new $this->_groupObject($this->dbConn, intval($objectID));
+          $this->_objects[$key] = new $this->_groupObject($this->app, intval($objectID));
         }
       }
     }

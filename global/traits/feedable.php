@@ -31,16 +31,16 @@ trait Feedable {
         $returnList[] = $entry;
         $entryCount++;
         if ($limit !== Null && $entryCount >= $limit) {
-          return new EntryGroup($this->dbConn, $returnList);
+          return new EntryGroup($this->app, $returnList);
         }
       }
-      return new EntryGroup($this->dbConn, $returnList);
+      return new EntryGroup($this->app, $returnList);
     } else {
-      return new EntryGroup($this->dbConn, $this->entries);
+      return new EntryGroup($this->app, $this->entries);
     }
   }
 
-  public function feedEntry(BaseEntry $entry, Application $app, $nested=False) {
+  public function feedEntry(BaseEntry $entry, $nested=False) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
     $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
     $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
@@ -48,9 +48,9 @@ trait Feedable {
 
     $diffInterval = $nowTime->diff($entry->time());
 
-    $feedMessage = $entry->formatFeedEntry($app->user);
+    $feedMessage = $entry->formatFeedEntry();
 
-    $blankEntryComment = new Comment($this->dbConn, 0, $app->user, $entry);
+    $blankEntryComment = new Comment($this->app, 0, $this->app->user, $entry);
 
     $entryType = $nested ? "div" : "li";
 
@@ -61,28 +61,28 @@ trait Feedable {
           <div class='feedEntry'>
             <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>
             ".$feedMessage['text']."\n";
-    if ($entry->allow($app->user, 'delete')) {
+    if ($entry->allow($this->app->user, 'delete')) {
       $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>\n";
     }
     $output .= "          </div>\n";
     if ($entry->comments) {
-      $commentGroup = new EntryGroup($app->dbConn, $entry->comments);
+      $commentGroup = new EntryGroup($this->app, $entry->comments);
       $commentGroup->info();
       $commentGroup->users();
       $commentGroup->comments();
       foreach ($commentGroup->entries() as $commentEntry) {
-        $output .= $this->feedEntry($commentEntry, $app, True);
+        $output .= $this->feedEntry($commentEntry, True);
       }
     }
-    if ($entry->allow($app->user, 'comment') && $blankEntryComment->depth() < 2) {
-      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', $app, array('currentObject' => $entry))."</div>\n";
+    if ($entry->allow($this->app->user, 'comment') && $blankEntryComment->depth() < 2) {
+      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', array('currentObject' => $entry))."</div>\n";
     }
     $output .= "          </div>
       </".$entryType.">\n";
     return $output;
   }
 
-  public function feed(EntryGroup $entries, Application $app, $numEntries=50, $emptyFeedText="") {
+  public function feed(EntryGroup $entries, $numEntries=50, $emptyFeedText="") {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
@@ -93,7 +93,7 @@ trait Feedable {
       $output .= $emptyFeedText;
     } else {
       // now pull info en masse for these entries.
-      $entryGroup = new EntryGroup($app->dbConn, $entries);
+      $entryGroup = new EntryGroup($this->app, $entries);
       $entryGroup->info();
       $entryGroup->users();
       $entryGroup->anime();
@@ -102,7 +102,7 @@ trait Feedable {
       $output = "<ul class='media-list ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
       foreach ($entryGroup->entries() as $entry) {
-        $feedOutput[] = $this->feedEntry($entry, $app);
+        $feedOutput[] = $this->feedEntry($entry);
       }
       $output .= implode("\n", $feedOutput);
       $output .= "</ul>\n";

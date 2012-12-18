@@ -6,10 +6,7 @@ class AnimeGroup extends BaseGroup {
   protected $_groupTableSingular = "anime";
   protected $_groupObject = "Anime";
   protected $_nameField = "title";
-
-  public function __construct(DbConn $dbConn, array $anime) {
-    parent::__construct($dbConn, $anime);
-  }
+  
   public function anime() {
     return $this->objects();
   }

@@ -19,8 +19,8 @@ class User extends BaseObject {
   protected $requestedFriends;
   protected $ownComments;
 
-  public function __construct(DbConn $database, $id=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null) {
+    parent::__construct($app, $id);
     $this->modelTable = "users";
     $this->modelPlural = "users";
     if ($id === 0) {
@@ -29,7 +29,7 @@ class User extends BaseObject {
       $this->usermask = 0;
       $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
-      $this->animeList = new AnimeList($this->dbConn, 0);
+      $this->animeList = new AnimeList($this->app, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
@@ -37,7 +37,7 @@ class User extends BaseObject {
       $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
       if ($this->currentUser()) {
         // toy example of an achievement listener.
-        $this->bind("afterUpdate", new TestAchievement($this->dbConn));
+        $this->bind("afterUpdate", new TestAchievement($this->app));
       }
     }
   }
@@ -55,6 +55,25 @@ class User extends BaseObject {
   }
   public function usermask() {
     return $this->returnInfo('usermask');
+  }
+  public function usermaskText() {
+    $roles = [];
+    if ($this->usermask() == 0) {
+      return "Guest";
+    }
+    if ($this->usermask() & 4) {
+      $roles[] = "Administrator";
+    }
+    if ($this->usermask() & 2) {
+      $roles[] = "Moderator";
+    }
+    if ($this->usermask() & 1) {
+      $roles[] = "User";
+    }
+    if (!$roles) {
+      return "Unknown";
+    }
+    return implode(", ", $roles);
   }
   public function lastActive() {
     return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(Config::SERVER_TIMEZONE));
@@ -80,7 +99,7 @@ class User extends BaseObject {
       } else {
         $userID = intval($req['user_id_1']);
       }
-      $reqArray['user'] = new User($this->dbConn, $userID);
+      $reqArray['user'] = new User($this->app, $userID);
       $friends[$userID] = $reqArray;
     }
     return $friends;
@@ -101,7 +120,7 @@ class User extends BaseObject {
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
       $friendReqs[] = array(
-          'user' => new User($this->dbConn, intval($req['user_id_1'])),
+          'user' => new User($this->app, intval($req['user_id_1'])),
           'time' => $req['time'],
           'message' => $req['message']
         );
@@ -124,7 +143,7 @@ class User extends BaseObject {
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
       $friendReqs[] = array(
-          'user' => new User($this->dbConn, intval($req['user_id_2'])),
+          'user' => new User($this->app, intval($req['user_id_2'])),
           'time' => $req['time'],
           'message' => $req['message']
         );
@@ -139,7 +158,7 @@ class User extends BaseObject {
   }
   public function animeList() {
     if ($this->animeList === Null) {
-      $this->animeList = new AnimeList($this->dbConn, $this->id);
+      $this->animeList = new AnimeList($this->app, $this->id);
     }
     return $this->animeList;
   }
@@ -148,7 +167,7 @@ class User extends BaseObject {
     $ownComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `user_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
     $comments = [];
     while ($comment = $ownComments->fetch_assoc()) {
-      $comments[] = new Comment($this->dbConn, intval($comment['id']));
+      $comments[] = new Comment($this->app, intval($comment['id']));
     }
     return $comments;
   }
@@ -542,27 +561,27 @@ class User extends BaseObject {
       if (!$findUserID) {
         return array("location" => "/feed.php", "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error');
       }
-      $newUser = new User($this->dbConn, $findUserID);
+      $newUser = new User($this->app, $findUserID);
       $newUser->switchedUser = $_SESSION['id'];
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
       return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username()).".", 'class' => 'success');
     } else {
-      $newUser = new User($this->dbConn, $username);
+      $newUser = new User($this->app, $username);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
       return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
     }
   }
-  public function render(Application $app) {
-    switch($app->action) {
+  public function render() {
+    switch($this->app->action) {
       case 'request_friend':
-        if ($this->id === $app->user->id) {
-          redirect_to($app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
+        if ($this->id === $this->app->user->id) {
+          redirect_to($this->app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
         }
-        $requestFriend = $app->user->requestFriend($this, $_POST['friend_request']);
+        $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
           redirect_to($this->url("show"), array('status' => "Your friend request has been sent to ".urlencode($this->username()).".", 'class' => 'success'));
         } else {
@@ -570,7 +589,7 @@ class User extends BaseObject {
         }
         break;
       case 'confirm_friend':
-        $confirmFriend = $app->user->confirmFriend($this);
+        $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
           redirect_to($this->url("show"), array('status' => "Hooray! You're now friends with ".urlencode($this->username()).".", 'class' => 'success'));
         } else {
@@ -590,20 +609,20 @@ class User extends BaseObject {
         }
         break;
       case 'switch_back':
-        $switchUser = $app->user->switchUser($_SESSION['switched_user'], False);
+        $switchUser = $this->app->user->switchUser($_SESSION['switched_user'], False);
         redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
         break;
       case 'switch_user':
         if (isset($_POST['switch_username'])) {
-          $switchUser = $app->user->switchUser($_POST['switch_username']);
+          $switchUser = $this->app->user->switchUser($_POST['switch_username']);
           redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
         }
         $title = "Switch Users";
-        $output = "<h1>Switch Users</h1>\n".$app->user->view("switchForm", $app);
+        $output = "<h1>Switch Users</h1>\n".$this->app->user->view("switchForm");
         break;
       case 'new':
         $title = "Sign Up";
-        $output = $this->view('new', $app);
+        $output = $this->view('new');
         break;
       case 'edit':
         if (isset($_POST['user']) && is_array($_POST['user'])) {
@@ -619,46 +638,46 @@ class User extends BaseObject {
           }
         }
         if ($this->id === 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = "Editing ".escape_output($this->username());
-        $output = $this->view("edit", $app);
+        $output = $this->view("edit");
         break;
       case 'show':
         if ($this->id === 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = escape_output($this->username())."'s Profile";
-        $output = $this->view("show", $app);
+        $output = $this->view("show");
         break;
       case 'feed':
-        if ($this->animeList()->allow($app->user, 'edit')) {
-          $output .= $this->view('addEntryInlineForm', $app);
+        if ($this->animeList()->allow($this->app->user, 'edit')) {
+          $output .= $this->view('addEntryInlineForm');
         }
-        if ($this->allow($app->user, 'comment')) {
-          $blankComment = new Comment($this->dbConn, 0, $app->user, $this);
+        if ($this->allow($this->app->user, 'comment')) {
+          $blankComment = new Comment($this->app, 0, $this->app->user, $this);
           $output .= "                <div class='addListEntryForm'>
-                      ".$blankComment->view('inlineForm', $app, array('currentObject' => $this))."
+                      ".$blankComment->view('inlineForm', $this->app, array('currentObject' => $this))."
                     </div>\n";
 
         }
-        $output .= $this->profileFeed($app);
+        $output .= $this->profileFeed();
         echo $output;
         exit;
       case 'anime_list':
-        echo $this->animeList()->view("show", $app);
+        echo $this->animeList()->view("show");
         exit;
       case 'stats':
-        echo $this->view('stats', $app);
+        echo $this->view('stats');
         exit;
       case 'achievements':
-        echo $this->view('achievements', $app);
+        echo $this->view('achievements');
         exit;
       case 'delete':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $username = $this->username();
@@ -672,10 +691,10 @@ class User extends BaseObject {
       default:
       case 'index':
         $title = "All Users";
-        $output = $app->user->view('index', $app);
+        $output = $this->app->user->view('index');
         break;
     }
-    $app->render($output, array('title' => $title));
+    $this->app->render($output, array('title' => $title));
   }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
@@ -689,17 +708,17 @@ class User extends BaseObject {
     } 
     return $output;
   }
-  public function profileFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
+  public function profileFeed(DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
     $commentEntries = [];
     foreach ($this->comments() as $comment) {
-      $commentEntries[] = new CommentEntry($this->dbConn, intval($comment->id));
+      $commentEntries[] = new CommentEntry($this->app, intval($comment->id));
     }
-    $feedEntries->append(new EntryGroup($app->dbConn, $commentEntries));
-    return $this->animeList()->feed($feedEntries, $app, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
+    $feedEntries->append(new EntryGroup($this->app, $commentEntries));
+    return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
-  public function globalFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
+  public function globalFeed(DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's global feed.
 
     // add each user's personal feeds to the total feed.
@@ -710,12 +729,12 @@ class User extends BaseObject {
       foreach ($friend['user']->ownComments() as $comment) {
         // only append top-level comments.
         if ($comment->depth() === 0) {
-          $comments[] = new CommentEntry($this->dbConn, intval($comment->id));
+          $comments[] = new CommentEntry($this->app, intval($comment->id));
         }
       }
-      $feedEntries->append(new EntryGroup($app->dbConn, $comments));
+      $feedEntries->append(new EntryGroup($this->app, $comments));
     }
-    return $this->animeList()->feed($feedEntries, $app, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
+    return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
   }
 }
 ?>

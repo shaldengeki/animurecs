@@ -1,20 +1,20 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  $app->check_partial_include(__FILE__);
+  $this->app->check_partial_include(__FILE__);
 
   // lists all tags.
   $resultsPerPage = 25;
-  $newTagType = new TagType($this->dbConn, 0);
-  if ($app->user->isAdmin()) {
-    $tagType = $this->dbConn->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+  $newTagType = new TagType($this->app, 0);
+  if ($this->app->user->isAdmin()) {
+    $tagType = $this->dbConn->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagTypePages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types`")/$resultsPerPage);
   } else {
-    $tagType = $this->dbConn->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` WHERE `approved_on` != '' ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $tagType = $this->dbConn->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` WHERE `approved_on` != '' ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagTypePages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types` WHERE `approved_on` != ''")/$resultsPerPage);
   }
 ?>
 <h1>All Tag Types</h1>
-<?php echo paginate($newTagType->url("index", array("page" => "")), intval($app->page), $tagTypePages); ?>
+<?php echo paginate($newTagType->url("index", array("page" => "")), intval($this->app->page), $tagTypePages); ?>
 <table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -27,18 +27,18 @@
   <tbody>
 <?php
   while ($thisID = $tagType->fetch_assoc()) {
-    $thisTagType = new TagType($this->dbConn, intval($thisID['id']));
+    $thisTagType = new TagType($this->app, intval($thisID['id']));
 ?>
     <tr>
       <td><?php echo $thisTagType->link("show", $thisTagType->name()); ?></td>
       <td><?php echo escape_output($thisTagType->description()); ?></td>
-      <td><?php echo $app->user->isAdmin() ? $thisTagType->link("edit", "Edit") : ""; ?></td>
-      <td><?php echo $app->user->isAdmin() ? $thisTagType->link("delete", "Delete") : ""; ?></td>
+      <td><?php echo $this->app->user->isAdmin() ? $thisTagType->link("edit", "Edit") : ""; ?></td>
+      <td><?php echo $this->app->user->isAdmin() ? $thisTagType->link("delete", "Delete") : ""; ?></td>
     </tr>
 <?php
   }
 ?>
   </tbody>
 </table>
-<?php echo paginate($newTagType->url("index", array("page" => "")), intval($app->page), $tagTypePages); ?>
+<?php echo paginate($newTagType->url("index", array("page" => "")), intval($this->app->page), $tagTypePages); ?>
 <?php echo $newTagType->link("new", "Add a tag type"); ?>

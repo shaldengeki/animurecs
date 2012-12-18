@@ -5,8 +5,8 @@ class TagType extends BaseObject {
 
   protected $tags;
   protected $createdUser;
-  public function __construct(DbConn $database, $id=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null) {
+    parent::__construct($app, $id);
     $this->modelTable = "tag_types";
     $this->modelPlural = "tagTypes";
     if ($id === 0) {
@@ -59,7 +59,7 @@ class TagType extends BaseObject {
         return False;
       } else {
         try {
-          $approvedUser = new User($this->dbConn, intval($tag_type['created_user_id']));
+          $approvedUser = new User($this->app, intval($tag_type['created_user_id']));
           $approvedUser->getInfo();
         } catch (Exception $e) {
           return False;
@@ -91,7 +91,7 @@ class TagType extends BaseObject {
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag type.
-    return new User($this->dbConn, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tag_types` WHERE `tag_types`.`id` = ".intval($this->id))));
+    return new User($this->app, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tag_types` WHERE `tag_types`.`id` = ".intval($this->id))));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -104,18 +104,18 @@ class TagType extends BaseObject {
     $tags = [];
     $tagIDs = $this->dbConn->stdQuery("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
-      $tags[] = new Tag($this->dbConn, intval($tagID['id']));
+      $tags[] = new Tag($this->app, intval($tagID['id']));
     }
     return $tags;
   }
   public function tags() {
     if ($this->tags === Null) {
-      $this->tags = new TagGroup($this->dbConn, $this->getTags());
+      $this->tags = new TagGroup($this->app, $this->getTags());
     }
     return $this->tags;
   }
 
-  public function render(Application $app) {
+  public function render() {
     if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
       $updateTagType = $this->create_or_update($_POST['tag_type']);
       if ($updateTagType) {
@@ -124,30 +124,30 @@ class TagType extends BaseObject {
         redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
       }
     }
-    switch($app->action) {
+    switch($this->app->action) {
       case 'new':
         $title = "Create a Tag Type";
-        $output = $this->view('new', $app);
+        $output = $this->view('new');
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = "Editing ".escape_output($this->name());
-        $output = $this->view('edit', $app);
+        $output = $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = escape_output($this->name());
-        $output = $this->view('show', $app);
+        $output = $this->view('show');
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $deleteTagType = $this->delete();
@@ -160,10 +160,10 @@ class TagType extends BaseObject {
       default:
       case 'index':
         $title = "All Tag Types";
-        $output = $this->view('index', $app);
+        $output = $this->view('index');
         break;
     }
-    $app->render($output, array('title' => $title));
+    $this->app->render($output, array('title' => $title));
   }
 }
 ?>

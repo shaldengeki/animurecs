@@ -161,18 +161,20 @@ function displayListEditForm(elt) {
 function revertListEditForm(elt) {
   // converts a list edit form back to a normal table list entry.
   // is called on the last cell of a list entry row, on the button.
-  url = $(elt).attr('data-url');
-  rowNode = $(elt).parent().parent();
-  buttonNode = $(elt).parent();
+  var url = $(elt).attr('data-url');
+  var rowNode = $(elt).parent().parent();
+  var buttonNode = $(elt).parent();
 
-  $(rowNode).find('.listEntryTitle .listEntryStatus').addClass('hidden');
+  var statusNode = $(rowNode).find('.listEntryTitle .listEntryStatus');
+  statusNode.addClass('hidden');
 
-  scoreNode = $(elt).parent().parent().find('.listEntryScore');
-  $(scoreNode).html(scoreNode.find('input').val() + "/10");
+  var scoreNode = $(elt).parent().parent().find('.listEntryScore');
+  var scoreVal = scoreNode.find('input').val();
+  $(scoreNode).html(scoreVal == "0" ? "" : scoreVal + "/10");
 
-  episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
-  finishedEps = $(episodeNode).find('.input-append input').val();
-  totalEps = $(episodeNode).find('.input-append .add-on').text();
+  var episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
+  var finishedEps = $(episodeNode).find('.input-append input').val();
+  var totalEps = $(episodeNode).find('.input-append .add-on').text();
   $(episodeNode).html(finishedEps + totalEps);
 
   $(buttonNode).empty().append($('<a></a>').attr('href', '#').attr('data-url', url).addClass('listEdit').append("<i></i>").addClass('icon-pencil').click(function(event) {
@@ -348,6 +350,21 @@ function initInterface(elt) {
       $(this).find('.feedEntryMenu').removeClass('hidden');
     }, function() {
       $(this).find('.feedEntryMenu').addClass('hidden');
+    });
+  });
+
+  // TOOD: automatically fill status, score, episode count from previous entry when user types anime name into title search box.
+
+  // fills episode count automatically when user marks anime as completed in dropdown AND the total episode count has already been loaded as an input add-on.
+  $('select[name=anime_list\\[status\\]]').each(function() {
+    $(this).change(function() {
+      if ($(this).val() == "2") {
+        var episodeNode = $($(this).parent().parent().parent().find('input[name=anime_list\\[episode\\]]')[0]);
+        if (episodeNode.next().length > 0) {
+          var episodeCount = parseInt(episodeNode.next().text().substr(1));
+          episodeNode.val(episodeCount);
+        }
+      }
     });
   });
 

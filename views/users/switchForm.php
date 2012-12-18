@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  $app->check_partial_include(__FILE__);
+  $this->app->check_partial_include(__FILE__);
 ?>
     <form action='<?php echo $this->url("switch_user"); ?>' method='POST' class='form-horizontal'>
       <fieldset>

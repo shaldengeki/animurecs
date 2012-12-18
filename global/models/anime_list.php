@@ -1,8 +1,8 @@
 <?php
 class AnimeList extends BaseList {
   // anime list.
-  public function __construct(DbConn $database, $user_id=Null) {
-    parent::__construct($database, $user_id);
+  public function __construct(Application $app, $user_id=Null) {
+    parent::__construct($app, $user_id);
     $this->modelTable = "anime_lists";
     $this->modelPlural = "animeLists";
     $this->partName = "episode";
@@ -38,31 +38,31 @@ class AnimeList extends BaseList {
         break;
     }
   }
-  public function render(Application $app) {
+  public function render() {
     if ($this->user_id !== Null) {
       $targetUser = $this->user();
     } else {
       try {
-        $targetUser = isset($_POST['anime_list']['user_id']) ? new User($database, intval($_POST['anime_list']['user_id'])) : $app->user;
+        $targetUser = isset($_POST['anime_list']['user_id']) ? new User($this->app, intval($_POST['anime_list']['user_id'])) : $this->app->user;
         if ($targetUser->id !== 0) {
           $targetUser->getInfo();
         } else {
           // This user does not exist.
-          redirect_to($app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+          redirect_to($this->app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
         }
       } catch (Exception $e) {
         // this non-zero userID does not exist.
-        redirect_to($app->user->url(), array('status' => "This user doesn't exist.", 'class' => 'error'));
+        redirect_to($this->app->user->url(), array('status' => "This user doesn't exist.", 'class' => 'error'));
       }
     }
     $location = $this->user()->url();
     $status = "";
     $class = "";
-    switch($app->action) {
+    switch($this->app->action) {
       case 'feed':
         $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
         $entries = $this->entries($maxTime, 50);
-        echo $this->feed($entries, $app, 50, "");
+        echo $this->feed($entries, 50, "");
         exit;
         break;
       case 'new':
@@ -105,7 +105,7 @@ class AnimeList extends BaseList {
         if (!isset($_REQUEST['id'])) {
           $_REQUEST['id'] = False;
         }
-        $deleteList = $app->user->animeList->delete([intval($_REQUEST['id'])]);
+        $deleteList = $this->app->user->animeList->delete([intval($_REQUEST['id'])]);
         if ($deleteList) {
           $status = "Successfully updated your anime list.";
           $class = "success";

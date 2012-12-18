@@ -1,10 +1,10 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  $app->check_partial_include(__FILE__);
+  $this->app->check_partial_include(__FILE__);
 ?>
     <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' class='form-horizontal'>
       <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />"; ?>
-      <input name='tag_type[created_user_id]' type='hidden' value='<?php echo $this->id === 0 ? intval($app->user->id) : $this->createdUser()->id; ?>' />
+      <input name='tag_type[created_user_id]' type='hidden' value='<?php echo $this->id === 0 ? intval($this->app->user->id) : $this->createdUser()->id; ?>' />
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag_type[name]'>Name</label>

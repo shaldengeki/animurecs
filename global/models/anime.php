@@ -19,8 +19,8 @@ class Anime extends BaseObject {
 
   protected $tags;
 
-  public function __construct(DbConn $database, $id=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null) {
+    parent::__construct($app, $id);
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
     if ($id === 0) {
@@ -57,7 +57,7 @@ class Anime extends BaseObject {
   }
   public function approvedUser() {
     if ($this->approvedUser === Null) {
-      $this->approvedUser = new User($this->dbConn, intval($this->returnInfo('approvedUserId')));
+      $this->approvedUser = new User($this->app, intval($this->returnInfo('approvedUserId')));
     }
     return $this->approvedUser;
   }
@@ -114,7 +114,7 @@ class Anime extends BaseObject {
       return True;
     }
     try {
-      $tag = new Tag($this->dbConn, intval($tag_id));
+      $tag = new Tag($this->app, intval($tag_id));
       $tag->getInfo();
     } catch (Exception $e) {
       return False;
@@ -181,7 +181,7 @@ class Anime extends BaseObject {
         return False;
       } else {
         try {
-          $approvedUser = new User($this->dbConn, intval($anime['approved_user_id']));
+          $approvedUser = new User($this->app, intval($anime['approved_user_id']));
           $approvedUser->getInfo();
         } catch (Exception $e) {
           return False;
@@ -281,13 +281,13 @@ class Anime extends BaseObject {
     $tags = [];
     $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
-      $tags[intval($tagID['tag_id'])] = new Tag($this->dbConn, intval($tagID['tag_id']));
+      $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
     }
     return $tags;
   }
   public function tags() {
     if ($this->tags === Null) {
-      $this->tags = new TagGroup($this->dbConn, $this->getTags());
+      $this->tags = new TagGroup($this->app, $this->getTags());
     }
     return $this->tags;
   }
@@ -296,7 +296,7 @@ class Anime extends BaseObject {
     $returnList = [];
     $animeEntries = $this->dbConn->stdQuery("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
     while ($entry = $animeEntries->fetch_assoc()) {
-      $newEntry = new AnimeEntry($this->dbConn, intval($entry['id']), $entry);
+      $newEntry = new AnimeEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;
     }
     return $returnList;
@@ -346,7 +346,7 @@ class Anime extends BaseObject {
   public function predictedRating(RecsEngine $recsEngine, User $user) {
     return $recsEngine->predict($user, $this);
   }
-  public function render(Application $app) {
+  public function render() {
     if (isset($_POST['anime']) && is_array($_POST['anime'])) {
       $updateAnime = $this->create_or_update($_POST['anime']);
       if ($updateAnime) {
@@ -355,15 +355,15 @@ class Anime extends BaseObject {
         redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error'));
       }
     }
-    switch($app->action) {
+    switch($this->app->action) {
       case 'feed':
         $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
         $entries = $this->entries($maxTime, 50);
-        echo $this->feed($entries, $app, 50, "");
+        echo $this->feed($entries, 50, "");
         exit;
         break;
       case 'token_search':
-        $blankAlias = new Alias($app->dbConn, 0, $this);
+        $blankAlias = new Alias($this->app, 0, $this);
         $searchResults = $blankAlias->search($_REQUEST['term']);
         $animus = [];
         foreach ($searchResults as $anime) {
@@ -374,27 +374,27 @@ class Anime extends BaseObject {
         break;
       case 'new':
         $title = "Add an anime";
-        $output = $this->view('new', $app);
+        $output = $this->view('new');
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = "Editing ".escape_output($this->title());
-        $output .= $this->view('edit', $app);
+        $output .= $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $title = escape_output($this->title());
-        $output = $this->view("show", $app);
+        $output = $this->view("show");
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = $app->display_error(404);
+          $output = $this->app->display_error(404);
           break;
         }
         $animeTitle = $this->title();
@@ -408,10 +408,10 @@ class Anime extends BaseObject {
       default:
       case 'index':
         $title = "All Anime";
-        $output = $this->view("index", $app);
+        $output = $this->view("index");
         break;
     }
-    $app->render($output, array('title' => $title));
+    $this->app->render($output, array('title' => $title));
   }
   public function scoreBar($score=False) {
     // returns markup for a score bar for a score given to this anime.
@@ -429,13 +429,13 @@ class Anime extends BaseObject {
     }
     return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($score*10.0)."%'>".round($score, 1)."/10</div></div>";
   }
-  public function formatFeedEntry(BaseEntry $entry, User $currentUser) {
-    return $entry->user->animeList->formatFeedEntry($entry, $currentUser);
+  public function formatFeedEntry(BaseEntry $entry) {
+    return $entry->user->animeList->formatFeedEntry($entry);
   }
-  public function animeFeed(Application $app, DateTime $maxTime=Null, $numEntries=50) {
+  public function animeFeed(DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->entries($maxTime, $numEntries);
-    return $this->feed($feedEntries, $app, $numEntries, "<blockquote><p>No entries yet - ".$app->user->link("show", "be the first!")."</p></blockquote>\n");
+    return $this->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>\n");
   }
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";

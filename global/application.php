@@ -16,7 +16,7 @@ class Application {
   }
   private function _connectDB() {
     if ($this->dbConn === Null) {
-      $this->dbConn = new DbConn(Config::MYSQL_HOST, Config::MYSQL_USERNAME, Config::MYSQL_PASSWORD, Config::MYSQL_DATABASE);
+      $this->dbConn = new DbConn();
     }
     return $this->dbConn;
   }
@@ -29,41 +29,32 @@ class Application {
   private function _loadDependencies() {
     $this->_loadDependency("/global/config.php");
 
-    $this->_loadDependency("/global/bcrypt.php");
-    $this->_loadDependency("/global/database.php");
-    $this->_loadDependency("/global/curl.php");
-    $this->_loadDependency("/global/recs_engine.php");
+    // core models, including base_object.
+    foreach (glob(Config::APP_ROOT."/global/core/*.php") as $filename) {
+      require_once($filename);
+    }
 
-    $this->_loadDependency("/global/aliasable.php");
-    $this->_loadDependency("/global/commentable.php");
-    $this->_loadDependency("/global/feedable.php");
+    // include all traits before models that depend on them.
+    foreach (glob(Config::APP_ROOT."/global/traits/*.php") as $filename) {
+      require_once($filename);
+    }
 
-    $this->_loadDependency("/global/base_object.php");
-    $this->_loadDependency("/global/base_list.php");
-    $this->_loadDependency("/global/base_entry.php");
-    $this->_loadDependency("/global/base_achievement.php");
+    // generic base models that extend base_object.
+    foreach (glob(Config::APP_ROOT."/global/base/*.php") as $filename) {
+      require_once($filename);
+    }
 
-    $this->_loadDependency("/global/base_group.php");
-    $this->_loadDependency("/global/anime_group.php");
-    $this->_loadDependency("/global/comment_group.php");
-    $this->_loadDependency("/global/tag_group.php");
-    $this->_loadDependency("/global/user_group.php");
-    $this->_loadDependency("/global/entry_group.php");
+    // group models.
+    foreach (glob(Config::APP_ROOT."/global/groups/*.php") as $filename) {
+      require_once($filename);
+    }
 
     $nonLinkedClasses = count(get_declared_classes());
 
-    $this->_loadDependency("/global/tag_type.php");
-    $this->_loadDependency("/global/tag.php");
-
-    $this->_loadDependency("/global/anime.php");
-    $this->_loadDependency("/global/alias.php");
-    $this->_loadDependency("/global/anime_list.php");
-    $this->_loadDependency("/global/anime_entry.php");
-
-    $this->_loadDependency("/global/user.php");
-
-    $this->_loadDependency("/global/comment.php");
-    $this->_loadDependency("/global/comment_entry.php");
+    // models that have URLs.
+    foreach (glob(Config::APP_ROOT."/global/models/*.php") as $filename) {
+      require_once($filename);
+    }
 
     session_start();
     $this->dbConn = $this->_connectDB();
@@ -75,7 +66,7 @@ class Application {
 
     // _classes is a modelUrl:modelName mapping for classes that are to be linked.
     foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $className) {
-      $blankClass = new $className($this->dbConn, 0);
+      $blankClass = new $className($this, 0);
       if (!isset($this->_classes[$blankClass->modelUrl()])) {
         $this->_classes[$blankClass->modelUrl] = $className;
       }
@@ -84,17 +75,14 @@ class Application {
     // include all achievements.
     // _achievements is an ID:name mapping of achievements.
     $nonAchievementClasses = count(get_declared_classes());
-    foreach (glob($_SERVER['DOCUMENT_ROOT']."/global/achievements/*.php") as $filename) {
+    foreach (glob(Config::APP_ROOT."/global/achievements/*.php") as $filename) {
       require_once($filename);
     }
     $achievementSlice = array_slice(get_declared_classes(), $nonAchievementClasses);
     foreach ($achievementSlice as $achievementName) {
-      $blankAchieve = new $achievementName($this->dbConn);
+      $blankAchieve = new $achievementName($this);
       $this->_achievements[$blankAchieve->id] = $achievementName;
     }
-
-    $this->_loadDependency("/global/display.php");
-    $this->_loadDependency("/global/misc.php");
   }
 
   public function display_error($code) {
@@ -112,13 +100,13 @@ class Application {
     $this->_loadDependencies();
 
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
-      $this->user = new User($this->dbConn, intval($_SESSION['id']));
+      $this->user = new User($this, intval($_SESSION['id']));
       // if user's last action was 5 or more minutes ago, update his/her last-active time.
       if ($this->user->lastActive->diff(new DateTime("now", $this->serverTimeZone))->i >= 5) {
         $this->user->updateLastActive();
       }
     } else {
-      $this->user = new User($this->dbConn, 0, "Guest");
+      $this->user = new User($this, 0, "Guest");
     }
     if (isset($_REQUEST['status'])) {
       $this->status = $_REQUEST['status'];
@@ -151,12 +139,12 @@ class Application {
       if (!class_exists($this->model)) {
         redirect_to($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
       }
-      $this->target = new $this->model($this->dbConn, $this->id);
+      $this->target = new $this->model($this, $this->id);
       if ($this->id !== 0) {
         try {
           $foo = $this->target->getInfo();
         } catch (Exception $e) {
-          $blankModel = new $this->model($this->dbConn);
+          $blankModel = new $this->model($this);
           redirect_to($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
         }
         if ($this->action === "new") {
@@ -169,7 +157,7 @@ class Application {
         echo $this->display_error(403);
         exit;
       } else {
-        echo $this->target->render($this);
+        echo $this->target->render();
       }
     }
   }

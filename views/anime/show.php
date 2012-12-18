@@ -1,6 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  $app->check_partial_include(__FILE__);
+  $this->app->check_partial_include(__FILE__);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -23,29 +23,29 @@
           <div class='profileUserInfo'>
             <h1>
               <?php echo escape_output($this->title()); ?> 
-              <?php echo $this->allow($app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : ""; ?>
+              <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : ""; ?>
             </h1>
             <p>
               <?php echo escape_output($this->description()); ?>
             </p>
 <?php
-  if ($app->user->loggedIn()) {
+  if ($this->app->user->loggedIn()) {
 ?>            <ul class='thumbnails'>
               <li class='span4'>
 <?php
-    if (!isset($app->user->animeList()->uniqueList()[$this->id]) || $app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
-      $userRating = $app->recsEngine->predict($app->user, $this)[$this->id];
+    if (!isset($this->app->user->animeList()->uniqueList()[$this->id]) || $this->app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
+      $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
 ?>                <p class='lead'>Predicted score:</p>
                 <?php echo $this->scoreBar($userRating); ?>
 <?php
     } else {
-      $userRating = $app->user->animeList()->uniqueList()[$this->id]['score'];
+      $userRating = $this->app->user->animeList()->uniqueList()[$this->id]['score'];
 ?>                <p class='lead'>You rated this:</p>
                 <?php echo $this->scoreBar($userRating); ?>
 <?php
     }
     if ($userRating != 0) {
-?>(which is <?php echo abs(round($userRating - $app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average score".($this->ratingCount() !== 0 ? " and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score" : "").")";
+?>(which is <?php echo abs(round($userRating - $this->app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $this->app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average score".($this->ratingCount() !== 0 ? " and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score" : "").")";
     }
   } else {
 ?>            <ul class='thumbnails'>
@@ -57,25 +57,25 @@
 ?>              </li>
               <li class='span8'>
                 <p class='lead'>Tags:</p>
-                <?php echo $this->tagCloud($app->user); ?>
+                <?php echo $this->tagCloud($this->app->user); ?>
               </li>
             </ul>
           </div>
           <div id='userFeed'>
 <?php
-  if ($app->user->loggedIn()) {
-    $animeList = new AnimeList($this->dbConn, 0);
-    $anime = new Anime($this->dbConn, 0);
-    if (isset($app->user->animeList()->uniqueList()[$this->id])) {
-      $thisEntry = $app->user->animeList()->uniqueList()[$this->id];
+  if ($this->app->user->loggedIn()) {
+    $animeList = new AnimeList($this->app, 0);
+    $anime = new Anime($this->app, 0);
+    if (isset($this->app->user->animeList()->uniqueList()[$this->id])) {
+      $thisEntry = $this->app->user->animeList()->uniqueList()[$this->id];
       $addText = "Update this anime in your list: ";
     } else {
       $thisEntry = [];
       $addText = "Add this anime to your list: ";
     }
 ?>              <div class='addListEntryForm'>
-              <form class='form-inline' action='<?php echo $animeList->url("new", array('user_id' => intval($app->user->id))); ?>' method='POST'>
-                <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($app->user->id); ?>' />
+              <form class='form-inline' action='<?php echo $animeList->url("new", array('user_id' => intval($this->app->user->id))); ?>' method='POST'>
+                <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->app->user->id); ?>' />
                 <?php echo $addText; ?>
                 <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='<?php echo intval($this->id); ?>' />
                 <?php echo display_status_dropdown("anime_list[status]", "span3", $thisEntry['status']); ?>
@@ -92,8 +92,8 @@
             </div>
 <?php
   }
-?>          <?php echo $this->animeFeed($app); ?>
+?>          <?php echo $this->animeFeed(); ?>
           </div>
         </div>
       </div>
-      <?php echo $this->tagList($app->user); ?>
+      <?php echo $this->tagList($this->app->user); ?>

@@ -9,9 +9,10 @@ class EntryGroup extends BaseGroup {
 
   protected $_anime, $_users, $_comments = Null;
 
-  public function __construct(DbConn $dbConn, array $entries) {
+  public function __construct(Application $app, array $entries) {
     // preserves keys of input array.
-    $this->dbConn = $dbConn;
+    $this->dbConn = $app->dbConn;
+    $this->app = $app;
     $this->_objects = [];
     $this->intKeys = True;
     if (count($entries) > 0) {
@@ -33,7 +34,7 @@ class EntryGroup extends BaseGroup {
     if (count($animeDict) > 0) {
       $getAnime = $this->dbConn->queryAssoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
       foreach ($getAnime as $anime) {
-        $animes[$anime['id']] = new Anime($this->dbConn, intval($anime['id']));
+        $animes[$anime['id']] = new Anime($this->app, intval($anime['id']));
         $animes[$anime['id']]->set($anime);
       }
       foreach ($this->entries() as $entry) {
@@ -62,7 +63,7 @@ class EntryGroup extends BaseGroup {
     if (count($userDict) > 0) {
       $getUsers = $this->dbConn->queryAssoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
       foreach ($getUsers as $user) {
-        $users[$user['id']] = new User($this->dbConn, intval($user['id']));
+        $users[$user['id']] = new User($this->app, intval($user['id']));
         $users[$user['id']]->set($user);
       }
       foreach ($this->entries() as $entry) {
@@ -92,7 +93,7 @@ class EntryGroup extends BaseGroup {
     if (count($commentDict) > 0) {
       $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
       foreach ($getComments as $comment) {
-        $newComment = new CommentEntry($this->dbConn, intval($comment['id']));
+        $newComment = new CommentEntry($this->app, intval($comment['id']));
         $newComment->comment()->set($comment);
         if (!isset($comments[$comment['type']])) {
           $comments[$comment['type']] = array();

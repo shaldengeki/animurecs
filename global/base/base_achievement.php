@@ -4,8 +4,8 @@ abstract class BaseAchievement extends BaseObject {
   protected $dependencies=[];
 
   // getter methods.
-  public function __construct(DbConn $database, $id=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null) {
+    parent::__construct($app, $id);
   }
   public function name() {
     return $this->returnInfo('name');

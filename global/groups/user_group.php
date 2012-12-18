@@ -7,9 +7,6 @@ class UserGroup extends BaseGroup {
   protected $_groupObject = "User";
   protected $_nameField = "username";
 
-  public function __construct(DbConn $dbConn, array $user) {
-    parent::__construct($dbConn, $user);
-  }
   public function users() {
     return $this->objects();
   }

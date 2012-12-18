@@ -1,8 +1,8 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  $app->check_partial_include(__FILE__);
+  $this->app->check_partial_include(__FILE__);
   $animeTags = [];
-  $blankTag = new Tag($this->dbConn, 0);
+  $blankTag = new Tag($this->app, 0);
   $this->tags()->info();
   foreach ($this->tags()->tags() as $tag) {
     $animeTags[] = array('id' => $tag->id, 'name' => $tag->name());
@@ -45,13 +45,13 @@
         </div>
 <?php
   }
-  if ($this->allow($app->user, $this->id === 0 ? 'new' : 'edit')) {
+  if ($this->allow($this->app->user, $this->id === 0 ? 'new' : 'edit')) {
 ?>        <div class='control-group'>
           <label class='control-label' for='anime[approved]'>Approved</label>
           <div class='controls'>
             <input name='anime[approved]' type='checkbox' value=1 <?php echo $this->isApproved() ? "checked=checked" : ""; ?>/>
           </div>
-          <input name='anime[approved_user_id]' type='hidden' value='<?php echo $this->isApproved() ? intval($this->approvedUser()->id) : $app->user->id; ?>' />
+          <input name='anime[approved_user_id]' type='hidden' value='<?php echo $this->isApproved() ? intval($this->approvedUser()->id) : $this->app->user->id; ?>' />
         </div>
 <?php
   }

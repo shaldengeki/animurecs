@@ -214,16 +214,16 @@ function tag_list($animes, $n=50) {
   }
   if (!($animes instanceof AnimeGroup)) {
     if (count($animes) > 0) {
-      $dbConn = current($animes)->dbConn;
+      $app = current($animes)->app;
     } else {
       return;
     }
-    $animes = new AnimeGroup($dbConn, $animes);
+    $animes = new AnimeGroup($app, $animes);
   }
   $tagCounts = $animes->tagCounts();
   $output = "<ul class='tagList'>\n";
   $i = 1;
-  $tagGroup = new TagGroup($animes->dbConn, array_keys($tagCounts));
+  $tagGroup = new TagGroup($animes->app, array_keys($tagCounts));
   $tagGroup->info();
   foreach ($tagGroup->tags() as $tag) {
     $output .= "<li>".$tag->link("show", $tag->name)." ".intval($tagCounts[$tag->id])."</li>\n";
@@ -247,14 +247,16 @@ function display_recommendations(RecsEngine $recsEngine, User $user) {
       $recScores[intval($rec['id'])] = $rec['predicted_score'];
       $animeIDs[] = $rec['id'];
     }
-    $animeGroup = new AnimeGroup($user->dbConn, $animeIDs);
+    $animeGroup = new AnimeGroup($user->app, $animeIDs);
     $animeGroup->info();
     foreach ($animeGroup->anime() as $anime) {
       $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($recScores[$anime->id], 1)."</em></p></li>\n";
     }
   }
   $output .= "</ul>";
-  $output .= tag_list($animeGroup->anime());
+  if (is_array($recs)) {
+    $output .= tag_list($animeGroup->anime());
+  }
   return $output;
 }
 

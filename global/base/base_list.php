@@ -14,8 +14,8 @@ abstract class BaseList extends BaseObject {
 
   protected $partName, $listType, $listTypeLower, $typeVerb, $typeID, $feedType;
 
-  public function __construct(DbConn $database, $user_id=Null) {
-    parent::__construct($database, $user_id);
+  public function __construct(Application $app, $user_id=Null) {
+    parent::__construct($app, $user_id);
     $this->modelTable = "";
     $this->modelPlural = "";
     $this->partName = "";
@@ -60,9 +60,9 @@ abstract class BaseList extends BaseObject {
     */
     // ensure that this user and list type exist.
     try {
-      $user = new User($this->dbConn, intval($entry['user_id']));
+      $user = new User($this->app, intval($entry['user_id']));
       $user->getInfo();
-      $type = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
+      $type = new $this->listType($this->app, intval($entry[$this->typeID]));
       $type->getInfo();
     } catch (Exception $e) {
       return False;
@@ -152,7 +152,7 @@ abstract class BaseList extends BaseObject {
   }
   public function user() {
     if ($this->user === Null) {
-      $this->user = new User($this->dbConn, $this->user_id);
+      $this->user = new User($this->app, $this->user_id);
     }
     return $this->user;
   }
@@ -179,7 +179,7 @@ abstract class BaseList extends BaseObject {
     $entryType = $this->listType."Entry";
     while ($entry = $entries->fetch_assoc()) {
       $entry['list'] = $this;
-      $returnList[intval($entry['id'])] = new $entryType($this->dbConn, intval($entry['id']), $entry);
+      $returnList[intval($entry['id'])] = new $entryType($this->app, intval($entry['id']), $entry);
       $entrySum += intval($entry['score']);
       $entryCount++;
     }
@@ -205,7 +205,7 @@ abstract class BaseList extends BaseObject {
 
     $this->uniqueListAvg = $this->uniqueListStdDev = $uniqueListSum = $uniqueListCount = 0;
     foreach ($returnList as $key=>$entry) {
-      $returnList[$key][$this->listTypeLower] = new $this->listType($this->dbConn, intval($entry[$this->typeID]));
+      $returnList[$key][$this->listTypeLower] = new $this->listType($this->app, intval($entry[$this->typeID]));
       unset($returnList[$key][$this->typeID]);
       if ($entry['score'] != 0) {
         $uniqueListCount++;
@@ -251,7 +251,7 @@ abstract class BaseList extends BaseObject {
   public function prevEntry($id, DateTime $beforeTime) {
     // Returns the previous entry in this user's entry list for $this->typeID and before $beforeTime.
     $entryType = $this->listType."Entry";
-    $prevEntry = new $entryType($this->dbConn, 0);
+    $prevEntry = new $entryType($this->app, 0);
 
     foreach ($this->entries()->entries() as $entry) {
       if ($entry->time >= $beforeTime) {

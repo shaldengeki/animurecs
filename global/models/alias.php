@@ -6,8 +6,8 @@ class Alias extends BaseObject {
   protected $parentId;
   protected $parent;
 
-  public function __construct(DbConn $database, $id=Null, BaseObject $parent=Null) {
-    parent::__construct($database, $id);
+  public function __construct(Application $app, $id=Null, BaseObject $parent=Null) {
+    parent::__construct($app, $id);
     $this->modelTable = "aliases";
     $this->modelPlural = "aliases";
     if ($id === 0) {
@@ -31,7 +31,7 @@ class Alias extends BaseObject {
   public function parent() {
     if ($this->parent === Null) {
       $type = $this->type();
-      $this->parent = new $type($this->dbConn, $this->parentId());
+      $this->parent = new $type($this->app, $this->parentId());
     }
     return $this->parent;
   }
@@ -63,7 +63,7 @@ class Alias extends BaseObject {
       return False;
     } else {
       try {
-        $parent = new $alias['type']($this->dbConn, intval($alias['parent_id']));
+        $parent = new $alias['type']($this->app, intval($alias['parent_id']));
         $parent->getInfo();
       } catch (Exception $e) {
         return False;
@@ -90,7 +90,7 @@ class Alias extends BaseObject {
     }
     while ($result = $search->fetch_assoc()) {
       try {
-        $tempObject = new $objType($this->dbConn, intval($result['parent_id']));
+        $tempObject = new $objType($this->app, intval($result['parent_id']));
         $tempObject->getInfo();
         $objects[intval($result['parent_id'])] = $tempObject;
       } catch (Exception $e) {
