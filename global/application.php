@@ -1,7 +1,8 @@
 <?php
 
 class Application {
-  private $_config, $_achievements, $_classes=[];
+  private $_config, $_classes, $_observers=[];
+  public $achievements=[];
   public $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender=Null;
 
   public $model,$action="";
@@ -73,7 +74,7 @@ class Application {
     }
 
     // include all achievements.
-    // _achievements is an ID:name mapping of achievements.
+    // achievements is an ID:object mapping of achievements.
     $nonAchievementClasses = count(get_declared_classes());
     foreach (glob(Config::APP_ROOT."/global/achievements/*.php") as $filename) {
       require_once($filename);
@@ -81,10 +82,76 @@ class Application {
     $achievementSlice = array_slice(get_declared_classes(), $nonAchievementClasses);
     foreach ($achievementSlice as $achievementName) {
       $blankAchieve = new $achievementName($this);
-      $this->_achievements[$blankAchieve->id] = $achievementName;
+      $this->achievements[$blankAchieve->id] = $blankAchieve;
+
+      // bind each achievement to its events.
+      foreach ($blankAchieve->events() as $event) {
+        $this->bind($event, $blankAchieve);
+      }
     }
   }
 
+  // bind/unbind/fire event handlers for objects.
+  // event names are of the form modelName.eventName
+  // e.g. User.afterCreate
+  public function bind($event, $observer) {
+    // binds a function to an event.
+    // can be either anonymous function or string name of class method.
+    if (!method_exists($observer, 'update')) {
+      if (Config::DEBUG_ON) {
+        throw new InvalidArgumentException(sprintf('Invalid observer: %s.', print_r($observer, True)));
+      } else {
+        return False;
+      }
+    }
+    if (!isset($this->_observers[$event])) {
+      $this->_observers[$event] = array($observer);
+    } else {
+      //check if this observer is bound to this event already
+      $elements = array_keys($this->_observers[$event], $o);
+      $notinarray = True;
+      foreach ($elements as $value) {
+        if ($observer === $this->_observers[$event][$value]) {
+            $notinarray = False;
+            break;
+        }
+      }
+      if ($notinarray) {
+        $this->_observers[$event][] = $observer;
+      }
+    }
+    return array($event, count($this->_observers[$event])-1);
+  }
+  public function unbind($observer) {
+    // callback is array of form [event_name, position]
+    // alternatively, also accepts a string for event name.
+    if (is_array($observer)) {
+      if (count($observer) < 2) {
+        return False;
+      } elseif (!isset($this->_observers[$observer[0]])) {
+        return True;
+      }
+      unset($this->_observers[$observer[0]][$observer[1]]);
+      return !isset($this->_observers[$observer[0]][$observer[1]]);
+    } else {
+      if (!isset($this->_observers[$observer])) {
+        return True;
+      }
+      unset($this->_observers[$observer]);
+      return !isset($this->_observers[$observer]);
+    }
+  }
+  public function fire($event, $object, $updateParams=Null) {
+    if (!isset($this->_observers[$event])) {
+      return;
+    }
+    foreach ($this->_observers[$event] as $observer) {
+      if (!method_exists($observer, 'update')) {
+        continue;
+      }
+      $observer->update($event, $object, $updateParams);
+    }
+  }
   public function display_error($code) {
     return $this->view('header').$this->view(intval($code)).$this->view('footer');
   }

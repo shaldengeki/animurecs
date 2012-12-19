@@ -95,7 +95,6 @@ abstract class BaseObject {
 
   // all classes must implement allow(), which defines user permissions.
   abstract public function allow(User $authingUser, $action, array $params=Null);
-
   // also should implement validate(), which takes an array of parameters and ensures that they are valid. returns a bool.
   public function validate(array $object) {
     if (isset($object['id']) && ( !is_numeric($object['id']) || intval($object['id']) != $object['id'] || intval($object['id']) < 0) ) {
@@ -111,82 +110,27 @@ abstract class BaseObject {
   }
 
   // event handlers for objects.
-  public function bind($event, $observer) {
-    // binds a function to an event.
-    // can be either anonymous function or string name of class method.
-    if (!method_exists($observer, 'update')) {
-      if (Config::DEBUG_ON) {
-        throw new InvalidArgumentException(sprintf('Invalid observer: %s.', print_r($observer, True)));
-      } else {
-        return False;
-      }
-    }
-    if (!isset($this->observers[$event])) {
-      $this->observers[$event] = array($observer);
-    } else {
-      $elements = array_keys($this->observers[$event], $o);
-      $notinarray = True;
-      foreach ($elements as $value) {
-        if ($observer === $this->observers[$event][$value]) {
-            $notinarray = False;
-            break;
-          }
-        }
-      //check if there already
-      if ($notinarray) {
-        $this->observers[$event][] = $observer;
-      }
-    }
-    return array($event, count($this->observers[$event])-1);
-  }
-  public function unbind($observer) {
-    // callback is array of form [event_name, position]
-    // alternatively, also accepts a string for event name.
-    if (is_array($observer)) {
-      if (count($observer) < 2) {
-        return False;
-      } elseif (!isset($this->observers[$observer[0]])) {
-        return True;
-      }
-      unset($this->observers[$observer[0]][$observer[1]]);
-      return !isset($this->observers[$observer[0]][$observer[1]]);
-    } else {
-      if (!isset($this->observers[$observer])) {
-        return True;
-      }
-      unset($this->observers[$observer]);
-      return !isset($this->observers[$observer]);
-    }
-  }
-  public function fire($event, $updateParams=Null) {
-    if (!isset($this->observers[$event])) {
-      return;
-    }
-    foreach ($this->observers[$event] as $observer) {
-      if (!method_exists($observer, 'update')) {
-        continue;
-      }
-      $observer->update($event, $this, $updateParams);
-    }
-  }
+  // event names are of the form modelName.eventName
+  // e.g. User.afterCreate
   public function before_create() {
-    $this->fire('beforeCreate');
+    $this->app->fire($this->modelName().'.beforeCreate', $this);
   }
   public function after_create() {
-    $this->fire('afterCreate');
+    $this->app->fire($this->modelName().'.afterCreate', $this);
   }
   public function before_update($updateParams=Null) {
-    $this->fire('beforeUpdate', $updateParams);
+    $this->app->fire($this->modelName().'.beforeUpdate', $this, $updateParams);
   }
   public function after_update($updateParams=Null) {
-    $this->fire('afterUpdate', $updateParams);
+    $this->app->fire($this->modelName().'.afterUpdate', $this, $updateParams);
   }
   public function before_delete() {
-    $this->fire('beforeDelete');
+    $this->app->fire($this->modelName().'.beforeDelete', $this);
   }
   public function after_delete() {
-    $this->fire('afterDelete');
+    $this->app->fire($this->modelName().'.afterDelete', $this);
   }
+
   public function create_or_update(array $object, array $whereConditions=Null) {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.

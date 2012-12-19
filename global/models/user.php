@@ -7,6 +7,7 @@ class User extends BaseObject {
   protected $email;
   protected $about;
   protected $usermask;
+  protected $achievementMask;
   protected $lastActive;
   protected $lastIP;
   protected $avatarPath;
@@ -35,10 +36,6 @@ class User extends BaseObject {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
       $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
-      if ($this->currentUser()) {
-        // toy example of an achievement listener.
-        $this->bind("afterUpdate", new TestAchievement($this->app));
-      }
     }
   }
   public function username() {
@@ -75,6 +72,9 @@ class User extends BaseObject {
     }
     return implode(", ", $roles);
   }
+  public function achievementMask() {
+    return $this->returnInfo('achievementMask');
+  }
   public function lastActive() {
     return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(Config::SERVER_TIMEZONE));
   }
@@ -83,6 +83,15 @@ class User extends BaseObject {
   }
   public function avatarPath() {
     return $this->returnInfo('avatarPath');
+  }
+  public function avatarImage(array $params=Null) {
+    $imageParams = [];
+    if (is_array($params) && $params) {
+      foreach ($params as $key => $value) {
+        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
+      }
+    }
+    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->avatarPath()))."' ".implode(" ", $imageParams)." />";
   }
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
@@ -255,128 +264,20 @@ class User extends BaseObject {
     $_SESSION['lastLoginCheckTime'] = microtime(True);
     return True;
   }
-  public function log_failed_login($username, $password) {
-    $insert_log = $this->dbConn->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->quoteSmart($username).", ".$this->dbConn->quoteSmart($password).")");
-  }
-  public function logIn($username, $password) {
-    // rate-limit requests.
-    $numFailedRequests = $this->dbConn->queryCount("SELECT COUNT(*) FROM `failed_logins` WHERE `ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR'])." AND `time` > NOW() - INTERVAL 1 HOUR");
-    if ($numFailedRequests > 5) {
-      return array("location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error');
-    }
-  
-    $bcrypt = new Bcrypt();
-    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
-    if (!$findUsername) {
-      $this->log_failed_login($username, $password);
-      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
-    }
-    if (!$bcrypt->verify($password, $findUsername['password_hash'])) {
-      $this->log_failed_login($username, $password);
-      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
-    }
-    
-    $_SESSION['id'] = intval($findUsername['id']);
-    $_SESSION['name'] = $findUsername['name'];
-    $_SESSION['username'] = $findUsername['username'];
-    $_SESSION['usermask'] = intval($findUsername['usermask']);
-    $this->id = intval($findUsername['id']);
-    $this->username = $findUsername['username'];
-    $this->name = $findUsername['name'];
-    $this->usermask = intval($findUsername['usermask']);
-
-    //update last IP address and last active.
-    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
-    $this->create_or_update($updateUser);
-    return array("/feed.php", array("status" => "Successfully logged in.", 'class' => 'success'));
-  }
-  public function register($username, $email, $password, $password_confirmation) {
-    // shorthand for create_or_update.
-    $user = array('username' => $username, 'about' => '', 'usermask' => array(1), 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation);
-    $registerUser = $this->create_or_update($user);
-    if (!$registerUser) {
-      return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
-    }
-    $_SESSION['id'] = intval($registerUser);
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['email'] = $user['email'];
-    $_SESSION['usermask'] = intval($user['usermask']);
-
-    $this->id = $_SESSION['id'];
-    $this->username = $user['username'];
-    $this->email = $user['email'];
-    $this->usermask = intval($user['usermask']);
-
-    //update last IP address and last active.
-    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
-    $this->create_or_update($updateUser);
-
-    return array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
-  }
-  public function importMAL($malUsername) {
-    // imports a user's MAL lists.
-    // takes a MAL username and returns a boolean.
-    $malList = parseMALList($malUsername);
-    $listIDs = [];
-    foreach($malList as $entry) {
-      $entry['user_id'] = $this->id;
-      $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
-    }
-    if (in_array(False, $listIDs, True)) {
+  public function isModerator() {
+    if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
       return False;
     }
     return True;
   }
-  public function requestFriend(User $requestedUser, array $request) {
-    // generates a friend request from the current user to requestedUser.
-    // returns a boolean.
-    $params = [];
-    $params[] = "`message` = ".(isset($request['message']) ? $this->dbConn->quoteSmart($request['message']) : '""');
-    $params[] = "`user_id_1` = ".intval($this->id);
-    $params[] = "`user_id_2` = ".intval($requestedUser->id);
-    $params[] = "`status` = 0";
-    $params[] = "`time` = NOW()";
-
-    // check to see if this already exists in friends or requests.
-    if (array_filter_by_key_property($this->friends(), 'user', 'id', $requestedUser->id)) {
-      // this friendship already exists.
-      return True;
-    }
-    if (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $requestedUser->id)) {
-      // this request already exists.
-      return True;
-    }
-    // otherwise, go ahead and create a request.
-    $this->before_update();
-    $requestedUser->before_update();
-    $createRequest = $this->dbConn->stdQuery("INSERT INTO `users_friends` SET ".implode(", ",$params));
-    if ($createRequest) {
-      $this->after_update();
-      $requestedUser->after_update();
-      return True;
-    } else {
+  public function isAdmin() {
+    if (!$this->usermask() or !(intval($this->usermask()) & 4)) {
       return False;
     }
+    return True;
   }
-  public function confirmFriend(User $requestedUser) {
-    // confirms a friend request from requestedUser directed at the current user.
-    // returns a boolean.
-    // check to see if this already exists in friends or requests.
-    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
-      // this friendship already exists.
-      return True;
-    }
-    // otherwise, go ahead and update this request.
-    $this->before_update();
-    $requestedUser->before_update();
-    $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = 1 WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." && `status` = 0 LIMIT 1");
-    if ($updateRequest) {
-      $this->after_update();
-      $requestedUser->after_update();
-      return True;
-    } else {
-      return False;
-    }
+  public function isStaff() {
+    return $this->isModerator() || $this->isAdmin();
   }
   public function validate(array $user) {
     if (!parent::validate($user)) {
@@ -533,20 +434,134 @@ class User extends BaseObject {
     }
     return True;
   }
-  public function isModerator() {
-    if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
+  public function log_failed_login($username, $password) {
+    $insert_log = $this->dbConn->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->quoteSmart($username).", ".$this->dbConn->quoteSmart($password).")");
+  }
+  public function logIn($username, $password) {
+    // rate-limit requests.
+    $numFailedRequests = $this->dbConn->queryCount("SELECT COUNT(*) FROM `failed_logins` WHERE `ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR'])." AND `time` > NOW() - INTERVAL 1 HOUR");
+    if ($numFailedRequests > 5) {
+      return array("location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error');
+    }
+  
+    $bcrypt = new Bcrypt();
+    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
+    if (!$findUsername) {
+      $this->log_failed_login($username, $password);
+      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
+    }
+    if (!$bcrypt->verify($password, $findUsername['password_hash'])) {
+      $this->log_failed_login($username, $password);
+      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
+    }
+    
+    $_SESSION['id'] = intval($findUsername['id']);
+    $_SESSION['name'] = $findUsername['name'];
+    $_SESSION['username'] = $findUsername['username'];
+    $_SESSION['usermask'] = intval($findUsername['usermask']);
+    $this->id = intval($findUsername['id']);
+    $this->username = $findUsername['username'];
+    $this->name = $findUsername['name'];
+    $this->usermask = intval($findUsername['usermask']);
+
+    //update last IP address and last active.
+    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
+    $this->create_or_update($updateUser);
+    return array("/feed.php", array("status" => "Successfully logged in.", 'class' => 'success'));
+  }
+  public function register($username, $email, $password, $password_confirmation) {
+    // shorthand for create_or_update.
+    $user = array('username' => $username, 'about' => '', 'usermask' => array(1), 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation);
+    $registerUser = $this->create_or_update($user);
+    if (!$registerUser) {
+      return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
+    }
+    $_SESSION['id'] = intval($registerUser);
+    $_SESSION['username'] = $user['username'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['usermask'] = intval($user['usermask']);
+
+    $this->id = $_SESSION['id'];
+    $this->username = $user['username'];
+    $this->email = $user['email'];
+    $this->usermask = intval($user['usermask']);
+
+    //update last IP address and last active.
+    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
+    $this->create_or_update($updateUser);
+
+    return array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
+  }
+  public function importMAL($malUsername) {
+    // imports a user's MAL lists.
+    // takes a MAL username and returns a boolean.
+    $malList = parseMALList($malUsername);
+    $listIDs = [];
+    foreach($malList as $entry) {
+      $entry['user_id'] = $this->id;
+      $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
+    }
+    if (in_array(False, $listIDs, True)) {
       return False;
     }
     return True;
   }
-  public function isAdmin() {
-    if (!$this->usermask() or !(intval($this->usermask()) & 4)) {
+  public function requestFriend(User $requestedUser, array $request) {
+    // generates a friend request from the current user to requestedUser.
+    // returns a boolean.
+    $params = [];
+    $params[] = "`message` = ".(isset($request['message']) ? $this->dbConn->quoteSmart($request['message']) : '""');
+    $params[] = "`user_id_1` = ".intval($this->id);
+    $params[] = "`user_id_2` = ".intval($requestedUser->id);
+    $params[] = "`status` = 0";
+    $params[] = "`time` = NOW()";
+
+    // check to see if this already exists in friends or requests.
+    if (array_filter_by_key_property($this->friends(), 'user', 'id', $requestedUser->id)) {
+      // this friendship already exists.
+      return True;
+    }
+    if (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $requestedUser->id)) {
+      // this request already exists.
+      return True;
+    }
+    // otherwise, go ahead and create a request.
+    $this->before_update();
+    $requestedUser->before_update();
+    $createRequest = $this->dbConn->stdQuery("INSERT INTO `users_friends` SET ".implode(", ",$params));
+    if ($createRequest) {
+      $this->after_update();
+      $requestedUser->after_update();
+      return True;
+    } else {
       return False;
     }
-    return True;
   }
-  public function isStaff() {
-    return $this->isModerator() || $this->isAdmin();
+  public function confirmFriend(User $requestedUser) {
+    // confirms a friend request from requestedUser directed at the current user.
+    // returns a boolean.
+    // check to see if this already exists in friends or requests.
+    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
+      // this friendship already exists.
+      return True;
+    }
+    // otherwise, go ahead and update this request.
+    $this->before_update();
+    $requestedUser->before_update();
+    $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = 1 WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." && `status` = 0 LIMIT 1");
+    if ($updateRequest) {
+      $this->after_update();
+      $requestedUser->after_update();
+      return True;
+    } else {
+      return False;
+    }
+  }
+  public function addAchievement(BaseAchievement $achievement) {
+    return $this->create_or_update(array('achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)));
+  }
+  public function removeAchievement(BaseAchievement $achievement) {
+    return $this->create_or_update(array('achievement_mask' => $this->achievementMask() - pow(2, $achievement->id - 1)));
   }
   public function switchUser($username, $switch_back=True) {
     /*
@@ -705,7 +720,7 @@ class User extends BaseObject {
       $entryTime = new DateTime($request['time'], $serverTimezone);
       $entryTime->setTimezone($outputTimezone);
       $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, Null, Null, $request['user']->id)."</li>\n";
-    } 
+    }
     return $output;
   }
   public function profileFeed(DateTime $maxTime=Null, $numEntries=50) {

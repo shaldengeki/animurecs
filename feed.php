@@ -27,7 +27,7 @@ $pageHTML = <<<EOD
     </ol>
   </div>
   <div class='span6'>
-    <h2>My Feed</h2>
+    <h2>Your Feed</h2>
     {$app->user->globalFeed()}
   </div>
 </div>

@@ -56,7 +56,7 @@ trait Feedable {
 
     $output = "      <".$entryType." class='media'>
         <div class='pull-right feedDate' data-time='".$entry->time()->format('U')."'>".ago($diffInterval)."</div>
-        ".$entry->user->link("show", "<img class='feedAvatarImg' src='".joinPaths(Config::ROOT_URL, escape_output($entry->user->avatarPath))."' />", True, array('class' => 'feedAvatar pull-left'))."
+        ".$entry->user->link("show", $entry->user->avatarImage(array('class' => 'feedAvatarImg')), True, array('class' => 'feedAvatar pull-left'))."
         <div class='media-body feedText'>
           <div class='feedEntry'>
             <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>

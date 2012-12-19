@@ -10,7 +10,7 @@
 <?php
 if ($this->avatarPath() != '') {
 ?>
-                <img src='<?php echo joinPaths(Config::ROOT_URL,escape_output($this->avatarPath())); ?>' class='img-rounded' alt=''>
+                <?php echo $this->avatarImage(array('class' => 'img-rounded', 'alt' => '')); ?>
 <?php
 } else {
 ?>
@@ -29,7 +29,7 @@ if ($this->avatarPath() != '') {
   shuffle($friendSlice);
   $friendSlice = array_slice($friendSlice, 0, 4);
   foreach ($friendSlice as $friendEntry) {
-?>            <li class='friendGridEntry'><?php echo $friendEntry['user']->link("show", "<img class='friendGridImage' src='/".$friendEntry['user']->avatarPath()."' /><div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True); ?></li>
+?>            <li class='friendGridEntry'><?php echo $friendEntry['user']->link("show", $friendEntry['user']->avatarImage(array('class' => 'friendGridImage'))."<div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True); ?></li>
 <?php
   }
 ?>

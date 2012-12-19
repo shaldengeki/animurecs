@@ -22,7 +22,7 @@
 <?php
   foreach ($animeGroup->anime() as $anime) {
 ?>
-    <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath()))."' />", True, array('title' => $anime->description(True))); echo ($animePredictions[$anime->id] instanceof Anime) ? "" : "<p><em>Predicted score: ".round($animePredictions[$anime->id], 1)."</em></p>"; ?></li>
+    <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4>".$anime->imageTag(), True, array('title' => $anime->description(True))); echo ($animePredictions[$anime->id] instanceof Anime) ? "" : "<p><em>Predicted score: ".round($animePredictions[$anime->id], 1)."</em></p>"; ?></li>
 <?php
   }
 ?>

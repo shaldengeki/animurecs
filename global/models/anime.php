@@ -52,6 +52,15 @@ class Anime extends BaseObject {
   public function imagePath() {
     return $this->returnInfo('imagePath');
   }
+  public function imageTag(array $params=Null) {
+    $imageParams = [];
+    if (is_array($params) && $params) {
+      foreach ($params as $key => $value) {
+        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
+      }
+    }
+    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->imagePath()))."' ".implode(" ", $imageParams)." />";
+  }
   public function approvedOn() {
     return $this->returnInfo('approvedOn');
   }

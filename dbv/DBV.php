@@ -21,9 +21,9 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  * @package DBV
- * @version 1.0
+ * @version 1.0.3
  * @author Victor Stanciu <vic.stanciu@gmail.com>
  * @link http://dbv.vizuina.com
  * @copyright Victor Stanciu 2012
@@ -48,14 +48,14 @@ class DBV
             if (function_exists('apache_request_headers')) {
                 $headers = apache_request_headers();
                 $authorization = $headers['HTTP_AUTHORIZATION'];
-            }                   
+            }
         }
 
         list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', base64_decode(substr($authorization, 6)));
         if (strlen(DBV_USERNAME) && strlen(DBV_PASSWORD) && (!isset($_SERVER['PHP_AUTH_USER']) || !($_SERVER['PHP_AUTH_USER'] == DBV_USERNAME && $_SERVER['PHP_AUTH_PW'] == DBV_PASSWORD))) {
             header('WWW-Authenticate: Basic realm="DBV interface"');
             header('HTTP/1.0 401 Unauthorized');
-            echo 'Access denied';
+            echo _('Access denied');
             exit();
         }
     }
@@ -74,7 +74,7 @@ class DBV
                 if (class_exists($class)) {
                     $adapter = new $class;
                     try {
-                        $adapter->connect(Config::MYSQL_HOST, Config::MYSQL_USERNAME, Config::MYSQL_PASSWORD, Config::MYSQL_DATABASE);
+                        $adapter->connect(Config::MYSQL_HOST, Config::MYSQL_PORT, Config::MYSQL_USERNAME, Config::MYSQL_PASSWORD, Config::MYSQL_DATABASE);
                         $this->_adapter = $adapter;
                     } catch (DBV_Exception $e) {
                         $this->error("[{$e->getCode()}] " . $e->getMessage());
@@ -109,7 +109,7 @@ class DBV
 
         if ($this->_isXMLHttpRequest()) {
             if (!count($items)) {
-                return $this->_json(array('error' => "You didn't select any objects"));
+                return $this->_json(array('error' => __("You didn't select any objects")));
             }
 
             foreach ($items as $item) {
@@ -157,7 +157,7 @@ class DBV
                 if ($revision > $current_revision) {
                     $this->_setCurrentRevision($revision);
                 }
-                $this->confirm("Executed revision <strong>$revision</strong>");
+                $this->confirm(__("Executed revision #{revision}", array('revision' => "<strong>$revision</strong>")));
             }
         }
 
@@ -169,7 +169,7 @@ class DBV
             foreach ($this->_log as $message) {
                 $return['messages'][$message['type']][] = $message['message'];
             }
-            $this->_json($return);          
+            $this->_json($return);
 
         } else {
             $this->indexAction();
@@ -184,7 +184,7 @@ class DBV
             $file = $_POST['file'];
         } else {
             $this->_json(array(
-                'error' => "Filename {$_POST['file']} contains illegal characters. Please contact the developer."
+                'error' => __("Filename #{file} contains illegal characters. Please contact the developer.", array('file' => $_POST['file']))
             ));
         }
 
@@ -197,11 +197,11 @@ class DBV
 
         if (!@file_put_contents($path, $content)) {
             $this->_json(array(
-                'error' => "Couldn't write file: <strong>$path</strong><br />Make sure the user running DBV has adequate permissions."
+                'error' => __("Couldn't write file: #{path}<br />Make sure the user running DBV has adequate permissions.", array('path' => "<strong>$path</strong>"))
             ));
         }
 
-        $this->_json(array('ok' => true, 'message' => "File <strong>$path</strong> successfully saved!"));
+        $this->_json(array('ok' => true, 'message' => __("File #{path} successfully saved!", array('path' => "<strong>$path</strong>"))));
     }
 
     protected function _createSchemaObject($item)
@@ -210,10 +210,13 @@ class DBV
 
         if (file_exists($file)) {
             if ($this->_runFile($file)) {
-                $this->confirm("Created schema object <strong>$item</strong>");
+                $this->confirm(__("Created schema object #{item}", array('item' => "<strong>$item</strong>")));
             }
         } else {
-            $this->error("Cannot find file for schema object <strong>$item</strong> (looked in " . DBV_SCHEMA_PATH . ")");
+            $this->error(__("Cannot find file for schema object #{item} (looked in #{schema_path})", array(
+                'item' => "<strong>$item</strong>",
+                'schema_path' => DBV_SCHEMA_PATH
+            )));
         }
     }
 
@@ -225,9 +228,9 @@ class DBV
             $file = DBV_SCHEMA_PATH . DS . "$item.sql";
 
             if (@file_put_contents($file, $sql)) {
-                $this->confirm("Wrote file: <strong>$file</strong>");
+                $this->confirm(__("Wrote file: #{file}", array('file' => "<strong>$file</strong>")));
             } else {
-                $this->error("Cannot write file: <strong>$file</strong>");
+                $this->error(__("Cannot write file: #{file}", array('file' => "<strong>$file</strong>")));
             }
         } catch (DBV_Exception $e) {
             $this->error(($e->getCode() ? "[{$e->getCode()}] " : '') . $e->getMessage());
@@ -242,7 +245,7 @@ class DBV
             case 'sql':
                 $content = file_get_contents($file);
                 if ($content === false) {
-                    $this->error("Cannot open file <strong>$file</strong>");
+                    $this->error(__("Cannot open file #{file}", array('file' => "<strong>$file</strong>")));
                     return false;
                 }
 
@@ -350,7 +353,7 @@ class DBV
         $return = array();
 
         foreach (new DirectoryIterator($dir) as $file) {
-            if ($file->isFile()) {
+            if ($file->isFile() && pathinfo($file->getFilename(), PATHINFO_EXTENSION) == 'sql') {
                 $return[] = $file->getBasename();
             }
         }
@@ -398,11 +401,11 @@ class DBV
         exit('404 Not Found');
     }
 
-    protected function _json($data = array()) 
+    protected function _json($data = array())
     {
         header("Content-type: text/x-json");
         echo (is_string($data) ? $data : json_encode($data));
-        exit();     
+        exit();
     }
 
     protected function _isXMLHttpRequest()
@@ -416,7 +419,7 @@ class DBV
             if ($headers['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
                 return true;
             }
-        }       
+        }
 
         return false;
     }

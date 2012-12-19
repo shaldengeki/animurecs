@@ -239,7 +239,7 @@ function tag_list($animes, $n=50) {
 function display_recommendations(RecsEngine $recsEngine, User $user) {
   $recs = $recsEngine->recommend($user);
 
-  $output = "<h1>Your Recs</h1>\n<ul class='recommendations'>\n";
+  $output = "<h1>Your Recs</h1>\n<ul class='item-grid recommendations'>\n";
   if (is_array($recs)) {
     $animeIDs = [];
     $recScores = [];
@@ -250,7 +250,7 @@ function display_recommendations(RecsEngine $recsEngine, User $user) {
     $animeGroup = new AnimeGroup($user->app, $animeIDs);
     $animeGroup->info();
     foreach ($animeGroup->anime() as $anime) {
-      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4><img src='".joinPaths(Config::ROOT_URL, escape_output($anime->imagePath))."' />", True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($recScores[$anime->id], 1)."</em></p></li>\n";
+      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4>".$anime->imageTag, True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($recScores[$anime->id], 1)."</em></p></li>\n";
     }
   }
   $output .= "</ul>";

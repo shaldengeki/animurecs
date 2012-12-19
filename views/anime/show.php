@@ -9,7 +9,7 @@
               <div class='thumbnail profileAvatar'>
 <?php
   if ($this->imagePath() != '') {
-?>                <img src='<?php echo joinPaths(Config::ROOT_URL,escape_output($this->imagePath())); ?>' class='img-rounded' alt=''>
+?>                <?php echo $this->imageTag(array('class' => 'img-rounded', 'alt' => '')); ?>
 <?php
   } else {
 ?>                <img src='/img/anime/blank.png' class='img-rounded' alt=''>

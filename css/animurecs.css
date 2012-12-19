@@ -1040,6 +1040,11 @@ body>.container-fluid{padding-top:20px;}
 .rightColumn.span9{margin-left:0;}.rightColumn.span9 .profileUserInfo{padding-left:2.564102564102564%;min-height:230px;}.rightColumn.span9 .profileUserInfo h1{margin-top:0;}
 .rightColumn.span9 .profileTabs .nav-tabs{margin-bottom:0;}
 .rightColumn.span9 .profileTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding-top:20px;}
+ul.item-grid{list-style:none;}ul.item-grid li{width:24%;height:200px;display:inline-block;text-align:center;margin-bottom:14px;}ul.item-grid li a img{height:150px;max-width:100px;}
+ul.item-grid li a h4{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+ul.item-grid li em{font-size:12px;}
+ul.achievements li{width:12%;height:100px;margin-bottom:7px;}ul.achievements li a img{height:75px;max-width:50px;}
+ul.achievements li em{font-size:10px;}
 #userFeed .addListEntryForm{text-align:center;}
 ul.media-list .media{border-bottom:1px solid #dddddd;padding:0 10px;}ul.media-list .media .feedDate{margin-right:10px;font-size:8pt;color:gray;}
 ul.media-list .media .feedAvatar{width:40px;height:40px;margin:0 0 0 5px;text-align:center;}ul.media-list .media .feedAvatar img{max-width:40px;max-height:40px;}
@@ -1058,9 +1063,6 @@ ul.tagCloud li.type{background-color:#aa00aa;}ul.tagCloud li.type p a,ul.tagClou
 ul.tagCloud li{float:left;height:18px;margin:3px;padding:2px 3px;font-size:11px;border:1px solid black;border-radius:5px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}ul.tagCloud li p,ul.tagCloud li a{display:inline;margin:0;padding:0;}
 ul.tagCloud li a,ul.tagCloud li a:hover,ul.tagCloud li a:active,ul.tagCloud li a:visited{text-decoration:none;color:inherit;}
 ul.tagCloud li span a,ul.tagCloud li span a:hover,ul.tagCloud li span a:active,ul.tagCloud li span a:visited{color:#A6B3CF;font-weight:bold;margin-left:5px;}
-ul.recommendations{list-style:none;}ul.recommendations li{width:24%;height:200px;display:inline-block;text-align:center;margin-bottom:14px;}ul.recommendations li a img{height:150px;max-width:100px;}
-ul.recommendations li a h4{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-ul.recommendations li em{font-size:12px;}
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}
