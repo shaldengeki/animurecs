@@ -206,9 +206,27 @@ function submitListUpdate(elt) {
   });
 }
 
+function loadAjaxTab(elt) {
+  // loads the content for an AJAX nav-tab.
+  var remoteTarget = $(elt).parent().attr('data-url');
+  var pageTarget = $(elt).attr('href');
+
+  $(pageTarget).parent().children('.tab-pane').each(function() {
+    $(this).removeClass('active');
+  });
+
+  if (typeof $(elt).parent().attr('loaded') == 'undefined' && typeof $(elt).parent().attr('loading') == 'undefined') {
+    $(elt).parent().attr('loading', true);
+    $(pageTarget).load(remoteTarget, function() {
+      $(elt).parent().removeAttr('loading');
+      $(elt).parent().attr('loaded', true);
+      initInterface(pageTarget);
+    }).addClass('active');
+  }
+}
+
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
-
   $(elt).find('.dropdown-toggle').dropdown();
 
   /* Datatable initialisation */
@@ -324,23 +342,8 @@ function initInterface(elt) {
   /* ajax tab autoloading. */
   $(elt).find('.nav-tabs li.ajaxTab:visible').each(function() {
     $(this).click(function(e) {
-      var thisTab = e.target // activated tab
-
-      var remoteTarget = $(thisTab).parent().attr('data-url');
-      var pageTarget = $(thisTab).attr('href');
-
-      $(pageTarget).parent().children('.tab-pane').each(function() {
-        $(this).removeClass('active');
-      });
-
-      if (typeof $(thisTab).parent().attr('loaded') == 'undefined' && typeof $(thisTab).parent().attr('loading') == 'undefined') {
-        $(thisTab).parent().attr('loading', true);
-        $(pageTarget).load(remoteTarget, function() {
-          $(thisTab).parent().removeAttr('loading');
-          $(thisTab).parent().attr('loaded', true);
-          initInterface(pageTarget);
-        }).addClass('active');
-      }
+      location.hash = $(e.target).attr('href').substr(1);
+      loadAjaxTab(e.target); // activated tab
     });
   });
 
@@ -380,7 +383,9 @@ function initInterface(elt) {
   /* Load a specific tab if url contains a hash */
   var url = document.location.toString();
   if (url.match('#')) {
-      $(elt).find('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
+    thisTab = $(elt).find('.nav-tabs a[href=#'+url.split('#')[1]+']');
+    thisTab.tab('show');
+    loadAjaxTab(thisTab);
   }
 }
 
