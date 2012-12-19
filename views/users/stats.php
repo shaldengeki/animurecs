@@ -1,1 +1,1 @@
-Coming soon!
+<blockquote>Coming soon!</blockquote>

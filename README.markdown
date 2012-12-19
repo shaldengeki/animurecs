@@ -13,7 +13,7 @@ To get started (after installing the above dependencies), you should do the foll
 After that, you'll want to write a rewrite rule for your webserver so you can have pretty URLs. For nginx, they'd look something like this (inside your server block):
 
     if (!-e $request_filename) {
-        rewrite  ^/([a-zA-Z0-9\_]+)?/?([a-zA-Z0-9\_]+)?/?([0-9A-Za-z\_]+)?/?$ /index.php?model=$1&id=$2&action=$3 last;
+        rewrite  ^/([a-zA-Z0-9\_]+)?/?(.+?)?/?([0-9A-Za-z\_]+)?/?$ /index.php?model=$1&id=$2&action=$3 last;
         break;
     }
 
