@@ -214,7 +214,7 @@ class Application {
 
       // kludge to allow people to use usernames in URLs.
       if ($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") {
-        $this->target = new $this->model($this, Null, $this->id);
+        $this->target = new $this->model($this, Null, urldecode($this->id));
       } else {
         $this->target = new $this->model($this, $this->id);
       }

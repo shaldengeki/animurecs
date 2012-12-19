@@ -758,7 +758,7 @@ class User extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? escape_output($username)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($username))."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

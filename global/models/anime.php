@@ -471,13 +471,13 @@ class Anime extends BaseObject {
   public function url($action="show", array $params=Null, $title=Null) {
     // returns the url that maps to this object and the given action.
     if ($title === Null) {
-      $title = str_replace(" ", "_", $this->title());
+      $title = $this->title();
     }
     $urlParams = "";
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? escape_output($title)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($title))."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

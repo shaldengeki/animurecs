@@ -332,13 +332,13 @@ class Tag extends BaseObject {
   public function url($action="show", array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.
     if ($name === Null) {
-      $name = str_replace(" ", "_", $this->name());
+      $name = $this->name();
     }
     $urlParams = "";
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? escape_output($name)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($name))."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
