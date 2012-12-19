@@ -224,8 +224,8 @@ class Comment extends BaseObject {
         break;
       case 'edit':
         if ($targetComment->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         if (isset($_POST['comment']) && is_array($_POST['comment'])) {
           // ensure that the thing to which this comment belongs exists.
@@ -262,16 +262,16 @@ class Comment extends BaseObject {
         break;
       case 'show':
         if ($targetComment->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = "Showing comment";
         $output = $targetComment->view('show');
         break;
       case 'delete':
         if ($targetComment->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $deleteComment = $targetComment->delete();
         if ($deleteComment) {

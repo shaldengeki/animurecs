@@ -293,24 +293,24 @@ class Tag extends BaseObject {
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = "Editing ".escape_output($this->name());
         $output = $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = "Tag: ".escape_output($this->name());
         $output = $this->view('show', array('recsEngine' => $this->app->recsEngine));
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $tagName = $this->name();
         $deleteTag = $this->delete();

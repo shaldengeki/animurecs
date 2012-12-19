@@ -651,16 +651,16 @@ class User extends BaseObject {
           }
         }
         if ($this->id === 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = "Editing ".escape_output($this->username());
         $output = $this->view("edit");
         break;
       case 'show':
         if ($this->id === 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = escape_output($this->username())."'s Profile";
         $output = $this->view("show");
@@ -690,8 +690,8 @@ class User extends BaseObject {
         exit;
       case 'delete':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $username = $this->username();
         $deleteUser = $this->delete();

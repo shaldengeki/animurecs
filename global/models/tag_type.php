@@ -131,24 +131,24 @@ class TagType extends BaseObject {
         break;
       case 'edit':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = "Editing ".escape_output($this->name());
         $output = $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $title = escape_output($this->name());
         $output = $this->view('show');
         break;
       case 'delete':
         if ($this->id == 0) {
-          $output = $this->app->display_error(404);
-          break;
+          $this->app->display_error(404);
+          exit;
         }
         $deleteTagType = $this->delete();
         if ($deleteTagType) {

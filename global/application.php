@@ -153,7 +153,8 @@ class Application {
     }
   }
   public function display_error($code) {
-    return $this->view('header').$this->view(intval($code));
+    echo $this->view('header').$this->view(intval($code)).$this->view('footer');
+    exit;
   }
   public function check_partial_include($filename) {
     // displays the standard 404 page if the user is requesting a partial directly.
