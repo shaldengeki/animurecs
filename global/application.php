@@ -168,12 +168,12 @@ class Application {
 
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
       $this->user = new User($this, intval($_SESSION['id']));
-      // if user's last action was 5 or more minutes ago, update his/her last-active time.
-      if ($this->user->lastActive->diff(new DateTime("now", $this->serverTimeZone))->i >= 5) {
+      // if user has not recently been active, update their last-active.
+      if (!$this->user->isCurrentlyActive()) {
         $this->user->updateLastActive();
       }
     } else {
-      $this->user = new User($this, 0, "Guest");
+      $this->user = new User($this, 0);
     }
     if (isset($_REQUEST['status'])) {
       $this->status = $_REQUEST['status'];
@@ -186,7 +186,11 @@ class Application {
       $this->model = $this->_classes[$_REQUEST['model']];
     }
     if (isset($_REQUEST['id'])) {
-      $this->id = intval($_REQUEST['id']);
+      if (is_numeric($_REQUEST['id'])) {
+        $this->id = intval($_REQUEST['id']);
+      } else {
+        $this->id = $_REQUEST['id'];
+      }
     }
     if (!isset($_REQUEST['action']) || $_REQUEST['action'] == '') {
       if ($this->id) {
@@ -206,8 +210,14 @@ class Application {
       if (!class_exists($this->model)) {
         redirect_to($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
       }
-      $this->target = new $this->model($this, $this->id);
-      if ($this->id !== 0) {
+
+      // kludge to allow people to use usernames in URLs.
+      if ($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") {
+        $this->target = new $this->model($this, Null, $this->id);
+      } else {
+        $this->target = new $this->model($this, $this->id);
+      }
+      if ($this->target->id !== 0) {
         try {
           $foo = $this->target->getInfo();
         } catch (Exception $e) {

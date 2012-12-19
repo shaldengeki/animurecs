@@ -12,7 +12,10 @@ class Tag extends BaseObject {
   protected $numManga;
   protected $manga;
 
-  public function __construct(Application $app, $id=Null) {
+  public function __construct(Application $app, $id=Null, $name=Null) {
+    if ($name !== Null) {
+      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `name` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $name))." LIMIT 1"));
+    }
     parent::__construct($app, $id);
     $this->modelTable = "tags";
     $this->modelPlural = "tags";
@@ -326,6 +329,17 @@ class Tag extends BaseObject {
     $this->app->render($output, array('title' => $title));
   }
 
+  public function url($action="show", array $params=Null, $name=Null) {
+    // returns the url that maps to this object and the given action.
+    if ($name === Null) {
+      $name = str_replace(" ", "_", $this->name());
+    }
+    $urlParams = "";
+    if (is_array($params)) {
+      $urlParams = http_build_query($params);
+    }
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? escape_output($name)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+  }
   public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];

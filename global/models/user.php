@@ -20,7 +20,10 @@ class User extends BaseObject {
   protected $requestedFriends;
   protected $ownComments;
 
-  public function __construct(Application $app, $id=Null) {
+  public function __construct(Application $app, $id=Null, $username=Null) {
+    if ($username !== Null) {
+      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `users` WHERE `username` = ".$app->dbConn->quoteSmart($username)." LIMIT 1"));
+    }
     parent::__construct($app, $id);
     $this->modelTable = "users";
     $this->modelPlural = "users";
@@ -264,6 +267,10 @@ class User extends BaseObject {
     $_SESSION['lastLoginCheckTime'] = microtime(True);
     return True;
   }
+  public function isCurrentlyActive() {
+    // return bool reflecting whether or not user has done something recently.
+    return $this->lastActive()->diff(new DateTime("now", new DateTimeZone(Config::SERVER_TIMEZONE)))->i < 5;
+  }
   public function isModerator() {
     if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
       return False;
@@ -455,14 +462,10 @@ class User extends BaseObject {
       return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
     }
     
-    $_SESSION['id'] = intval($findUsername['id']);
-    $_SESSION['name'] = $findUsername['name'];
-    $_SESSION['username'] = $findUsername['username'];
-    $_SESSION['usermask'] = intval($findUsername['usermask']);
-    $this->id = intval($findUsername['id']);
-    $this->username = $findUsername['username'];
-    $this->name = $findUsername['name'];
-    $this->usermask = intval($findUsername['usermask']);
+    $this->id = $_SESSION['id'] = intval($findUsername['id']);
+    $this->name = $_SESSION['name'] = $findUsername['name'];
+    $this->username = $_SESSION['username'] = $findUsername['username'];
+    $this->usermask = $_SESSION['usermask'] = intval($findUsername['usermask']);
 
     //update last IP address and last active.
     $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
@@ -476,18 +479,13 @@ class User extends BaseObject {
     if (!$registerUser) {
       return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
     }
-    $_SESSION['id'] = intval($registerUser);
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['email'] = $user['email'];
-    $_SESSION['usermask'] = intval($user['usermask']);
-
-    $this->id = $_SESSION['id'];
-    $this->username = $user['username'];
-    $this->email = $user['email'];
-    $this->usermask = intval($user['usermask']);
+    $this->id = $_SESSION['id'] = intval($registerUser);
+    $this->username = $_SESSION['username'] = $user['username'];
+    $this->email = $_SESSION['email'] = $user['email'];
+    $this->usermask = $_SESSION['usermask'] = intval($user['usermask']);
 
     //update last IP address and last active.
-    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
+    $updateUser = array('last_ip' => $_SERVER['REMOTE_ADDR']);
     $this->create_or_update($updateUser);
 
     return array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
@@ -750,6 +748,17 @@ class User extends BaseObject {
       $feedEntries->append(new EntryGroup($this->app, $comments));
     }
     return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
+  }
+  public function url($action="show", array $params=Null, $username=Null) {
+    // returns the url that maps to this object and the given action.
+    if ($username === Null) {
+      $username = $this->username();
+    }
+    $urlParams = "";
+    if (is_array($params)) {
+      $urlParams = http_build_query($params);
+    }
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? escape_output($username)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

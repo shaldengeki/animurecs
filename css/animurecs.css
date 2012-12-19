@@ -1033,6 +1033,9 @@ body>.container-fluid{padding-top:20px;}
 .ui-timepicker-div dl dd{margin:0 10px 10px 65px;}
 .ui-timepicker-div td{font-size:90%;}
 .ui-tpicker-grid-label{background:none;border:none;margin:0;padding:0;}
+ul.item-grid{list-style:none;}ul.item-grid li{width:24%;height:200px;display:inline-block;text-align:center;margin-bottom:14px;}ul.item-grid li a img{height:150px;max-width:100px;}
+ul.item-grid li a h4{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+ul.item-grid li em{font-size:12px;}
 .leftColumn .avatarContainer{min-height:230px;margin-bottom:0;}.leftColumn .avatarContainer .profileAvatar{background-color:transparent;}.leftColumn .avatarContainer .profileAvatar img{height:220px;max-width:220px;}
 .leftColumn .friendListBox{width:208px;border:1px solid #dddddd;}.leftColumn .friendListBox h3{padding-left:10px;margin:2px;background-color:#f1f1f1;border-radius:4px 4px 0 0;border:1px solid #dddddd;}
 .leftColumn .friendListBox ul.friendGrid{margin:0;padding:2px;list-style:none;height:202px;width:202px;line-height:normal;}.leftColumn .friendListBox ul.friendGrid li.friendGridEntry{float:left;width:98px;height:98px;position:relative;margin:1px;background-color:white;text-align:center;}.leftColumn .friendListBox ul.friendGrid li.friendGridEntry img{max-width:98px;height:98px;}
@@ -1040,9 +1043,6 @@ body>.container-fluid{padding-top:20px;}
 .rightColumn.span9{margin-left:0;}.rightColumn.span9 .profileUserInfo{padding-left:2.564102564102564%;min-height:230px;}.rightColumn.span9 .profileUserInfo h1{margin-top:0;}
 .rightColumn.span9 .profileTabs .nav-tabs{margin-bottom:0;}
 .rightColumn.span9 .profileTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding-top:20px;}
-ul.item-grid{list-style:none;}ul.item-grid li{width:24%;height:200px;display:inline-block;text-align:center;margin-bottom:14px;}ul.item-grid li a img{height:150px;max-width:100px;}
-ul.item-grid li a h4{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-ul.item-grid li em{font-size:12px;}
 ul.achievements li{width:12%;height:100px;margin-bottom:7px;}ul.achievements li a img{height:75px;max-width:50px;}
 ul.achievements li em{font-size:10px;}
 #userFeed .addListEntryForm{text-align:center;}

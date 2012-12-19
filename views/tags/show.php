@@ -18,7 +18,7 @@
 <h1><?php echo escape_output(($this->type()->id != 1 ? $this->type()->name().":" : "").$this->name()).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
 <?php echo $this->description() ? "<p class='lead'>".escape_output($this->description())."</p>" : "" ?>
 <?php echo paginate($this->url("show", array("page" => "")), intval($this->app->page), $animePages); ?>
-  <ul class='recommendations'>
+  <ul class='item-grid recommendations'>
 <?php
   foreach ($animeGroup->anime() as $anime) {
 ?>

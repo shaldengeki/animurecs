@@ -19,7 +19,10 @@ class Anime extends BaseObject {
 
   protected $tags;
 
-  public function __construct(Application $app, $id=Null) {
+  public function __construct(Application $app, $id=Null, $title=Null) {
+    if ($title !== Null) {
+      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `title` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $title))." LIMIT 1"));
+    }
     parent::__construct($app, $id);
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
@@ -464,6 +467,17 @@ class Anime extends BaseObject {
     }
     $output .= "</ul>\n";
     return $output;
+  }
+  public function url($action="show", array $params=Null, $title=Null) {
+    // returns the url that maps to this object and the given action.
+    if ($title === Null) {
+      $title = str_replace(" ", "_", $this->title());
+    }
+    $urlParams = "";
+    if (is_array($params)) {
+      $urlParams = http_build_query($params);
+    }
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? escape_output($title)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>
