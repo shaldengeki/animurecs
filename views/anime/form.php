@@ -3,8 +3,7 @@
   $this->app->check_partial_include(__FILE__);
   $animeTags = [];
   $blankTag = new Tag($this->app, 0);
-  $this->tags()->info();
-  foreach ($this->tags()->tags() as $tag) {
+  foreach ($this->tags()->load('info') as $tag) {
     $animeTags[] = array('id' => $tag->id, 'name' => $tag->name());
   }
 ?>

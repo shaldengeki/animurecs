@@ -121,7 +121,7 @@ class Anime extends BaseObject {
       Returns a boolean.
     */
     // check to see if this is an update.
-    $tags = $this->tags()->tags();
+    $tags = $this->tags();
     if (isset($tags[intval($tag_id)])) {
       return True;
     }
@@ -268,7 +268,7 @@ class Anime extends BaseObject {
     if (isset($anime['anime_tags'])) {
       // drop any unneeded  tags.
       $tagsToDrop = array();
-      foreach ($this->tags()->tags() as $tag) {
+      foreach ($this->tags() as $tag) {
         if (!in_array($tag->id, $anime['anime_tags'])) {
           $tagsToDrop[] = intval($tag->id);
         }
@@ -276,7 +276,7 @@ class Anime extends BaseObject {
       $drop_tags = $this->drop_taggings($tagsToDrop);
       foreach ($anime['anime_tags'] as $tagToAdd) {
         // add any needed tags.
-        if (!array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
+        if (!array_filter_by_property($this->tags(), 'id', $tagToAdd)) {
           // find this tagID.
           $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {
@@ -451,8 +451,7 @@ class Anime extends BaseObject {
   }
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
-    $this->tags()->info();
-    foreach ($this->tags()->tags() as $tag) {
+    foreach ($this->tags()->load('info') as $tag) {
       $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
     }
     $output .= "</ul>\n";
@@ -460,10 +459,9 @@ class Anime extends BaseObject {
   }
   public function tagList(User $currentUser) {
     $output = "<ul class='tagList'>\n";
-    $this->tags()->info();
-    $tagCounts = $this->tags()->tagCounts();
+    $tagCounts = $this->tags()->load('info')->tagCounts();
     foreach ($tagCounts as $tagID => $count) {
-      $output .= "<li>".$this->tags()->tags()[$tagID]->link("show", $this->tags()->tags()[$tagID]->name)." ".intval($count)."</li>\n";
+      $output .= "<li>".$this->tags()[$tagID]->link("show", $this->tags()[$tagID]->name)." ".intval($count)."</li>\n";
     }
     $output .= "</ul>\n";
     return $output;

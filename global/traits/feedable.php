@@ -67,10 +67,7 @@ trait Feedable {
     $output .= "          </div>\n";
     if ($entry->comments) {
       $commentGroup = new EntryGroup($this->app, $entry->comments);
-      $commentGroup->info();
-      $commentGroup->users();
-      $commentGroup->comments();
-      foreach ($commentGroup->entries() as $commentEntry) {
+      foreach ($commentGroup->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
         $output .= $this->feedEntry($commentEntry, True);
       }
     }
@@ -86,22 +83,17 @@ trait Feedable {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
-    $entries->comments();
-    $entries = array_sort_by_method($entries->entries(), 'time', array(), 'desc');
+    $entries = array_sort_by_method($entries->load('comments')->entries(), 'time', array(), 'desc');
     $entries = array_slice($entries, 0, $numEntries);
     if (!$entries) {
       $output .= $emptyFeedText;
     } else {
       // now pull info en masse for these entries.
       $entryGroup = new EntryGroup($this->app, $entries);
-      $entryGroup->info();
-      $entryGroup->users();
-      $entryGroup->anime();
-      $entryGroup->comments();
 
       $output = "<ul class='media-list ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
-      foreach ($entryGroup->entries() as $entry) {
+      foreach ($entryGroup->load('info')->load('users')->load('anime')->load('comments')->entries() as $entry) {
         $feedOutput[] = $this->feedEntry($entry);
       }
       $output .= implode("\n", $feedOutput);

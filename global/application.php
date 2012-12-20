@@ -166,7 +166,6 @@ class Application {
   public function init() {
     $this->startRender = microtime(true);
     $this->_loadDependencies();
-
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
       $this->user = new User($this, intval($_SESSION['id']));
       // if user has not recently been active, update their last-active.

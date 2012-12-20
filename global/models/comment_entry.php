@@ -55,14 +55,15 @@ class CommentEntry extends BaseEntry {
     } else {
       $feedTitle = "You";
     }
-    if ($this->depth() < 2) {
+    if ($this->depth() < 1) {
       if ($this->app->user->id != $this->comment()->parent()->id) {
         $receivingUser = $this->comment()->parent()->link("show", $this->comment()->parent()->username);
       } else {
         $receivingUser = "you";
       }
-      $feedTitle .= " to ".$receivingUser.":";
+      $feedTitle .= " to ".$receivingUser;
     }
+    $feedTitle .= ":";
     return array('title' => $feedTitle, 'text' => escape_output($this->comment()->message()));
   }
   public function url($action="show", array $params=Null, $id=Null) {

@@ -101,7 +101,7 @@ class Tag extends BaseObject {
     */
     $this->anime();
     if ($animus === Null) {
-      $animus = array_keys($this->anime());
+      $animus = array_keys($this->anime()->anime());
     }
     $animeIDs = [];
     foreach ($animus as $anime) {
@@ -250,7 +250,7 @@ class Tag extends BaseObject {
     while ($animeID = $animeIDs->fetch_assoc()) {
       $animes[intval($animeID['anime_id'])] = new Anime($this->app, intval($animeID['anime_id']));
     }
-    return $animes;
+    return new AnimeGroup($this->app, $animes);
   }
   public function anime() {
     if ($this->anime === Null) {

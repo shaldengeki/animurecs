@@ -14,10 +14,8 @@
         </thead>
         <tbody>
 <?php
-  $users = array_keys($this->dbConn->queryAssoc("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC", 'id'));
-  $userGroup = new UserGroup($this->app, $users);
-  $userGroup->info();
-  foreach ($userGroup->users() as $thisUser) {
+  $userGroup = new UserGroup($this->app, array_keys($this->dbConn->queryAssoc("SELECT `users`.`id` FROM `users` ORDER BY `users`.`username` ASC", 'id')));
+  foreach ($userGroup->load('info') as $thisUser) {
 ?>          <tr>
             <td><?php echo $thisUser->link("show", $thisUser->username()); ?></td>
             <td><?php echo escape_output($thisUser->usermaskText()); ?></td>

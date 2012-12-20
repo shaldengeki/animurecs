@@ -724,11 +724,7 @@ class User extends BaseObject {
   public function profileFeed(DateTime $maxTime=Null, $numEntries=50) {
     // returns markup for this user's profile feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
-    $commentEntries = [];
-    foreach ($this->comments() as $comment) {
-      $commentEntries[] = new CommentEntry($this->app, intval($comment->id));
-    }
-    $feedEntries->append(new EntryGroup($this->app, $commentEntries));
+    $feedEntries->append($this->comments());
     return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
   public function globalFeed(DateTime $maxTime=Null, $numEntries=50) {

@@ -13,7 +13,7 @@ trait Commentable {
     while ($comment = $profileComments->fetch_assoc()) {
       $comments[intval($comment['id'])] = new CommentEntry($this->app, intval($comment['id']));
     }
-    return $comments;
+    return new EntryGroup($this->app, $comments);
   }
   public function comments() {
     if ($this->comments === Null) {

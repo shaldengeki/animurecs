@@ -2,7 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
   $tagAnime = [];
-  foreach ($this->anime() as $anime) {
+  foreach ($this->anime()->load('info') as $anime) {
     $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title());
   }
   $anime = new Anime($this->app, 0);

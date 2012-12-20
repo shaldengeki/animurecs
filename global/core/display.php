@@ -223,10 +223,9 @@ function tag_list($animes, $n=50) {
   $tagCounts = $animes->tagCounts();
   $output = "<ul class='tagList'>\n";
   $i = 1;
-  $tagGroup = new TagGroup($animes->app, array_keys($tagCounts));
-  $tagGroup->info();
-  foreach ($tagGroup->tags() as $tag) {
-    $output .= "<li>".$tag->link("show", $tag->name)." ".intval($tagCounts[$tag->id])."</li>\n";
+  $animes->tags()->load('info');
+  foreach ($tagCounts as $id=>$count) {
+    $output .= "<li>".$animes->tags()[$id]->link("show", $animes->tags()[$id]->name)." ".intval($count)."</li>\n";
     if ($i >= $n) {
       break;
     }
@@ -248,14 +247,13 @@ function display_recommendations(RecsEngine $recsEngine, User $user) {
       $animeIDs[] = $rec['id'];
     }
     $animeGroup = new AnimeGroup($user->app, $animeIDs);
-    $animeGroup->info();
-    foreach ($animeGroup->anime() as $anime) {
+    foreach ($animeGroup->load('info') as $anime) {
       $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4>".$anime->imageTag, True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($recScores[$anime->id], 1)."</em></p></li>\n";
     }
   }
   $output .= "</ul>";
   if (is_array($recs)) {
-    $output .= tag_list($animeGroup->anime());
+    $output .= tag_list($animeGroup);
   }
   return $output;
 }

@@ -43,7 +43,7 @@ class EntryGroup extends BaseGroup {
         }
       }
     }
-    return $animes;
+    return new AnimeGroup($this->app, $animes);
   }
   public function anime() {
     if ($this->_anime === Null) {
@@ -74,7 +74,7 @@ class EntryGroup extends BaseGroup {
         $entry->set($setArray);
       }
     }
-    return $users;
+    return new UserGroup($this->app, $users);
   }
   public function users() {
     if ($this->_users === Null) {
@@ -83,7 +83,7 @@ class EntryGroup extends BaseGroup {
     return $this->_users;
   }
   private function _getComments() {
-    $commentDict = [];
+    $commentDict = $comments = $commentFlatList = [];
     foreach ($this->entries() as $entry) {
       if (method_exists($entry, 'comment')) {
         $commentDict["(`id` = ".$entry->commentId.")"] = 1;
@@ -104,6 +104,7 @@ class EntryGroup extends BaseGroup {
           $comments[$comment['type']][$comment['parent_id']][$newComment->id] = $newComment;
         }
         $comments[$comment['id']] = $newComment;
+        $commentFlatList[$comment['id']] = $newComment;
       }
       foreach ($this->entries() as $entry) {
         if (method_exists($entry, 'comment')) {
@@ -116,13 +117,13 @@ class EntryGroup extends BaseGroup {
         }
       }
     }
+    return $commentFlatList;
   }
   public function comments() {
     if ($this->_comments === Null) {
-      $this->_getComments();
-      $this->_comments = True;
+      $this->_comments = $this->_getComments();
     }
-    return;
+    return $this->_comments;
   }
 
   public function entries() {
