@@ -33,10 +33,6 @@ function format_mysql_timestamp($date) {
   return date('n/j/Y', strtotime($date));
 }
 
-function display_post_time($unixtime) {
-  return date('Y/m/d H:i', $unixtime);
-}
-
 function escape_output($input) {
   if ($input == '' || $input == 'NULL') {
     return '';
@@ -129,13 +125,6 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
     return $output;
 }
 
-function display_login_form() {
-  echo "<form id='login_form' class='form' accept-charset='UTF-8' action='/login.php' method='post'>
-  <input id='username' name='username' size='30' type='text' placeholder='Username' />
-  <input id='password' name='password' size='30' type='password' placeholder='Password' />
-  <input class='btn btn-primary' name='commit' type='submit' value='Sign in' />\n</form>\n";
-}
-
 function display_status_dropdown($select_id="anime_list[status]", $class="", $selected=False) {
   $statuses = array(
       0 => "Remove",
@@ -168,45 +157,6 @@ function display_month_year_dropdown($select_id="", $select_name_prefix="form_en
   echo "</select>\n";
 }
 
-function display_register_form(DbConn $database, $action=".") {
-  $output = "    <form class='form-horizontal' name='register' method='post' action=".$_SERVER['SCRIPT_NAME'].">
-      <fieldset>
-        <legend>Signing up is easy! Fill in a few things...</legend>
-        <div class='control-group'>
-          <label class='control-label'>A username:</label>
-          <div class='controls'>
-            <input type='text' class='' name='username' id='username' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label'>Your password:</label>
-          <div class='controls'>
-            <input type='password' class='' name='password' id='password' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label'>Repeat that password:</label>
-          <div class='controls'>
-            <input type='password' class='' name='password_confirmation' id='password_confirmation' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label'>Your email:</label>
-          <div class='controls'>
-            <input type='text' class='' name='email' id='email' />
-          </div>
-        </div>
-        <div class='control-group'>
-          <label class='control-label'>... And you're done!</label>
-          <div class='controls'>
-            <button type='submit' class='btn btn-primary'>Sign up</button>
-          </div>
-        </div>
-      </fieldset>
-    </form>\n";
-  return $output;
-}
-
 function tag_list($animes, $n=50) {
   // displays a list of tags for a list of anime, sorted by frequency of tag.
   if ($animes instanceof Anime) {
@@ -232,29 +182,6 @@ function tag_list($animes, $n=50) {
     $i++;
   }
   $output .= "</ul>";
-  return $output;
-}
-
-function display_recommendations(RecsEngine $recsEngine, User $user) {
-  $recs = $recsEngine->recommend($user);
-
-  $output = "<h1>Your Recs</h1>\n<ul class='item-grid recommendations'>\n";
-  if (is_array($recs)) {
-    $animeIDs = [];
-    $recScores = [];
-    foreach ($recs as $rec) {
-      $recScores[intval($rec['id'])] = $rec['predicted_score'];
-      $animeIDs[] = $rec['id'];
-    }
-    $animeGroup = new AnimeGroup($user->app, $animeIDs);
-    foreach ($animeGroup->load('info') as $anime) {
-      $output .= "<li>".$anime->link("show", "<h4>".escape_output($anime->title)."</h4>".$anime->imageTag, True, array('title' => $anime->description(True)))."<p><em>Predicted score: ".round($recScores[$anime->id], 1)."</em></p></li>\n";
-    }
-  }
-  $output .= "</ul>";
-  if (is_array($recs)) {
-    $output .= tag_list($animeGroup);
-  }
   return $output;
 }
 
