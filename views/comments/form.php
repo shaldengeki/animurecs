@@ -2,7 +2,8 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-    <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' class='form-horizontal'><?php echo ($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />"; ?>
+    <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')); ?>
+      <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />"; ?>
       <input type='hidden' name='comment[user_id]' value='<?php echo intval($this->app->user->id); ?>' />
       <input type='hidden' name='comment[type]' value='<?php echo escape_output(($this->id === 0) ? get_class($params['currentObject']) : $this->type()); ?>' />
       <input type='hidden' name='comment[parent_id]' value='<?php echo ($this->id === 0) ? intval($params['currentObject']->id) : $this->parent()->id; ?>' />

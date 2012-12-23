@@ -4,7 +4,7 @@
   $anime = new Anime($this->app, 0);
 ?>
                 <div class='addListEntryForm'>
-                  <form class='form-inline' action='<?php echo $this->animeList()->url("new"); ?>' method='POST'>
+                  <?php echo $this->app->form(array('action' => $this->animeList()->url("new"), 'class' => 'form-inline')); ?>
                     <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->id); ?>' />
                     <input name='anime_list_anime_title' id='anime_list_anime_title' type='text' class='autocomplete input-xlarge' data-labelField='title' data-valueField='id' data-url='<?php echo $anime->url("token_search"); ?>' data-tokenLimit='1' data-outputElement='#anime_list_anime_id' placeholder='Have an anime to update? Type it in!' />
                     <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='' />

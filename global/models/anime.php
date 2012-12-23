@@ -391,7 +391,6 @@ class Anime extends BaseObject {
       case 'edit':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $title = "Editing ".escape_output($this->title());
         $output .= $this->view('edit');
@@ -399,7 +398,6 @@ class Anime extends BaseObject {
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $title = escape_output($this->title());
         $output = $this->view("show");
@@ -407,7 +405,6 @@ class Anime extends BaseObject {
       case 'delete':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $animeTitle = $this->title();
         $deleteAnime = $this->delete();

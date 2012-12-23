@@ -74,22 +74,22 @@
       $addText = "Add this anime to your list: ";
     }
 ?>              <div class='addListEntryForm'>
-              <form class='form-inline' action='<?php echo $animeList->url("new", array('user_id' => intval($this->app->user->id))); ?>' method='POST'>
-                <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->app->user->id); ?>' />
-                <?php echo $addText; ?>
-                <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='<?php echo intval($this->id); ?>' />
-                <?php echo display_status_dropdown("anime_list[status]", "span3", $thisEntry['status']); ?>
-                <div class='input-append'>
-                  <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='<?php echo intval($thisEntry['score']); ?>' />
-                  <span class='add-on'>/10</span>
-                </div>
-                <div class='input-prepend'>
-                  <span class='add-on'>Ep</span>
-                  <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' value='<?php echo intval($thisEntry['episode']); ?>' />
-                </div>
-                <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
-              </form>
-            </div>
+                <?php echo $this->app->form(array('action' => $animeList->url("new", array('user_id' => intval($this->app->user->id))), 'class' => 'form-inline')); ?>
+                  <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->app->user->id); ?>' />
+                  <?php echo $addText; ?>
+                  <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='<?php echo intval($this->id); ?>' />
+                  <?php echo display_status_dropdown("anime_list[status]", "span3", $thisEntry['status']); ?>
+                  <div class='input-append'>
+                    <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='<?php echo intval($thisEntry['score']); ?>' />
+                    <span class='add-on'>/10</span>
+                  </div>
+                  <div class='input-prepend'>
+                    <span class='add-on'>Ep</span>
+                    <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' value='<?php echo intval($thisEntry['episode']); ?>' />
+                  </div>
+                  <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
+                </form>
+              </div>
 <?php
   }
 ?>          <?php echo $this->animeFeed(); ?>

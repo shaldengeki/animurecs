@@ -2,7 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-    <form class='form-horizontal' name='register' method='post' action="<?php echo $_SERVER['SCRIPT_NAME']; ?>">
+    <?php echo $this->app->form(array('action' => $_SERVER['SCRIPT_NAME'], 'name' => 'register', 'class' => 'form-horizontal')); ?>
       <fieldset>
         <legend>Signing up is easy! Fill in a few things...</legend>
         <div class='control-group'>

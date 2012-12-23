@@ -3,13 +3,20 @@
 class Application {
   private $_config, $_classes, $_observers=[];
   public $achievements=[];
-  public $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender=Null;
+  public $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
-  public $model,$action="";
+  public $model,$action,$status,$class="";
   public $id=0;
-  public $status,$class="";
+  public $ajax=False;
   public $page=1;
+  public $csrfField="csrf_token";
 
+  private function _generateCSRFToken() {
+    if ($this->csrfToken === Null) {
+      $this->csrfToken = hash('sha256', 'csrf-token:'.session_id());
+    }
+    return $this->csrfToken;
+  }
   private function _loadDependency($relPath) {
     // requires an application dependency from its path relative to the DOCUMENT_ROOT
     // e.g. /global/config.php
@@ -90,6 +97,18 @@ class Application {
       }
     }
   }
+  private function _checkCSRF() {
+    // only generate CSRF token if the user is logged in.
+    if ($this->user->id !== 0) {
+      $this->csrfToken = $this->_generateCSRFToken();
+      // if request came in through AJAX, or there isn't a POST, don't run CSRF filter.
+      if (!$this->ajax && !empty($_POST)) {
+        if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
+          $this->display_error(403);
+        }
+      }
+    }
+  }
 
   // bind/unbind/fire event handlers for objects.
   // event names are of the form modelName.eventName
@@ -152,6 +171,7 @@ class Application {
       $observer->update($event, $object, $updateParams);
     }
   }
+
   public function display_error($code) {
     echo $this->view('header').$this->view(intval($code)).$this->view('footer');
     exit;
@@ -159,8 +179,7 @@ class Application {
   public function check_partial_include($filename) {
     // displays the standard 404 page if the user is requesting a partial directly.
     if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
-      echo $this->display_error(404);
-      exit;
+      $this->display_error(404);
     }
   }
   public function init() {
@@ -175,6 +194,16 @@ class Application {
     } else {
       $this->user = new User($this, 0);
     }
+
+    // check to see if this request is being made via ajax.
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && trim(strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])) == 'xmlhttprequest') {
+      $this->ajax = True;
+    }
+
+    // protect against CSRF attacks.
+    $this->_checkCSRF();
+
+    // set model, action, ID, status, class from request parameters.
     if (isset($_REQUEST['status'])) {
       $this->status = $_REQUEST['status'];
     }
@@ -231,12 +260,25 @@ class Application {
         $this->action = "new";
       }
       if (!$this->target->allow($this->user, $this->action)) {
-        echo $this->display_error(403);
-        exit;
+        $this->display_error(403);
       } else {
         echo $this->target->render();
       }
     }
+  }
+  public function form(array $params=Null) {
+    if (!isset($params['method'])) {
+      $params['method'] = "POST";
+    }
+    if (!isset($params['accept-charset'])) {
+      $params['accept-charset'] = "UTF-8";
+    }
+    $formAttrs = [];
+    foreach ($params as $key=>$value) {
+      $formAttrs[] = escape_output($key)."='".escape_output($value)."'";
+    }
+    $formAttrs = implode(" ", $formAttrs);
+    return "<form ".$formAttrs."><input type='hidden' name='".escape_output($this->csrfField)."' value='".escape_output($this->csrfToken)."' />\n";
   }
   public function view($view="index", $params=Null) {
     // includes a provided application-level view.

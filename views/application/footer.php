@@ -11,7 +11,7 @@
 ?>
       <pre><?php echo escape_output(print_r($this->dbConn->queryLog, True)); ?></pre>
       <pre>Rendering took <?php echo round((microtime(true) - $this->startRender)*1000, 2); ?>ms</pre>
-      <pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>
+      <!--<pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>-->
 <?php
   }
 ?>

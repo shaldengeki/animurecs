@@ -294,7 +294,6 @@ class Tag extends BaseObject {
       case 'edit':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $title = "Editing ".escape_output($this->name());
         $output = $this->view('edit');
@@ -302,7 +301,6 @@ class Tag extends BaseObject {
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $title = "Tag: ".escape_output($this->name());
         $output = $this->view('show', array('recsEngine' => $this->app->recsEngine));
@@ -310,7 +308,6 @@ class Tag extends BaseObject {
       case 'delete':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $tagName = $this->name();
         $deleteTag = $this->delete();

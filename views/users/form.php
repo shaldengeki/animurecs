@@ -2,7 +2,8 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-    <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' enctype='multipart/form-data' class='form-horizontal'><?php echo ($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />"; ?>
+    <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal')); ?>
+      <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />"; ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>

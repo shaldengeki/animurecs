@@ -132,7 +132,6 @@ class TagType extends BaseObject {
       case 'edit':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $title = "Editing ".escape_output($this->name());
         $output = $this->view('edit');
@@ -140,7 +139,6 @@ class TagType extends BaseObject {
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $title = escape_output($this->name());
         $output = $this->view('show');
@@ -148,7 +146,6 @@ class TagType extends BaseObject {
       case 'delete':
         if ($this->id == 0) {
           $this->app->display_error(404);
-          exit;
         }
         $deleteTagType = $this->delete();
         if ($deleteTagType) {

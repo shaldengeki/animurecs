@@ -6,8 +6,9 @@
   foreach ($this->tags()->load('info') as $tag) {
     $animeTags[] = array('id' => $tag->id, 'name' => $tag->name());
   }
+  echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal'));
 ?>
-    <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' enctype='multipart/form-data' method='POST' class='form-horizontal'><?php echo ($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />"; ?>
+    <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />"; ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='anime[title]'>Series Title</label>

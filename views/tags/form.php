@@ -7,7 +7,8 @@
   }
   $anime = new Anime($this->app, 0);
 ?>
-    <form action='<?php echo ($this->id === 0) ? $this->url("new") : $this->url("edit"); ?>' method='POST' class='form-horizontal'><?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />"; ?>
+    <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-inline')); ?>
+      <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />"; ?>
       <input name='tag[created_user_id]' type='hidden' value=<?php echo $this->id === 0 ? intval($this->app->user->id) : $this->createdUser()->id; ?> />
       <fieldset>
         <div class='control-group'>

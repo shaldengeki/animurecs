@@ -100,7 +100,7 @@ class Alias extends BaseObject {
     return $objects;
   }
   public function form(User $currentUser, BaseObject $currentObject) {
-    $output = "    <form action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST' class='form-horizontal'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
+    $output = $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')).(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
       <input type='hidden' name='alias[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
       <input type='hidden' name='alias[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
       <fieldset>
@@ -119,7 +119,7 @@ class Alias extends BaseObject {
     return $output;
   }
   public function inlineForm(User $currentUser, BaseObject $currentObject) {
-    $output = "    <form class='form-inline' action='".(($this->id === 0) ? $this->url("new") : $this->url("edit"))."' method='POST'>\n".(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
+    $output = $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')).(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
       <input type='hidden' name='alias[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
       <input type='hidden' name='alias[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
       <input type='text' name='alias[name]'".(($this->id === 0) ? "placeholder='Add an alias'" : "value='".escape_output($this->name())."'")." />
