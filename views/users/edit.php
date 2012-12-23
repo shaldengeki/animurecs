@@ -15,7 +15,7 @@
                 </div>
                 <div class='tab-pane' id='malImport'>
                   <p>To import your list, we'll need your MAL username:</p>
-                  <?php echo $this->app->form(array('action' => echo $this->url("mal_import"), 'class' => 'form form-inline')); ?>
+                  <?php echo $this->app->form(array('action' => $this->url("mal_import"), 'class' => 'form form-inline')); ?>
                     <input type='text' name='user[mal_username]' placeholder='MAL username' />
                     <input type='submit' class='btn btn-primary' value='Import' />
                   </form>
