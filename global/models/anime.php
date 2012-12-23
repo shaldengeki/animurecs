@@ -280,7 +280,7 @@ class Anime extends BaseObject {
           // find this tagID.
           $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {
-            $create_tagging = $this->create_or_update_tagging($tagID, $currentUser);
+            $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
         }
       }
