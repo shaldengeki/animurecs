@@ -20,7 +20,8 @@ class Tag extends BaseObject {
     $this->modelTable = "tags";
     $this->modelPlural = "tags";
     if ($id === 0) {
-      $this->name = $this->description = "";
+      $this->name = "New Tag";
+      $this->description = "";
       $this->type = $this->anime = $this->manga = $this->createdUser = [];
     } else {
       $this->name = $this->description = $this->type = $this->anime = $this->manga = $this->createdUser = Null;

@@ -1051,6 +1051,8 @@ ul.media-list .media .feedAvatar{width:40px;height:40px;margin:0 0 0 5px;text-al
 ul.media-list .media .feedText{padding-left:10px;font-size:10pt;}ul.media-list .media .feedText .feedUser{font-size:11pt;}ul.media-list .media .feedText .feedUser a:link,ul.media-list .media .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
 ul.media-list .media .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
 ul.media-list .media .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.media-list .media .feedText .feedEntryMenu li{display:inline;white-space:nowrap;}
+div#userList ul#userListNav{margin:0 auto;width:100%;text-align:center;}div#userList ul#userListNav li{float:none;display:inline-block;}
+div#userList h2{margin-top:-40px;padding-top:40px;}
 ul.tagList{position:absolute;top:80px;left:-150px;width:140px;list-style:none;}ul.tagList li{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;}
 .tag-general{color:#006ffa;}
 .tag-studio{color:#aa0000;}

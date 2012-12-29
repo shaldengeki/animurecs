@@ -10,7 +10,7 @@
                         6 => array('id' => 'planToWatch', 'title' => 'Plan to Watch'));
   $relevantEntries = $this->listSection($params['status']);
 ?>
-      <div class='<?php echo escape_output($statusStrings[$params['status']]['id']); ?>'>
+      <div id='<?php echo escape_output($statusStrings[$params['status']]['id']); ?>'>
         <h2><?php echo escape_output($statusStrings[$params['status']]['title']); ?></h2>
         <table class='table table-bordered table-striped dataTable' data-id='<?php echo intval($this->user()->id); ?>'>
           <thead>

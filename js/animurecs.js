@@ -384,8 +384,10 @@ function initInterface(elt) {
   var url = document.location.toString();
   if (url.match('#')) {
     thisTab = $(elt).find('.nav-tabs a[href=#'+url.split('#')[1]+']');
-    thisTab.tab('show');
-    loadAjaxTab(thisTab);
+    if (thisTab.length > 0) {
+      thisTab.tab('show');
+      loadAjaxTab(thisTab);
+    }
   }
 }
 

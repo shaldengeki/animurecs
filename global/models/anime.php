@@ -27,7 +27,8 @@ class Anime extends BaseObject {
     $this->modelTable = "anime";
     $this->modelPlural = "anime";
     if ($id === 0) {
-      $this->title = $this->description = $this->imagePath = $this->approvedOn = "";
+      $this->title = "New Anime";
+      $this->description = $this->imagePath = $this->approvedOn = "";
       $this->episodeCount = $this->episodeLength = $this->ratingAvg = $this->regularizedAvg = 0;
       $this->tags = $this->comments = $this->entries = $this->approvedUser = $this->entries = $this->ratings = [];
     } else {
