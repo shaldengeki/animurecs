@@ -157,62 +157,6 @@ function display_month_year_dropdown($select_id="", $select_name_prefix="form_en
   echo "</select>\n";
 }
 
-function tag_list($animes, $n=50) {
-  // displays a list of tags for a list of anime, sorted by frequency of tag.
-  if ($animes instanceof Anime) {
-    $animes = array($animes);
-  }
-  if (!($animes instanceof AnimeGroup)) {
-    if (count($animes) > 0) {
-      $app = current($animes)->app;
-    } else {
-      return;
-    }
-    $animes = new AnimeGroup($app, $animes);
-  }
-  $tagCounts = $animes->tagCounts();
-  $output = "<ul class='tagList'>\n";
-  $i = 1;
-  $animes->tags()->load('info');
-  foreach ($tagCounts as $id=>$count) {
-    $output .= "<li>".$animes->tags()[$id]->link("show", $animes->tags()[$id]->name)." ".intval($count)."</li>\n";
-    if ($i >= $n) {
-      break;
-    }
-    $i++;
-  }
-  $output .= "</ul>";
-  return $output;
-}
-
-function display_tag_type_dropdown(DbConn $database, $select_id="tag[tag_type_id]", $selected=0) {
-  $output = "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
-  $allTypes = $database->stdQuery("SELECT `id`, `name` FROM `tag_types` ORDER BY `name` ASC");
-  while ($type = $allTypes->fetch_assoc()) {
-    $output .= "<option value='".intval($type['id'])."'".(($selected == intval($type['id'])) ? "selected='selected'" : "").">".escape_output($type['name'])."</option>\n";
-  }
-  $output .= "</select>\n";
-  return $output;
-}
-
-function display_user_roles_select($select_id="user[usermask][]", $mask=0) {
-  $output = "";
-  for ($usermask = 0; $usermask <= 2; $usermask++) {
-    $output .= "<label class='checkbox'>
-  <input type='checkbox' name='".escape_output($select_id)."' value='".intval(pow(2, $usermask))."'".(($mask & intval(pow(2, $usermask))) ? "checked='checked'" : "")." />".escape_output(convert_usermask_to_text(pow(2, $usermask)))."\n</label>\n";
-  }
-  return $output;
-}
-
-function display_userlevel_dropdown(DbConn $database, $select_id="userlevel", $selected=0) {
-  $output = "<select id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
-  for ($userlevel = 0; $userlevel <= 3; $userlevel++) {
-    $output .= "  <option value='".intval($userlevel)."'".(($selected == intval($userlevel)) ? "selected='selected'" : "").">".escape_output(convert_userlevel_to_text($userlevel))."</option>\n";
-  }
-  $output .= "</select>\n";
-  return $output;
-}
-
 function display_history_json(DbConn $database, User $user, array $fields = array(), array $machines=array()) {
   header('Content-type: application/json');
   $return_array = array();

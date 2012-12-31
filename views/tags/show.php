@@ -27,4 +27,4 @@
 ?>
   </ul>
 <?php echo paginate($this->url("show", array("page" => "")), intval($this->app->page), $animePages); ?>
-<?php echo tag_list($animeGroup); ?>
+<?php echo $animeGroup->tag_list(); ?>

@@ -1,4 +1,10 @@
 <?php
+class DbException extends Exception {
+  public function __construct($message = null, $code = 0, Exception $previous = null) {
+    parent::__construct($message, $code, $previous);
+  }
+}
+
 class DbConn extends mysqli {
   //basic database connection class that provides input-escaping and standardized query error output.
   
@@ -12,9 +18,10 @@ class DbConn extends mysqli {
     $this->password = $password;
     $this->database = $database;
     $this->queryLog = [];
-    parent::__construct($this->host, $this->username, $this->password, $this->database, $this->port);
-    if (mysqli_connect_error()) {
-      die('Could not connect to the database.');
+    try {
+      parent::__construct($this->host, $this->username, $this->password, $this->database, $this->port);
+    } catch (Exception $e) {
+      throw new DbException('Could not connect to the database.');
     }
     $this->set_charset("utf8");
     if (class_exists("Memcached")) {
@@ -27,10 +34,10 @@ class DbConn extends mysqli {
   }
   public function quoteSmart($value) {
     //escapes input values for insertion into a query.
-    if( is_array($value) ) {
+    if(is_array($value)) {
       return array_map(array($this, $this->quoteSmart), $value);
     } else {
-      if( get_magic_quotes_gpc() ) {
+      if(get_magic_quotes_gpc()) {
         $value = stripslashes($value);
       }
       if ($value === Null) {
@@ -44,17 +51,25 @@ class DbConn extends mysqli {
   public function stdQuery($query) {
     // executes a query with standardized error message.
     if (Config::DEBUG_ON) {
-      $this->queryLog[] = $query;      
-      $result = $this->query($query)
-        or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
-          Query: ".$query."<br />
-          ".$this->error."<br />
-          Time: ".time()."<br />
-          Stack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>");
-    } else {
-      $result = $this->query($query)
-        or die("Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />
-           Time: ".time());
+      $this->queryLog[] = $query;
+    }
+    try {
+      $result = $this->query($query);
+    } catch (Exception $e) {
+      if (Config::DEBUG_ON) {
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Query: ".$query."<br />".$this->error."<br />Time: ".time()."<br />Stack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>";
+      } else {
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Time: ".time();
+      }
+      throw new DbException($exceptionText);
+    }
+    if (!$result) {
+      if (Config::DEBUG_ON) {
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Query: ".$query."<br />".$this->error."<br />Time: ".time()."<br />Stack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>";
+      } else {
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Time: ".time();
+      }
+      throw new DbException($exceptionText);
     }
     return $result;
   }
@@ -126,7 +141,10 @@ class DbConn extends mysqli {
       } elseif ($idKey === Null && $valKey !== Null) {
         $returnValue[] = $row[$valKey];
       } else {
-         $returnValue[intval($row[$idKey])] = $row[$valKey];
+        if (is_numeric($row[$idKey])) {
+          $row[$idKey] = intval($row[$idKey]);
+        }
+        $returnValue[$row[$idKey]] = $row[$valKey];
       }
     }
     $result->free();

@@ -1,11 +1,13 @@
 <?php
 class Bcrypt {
-  private $rounds;
+  private $rounds, $randomState;
+
   public function __construct($rounds = 8) {
     if(CRYPT_BLOWFISH != 1) {
       throw new Exception("bcrypt not supported in this installation. See http://php.net/crypt");
+    } elseif (!is_int($rounds)) {
+      throw new Exception("Number of rounds must be integral");
     }
-
     $this->rounds = $rounds;
   }
 
@@ -33,7 +35,6 @@ class Bcrypt {
     return $salt;
   }
 
-  private $randomState;
   private function getRandomBytes($count) {
     $bytes = '';
 

@@ -6,6 +6,6 @@
 ?>
 <div class='center-horizontal'>
   <h1>Error (404): Not Found</h1>
-  <img src='/img/hanyuu.png' />
+  <img src='/img/404.png' />
   <p>The thing you're looking for doesn't exist anymore. Sorry about that!</p>
 </div>

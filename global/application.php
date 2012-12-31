@@ -1,5 +1,13 @@
 <?php
 
+class AppException extends Exception {
+  private $app;
+  public function __construct($app, $message = null, $code = 0, Exception $previous = null) {
+    parent::__construct($message, $code, $previous);
+    $this->app = $app;
+  }
+}
+
 class Application {
   private $_config, $_classes, $_observers=[];
   public $achievements=[];
@@ -118,7 +126,7 @@ class Application {
     // can be either anonymous function or string name of class method.
     if (!method_exists($observer, 'update')) {
       if (Config::DEBUG_ON) {
-        throw new InvalidArgumentException(sprintf('Invalid observer: %s.', print_r($observer, True)));
+        throw new AppException($this, sprintf('Invalid observer: %s.', print_r($observer, True)));
       } else {
         return False;
       }
@@ -235,6 +243,12 @@ class Application {
     } else {
       $this->page = max(1, intval($_REQUEST['page']));
     }
+    if (!isset($_REQUEST['format'])) {
+      $this->format = 'html';
+    } else {
+      $this->format = $_REQUEST['format'];
+    }
+
     if (isset($this->model) && $this->model !== "") {
       if (!class_exists($this->model)) {
         redirect_to($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));

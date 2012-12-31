@@ -62,7 +62,7 @@
 ?>      <div class='control-group'>
           <label class='control-label' for='user[usermask]'>Role(s)</label>
           <div class='controls'>
-            <?php echo display_user_roles_select("user[usermask][]", ($this->id === 0) ? 0 : intval($this->usermask())); ?>
+            <?php echo $this->view('roleCheckboxes'); ?>
           </div>
         </div>
 <?php

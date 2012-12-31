@@ -6,6 +6,6 @@
 ?>
 <div class='center-horizontal'>
   <h1>Error (403): Insufficient privileges</h1>
-  <img src='/img/kawaii.png' />
+  <img src='/img/403.png' />
   <p>Unfortunately, you don't have the required permissions to do that! If this is in error, please contact a site admin. Thanks!</p>
 </div>

@@ -5,7 +5,7 @@
   }
 ?>
       <hr />
-      <p>Created and maintained by <a href='<?php echo Config::ROOT_URL; ?>/users/1/show/'>shaldengeki</a>.</p>
+      <p>Created and maintained by <a href='<?php echo Config::ROOT_URL; ?>/users/shaldengeki'>shaldengeki</a>.</p>
 <?php
   if (Config::DEBUG_ON) {
 ?>

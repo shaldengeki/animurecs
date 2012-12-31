@@ -26,7 +26,7 @@
         <div class='control-group'>
           <label class='control-label' for='tag[tag_type_id]'>Tag Type</label>
           <div class='controls'>
-            <?php echo display_tag_type_dropdown($this->dbConn, "tag[tag_type_id]", ($this->id === 0 ? False : intval($this->type()->id))); ?>
+            <?php echo $this->view('tagTypeDropdown'); ?>
           </div>
         </div>
         <div class='control-group'>

@@ -25,6 +25,6 @@
 </ul>
 <?php
   if (is_array($recs)) {
-    echo tag_list($animeGroup);
+    echo $animeGroup->tag_list();
   }
 ?>

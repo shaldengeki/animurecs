@@ -39,7 +39,7 @@ abstract class BaseObject {
     }
     return $this->modelUrl;
   }
-  protected function humanizeParameter($parameter) {
+  public function humanizeParameter($parameter) {
     // takes a parameter name like created_at
     // returns a human-friendly name like createdAt
     $paramParts = explode("_", $parameter);
@@ -60,13 +60,14 @@ abstract class BaseObject {
       }
       $this->{$this->humanizeParameter($key)} = $value;
     }
+    return $this;
   }
   public function getInfo() {
     // retrieves (from the database) all properties of this object in the object's table.
     $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
     if (!$info) {
       if (Config::DEBUG_ON) {
-        throw new Exception($this->modelName().' ID Not Found: '.$this->id);
+        throw new AppException($this->app, $this->modelName().' ID Not Found: '.$this->id);
       } else {
         return;
       }
