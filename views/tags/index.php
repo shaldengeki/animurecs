@@ -14,7 +14,7 @@
   }
 ?>
 <h1>All Tags</h1>
-<?php echo paginate($newTag->url("index", array("page" => "")), intval($this->app->page), $tagPages); ?>
+<?php echo paginate($newTag->url("index", Null, array("page" => "")), intval($this->app->page), $tagPages); ?>
 <table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -43,4 +43,4 @@
   </tbody>
 </table>
 <?php echo $newTag->link("new", "Add a tag"); ?>
-<?php echo paginate($newTag->url("index", array("page" => "")), intval($this->app->page), $tagPages); ?>
+<?php echo paginate($newTag->url("index", Null, array("page" => "")), intval($this->app->page), $tagPages); ?>

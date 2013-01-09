@@ -21,7 +21,7 @@ class DbConn extends mysqli {
     try {
       parent::__construct($this->host, $this->username, $this->password, $this->database, $this->port);
     } catch (Exception $e) {
-      throw new DbException('Could not connect to the database.');
+      throw new DbException('could not connect to the database', 0, $e);
     }
     $this->set_charset("utf8");
     if (class_exists("Memcached")) {
@@ -57,19 +57,19 @@ class DbConn extends mysqli {
       $result = $this->query($query);
     } catch (Exception $e) {
       if (Config::DEBUG_ON) {
-        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Query: ".$query."<br />".$this->error."<br />Time: ".time()."<br />Stack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>";
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query."\n".$this->error."\nTime: ".time()."\nStack trace:\n<pre>".print_r(debug_backtrace(), True)."</pre>";
       } else {
-        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Time: ".time();
+        $exceptionText = "Could not query MySQL database.";
       }
-      throw new DbException($exceptionText);
+      throw new DbException($exceptionText, 0, $e);
     }
     if (!$result) {
       if (Config::DEBUG_ON) {
-        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Query: ".$query."<br />".$this->error."<br />Time: ".time()."<br />Stack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>";
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query."\n".$this->error."\nTime: ".time()."\nStack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>";
       } else {
-        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".<br />Time: ".time();
+        $exceptionText = "Could not query MySQL database.";
       }
-      throw new DbException($exceptionText);
+      throw new DbException($exceptionText, 0, $e);
     }
     return $result;
   }

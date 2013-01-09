@@ -105,7 +105,7 @@ class AnimeEntry extends BaseEntry {
           try {
             $targetUser = new User($this->app, intval($_POST['anime_entry']['user_id']));
             $targetUser->getInfo();
-          } catch (Exception $e) {
+          } catch (DbException $e) {
             // this non-zero userID does not exist.
             $status = "This user doesn't exist.";
             $class = "error";
@@ -121,7 +121,7 @@ class AnimeEntry extends BaseEntry {
           try {
             $targetAnime = new Anime($this->app, intval($_POST['anime_entry']['anime_id']));
             $targetAnime->getInfo();
-          } catch (Exception $e) {
+          } catch (DbException $e) {
             $location = $targetUser->url();
             $status = "This anime ID doesn't exist.";
             $class = "error";

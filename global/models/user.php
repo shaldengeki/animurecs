@@ -714,7 +714,7 @@ class User extends BaseObject {
     foreach ($this->friendRequests() as $request) {
       $entryTime = new DateTime($request['time'], $serverTimezone);
       $entryTime->setTimezone($outputTimezone);
-      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", True, Null, Null, $request['user']->id)."</li>\n";
+      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", Null, True, Null, Null, $request['user']->id)."</li>\n";
     }
     return $output;
   }
@@ -742,7 +742,7 @@ class User extends BaseObject {
     }
     return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
   }
-  public function url($action="show", array $params=Null, $username=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $username=Null) {
     // returns the url that maps to this object and the given action.
     if ($username === Null) {
       $username = $this->username();
@@ -751,7 +751,7 @@ class User extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($username))."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($username))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

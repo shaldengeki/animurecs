@@ -29,7 +29,7 @@ if ($this->avatarPath() != '') {
   shuffle($friendSlice);
   $friendSlice = array_slice($friendSlice, 0, 4);
   foreach ($friendSlice as $friendEntry) {
-?>            <li class='friendGridEntry'><?php echo $friendEntry['user']->link("show", $friendEntry['user']->avatarImage(array('class' => 'friendGridImage'))."<div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", True); ?></li>
+?>            <li class='friendGridEntry'><?php echo $friendEntry['user']->link("show", $friendEntry['user']->avatarImage(array('class' => 'friendGridImage'))."<div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", Null, True); ?></li>
 <?php
   }
 ?>

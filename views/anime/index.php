@@ -14,7 +14,7 @@
   }
 ?>
 <h1>All Anime</h1>
-<?php echo paginate($newAnime->url("index", array('page' => '')), intval($this->app->page), $animePages); ?>
+<?php echo paginate($newAnime->url("index", Null, array('page' => '')), intval($this->app->page), $animePages); ?>
 <table class='table table-striped table-bordered dataTable' data-recordsPerPage='<?php echo $resultsPerPage; ?>'>
   <thead>
     <tr>
@@ -62,5 +62,5 @@
 ?>
   </tbody>
 </table>
-<?php echo paginate($newAnime->url("index", array('page' => '')), intval($this->app->page), $animePages); ?>
+<?php echo paginate($newAnime->url("index", Null, array('page' => '')), intval($this->app->page), $animePages); ?>
 <?php echo $newAnime->allow($this->app->user, 'new') ? $newAnime->link("new", "Add an anime") : ""; ?>

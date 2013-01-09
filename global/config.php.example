@@ -19,6 +19,9 @@ class Config {
   const SERVER_TIMEZONE = 'Your/timezone';
   const OUTPUT_TIMEZONE = 'Timezone/to/output';
 
+  // logging settings.
+  const LOG_FILE = '/var/log/animurecs.log';
+
   // settings for debugging in development environments.
   const DEBUG_ON = False;
 }

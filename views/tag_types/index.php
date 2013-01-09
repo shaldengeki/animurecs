@@ -14,7 +14,7 @@
   }
 ?>
 <h1>All Tag Types</h1>
-<?php echo paginate($newTagType->url("index", array("page" => "")), intval($this->app->page), $tagTypePages); ?>
+<?php echo paginate($newTagType->url("index", Null, array("page" => "")), intval($this->app->page), $tagTypePages); ?>
 <table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -40,5 +40,5 @@
 ?>
   </tbody>
 </table>
-<?php echo paginate($newTagType->url("index", array("page" => "")), intval($this->app->page), $tagTypePages); ?>
+<?php echo paginate($newTagType->url("index", Null, array("page" => "")), intval($this->app->page), $tagTypePages); ?>
 <?php echo $newTagType->link("new", "Add a tag type"); ?>

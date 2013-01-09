@@ -66,7 +66,7 @@ class CommentEntry extends BaseEntry {
     $feedTitle .= ":";
     return array('title' => $feedTitle, 'text' => escape_output($this->comment()->message()));
   }
-  public function url($action="show", array $params=Null, $id=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.
     // if we're showing this comment, show its parent instead.
     if ($action == "show") {
@@ -79,7 +79,7 @@ class CommentEntry extends BaseEntry {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 

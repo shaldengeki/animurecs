@@ -6,12 +6,15 @@ class AppException extends Exception {
     parent::__construct($message, $code, $previous);
     $this->app = $app;
   }
+  public function __toString() {
+    return "AppError:\n".$this->getFile().":".$this->getLine()."\n".$this->getMessage()."\nStack trace:\n".$this->getTraceAsString();
+  }
 }
 
 class Application {
   private $_config, $_classes, $_observers=[];
   public $achievements=[];
-  public $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
+  public $logger, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
   public $model,$action,$status,$class="";
   public $id=0;
@@ -25,10 +28,21 @@ class Application {
     }
     return $this->csrfToken;
   }
-  private function _loadDependency($relPath) {
-    // requires an application dependency from its path relative to the DOCUMENT_ROOT
-    // e.g. /global/config.php
-    require_once($_SERVER['DOCUMENT_ROOT'].$relPath);
+  private function _loadDependency($absPath) {
+    // requires an application dependency from its absolute path
+    // e.g. /ABSOLUTE_PATH/global/config.php
+    if (file_exists($absPath)) {
+      include_once($absPath);
+    } else {
+      throw new AppException($this, 'required library not found at '.$absPath);
+    }
+  }
+  private function _connectLogger() {
+    if (Config::DEBUG_ON) {
+      return log::factory('file', Config::LOG_FILE, 'Animurecs', array(), PEAR_LOG_DEBUG);
+    } else {
+      return log::factory('file', Config::LOG_FILE, 'Animurecs', array(), PEAR_LOG_WARNING);
+    }
   }
   private function _connectDB() {
     if ($this->dbConn === Null) {
@@ -43,38 +57,56 @@ class Application {
     return $this->recsEngine;
   }
   private function _loadDependencies() {
-    $this->_loadDependency("/global/config.php");
+    $this->_loadDependency("./global/config.php");
 
-    // core models, including base_object.
-    foreach (glob(Config::APP_ROOT."/global/core/*.php") as $filename) {
-      require_once($filename);
-    }
+    require_once('Log.php');
+    $this->logger = $this->_connectLogger();
 
-    // include all traits before models that depend on them.
-    foreach (glob(Config::APP_ROOT."/global/traits/*.php") as $filename) {
-      require_once($filename);
-    }
+    try {
+      // core models, including base_object.
+      foreach (glob(Config::APP_ROOT."/global/core/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
 
-    // generic base models that extend base_object.
-    foreach (glob(Config::APP_ROOT."/global/base/*.php") as $filename) {
-      require_once($filename);
-    }
+      // include all traits before models that depend on them.
+      foreach (glob(Config::APP_ROOT."/global/traits/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
 
-    // group models.
-    foreach (glob(Config::APP_ROOT."/global/groups/*.php") as $filename) {
-      require_once($filename);
-    }
+      // generic base models that extend base_object.
+      foreach (glob(Config::APP_ROOT."/global/base/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
 
-    $nonLinkedClasses = count(get_declared_classes());
+      // group models.
+      foreach (glob(Config::APP_ROOT."/global/groups/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
 
-    // models that have URLs.
-    foreach (glob(Config::APP_ROOT."/global/models/*.php") as $filename) {
-      require_once($filename);
+      $nonLinkedClasses = count(get_declared_classes());
+
+      // models that have URLs.
+      foreach (glob(Config::APP_ROOT."/global/models/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
+    } catch (AppException $e) {
+      $this->logger->log($e, PEAR_LOG_ALERT);
+      $this->display_error(500);
     }
 
     session_start();
-    $this->dbConn = $this->_connectDB();
-    $this->recsEngine = $this->_connectRecsEngine();
+    try {
+      $this->dbConn = $this->_connectDB();
+    } catch (DbException $e) {
+      $this->logger->log($e, PEAR_LOG_ALERT);
+      $this->display_error(500);
+    }
+    try {
+      $this->recsEngine = $this->_connectRecsEngine();
+    } catch (AppException $e) {
+      $this->logger->log($e, PEAR_LOG_WARNING);
+      $this->display_error(500);
+    }
     
     date_default_timezone_set(Config::SERVER_TIMEZONE);
     $this->serverTimeZone = new DateTimeZone(Config::SERVER_TIMEZONE);
@@ -91,8 +123,13 @@ class Application {
     // include all achievements.
     // achievements is an ID:object mapping of achievements.
     $nonAchievementClasses = count(get_declared_classes());
-    foreach (glob(Config::APP_ROOT."/global/achievements/*.php") as $filename) {
-      require_once($filename);
+    try {
+      foreach (glob(Config::APP_ROOT."/global/achievements/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
+    } catch (AppException $e) {
+      $this->logger->log($e, PEAR_LOG_ALERT);
+      $this->display_error(500);
     }
     $achievementSlice = array_slice(get_declared_classes(), $nonAchievementClasses);
     foreach ($achievementSlice as $achievementName) {
@@ -193,6 +230,7 @@ class Application {
   public function init() {
     $this->startRender = microtime(true);
     $this->_loadDependencies();
+
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
       $this->user = new User($this, intval($_SESSION['id']));
       // if user has not recently been active, update their last-active.
@@ -243,10 +281,10 @@ class Application {
     } else {
       $this->page = max(1, intval($_REQUEST['page']));
     }
-    if (!isset($_REQUEST['format'])) {
+    if (!isset($_REQUEST['format']) || $_REQUEST['format'] === "") {
       $this->format = 'html';
     } else {
-      $this->format = $_REQUEST['format'];
+      $this->format = escape_output($_REQUEST['format']);
     }
 
     if (isset($this->model) && $this->model !== "") {
@@ -263,7 +301,7 @@ class Application {
       if ($this->target->id !== 0) {
         try {
           $foo = $this->target->getInfo();
-        } catch (Exception $e) {
+        } catch (DbException $e) {
           $blankModel = new $this->model($this);
           redirect_to($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
         }
@@ -274,9 +312,16 @@ class Application {
         $this->action = "new";
       }
       if (!$this->target->allow($this->user, $this->action)) {
+        $error = new AppException($this, $this->user." attempted to ".$this->action." ".$this->target);
+        $this->logger->log($error, PEAR_LOG_WARNING);
         $this->display_error(403);
       } else {
-        echo $this->target->render();
+        try {
+          echo $this->target->render();
+        } catch (Exception $e) {
+          $this->logger->log($e, PEAR_LOG_ERR);
+          $this->display_error(500);
+        }
       }
     }
   }

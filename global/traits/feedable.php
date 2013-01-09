@@ -56,13 +56,13 @@ trait Feedable {
 
     $output = "      <".$entryType." class='media'>
         <div class='pull-right feedDate' data-time='".$entry->time()->format('U')."'>".ago($diffInterval)."</div>
-        ".$entry->user->link("show", $entry->user->avatarImage(array('class' => 'feedAvatarImg')), True, array('class' => 'feedAvatar pull-left'))."
+        ".$entry->user->link("show", $entry->user->avatarImage(array('class' => 'feedAvatarImg')), Null, True, array('class' => 'feedAvatar pull-left'))."
         <div class='media-body feedText'>
           <div class='feedEntry'>
             <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>
             ".$feedMessage['text']."\n";
     if ($entry->allow($this->app->user, 'delete')) {
-      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", True)."</li></ul>\n";
+      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", Null, True)."</li></ul>\n";
     }
     $output .= "          </div>\n";
     if ($entry->comments) {

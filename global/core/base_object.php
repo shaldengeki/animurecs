@@ -64,13 +64,10 @@ abstract class BaseObject {
   }
   public function getInfo() {
     // retrieves (from the database) all properties of this object in the object's table.
-    $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    if (!$info) {
-      if (Config::DEBUG_ON) {
-        throw new AppException($this->app, $this->modelName().' ID Not Found: '.$this->id);
-      } else {
-        return;
-      }
+    try {
+      $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
+    } catch (DbException $e) {
+      throw new DbException($this->modelName().' ID not found: '.$this->id);
     }
     $this->set($info);
   }
@@ -225,7 +222,7 @@ abstract class BaseObject {
     echo $this->app->render($this->view($this->app->action));
     exit;
   }
-  public function url($action="show", array $params=Null, $id=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
     if ($id === Null) {
       $id = intval($this->id);
@@ -234,9 +231,9 @@ abstract class BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
-  public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
+  public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
     if (is_array($params) && $params) {
@@ -244,7 +241,19 @@ abstract class BaseObject {
         $linkParams[] = escape_output($key)."='".escape_output($value)."'";
       }
     }
-    return "<a href='".$this->url($action, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='".$this->url($action, $format, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
+  }
+  public function ajaxLink($action="show", $text="Show", $source=Null, $target=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
+    if (!is_array($params)) {
+      $params = [];
+    }
+    if ($source !== Null) {
+      $params['data-url'] = $source;
+    }
+    if ($target !== Null) {
+      $params['data-target'] = $target;
+    }
+    return $this->link($action, $text, Null, $raw, $params, $urlParams, $id);
   }
 
  }

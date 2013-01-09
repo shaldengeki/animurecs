@@ -450,7 +450,7 @@ class Anime extends BaseObject {
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
     foreach ($this->tags()->load('info') as $tag) {
-      $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
+      $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", Null, False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
     }
     $output .= "</ul>\n";
     return $output;
@@ -464,7 +464,7 @@ class Anime extends BaseObject {
     $output .= "</ul>\n";
     return $output;
   }
-  public function url($action="show", array $params=Null, $title=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $title=Null) {
     // returns the url that maps to this object and the given action.
     if ($title === Null) {
       $title = $this->title();
@@ -473,7 +473,7 @@ class Anime extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($title))."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

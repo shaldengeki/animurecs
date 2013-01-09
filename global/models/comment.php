@@ -146,11 +146,11 @@ class Comment extends BaseObject {
     }
     return True;
   }
-  public function url($action="show", array $params=Null, $id=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.
     // if we're showing this comment, show its parent instead.
     if ($action == "show") {
-      return $this->parent()->url($action, $params);
+      return $this->parent()->url($action, $format, $params);
     }
     if ($id === Null) {
       $id = intval($this->id);
@@ -159,7 +159,7 @@ class Comment extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function render() {
     if ($this->app->id != 0) {

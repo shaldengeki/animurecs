@@ -17,7 +17,7 @@
     $animeGroup = new AnimeGroup($this->app, $animeIDs);
     foreach ($animeGroup->load('info') as $anime) {
 ?>
-  <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title)."</h4>".$anime->imageTag, True, array('title' => $anime->description(True))); ?><p><em>Predicted score: <?php echo round($recScores[$anime->id], 1); ?></em></p></li>
+  <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title)."</h4>".$anime->imageTag, Null, True, array('title' => $anime->description(True))); ?><p><em>Predicted score: <?php echo round($recScores[$anime->id], 1); ?></em></p></li>
 <?php
     }
   }

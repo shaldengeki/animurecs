@@ -263,7 +263,7 @@ abstract class BaseList extends BaseObject {
     }
     return $prevEntry;
   }
-  public function url($action="show", array $params=Null, $id=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
     if ($id === Null) {
       $id = $this->user_id;
@@ -272,12 +272,12 @@ abstract class BaseList extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
-  public function link($action="show", $text=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
+  public function link($action="show", $text=Null, $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.
     $text = ($text === Null) ? "List" : $text;
-    return parent::link($action, $text, $raw, $params, $urlParams, $id);
+    return parent::link($action, $text, $format, $raw, $params, $urlParams, $id);
   }
   public function similarity(BaseList $currentList) {
     // calculates pearson's r between this list and the current user's list.

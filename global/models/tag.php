@@ -269,7 +269,6 @@ class Tag extends BaseObject {
     }
     return $this->numAnime;
   }
-
   public function render() {
     if (isset($_POST['tag']) && is_array($_POST['tag'])) {
       $updateTag = $this->create_or_update($_POST['tag']);
@@ -326,8 +325,7 @@ class Tag extends BaseObject {
     }
     $this->app->render($output, array('title' => $title));
   }
-
-  public function url($action="show", array $params=Null, $name=Null) {
+  public function url($action="show", $format=Null, array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.
     if ($name === Null) {
       $name = $this->name();
@@ -336,9 +334,9 @@ class Tag extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($name))."/".escape_output($action)."/" : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($name))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
-  public function link($action="show", $text="Show", $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
+  public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
     if (is_array($params)) {
@@ -348,7 +346,7 @@ class Tag extends BaseObject {
     }
     $linkClass = $this->id != 0 ? " class='tag-".escape_output($this->type()->name)."'" : "";
     $linkTitle = $this->id != 0 ? " title='".escape_output($this->name())."'" : "";
-    return "<a".$linkClass.$linkTitle." href='".$this->url($action, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
+    return "<a".$linkClass.$linkTitle." href='".$this->url($action, $format, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
   }
 }
 ?>
