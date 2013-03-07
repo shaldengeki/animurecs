@@ -12,6 +12,12 @@ class AppException extends Exception {
 }
 
 class Application {
+  /*
+    Class that serves to store all the application-relevant parameters
+    E.g. this request's model/action/id/format
+    And configuration parameters
+    Also serves as DI container (stores database, logger, recommendation engine objects)
+  */
   private $_config, $_classes, $_observers=[];
   public $achievements=[];
   public $logger, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
@@ -23,6 +29,7 @@ class Application {
   public $csrfField="csrf_token";
 
   private function _generateCSRFToken() {
+    // generates a CSRF token, if one has not already been created for this Application object.
     if ($this->csrfToken === Null) {
       $this->csrfToken = hash('sha256', 'csrf-token:'.session_id());
     }
@@ -57,6 +64,10 @@ class Application {
     return $this->recsEngine;
   }
   private function _loadDependencies() {
+    // Loads configuration and all application objects from library files.
+    // Connects database, logger, recommendation engine.
+    // Creates a list of objects that can be accessed via URL.
+
     $this->_loadDependency("./global/config.php");
 
     require_once('Log.php');
@@ -292,7 +303,7 @@ class Application {
         redirect_to($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
       }
 
-      // kludge to allow people to use usernames in URLs.
+      // kludge to allow model names in URLs.
       if ($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") {
         $this->target = new $this->model($this, Null, urldecode($this->id));
       } else {

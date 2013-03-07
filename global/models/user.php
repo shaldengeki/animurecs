@@ -123,7 +123,7 @@ class User extends BaseObject {
     return $this->friends;
   }
   public function getFriendRequests($status=0) {
-    // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests directed at this user.
+    // returns a list of user,time,message arrays corresponding to all outstanding friend requests directed at this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
     $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_1`, `time`, `message` FROM `users_friends`
@@ -452,7 +452,7 @@ class User extends BaseObject {
     }
   
     $bcrypt = new Bcrypt();
-    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
+    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
     if (!$findUsername) {
       $this->log_failed_login($username, $password);
       return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
@@ -465,6 +465,7 @@ class User extends BaseObject {
     $this->id = $_SESSION['id'] = intval($findUsername['id']);
     $this->name = $_SESSION['name'] = $findUsername['name'];
     $this->username = $_SESSION['username'] = $findUsername['username'];
+    $this->email = $_SESSION['email'] = $findUsername['email'];
     $this->usermask = $_SESSION['usermask'] = intval($findUsername['usermask']);
 
     //update last IP address and last active.
