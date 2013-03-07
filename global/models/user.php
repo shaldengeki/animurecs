@@ -452,7 +452,7 @@ class User extends BaseObject {
     }
   
     $bcrypt = new Bcrypt();
-    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
+    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
     if (!$findUsername) {
       $this->log_failed_login($username, $password);
       return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
@@ -467,6 +467,7 @@ class User extends BaseObject {
     $this->username = $_SESSION['username'] = $findUsername['username'];
     $this->email = $_SESSION['email'] = $findUsername['email'];
     $this->usermask = $_SESSION['usermask'] = intval($findUsername['usermask']);
+    $this->avatarPath = $_SESSION['avatarPath'] = $findUsername['avatar_path'];
 
     //update last IP address and last active.
     $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
