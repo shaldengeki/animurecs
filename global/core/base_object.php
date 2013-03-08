@@ -1,4 +1,19 @@
 <?php
+
+class ValidationException extends AppException {
+  private $params;
+  public function __construct($params, $app, $messages=Null, $code=0, AppException $previous=Null) {
+    parent::__construct($app, $messages, $code, $previous);
+    $this->params = $params;
+  }
+  public function __toString() {
+    return "ValidationException:\n".$this->getFile().":".$this->getLine()."\nParams: ".print_r($this->params, TRUE)."Messages: ".print_r($this->getMessages(), TRUE)."Stack trace:\n".$this->getTraceAsString()."\n";
+  }
+  public function display() {
+    return "<p class='error'>One or more fields you entered in this form was incorrect:".$this->formatMessages()."Please correct this and try again!</p>";
+  }
+}
+
 abstract class BaseObject {
   // base class for database objects.
 
@@ -95,16 +110,21 @@ abstract class BaseObject {
   abstract public function allow(User $authingUser, $action, array $params=Null);
   // also should implement validate(), which takes an array of parameters and ensures that they are valid. returns a bool.
   public function validate(array $object) {
+    $validationErrors = [];
     if (isset($object['id']) && ( !is_numeric($object['id']) || intval($object['id']) != $object['id'] || intval($object['id']) < 0) ) {
-      return False;
+      $validationErrors[] = "Object ID must be an integer greater than 0";
     }
     if (isset($object['created_at']) && !strtotime($object['created_at'])) {
-      return False;
+      $validationErrors[] = "Malformed created-at time";
     }
     if (isset($object['updated_at']) && !strtotime($object['updated_at'])) {
-      return False;
+      $validationErrors[] = "Malformed updated-at time";
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($object, $this->app, $validationErrors);
+    } else {
+      return True;
+    }
   }
 
   // event handlers for objects.

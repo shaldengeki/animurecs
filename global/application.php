@@ -1,13 +1,32 @@
 <?php
 
 class AppException extends Exception {
-  private $app;
-  public function __construct($app, $message = null, $code = 0, Exception $previous = null) {
-    parent::__construct($message, $code, $previous);
+  private $app, $messages;
+  public function __construct($app, $messages=Null, $code=0, Exception $previous=Null) {
+    if (is_array($messages)) {
+      $this->messages = $messages;
+    } else {
+      $this->messages = array($messages);
+    }
+    parent::__construct($this->formatMessages(), $code, $previous);
     $this->app = $app;
   }
+  public function getMessages() {
+    return $this->messages;
+  }
+  public function formatMessages() {
+    if (count($this->messages) > 0) {
+      return "<ul><li>".implode("</li><li>", $this->messages)."</li></ul>";
+    } else {
+      return "";
+    }
+  }
   public function __toString() {
-    return "AppError:\n".$this->getFile().":".$this->getLine()."\n".$this->getMessage()."\nStack trace:\n".$this->getTraceAsString();
+    return get_class($this).":\n".$this->getFile().":".$this->getLine()."\nMessages: ".print_r($this->getMessages(), TRUE)."Stack trace:\n".$this->getTraceAsString()."\n";
+  }
+  public function display() {
+    // displays end user-friendly output explaining the exception that occurred.
+    echo "A server error occurred, and I wasn't able to complete your request. I've let the staff know something's wrong - apologies for the problems!";
   }
 }
 
@@ -232,6 +251,11 @@ class Application {
     echo $this->view('header').$this->view(intval($code)).$this->view('footer');
     exit;
   }
+  public function display_exception($e) {
+    // formats a (subclassed) instance of AppException for display to the end user.
+    echo $this->view('header').$e->display().$this->view('footer');
+    exit;
+  }
   public function check_partial_include($filename) {
     // displays the standard 404 page if the user is requesting a partial directly.
     if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
@@ -324,13 +348,16 @@ class Application {
       }
       if (!$this->target->allow($this->user, $this->action)) {
         $error = new AppException($this, $this->user." attempted to ".$this->action." ".$this->target);
-        $this->logger->log($error, PEAR_LOG_WARNING);
+        $this->logger->warning($error->__toString());
         $this->display_error(403);
       } else {
         try {
           echo $this->target->render();
+        } catch (AppException $e) {
+          $this->logger->err($e->__toString());
+          $this->display_exception($e);
         } catch (Exception $e) {
-          $this->logger->log($e, PEAR_LOG_ERR);
+          $this->logger->err($e->__toString());
           $this->display_error(500);
         }
       }

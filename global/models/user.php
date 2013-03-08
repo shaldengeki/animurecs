@@ -287,59 +287,64 @@ class User extends BaseObject {
     return $this->isModerator() || $this->isAdmin();
   }
   public function validate(array $user) {
+    $validationErrors = [];
     if (!parent::validate($user)) {
-      return False;
+      $validationErrors[] = "Parent validation failure";
     }
 
     if ($this->id === 0) {
       if (!isset($user['username']) || !isset($user['email'])) {
-        return False;
+        $validationErrors[] = "ID set without username or email";
       }
       if ($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`username`) = ".$this->dbConn->quoteSmart(strtolower($user['username']))) > 0) {
-        return False;
+        $validationErrors[] = "This username already exists";
       }
     } else {
       if (isset($user['username'])) {
         if (strlen($user['username']) < 1 || strlen($user['username']) > 40) {
-          return False;
+          $validationErrors[] = "Username must be between 1 and 40 characters";
         }
         // username must be unique if we're changing.
         if ($user['username'] != $this->username() && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`username`) = ".$this->dbConn->quoteSmart(strtolower($user['username']))) > 0) {
-          return False;
+          $validationErrors[] = "New username is already taken";
         }
       }
     }
 
     if (isset($user['password']) && ($this->id === 0 || $user['password'] != '')) {
      if (strlen($user['password']) < 6) {
-        return False;
+        $validationErrors[] = "Password must be longer than 6 characters";
       }
       if (!isset($user['password_confirmation']) || $user['password_confirmation'] != $user['password']) {
-        return False;
+        $validationErrors[] = "Password confirmation does not match";
       }
     }
     if (isset($user['email'])) {
       if (strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email'])) {
-        return False;
+        $validationErrors[] = "Malformed email address";
       }
       // email must be unique if we're changing.
       if (($this->id === 0 || $user['email'] != $this->email()) && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`email`) = ".$this->dbConn->quoteSmart(strtolower($user['email']))) > 0) {
-        return False;
+        $validationErrors[] = "This email has already been taken. Try resetting your password!";
       }
     }
     if (isset($user['about']) && (strlen($user['about']) < 0 || strlen($user['about']) > 600)) {
-      return False;
+      $validationErrors[] = "Your bio must be at most 600 characters";
     }
     if (isset($user['usermask']) && ( !is_numeric($user['usermask']) || intval($user['usermask']) != $user['usermask'] || intval($user['usermask']) < 0) ) {
-      return False;
+      $validationErrors[] = "Your user permissions are invalid";
     }
     if (isset($user['last_active']) && !strtotime($user['last_active'])) {
-      return False;
+      $validationErrors[] = "Malformed last-active time";
     }
     if (isset($user['last_ip']) && !preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $user['last_ip'])) {
-      return False;
+      $validationErrors[] = "Malformed IP address";
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($user, $this->app, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function create_or_update(array $user, array $whereConditions=Null) {
     // creates or updates a user based on the parameters passed in $user and this object's attributes.
