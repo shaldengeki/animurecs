@@ -650,7 +650,13 @@ class User extends BaseObject {
           if (isset($_POST['user']['usermask']) && intval($_POST['user']['usermask']) > 1 && intval($_POST['user']['usermask']) >= $this->usermask()) {
             redirect_to($this->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
           }
-          $updateUser = $this->create_or_update($_POST['user']);
+          $updateErrors = False;
+          try {
+            $updateUser = $this->create_or_update($_POST['user']);
+          } catch (ValidationException $e) {
+            // validation exceptions don't need to be logged.
+            redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => $e->formatMessages(), 'class' => 'error'));
+          }
           if ($updateUser) {
             redirect_to($this->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
           } else {

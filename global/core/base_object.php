@@ -7,10 +7,10 @@ class ValidationException extends AppException {
     $this->params = $params;
   }
   public function __toString() {
-    return "ValidationException:\n".$this->getFile().":".$this->getLine()."\nParams: ".print_r($this->params, TRUE)."Messages: ".print_r($this->getMessages(), TRUE)."Stack trace:\n".$this->getTraceAsString()."\n";
+    return "ValidationException:\n".$this->getFile().":".$this->getLine()."\nParams: ".print_r($this->params, TRUE)."Messages: ".$this->formatMessages()."\nStack trace:\n".$this->getTraceAsString()."\n";
   }
   public function display() {
-    return "<p class='error'>One or more fields you entered in this form was incorrect:".$this->formatMessages()."Please correct this and try again!</p>";
+    return "<p class='error'>One or more fields you entered in this form was incorrect:".$this->listMessages()."Please correct this and try again!</p>";
   }
 }
 

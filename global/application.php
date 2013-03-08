@@ -15,6 +15,15 @@ class AppException extends Exception {
     return $this->messages;
   }
   public function formatMessages() {
+    // displays a list of this exception's messages.
+    if (count($this->messages) > 0) {
+      return implode("\n", $this->messages);
+    } else {
+      return "";
+    }
+  }
+  public function listMessages() {
+    // returns an unordered HTML list of this exception's messages.
     if (count($this->messages) > 0) {
       return "<ul><li>".implode("</li><li>", $this->messages)."</li></ul>";
     } else {
@@ -22,7 +31,7 @@ class AppException extends Exception {
     }
   }
   public function __toString() {
-    return get_class($this).":\n".$this->getFile().":".$this->getLine()."\nMessages: ".print_r($this->getMessages(), TRUE)."Stack trace:\n".$this->getTraceAsString()."\n";
+    return get_class($this).":\n".$this->getFile().":".$this->getLine()."\nMessages: ".$this->formatMessages()."\nStack trace:\n".$this->getTraceAsString()."\n";
   }
   public function display() {
     // displays end user-friendly output explaining the exception that occurred.
