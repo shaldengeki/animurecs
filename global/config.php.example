@@ -8,7 +8,7 @@ class Config {
 
   const MEMCACHED_HOST = 'localhost';
   const MEMCACHED_PORT = 11211;
-  const MEMCACHED_DEFAULT_LIFESPAN = 20; // in seconds.
+  const MEMCACHED_DEFAULT_LIFESPAN = 0; // in seconds. 0 if cache should persist indefinitely until software invalidates it. (this is probably what you want)
 
   const RECS_ENGINE_HOST = 'localhost';
   const RECS_ENGINE_PORT = 6275;

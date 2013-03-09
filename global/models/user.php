@@ -354,9 +354,9 @@ class User extends BaseObject {
     } else {
       unset($user['usermask']);
     }
-    if (!$this->validate($user)) {
-      return False;
-    }
+
+    $this->validate($user);      
+
     // filter some parameters out first and replace them with their corresponding db fields.
     if (isset($user['password']) && $user['password'] != '') {
       $bcrypt = new Bcrypt();
@@ -482,7 +482,11 @@ class User extends BaseObject {
   public function register($username, $email, $password, $password_confirmation) {
     // shorthand for create_or_update.
     $user = array('username' => $username, 'about' => '', 'usermask' => array(1), 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation);
-    $registerUser = $this->create_or_update($user);
+    try {
+      $registerUser = $this->create_or_update($user);
+    } catch (ValidationException $e) {
+      return array("location" => "/register.php", "status" => "Some errors were found in registering you: ".$e->formatMessages());
+    }
     if (!$registerUser) {
       return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
     }

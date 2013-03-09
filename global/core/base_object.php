@@ -78,13 +78,24 @@ abstract class BaseObject {
     return $this;
   }
   public function getInfo() {
-    // retrieves (from the database) all properties of this object in the object's table.
-    try {
-      $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
-    } catch (DbException $e) {
-      throw new DbException($this->modelName().' ID not found: '.$this->id);
+    // retrieves (from the cache or database) all direct properties of this object (not lists of other objects).
+    if ($this->id !== Null) {
+      $cacheKey = $this->modelName()."-".intval($this->id);
+      $info = $this->app->cache->get($cacheKey, $foo, $cas);
+      if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
+        // key is not yet set in cache. fetch from DB and set it in cache.
+        try {
+          $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
+        } catch (DbException $e) {
+          throw new DbException($this->modelName().' ID not found: '.$this->id);
+        }
+        // set cache for this object.
+        $this->app->cache->set($cacheKey, $info);
+      }
+      $this->set($info);
+      return True;
     }
-    $this->set($info);
+    return False;
   }
   public function returnInfo($param) {
     // sets object property if not set, then returns requested property.
@@ -132,21 +143,43 @@ abstract class BaseObject {
   // e.g. User.afterCreate
   public function before_create() {
     $this->app->fire($this->modelName().'.beforeCreate', $this);
+    if (get_parent_class($this) !== FALSE) {
+      $this->app->fire(get_parent_class($this).'.beforeCreate', $this);
+    }
   }
   public function after_create() {
     $this->app->fire($this->modelName().'.afterCreate', $this);
+    if (get_parent_class($this) !== FALSE) {
+      $this->app->fire(get_parent_class($this).'.afterCreate', $this);
+    }
   }
   public function before_update($updateParams=Null) {
     $this->app->fire($this->modelName().'.beforeUpdate', $this, $updateParams);
+    if (get_parent_class($this) !== FALSE) {
+      $this->app->fire(get_parent_class($this).'.beforeUpdate', $this);
+    }
   }
   public function after_update($updateParams=Null) {
     $this->app->fire($this->modelName().'.afterUpdate', $this, $updateParams);
+    if (get_parent_class($this) !== FALSE) {
+      $this->app->fire(get_parent_class($this).'.afterUpdate', $this);
+    }
+    // clear cache entries for this object.
+    $this->app->cache->delete($this->modelName()."-".intval($this->id));
   }
   public function before_delete() {
     $this->app->fire($this->modelName().'.beforeDelete', $this);
+    if (get_parent_class($this) !== FALSE) {
+      $this->app->fire(get_parent_class($this).'.beforeDelete', $this);
+    }
   }
   public function after_delete() {
     $this->app->fire($this->modelName().'.afterDelete', $this);
+    if (get_parent_class($this) !== FALSE) {
+      $this->app->fire(get_parent_class($this).'.afterDelete', $this);
+    }
+    // clear cache entries for this object.
+    $this->app->cache->delete($this->modelName()."-".intval($this->id));
   }
 
   public function create_or_update(array $object, array $whereConditions=Null) {

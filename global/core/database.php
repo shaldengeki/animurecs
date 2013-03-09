@@ -24,14 +24,8 @@ class DbConn extends mysqli {
       throw new DbException('could not connect to the database', 0, $e);
     }
     $this->set_charset("utf8");
-    if (class_exists("Memcached")) {
-      $this->memcached = new Memcached();
-      $this->memcached->addServer(Config::MEMCACHED_HOST, intval(Config::MEMCACHED_PORT));
-    } else {
-      // memcached isn't running. don't cache anything.
-      $this->memcached = False;
-    }
   }
+
   public function quoteSmart($value) {
     //escapes input values for insertion into a query.
     if(is_array($value)) {
@@ -75,56 +69,25 @@ class DbConn extends mysqli {
   }
   public function queryFirstRow($query) {
     // pulls the first row returned from the query.
-    // pull from memcached if it's up.
-    $queryKey = md5("queryFirstRow".$query);
-    if (!($this->memcached === False)) {
-      $result = $this->memcached->get($queryKey);
-      if ($this->memcached->getResultCode() == Memcached::RES_SUCCESS) {
-        return $result;
-      }
-    }
     $result = $this->stdQuery($query);
     if ($result->num_rows < 1) {
       return False;
     }
     $returnValue = $result->fetch_assoc();
     $result->free();
-    // store in memcached if it's up.
-    if (!($this->memcached === False)) {
-      $this->memcached->set($queryKey, $returnValue, Config::MEMCACHED_DEFAULT_LIFESPAN);
-    }
     return $returnValue;
   }
   public function queryFirstValue($query) {
-    // pull from memcached if it's up.
-    $queryKey = md5("queryFirstRow".$query);
-    if (!($this->memcached === False)) {
-      $result = $this->memcached->get($queryKey);
-      if ($this->memcached->getResultCode() == Memcached::RES_SUCCESS) {
-        $resultKeys = array_keys($result);
-        return $result[$resultKeys[0]];
-      }
-    }
+    // pulls the first key from the first row returned by the query.
     $result = $this->queryFirstRow($query);
     if (!$result || count($result) != 1) {
       return False;
     }
     $resultKeys = array_keys($result);
-    // store in memcached if it's up.
-    if (!($this->memcached === False)) {
-      $this->memcached->set($queryKey, $result, Config::MEMCACHED_DEFAULT_LIFESPAN);
-    }
     return $result[$resultKeys[0]];
   }
   public function queryAssoc($query, $idKey=Null, $valKey=Null) {
-    // pull from memcached if it's up.
-    $queryKey = md5("queryAssoc".$idKey.$query);
-    if (!($this->memcached === False)) {
-      $returnValue = $this->memcached->get($queryKey);
-      if ($this->memcached->getResultCode() == Memcached::RES_SUCCESS) {
-        return $returnValue;
-      }
-    }
+    // pulls an associative array of columns for the first row returned by the query.
     $result = $this->stdQuery($query);
     if (!$result) {
       return False;
@@ -148,10 +111,6 @@ class DbConn extends mysqli {
       }
     }
     $result->free();
-    // store in memcached if it's up.
-    if (!($this->memcached === False)) {
-      $this->memcached->set($queryKey, $returnValue, Config::MEMCACHED_DEFAULT_LIFESPAN);
-    }
     return $returnValue;
   }
   public function queryCount($query, $column="*") {

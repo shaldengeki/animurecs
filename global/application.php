@@ -48,7 +48,7 @@ class Application {
   */
   private $_config, $_classes, $_observers=[];
   public $achievements=[];
-  public $logger, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
+  public $logger, $cache, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
   public $model,$action,$status,$class="";
   public $id=0;
@@ -78,6 +78,12 @@ class Application {
     } else {
       return log::factory('file', Config::LOG_FILE, 'Animurecs', array(), PEAR_LOG_WARNING);
     }
+  }
+  private function _connectCache() {
+    if ($this->cache === Null) {
+      $this->cache = new Cache();
+    }
+    return $this->cache;
   }
   private function _connectDB() {
     if ($this->dbConn === Null) {
@@ -129,22 +135,28 @@ class Application {
         $this->_loadDependency($filename);
       }
     } catch (AppException $e) {
-      $this->logger->log($e, PEAR_LOG_ALERT);
+      $this->logger->alert($e);
       $this->display_error(500);
     }
 
     session_start();
     try {
+      $this->cache = $this->_connectCache();
+    } catch (CacheException $e) {
+      $this->logger->alert($e->__toString());
+      $this->display_exception($e);
+    }
+    try {
       $this->dbConn = $this->_connectDB();
     } catch (DbException $e) {
-      $this->logger->log($e, PEAR_LOG_ALERT);
-      $this->display_error(500);
+      $this->logger->alert($e->__toString());
+      $this->display_exception($e);
     }
     try {
       $this->recsEngine = $this->_connectRecsEngine();
     } catch (AppException $e) {
-      $this->logger->log($e, PEAR_LOG_WARNING);
-      $this->display_error(500);
+      $this->logger->warning($e->__toString());
+      $this->display_exception($e);
     }
     
     date_default_timezone_set(Config::SERVER_TIMEZONE);
@@ -356,7 +368,7 @@ class Application {
         $this->action = "new";
       }
       if (!$this->target->allow($this->user, $this->action)) {
-        $error = new AppException($this, $this->user." attempted to ".$this->action." ".$this->target);
+        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$this->target->modelName()." ID#".$this->target->id);
         $this->logger->warning($error->__toString());
         $this->display_error(403);
       } else {
