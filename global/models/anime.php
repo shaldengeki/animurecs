@@ -417,8 +417,27 @@ class Anime extends BaseObject {
         break;
       default:
       case 'index':
-        $title = "All Anime";
-        $output = $this->view("index");
+        $title = "Browse Anime";
+        $resultsPerPage = 25;
+        if (!isset($_REQUEST['search'])) {
+          if ($this->app->user->isAdmin()) {
+            $animeIDs = $this->dbConn->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `anime`")/$resultsPerPage);
+          } else {
+            $animeIDs = $this->dbConn->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
+          }
+          $anime = [];
+          while ($animeID = $animeIDs->fetch_assoc()) {
+            $anime[] = new Anime($this->app, intval($animeID['id']));
+          }
+        } else {
+          $blankAlias = new Alias($this->app, 0, $this);
+          $searchResults = $blankAlias->search($_REQUEST['search']);
+          $anime = array_slice($searchResults, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage));
+          $numPages = ceil(count($searchResults)/$resultsPerPage);
+        }
+        $output = $this->view("index", array('anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage));
         break;
     }
     $this->app->render($output, array('title' => $title));
@@ -450,7 +469,7 @@ class Anime extends BaseObject {
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
     foreach ($this->tags()->load('info') as $tag) {
-      $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name)."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", Null, False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
+      $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name, Null, False, array('title' => "(".$tag->numAnime.")"))."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", Null, False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
     }
     $output .= "</ul>\n";
     return $output;

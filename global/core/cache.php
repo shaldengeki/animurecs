@@ -1,5 +1,4 @@
 <?php
-
 class Cache {
   // Provides interface for memcached.
   private $memcached;

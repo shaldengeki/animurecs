@@ -192,6 +192,9 @@ class User extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      /* cases where we want only this user + staff capable */
+      case 'friendRecs':
+      case 'recommendations':
       case 'mal_import':
       case 'edit':
         if ($authingUser->id == $this->id || ( ($authingUser->isStaff()) && $authingUser->usermask > $this->usermask) ) {
@@ -206,24 +209,28 @@ class User extends BaseObject {
         }
         return False;
         break;
+      /* cases where we only want logged-in users */
       case 'new':
         if (!$authingUser->loggedIn()) {
           return True;
         }
         return False;
         break;
+      /* cases where we only want admins, and only target non-admins */
       case 'delete':
         if ($authingUser->isAdmin() && !$this->isAdmin()) {
           return True;
         }
         return False;
         break;
+      /* cases where we only want admins */
       case 'switch_user':
         if ($authingUser->isAdmin()) {
           return True;
         }
         return False;
         break;
+      /* cases where we want only logged-in users who are not this user */
       case 'comment':
         if ($authingUser->loggedIn() && $authingUser->id != $this->id) {
           return True;
@@ -601,6 +608,7 @@ class User extends BaseObject {
   }
   public function render() {
     switch($this->app->action) {
+      /* Topbar views */
       case 'request_friend':
         if ($this->id === $this->app->user->id) {
           redirect_to($this->app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
@@ -620,18 +628,6 @@ class User extends BaseObject {
           redirect_to($this->url("show"), array('status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
         }
         break;
-      case 'mal_import':
-        // import a MAL list for this user.
-        if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {
-          redirect_to($this->url("edit"), array('status' => 'Please enter a MAL username.'));
-        }
-        $importMAL = $this->importMAL($_POST['user']['mal_username']);
-        if ($importMAL) {
-          redirect_to($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
-        } else {
-          redirect_to($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please try again.', 'class' => 'error'));
-        }
-        break;
       case 'switch_back':
         $switchUser = $this->app->user->switchUser($_SESSION['switched_user'], False);
         redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
@@ -648,6 +644,8 @@ class User extends BaseObject {
         $title = "Sign Up";
         $output = $this->view('new');
         break;
+
+      /* user setting views */
       case 'edit':
         if (isset($_POST['user']) && is_array($_POST['user'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
@@ -673,6 +671,21 @@ class User extends BaseObject {
         $title = "Editing ".escape_output($this->username());
         $output = $this->view("edit");
         break;
+
+      case 'mal_import':
+        // import a MAL list for this user.
+        if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {
+          redirect_to($this->url("edit"), array('status' => 'Please enter a MAL username.'));
+        }
+        $importMAL = $this->importMAL($_POST['user']['mal_username']);
+        if ($importMAL) {
+          redirect_to($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
+        } else {
+          redirect_to($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please try again.', 'class' => 'error'));
+        }
+        break;
+
+      /* user profile views */
       case 'show':
         if ($this->id === 0) {
           $this->app->display_error(404);
@@ -715,6 +728,15 @@ class User extends BaseObject {
           redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
         }
         break;
+      /* Discover views */
+      case 'recommendations':
+        echo $this->view('recommendations');
+        exit;
+        break;
+      case 'friendRecs':
+        echo $this->view('friendRecs');
+        exit;
+
       default:
       case 'index':
         $title = "All Users";

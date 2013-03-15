@@ -211,18 +211,21 @@ function loadAjaxTab(elt) {
   var remoteTarget = $(elt).parent().attr('data-url');
   var pageTarget = $(elt).attr('href');
 
+  // remove active marker from all other tab panes.
   $(pageTarget).parent().children('.tab-pane').each(function() {
     $(this).removeClass('active');
   });
 
+  // load page from data-url if necessary.
   if (typeof $(elt).parent().attr('loaded') == 'undefined' && typeof $(elt).parent().attr('loading') == 'undefined') {
     $(elt).parent().attr('loading', true);
     $(pageTarget).load(remoteTarget, function() {
       $(elt).parent().removeAttr('loading');
       $(elt).parent().attr('loaded', true);
       initInterface(pageTarget);
-    }).addClass('active');
+    });
   }
+  $(pageTarget).addClass('active');
 }
 
 function initInterface(elt) {
@@ -310,7 +313,7 @@ function initInterface(elt) {
   $(window).scroll(function() {
     $(elt).find('ul.ajaxFeed:visible').each(function() {
       if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && typeof $(this).attr('loading') == 'undefined') {
-        //get last-loaded MAL change and load more past this.
+        //get last-loaded list change and load more past this.
         $(this).attr('loading', 'true');
         var lastTime = $(this).find('.feedDate:last').attr('data-time');
         var anime_id = "";
@@ -342,6 +345,7 @@ function initInterface(elt) {
   /* ajax tab autoloading. */
   $(elt).find('.nav-tabs li.ajaxTab:visible').each(function() {
     $(this).click(function(e) {
+      e.preventDefault();
       location.hash = $(e.target).attr('href').substr(1);
       loadAjaxTab(e.target); // activated tab
     });

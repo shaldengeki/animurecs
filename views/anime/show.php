@@ -96,4 +96,4 @@
           </div>
         </div>
       </div>
-      <?php echo $this->tagList($this->app->user); ?>
+      <?php /* echo $this->tagList($this->app->user); */ ?>

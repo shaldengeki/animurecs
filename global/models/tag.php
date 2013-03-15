@@ -339,13 +339,20 @@ class Tag extends BaseObject {
   public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
-    if (is_array($params)) {
-      foreach ($params as $key => $value) {
-        $linkParams[] = escape_output($key)."='".escape_output($value)."'";
-      }
+    if (!is_array($params)) {
+      $params = array();
     }
-    $linkClass = $this->id != 0 ? " class='tag-".escape_output($this->type()->name)."'" : "";
-    $linkTitle = $this->id != 0 ? " title='".escape_output($this->name())."'" : "";
+    if (!isset($params['title'])) {
+      $params['title'] = $this->name();
+    }
+    if (!isset($params['class'])) {
+      $params['class'] = 'tag-'.$this->type()->name;
+    } else {
+      $params['class'] .= ' tag-'.$this->type()->name;
+    }
+    foreach ($params as $key => $value) {
+      $linkParams[] = escape_output($key)."='".escape_output($value)."'";
+    }
     return "<a".$linkClass.$linkTitle." href='".$this->url($action, $format, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
   }
 }
