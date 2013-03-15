@@ -515,7 +515,12 @@ class User extends BaseObject {
     $listIDs = [];
     foreach($malList as $entry) {
       $entry['user_id'] = $this->id;
-      $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
+      try {
+        $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
+      } catch (DbException $e) {
+        $this->app->logger->err($e->__toString());
+        $listIDs[$entry['anime_id']] = False;
+      }
     }
     if (in_array(False, $listIDs, True)) {
       return False;
@@ -681,7 +686,7 @@ class User extends BaseObject {
         if ($importMAL) {
           redirect_to($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
         } else {
-          redirect_to($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please try again.', 'class' => 'error'));
+          redirect_to($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please check your list for errors and, if necessary, try again.', 'class' => 'error'));
         }
         break;
 

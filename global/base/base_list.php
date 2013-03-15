@@ -97,9 +97,11 @@ abstract class BaseList extends BaseObject {
       $returnValue = intval($entry['id']);
       $this->after_update();
     } else {
-      $params[] = "`time` = NOW()";
+      if (!isset($entry['time'])) {
+        $params[] = "`time` = NOW()";
+      }
       $this->before_create();
-      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params).$timeString);
+      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
       if (!$insertDependency) {
         return False;
       }

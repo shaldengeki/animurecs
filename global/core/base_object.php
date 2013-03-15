@@ -70,7 +70,7 @@ abstract class BaseObject {
       if (is_numeric($value)) {
         $value = ( (int) $value == $value ? (int) $value : (float) $value);
       }
-      if (($key == 'created_at' || $key == 'updated_at') && !($value instanceof DateTime)) {
+      if (($key == 'created_at' || $key == 'updated_at' || $key == 'approved_on') && !($value instanceof DateTime)) {
         $value = new DateTime($value, new DateTimeZone(Config::SERVER_TIMEZONE));
       }
       $this->{$this->humanizeParameter($key)} = $value;

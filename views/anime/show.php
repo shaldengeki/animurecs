@@ -22,7 +22,7 @@
         <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>
-              <?php echo escape_output($this->title()); ?> 
+              <?php echo escape_output($this->title()); ?>
               <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : ""; ?>
             </h1>
             <p>
