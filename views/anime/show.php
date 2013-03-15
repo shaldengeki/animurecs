@@ -80,7 +80,7 @@
                   <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='<?php echo intval($this->id); ?>' />
                   <?php echo display_status_dropdown("anime_list[status]", "span3", $thisEntry['status'] ? $thisEntry['status'] : 1); ?>
                   <div class='input-append'>
-                    <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='<?php echo intval($thisEntry['score']); ?>' />
+                    <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='<?php echo intval($thisEntry['score']) == 0 ? "" : intval($thisEntry['score']); ?>' />
                     <span class='add-on'>/10</span>
                   </div>
                   <div class='input-prepend'>
