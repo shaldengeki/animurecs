@@ -140,10 +140,12 @@ class BaseGroup implements Iterator, ArrayAccess {
       foreach ($objectList as $object) {
         $inclusion[] = $object->id;
       }
-      $objectInfo = $this->dbConn->queryAssoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
-      foreach ($objectInfo as $info) {
-        $object = current(array_filter_by_property($objectList, "id", intval($info['id'])));
-        $object->set($info);
+      if ($inclusion) {
+        $objectInfo = $this->dbConn->queryAssoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
+        foreach ($objectInfo as $info) {
+          $object = current(array_filter_by_property($objectList, "id", intval($info['id'])));
+          $object->set($info);
+        }
       }
     }
   }
@@ -159,7 +161,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    return $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON  `tags`.`id` =  `tag_id` WHERE  `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)');
+    return $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON  `tags`.`id` =  `tag_id` WHERE  `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
   }
   public function tagCounts() {
     if ($this->_tagCounts === Null) {

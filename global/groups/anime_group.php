@@ -17,7 +17,10 @@ class AnimeGroup extends BaseGroup {
       return intval($anime->id);
     }, $this->anime());
 
-    $tags = $this->dbConn->queryAssoc("SELECT `tag_id` FROM `anime_tags` WHERE `anime_id` IN (".implode(",", $animeIDs).")", 'tag_id', 'tag_id');
+    $tags = [];
+    if ($animeIDs) {
+      $tags = $this->dbConn->queryAssoc("SELECT `tag_id` FROM `anime_tags` WHERE `anime_id` IN (".implode(",", $animeIDs).")", 'tag_id', 'tag_id');
+    }
     return new TagGroup($this->app, $tags);
   }
   public function tags() {

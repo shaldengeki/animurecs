@@ -31,7 +31,7 @@ class EntryGroup extends BaseGroup {
         $animeDict[$entry->animeId] = 1;
       }
     }
-    if (count($animeDict) > 0) {
+    if ($animeDict) {
       $getAnime = $this->dbConn->queryAssoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
       foreach ($getAnime as $anime) {
         $animes[$anime['id']] = new Anime($this->app, intval($anime['id']));
@@ -60,7 +60,7 @@ class EntryGroup extends BaseGroup {
       }
       $userDict[$entry->userId] = 1;
     }
-    if (count($userDict) > 0) {
+    if ($userDict) {
       $getUsers = $this->dbConn->queryAssoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
       foreach ($getUsers as $user) {
         $users[$user['id']] = new User($this->app, intval($user['id']));
@@ -90,7 +90,7 @@ class EntryGroup extends BaseGroup {
       }
       $commentDict["(`type` = '".$entry->modelName()."' && `parent_id` = ".$entry->id.")"] = 1;
     }
-    if (count($commentDict) > 0) {
+    if ($commentDict) {
       $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
       foreach ($getComments as $comment) {
         $newComment = new CommentEntry($this->app, intval($comment['id']));

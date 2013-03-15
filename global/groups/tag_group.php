@@ -12,13 +12,16 @@ class TagGroup extends BaseGroup {
     foreach ($this->tags() as $tag) {
       $tagTypeDict[$tag->tagTypeId] = 1;
     }
-    $getTagTypes = $this->dbConn->queryAssoc("SELECT * FROM `tag_types` WHERE `id` IN (".implode(",", array_keys($tagTypeDict)).")");
-    foreach ($getTagTypes as $tagType) {
-      $tagTypes[$tagType['id']] = new TagType($this->app, intval($tagType['id']));
-      $tagTypes[$tagType['id']]->set($tagType);
-    }
-    foreach ($this->tags() as $tag) {
-      $tag->set(array('type' => $tagTypes[$tag->tagTypeId]));
+    $tagTypes = [];
+    if ($tagTypeDict) {
+      $getTagTypes = $this->dbConn->queryAssoc("SELECT * FROM `tag_types` WHERE `id` IN (".implode(",", array_keys($tagTypeDict)).")");
+      foreach ($getTagTypes as $tagType) {
+        $tagTypes[$tagType['id']] = new TagType($this->app, intval($tagType['id']));
+        $tagTypes[$tagType['id']]->set($tagType);
+      }
+      foreach ($this->tags() as $tag) {
+        $tag->set(array('type' => $tagTypes[$tag->tagTypeId]));
+      }
     }
     return $tagTypes;
   }
@@ -31,7 +34,7 @@ class TagGroup extends BaseGroup {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    return $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `anime_tags` WHERE  `tag_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)');
+    return $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `anime_tags` WHERE  `tag_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
   }
   public function tags() {
     return $this->objects();
