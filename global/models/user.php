@@ -194,6 +194,7 @@ class User extends BaseObject {
     switch($action) {
       /* cases where we want only this user + staff capable */
       case 'globalFeed':
+      case 'discover':
       case 'friendRecs':
       case 'recommendations':
       case 'mal_import':
@@ -734,13 +735,16 @@ class User extends BaseObject {
           redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
         }
         break;
-
       /* feed views */
       case 'globalFeed':
         $title = escape_output("Global Feed");
         $output = $this->view("globalFeed");
         break;
       /* Discover views */
+      case 'discover':
+        $title = escape_output("Discover Anime");
+        $output = $this->view("discover");
+        break;
       case 'recommendations':
         echo $this->view('recommendations');
         exit;

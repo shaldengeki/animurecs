@@ -70,6 +70,6 @@
   </div>
   <div class='span6'>
     <h2>Your Feed</h2>
-    <?php echo $this->app->user->globalFeed(); ?>
+    <?php echo $this->globalFeed(); ?>
   </div>
 </div>

@@ -61,7 +61,7 @@
             <li class='divider-vertical'></li>
             <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
             <li class='divider-vertical'></li>
-            <li><a href='/discover.php'><i class='icon-star icon-white'></i> Discover</a></li>
+            <li><?php echo $this->user->link("discover", "<i class='icon-star icon-white'></i> Discover", Null, True); ?></li>
             <li class='divider-vertical'></li>
 <?php
   }
