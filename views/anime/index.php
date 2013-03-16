@@ -4,10 +4,14 @@
 
   // lists all anime.
   $newAnime = new Anime($this->app, 0);
+  $paginationArray = array('page' => '');
+  if (isset($_REQUEST['search'])) {
+    $paginationArray['search'] = $_REQUEST['search'];
+  }
 ?>
 <h1>Browse Anime</h1>
 <?php echo $newAnime->view('searchForm'); ?>
-<?php echo paginate($newAnime->url("index", Null, array('search' => $_REQUEST['search'], 'page' => '')), intval($this->app->page), $params['numPages']); ?>
+<?php echo paginate($newAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']); ?>
 <table class='table table-striped table-bordered dataTable' data-recordsPerPage='<?php echo $params['resultsPerPage']; ?>'>
   <thead>
     <tr>
@@ -54,5 +58,5 @@
 ?>
   </tbody>
 </table>
-<?php echo paginate($newAnime->url("index", Null, array('search' => $_REQUEST['search'], 'page' => '')), intval($this->app->page), $params['numPages']); ?>
+<?php echo paginate($newAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']); ?>
 <?php echo $newAnime->allow($this->app->user, 'new') ? $newAnime->link("new", "Add an anime") : ""; ?>

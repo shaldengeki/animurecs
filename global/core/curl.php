@@ -135,9 +135,9 @@ function parseMALList($username, $type="anime") {
 	// hits a MAL list of the given type for the given username.
 	// returns an associative array containing the resultant XML, or False if an error occurred.
 
-    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-    $nowTime = new DateTime("now", $serverTimezone);
+  $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
+  $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
+  $nowTime = new DateTime("now", $serverTimezone);
 
 	$xmlPage = hitPage("http://myanimelist.net/malappinfo.php?u=".urlencode($username)."&status=all&type=".urlencode($type));
 	if (!$xmlPage) {

@@ -34,10 +34,10 @@ class Tag extends BaseObject {
     return $this->returnInfo('description');
   }
   public function createdAt() {
-    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('createdAt'), $this->app->serverTimeZone);
   }
   public function updatedAt() {
-    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('updatedAt'), $this->app->serverTimeZone);
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -353,7 +353,7 @@ class Tag extends BaseObject {
     foreach ($params as $key => $value) {
       $linkParams[] = escape_output($key)."='".escape_output($value)."'";
     }
-    return "<a".$linkClass.$linkTitle." href='".$this->url($action, $format, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
+    return "<a href='".$this->url($action, $format, $urlParams, $id)."' ".implode(" ", $linkParams).">".($raw ? $text : escape_output($text))."</a>";
   }
 }
 ?>

@@ -15,7 +15,7 @@
       </li>
       <li><s>Fee</s>d
         <ul>
-          <li>feeds currently "work" for users and anime pages (i.e. infinite scrollback)</li>
+          <li>3/16/13- infinite scrollback should now work for every activity feed on the site</li>
           <li>still need to implement fetching updates in real time</li>
           <li>also, email notifications (should probably be in its own bullet) of events (signup, settings changed, big stuff happening)
         </ul>
@@ -70,6 +70,6 @@
   </div>
   <div class='span6'>
     <h2>Your Feed</h2>
-    <?php echo $this->globalFeed(); ?>
+    <?php echo $this->view('feed', $params); ?>
   </div>
 </div>

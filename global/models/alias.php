@@ -13,8 +13,13 @@ class Alias extends BaseObject {
     if ($id === 0) {
       $this->name = "";
       $this->parent = $parent;
-      $this->parentId = $parent->id;
-      $this->type = get_class($this->parent);
+      if ($parent !== Null) {
+        $this->parentId = $parent->id;
+        $this->type = get_class($this->parent);
+      } else {
+        $this->parentId = Null;
+        $this->type = Null;
+      }
     } else {
       $this->name = $this->parent = $this->parentId = $this->type = Null;
     }

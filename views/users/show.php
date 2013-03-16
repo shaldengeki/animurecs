@@ -88,7 +88,7 @@ if ($this->avatarPath() != '') {
 <?php
   }
 ?>
-                <?php echo $this->profileFeed(); ?>
+                <?php echo $this->view('feed', array('entries' => $this->profileFeed(), 'numEntries' => 50, 'feedURL' => $this->url('feed'))); ?>
               </div>
               <div class='tab-pane' id='userList'>
                 Loading...

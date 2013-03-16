@@ -79,7 +79,7 @@ class User extends BaseObject {
     return $this->returnInfo('achievementMask');
   }
   public function lastActive() {
-    return new DateTime($this->returnInfo('lastActive'), new DateTimeZone(Config::SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('lastActive'), $this->app->serverTimeZone);
   }
   public function lastIP() {
     return $this->returnInfo('lastIP');
@@ -179,9 +179,9 @@ class User extends BaseObject {
     $ownComments = $this->dbConn->stdQuery("SELECT `id` FROM `comments` WHERE `user_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
     $comments = [];
     while ($comment = $ownComments->fetch_assoc()) {
-      $comments[] = new Comment($this->app, intval($comment['id']));
+      $comments[] = new CommentEntry($this->app, intval($comment['id']));
     }
-    return $comments;
+    return new EntryGroup($this->app, $comments);
   }
   public function ownComments() {
     if ($this->ownComments === Null) {
@@ -193,6 +193,7 @@ class User extends BaseObject {
     // takes a user object and an action and returns a bool.
     switch($action) {
       /* cases where we want only this user + staff capable */
+      case 'globalFeedEntries':
       case 'globalFeed':
       case 'discover':
       case 'friendRecs':
@@ -278,7 +279,7 @@ class User extends BaseObject {
   }
   public function isCurrentlyActive() {
     // return bool reflecting whether or not user has done something recently.
-    return $this->lastActive()->diff(new DateTime("now", new DateTimeZone(Config::SERVER_TIMEZONE)))->i < 5;
+    return $this->lastActive()->diff(new DateTime("now", $this->app->serverTimeZone))->i < 5;
   }
   public function isModerator() {
     if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
@@ -378,9 +379,9 @@ class User extends BaseObject {
     }
 
     // process uploaded image.
-    $file_array = $_FILES['avatar_image'];
+    $file_array = isset($_FILES['avatar_image']) ? $_FILES['avatar_image'] : array();
     $imagePath = "";
-    if ($file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
+    if (isset($file_array['tmp_name']) && $file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
       if ($file_array['error'] != UPLOAD_ERR_OK) {
         return False;
       }
@@ -701,17 +702,25 @@ class User extends BaseObject {
         $output = $this->view("show");
         break;
       case 'feed':
-        if ($this->animeList()->allow($this->app->user, 'edit')) {
-          $output .= $this->view('addEntryInlineForm');
-        }
-        if ($this->allow($this->app->user, 'comment')) {
-          $blankComment = new Comment($this->app, 0, $this->app->user, $this);
-          $output .= "                <div class='addListEntryForm'>
-                      ".$blankComment->view('inlineForm', $this->app, array('currentObject' => $this))."
-                    </div>\n";
+        $output = "";
+        if (isset($_REQUEST['maxTime']) && is_numeric($_REQUEST['maxTime'])) {
+          $maxTime = '@'.intval($_REQUEST['maxTime']);
+        } else {
+          // if this isn't a non-current slice of the user's feed, append the usual forms at the top.
+          $maxTime = "now";
+          if ($this->animeList()->allow($this->app->user, 'edit')) {
+            $output .= $this->view('addEntryInlineForm');
+          }
+          if ($this->allow($this->app->user, 'comment')) {
+            $blankComment = new Comment($this->app, 0, $this->app->user, $this);
+            $output .= "                <div class='addListEntryForm'>
+                        ".$blankComment->view('inlineForm', $this->app, array('currentObject' => $this))."
+                      </div>\n";
 
+          }
         }
-        $output .= $this->profileFeed();
+        $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
+        $output .= $this->view('feed', array('entries' => $this->profileFeed($maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => ''));
         echo $output;
         exit;
       case 'anime_list':
@@ -735,11 +744,24 @@ class User extends BaseObject {
           redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
         }
         break;
+
       /* feed views */
       case 'globalFeed':
         $title = escape_output("Global Feed");
-        $output = $this->view("globalFeed");
+        $feedEntries = $this->globalFeed();
+        $output = $this->view("globalFeed", array('entries' => $feedEntries, 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => ''));
         break;
+      case 'globalFeedEntries':
+        if (isset($_REQUEST['maxTime']) && is_numeric($_REQUEST['maxTime'])) {
+          $maxTime = '@'.intval($_REQUEST['maxTime']);
+        } else {
+          $maxTime = "now";
+        }
+        $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
+        $output .= $this->view('feed', array('entries' => $this->globalFeed($maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => ''));
+        echo $output;
+        exit;
+
       /* Discover views */
       case 'discover':
         $title = escape_output("Discover Anime");
@@ -763,31 +785,41 @@ class User extends BaseObject {
   }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
-    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
     $output = "";
     foreach ($this->friendRequests() as $request) {
-      $entryTime = new DateTime($request['time'], $serverTimezone);
-      $entryTime->setTimezone($outputTimezone);
+      $entryTime = new DateTime($request['time'], $this->app->serverTimeZone);
+      $entryTime->setTimezone($this->app->outputTimeZone);
       $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", Null, True, Null, Null, $request['user']->id)."</li>\n";
     }
     return $output;
   }
   public function profileFeed(DateTime $maxTime=Null, $numEntries=50) {
-    // returns markup for this user's profile feed.
+    // returns an EntryGroup consisting of entries for this user's profile feed.
+    if ($maxTime == Null) {
+      $maxTime = new DateTime("now", $this->app->serverTimeZone);
+    }
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
-    $feedEntries->append($this->comments());
-    return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
+    $feedEntries->append($this->comments()->filter(function($a) use ($maxTime) {
+      return $a->time < $maxTime;
+    })->sort(buildPropertySorter("time", -1))->limit($numEntries));
+    return $feedEntries;
+    //return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
   public function globalFeed(DateTime $maxTime=Null, $numEntries=50) {
-    // returns markup for this user's global feed.
+    // returns an EntryGroup of entries corresponding to this user's global feed.
+    if ($maxTime == Null) {
+      $maxTime = new DateTime("now", $this->app->serverTimeZone);
+    }
 
-    // add each user's personal feeds to the total feed.
+    // add each user's personal feed to the global feed.
     $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
     foreach ($this->friends() as $friend) {
       $feedEntries->append($friend['user']->animeList()->entries($maxTime, $numEntries));
       $comments = [];
-      foreach ($friend['user']->ownComments() as $comment) {
+      $friendComments = $friend['user']->ownComments()->filter(function($a) use ($maxTime) {
+        return $a->time < $maxTime;
+      });
+      foreach ($friendComments as $comment) {
         // only append top-level comments.
         if ($comment->depth() === 0) {
           $comments[] = new CommentEntry($this->app, intval($comment->id));
@@ -795,7 +827,7 @@ class User extends BaseObject {
       }
       $feedEntries->append(new EntryGroup($this->app, $comments));
     }
-    return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>Nothing's in your feed yet. Why not add some anime to your list?</p></blockquote>\n");
+    return $feedEntries;
   }
   public function url($action="show", $format=Null, array $params=Null, $username=Null) {
     // returns the url that maps to this object and the given action.

@@ -48,7 +48,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     ++$this->position;
   }
   public function valid() {
-    return isset($this->objects()[$this->_objectKeys[$this->position]]);
+    return isset($this->_objectKeys[$this->position]) && isset($this->objects()[$this->_objectKeys[$this->position]]);
   }
 
   // array access functions.
@@ -156,6 +156,9 @@ class BaseGroup implements Iterator, ArrayAccess {
     }
     return $this->_objects;
   }
+  public function size() {
+    return count($this->_objects);
+  }
   protected function _getTagCounts() {
     $inclusion = [];
     foreach ($this->_objects as $object) {
@@ -182,6 +185,25 @@ class BaseGroup implements Iterator, ArrayAccess {
     $this->_objectKeys = array_keys($this->_objects);
     $this->_setObjectGroups();
     return $this->objects();
+  }
+  public function filter($filterFunction) {
+    // filter the objects in this group by the given filterFunction and returns a new group.
+    $className = get_class($this);
+    $filteredObjects = array_filter($this->_objects, $filterFunction);
+    return new $className($this->app, $filteredObjects ? $filteredObjects : []);
+  }
+  public function sort($sortFunction) {
+    // sorts the objects in this group by the given sortFunction and returns the a new group.
+    $className = get_class($this);
+    $sortedObjects = $this->_objects;
+    @uasort($sortedObjects, $sortFunction);
+    return new $className($this->app, $sortedObjects ? $sortedObjects : []);
+  }
+  public function limit($n) {
+    // returns the first N objects in this group as a new group.
+    $className = get_class($this);
+    $limitedObjects = array_slice($this->_objects, 0, $n);
+    return new $className($this->app, $limitedObjects ? $limitedObjects : []);
   }
 }
 

@@ -16,8 +16,7 @@ abstract class BaseEntry extends BaseObject {
   public function __construct(Application $app, $id=Null, $params=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
-      $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-      $this->time = new DateTime("now", $serverTimezone);
+      $this->time = new DateTime("now", $this->app->serverTimeZone);
       $this->status = $this->score = 0;
       $this->comments = [];
     } else {
@@ -39,8 +38,7 @@ abstract class BaseEntry extends BaseObject {
     return $this->user;
   }
   public function time() {
-    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-    return new DateTime($this->returnInfo('time'), $serverTimezone);
+    return new DateTime($this->returnInfo('time'), $this->app->serverTimeZone);
   }
   public function status() {
     return $this->returnInfo('status');

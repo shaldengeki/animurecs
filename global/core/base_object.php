@@ -73,7 +73,7 @@ abstract class BaseObject {
         $value = ( (int) $value == $value ? (int) $value : (float) $value);
       }
       if (($key == 'created_at' || $key == 'updated_at' || $key == 'approved_on') && !($value instanceof DateTime)) {
-        $value = new DateTime($value, new DateTimeZone(Config::SERVER_TIMEZONE));
+        $value = new DateTime($value, $this->app->serverTimeZone);
       }
       $this->{$this->humanizeParameter($key)} = $value;
     }
@@ -86,6 +86,7 @@ abstract class BaseObject {
       throw new DbException($this->modelName().' with null ID not found in database');
     }
     $cacheKey = $this->modelName()."-".intval($this->id);
+    $cas = "";
     $info = $this->app->cache->get($cacheKey, $foo, $cas);
     if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
       // key is not yet set in cache. fetch from DB and set it in cache.

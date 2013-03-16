@@ -8,7 +8,7 @@
 <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
   <head>
     <meta content='text/html; charset=UTF-8' http-equiv='content-type' />
-    <title><?php echo (isset($params['title']) ? escape_output($params['title']) : "Animurecs").($subtitle != '' ? ' - '.escape_output($subtitle) : ''); ?></title>
+    <title><?php echo (isset($params['title']) ? escape_output($params['title']) : "Animurecs").(isset($params['subtitle']) && $params['subtitle'] != '' ? ' - '.escape_output($params['subtitle']) : ''); ?></title>
     <link href='/favicon.ico' rel='shortcut icon' />
 
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' type='text/css' />

@@ -20,10 +20,10 @@ class Comment extends BaseObject {
     if ($id === 0) {
       $this->message = "";
       $this->parent = $parent;
-      $this->parentId = $parent->id;
-      $this->type = get_class($this->parent);
+      $this->parentId = ($parent !== Null) ? $parent->id : Null;
+      $this->type = ($parent !== Null) ? get_class($this->parent) : Null;
       $this->user = $user;
-      $this->userId = $user->id;
+      $this->userId = ($user !== Null) ? $user->id : Null;
     } else {
       $this->message = $this->userId = $this->parent = $this->parentId = $this->type = Null;
     }

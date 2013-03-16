@@ -52,9 +52,7 @@ class AnimeEntry extends BaseEntry {
   public function formatFeedEntry() {
     // fetch the previous feed entry and compare values against current entry.
 
-    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-    $nowTime = new DateTime("now", $outputTimezone);
+    $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
     $diffInterval = $nowTime->diff($this->time());
     $prevEntry = $this->list->prevEntry($this->anime()->id, $this->time());

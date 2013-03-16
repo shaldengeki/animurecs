@@ -68,7 +68,7 @@ class EntryGroup extends BaseGroup {
       }
       foreach ($this->entries() as $entry) {
         $setArray = array('user' => $users[$entry->userId]);
-        if (method_exists($entry, 'parent') && $entry->parentId !== Null) {
+        if (method_exists($entry, 'parent') && $entry->parentId !== Null && isset($users[$entry->parentId])) {
           $setArray['parent'] = $users[$entry->parentId];
         }
         $entry->set($setArray);
@@ -125,7 +125,6 @@ class EntryGroup extends BaseGroup {
     }
     return $this->_comments;
   }
-
   public function entries() {
     return $this->objects();
   }

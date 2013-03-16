@@ -49,6 +49,18 @@ function convert_usermask_to_text($usermask) {
   return implode(", ", $roles);
 }
 
+function array_collect_properties($a, $property) {
+  // collects the values of $property for each element of $a and returns a resultant array
+  // where they keys are preserved.
+  $result = [];
+  foreach ($a as $key => $value) {
+    if (property_exists($value, $property)) {
+      $result[$key] = $value->$property;
+    }
+  }
+  return $result;
+}
+
 function buildPropertyFilter($property, $value) {
   // returns a function that filters a list of objects on an property
   return function($a) use ($property, $value) {
@@ -178,7 +190,7 @@ function buildPropertySorter($property, $order) {
 }
 
 function array_sort_by_property($a, $property, $order="desc") {
-  // sorts a list of associative arrays by a given key in a given order.
+  // sorts a list of objects by a given property in a given order.
   switch($order) {
     case 'asc':
       $orderVal = 1;

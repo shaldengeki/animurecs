@@ -315,7 +315,11 @@ function initInterface(elt) {
       if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && typeof $(this).attr('loading') == 'undefined') {
         //get last-loaded list change and load more past this.
         $(this).attr('loading', 'true');
-        var lastTime = $(this).find('.feedDate:last').attr('data-time');
+        // find the lowest feedDate on the page.
+        var feedDates = $('.feedDate').map(function() {
+          return $(this).attr('data-time');
+        }).get();
+        var lastTime = Array.min(feedDates);
         var anime_id = "";
         if (typeof $(this).attr('anime_id') == 'undefined') {
           anime_id = $(this).attr('anime_id');
@@ -396,5 +400,11 @@ function initInterface(elt) {
 }
 
 $(document).ready(function () {
+  Array.max = function( array ){
+      return Math.max.apply( Math, array );
+  };
+  Array.min = function( array ){
+     return Math.min.apply( Math, array );
+  };
   initInterface(document);
 });

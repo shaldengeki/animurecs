@@ -15,13 +15,12 @@ trait Feedable {
     }
     if ($maxTime !== Null || $limit !== Null) {
       // Returns a list of up to $limit entries up to $maxTime.
-      $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-      $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
       if ($maxTime === Null) {
-        $nowTime = new DateTime();
-        $nowTime->setTimezone($outputTimezone);
-        $maxTime = $nowTime;
+        // set time ceiling to now.
+        $maxTime = new DateTime("now", $this->app->outputTimeZone);
       }
+
+      // loop through all of this feedable's entries until we reach the end or our limit.
       $returnList = [];
       $entryCount = 0;
       foreach ($this->entries()->entries() as $entry) {
@@ -42,9 +41,7 @@ trait Feedable {
 
   public function feedEntry(BaseEntry $entry, $nested=False) {
     // takes a feed entry from the current object and outputs feed markup for this feed entry.
-    $outputTimezone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
-    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
-    $nowTime = new DateTime("now", $outputTimezone);
+    $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
     $diffInterval = $nowTime->diff($entry->time());
 

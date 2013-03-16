@@ -174,7 +174,6 @@ abstract class BaseList extends BaseObject {
   }
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
-    $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $returnList = [];
     $entries = $this->dbConn->stdQuery("SELECT * FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;

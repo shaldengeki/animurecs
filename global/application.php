@@ -39,6 +39,14 @@ class AppException extends Exception {
   }
 }
 
+function ErrorHandler($errno, $errstr, $errfile, $errline, array $errcontext) {
+  // error was suppressed with the @-operator
+  if (0 === error_reporting()) {
+    return false;
+  }
+  throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+}
+
 class Application {
   /*
     Class that serves to store all the application-relevant parameters
@@ -285,6 +293,7 @@ class Application {
   }
   public function init() {
     $this->startRender = microtime(true);
+    set_error_handler('ErrorHandler', E_ALL & ~E_NOTICE);
     $this->_loadDependencies();
 
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
@@ -417,9 +426,7 @@ class Application {
         $appVars[$key] = $value;
       }
     }
-    echo $this->view('header', $appVars);
-    echo $text;
-    echo $this->view('footer', $appVars);
+    echo $this->view('header', $appVars).$text.$this->view('footer', $appVars);
     exit;
   }
 }

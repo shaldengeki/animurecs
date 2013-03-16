@@ -48,10 +48,10 @@ class Anime extends BaseObject {
     return $this->returnInfo('episodeLength');
   }
   public function createdAt() {
-    return new DateTime($this->returnInfo('createdAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('createdAt'), $this->app->serverTimeZone);
   }
   public function updatedAt() {
-    return new DateTime($this->returnInfo('updatedAt'), new DateTimeZone(Config::SERVER_TIMEZONE));
+    return new DateTime($this->returnInfo('updatedAt'), $this->app->serverTimeZone);
   }
   public function imagePath() {
     return $this->returnInfo('imagePath');
@@ -372,7 +372,7 @@ class Anime extends BaseObject {
       case 'feed':
         $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
         $entries = $this->entries($maxTime, 50);
-        echo $this->feed($entries, 50, "");
+        echo $this->app->user->view('feed', array('entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => ''));
         exit;
         break;
       case 'token_search':
@@ -401,7 +401,7 @@ class Anime extends BaseObject {
           $this->app->display_error(404);
         }
         $title = escape_output($this->title());
-        $output = $this->view("show");
+        $output = $this->view("show", array('entries' => $this->animeFeed(Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"));
         break;
       case 'delete':
         if ($this->id == 0) {
@@ -462,9 +462,8 @@ class Anime extends BaseObject {
     return $entry->user->animeList->formatFeedEntry($entry);
   }
   public function animeFeed(DateTime $maxTime=Null, $numEntries=50) {
-    // returns markup for this user's profile feed.
-    $feedEntries = $this->entries($maxTime, $numEntries);
-    return $this->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>\n");
+    // returns an EntryGroup consisting of entries in this anime's feed.
+    return $this->entries($maxTime, $numEntries);
   }
   public function tagCloud(User $currentUser) {
     $output = "<ul class='tagCloud'>";
