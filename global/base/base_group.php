@@ -137,14 +137,42 @@ class BaseGroup implements Iterator, ArrayAccess {
   protected function _getInfo() {
     foreach ($this->_objectGroups as $groupTable=>$objectList) {
       $inclusion = [];
-      foreach ($objectList as $object) {
-        $inclusion[] = $object->id;
+      $idToListIndex = [];
+      foreach ($objectList as $key=>$object) {
+        $inclusion[$key] = $object->id;
+        $idToListIndex[$object->id] = $key;
       }
       if ($inclusion) {
-        $objectInfo = $this->dbConn->queryAssoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
-        foreach ($objectInfo as $info) {
-          $object = current(array_filter_by_property($objectList, "id", intval($info['id'])));
-          $object->set($info);
+        $modelName = current($objectList)->modelName();
+        $cacheKeys = array_map(function($id) use ($modelName) {
+          return $modelName."-".$id;
+        }, $inclusion);
+        $casTokens = [];
+
+        // fetch as many objects as we can from the cache.
+        $cacheValues = $this->app->cache->get($cacheKeys, $casTokens);
+        if ($cacheValues) {
+          $objectsFound = [];
+          foreach ($cacheValues as $cacheKey=>$cacheValue) {
+            // lop off the Object- from the cache key to get the ID, so we can set the appropriate object's values.
+            $objectID = intval(explode("-", $cacheKey)[1]);
+            $objectList[$idToListIndex[$objectID]]->set($cacheValue);
+            $objectsFound[] = $objectID;
+          }
+          $inclusion = array_diff($inclusion, $objectsFound);
+        }
+        if ($inclusion) {
+          // we have objects that are not yet cached. pull them from the db.
+          $infoToCache = [];
+          $objectInfo = $this->dbConn->queryAssoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
+          foreach ($objectInfo as $info) {
+            $objectList[$idToListIndex[intval($info['id'])]]->set($info);
+            $infoToCache[$modelName."-".$info['id']] = $info;
+          }
+          // now set these object values in the cache.
+          foreach ($infoToCache as $cacheKey=>$cacheValue) {
+            $this->app->cache->set($cacheKey, $cacheValue);
+          }
         }
       }
     }

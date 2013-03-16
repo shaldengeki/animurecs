@@ -168,8 +168,6 @@ abstract class BaseObject {
     if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.afterUpdate', $this);
     }
-    // clear cache entries for this object.
-    $this->app->cache->delete($this->modelName()."-".intval($this->id));
   }
   public function before_delete() {
     $this->app->fire($this->modelName().'.beforeDelete', $this);
@@ -182,8 +180,6 @@ abstract class BaseObject {
     if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.afterDelete', $this);
     }
-    // clear cache entries for this object.
-    $this->app->cache->delete($this->modelName()."-".intval($this->id));
   }
 
   public function create_or_update(array $object, array $whereConditions=Null) {

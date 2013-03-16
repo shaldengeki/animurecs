@@ -26,12 +26,21 @@ class Cache {
     } while ($this->memcached->getResultCode() != Memcached::RES_SUCCESS);
   }
   public function get($key, &$cas_token=Null) {
-    // retrieves a key from the cache.
-    $cacheValue = $this->memcached->get($key, Null, $cas_token);
-    if (!$cacheValue && $this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
-      return False;
+    // retrieves a key (or many keys) from the cache.
+    if (is_array($key)) {
+      $cacheValues = $this->memcached->getMulti($key, $cas_token);
+      if (!$cacheValues or $this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
+        return False;
+      } else {
+        return $cacheValues;
+      }
     } else {
-      return $cacheValue;
+      $cacheValue = $this->memcached->get($key, Null, $cas_token);
+      if (!$cacheValue && $this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
+        return False;
+      } else {
+        return $cacheValue;
+      }
     }
   }
   public function delete($key) {

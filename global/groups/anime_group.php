@@ -17,9 +17,47 @@ class AnimeGroup extends BaseGroup {
       return intval($anime->id);
     }, $this->anime());
 
-    $tags = [];
     if ($animeIDs) {
-      $tags = $this->dbConn->queryAssoc("SELECT `tag_id` FROM `anime_tags` WHERE `anime_id` IN (".implode(",", $animeIDs).")", 'tag_id', 'tag_id');
+      $cacheKeys = array_map(function($animeID) {
+        return "Anime-".$animeID."-tagIDs";
+      }, $animeIDs);
+      $casTokens = [];
+
+      $tags = [];
+      // fetch as many tags as we can from the cache.
+      $cacheValues = $this->app->cache->get($cacheKeys, $casTokens);
+      if ($cacheValues) {
+        $animeFound = [];
+        foreach ($cacheValues as $cacheKey=>$tagIDs) {
+          foreach ($tagIDs as $tagID) {
+            $tags[$tagID] = $tagID;
+          }
+          // split the ID off from the cacheKey.
+          $animeFound[] = intval(explode("-", $cacheKey)[1]);
+        }
+        $animeIDs = array_diff($animeIDs, $animeFound);
+
+      }
+      if ($animeIDs) {
+        // now fetch the non-cached results from the db, building a record so we can cache it after.
+        $animeTags = [];
+        $fetchTaggings = $this->dbConn->stdQuery("SELECT `anime_id`, `tag_id` FROM `anime_tags` WHERE `anime_id` IN (".implode(",", $animeIDs).")");
+        while ($tagging = $fetchTaggings->fetch_assoc()) {
+          $animeID = intval($tagging['anime_id']);
+          $tagID = intval($tagging['tag_id']);
+          $tags[$tagID] = $tagID;
+          if (isset($animeTags[$animeID])) {
+            $animeTags[$animeID][] = $tagID;
+          } else {
+            $animeTags[$animeID] = array($tagID);
+          }
+        }
+        // finally, store these new records in the cache.
+        foreach ($animeTags as $animeID => $tagIDs) {
+          $cacheKey = "Anime-".$animeID."-tagIDs";
+          $this->app->cache->set($cacheKey, $tagIDs);
+        }
+      }
     }
     return new TagGroup($this->app, $tags);
   }

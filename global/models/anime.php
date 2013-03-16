@@ -277,7 +277,7 @@ class Anime extends BaseObject {
       $drop_tags = $this->drop_taggings($tagsToDrop);
       foreach ($anime['anime_tags'] as $tagToAdd) {
         // add any needed tags.
-        if (!array_filter_by_property($this->tags(), 'id', $tagToAdd)) {
+        if (!array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
           $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {

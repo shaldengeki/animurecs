@@ -194,12 +194,25 @@ class Application {
     foreach ($achievementSlice as $achievementName) {
       $blankAchieve = new $achievementName($this);
       $this->achievements[$blankAchieve->id] = $blankAchieve;
+    }
+  }
+  private function _bindEvents() {
+    // binds all event observers.
 
-      // bind each achievement to its events.
-      foreach ($blankAchieve->events() as $event) {
-        $this->bind($event, $blankAchieve);
+    // bind each achievement to its events.
+    foreach ($this->achievements as $achievement) {
+      foreach ($achievement->events() as $event) {
+        $this->bind($event, $achievement);
       }
     }
+
+    // clear cache for a database object every time it's updated or deleted.
+    $this->bind(array('BaseObject.afterUpdate', 'BaseObject.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->cache->delete($parent->modelName()."-".intval($parent->id));
+    }));
+    $this->bind(array('Anime.afterUpdate', 'Anime.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->cache->delete($parent->modelName()."-".intval($parent->id)."-tagIDs");
+    }));
   }
   private function _checkCSRF() {
     // only generate CSRF token if the user is logged in.
@@ -217,8 +230,8 @@ class Application {
   // bind/unbind/fire event handlers for objects.
   // event names are of the form modelName.eventName
   // e.g. User.afterCreate
-  public function bind($event, $observer) {
-    // binds a function to an event.
+  public function bind($events, $observer) {
+    // binds a function to an event or events.
     // can be either anonymous function or string name of class method.
     if (!method_exists($observer, 'update')) {
       if (Config::DEBUG_ON) {
@@ -227,20 +240,25 @@ class Application {
         return False;
       }
     }
-    if (!isset($this->_observers[$event])) {
-      $this->_observers[$event] = array($observer);
-    } else {
-      //check if this observer is bound to this event already
-      $elements = array_keys($this->_observers[$event], $o);
-      $notinarray = True;
-      foreach ($elements as $value) {
-        if ($observer === $this->_observers[$event][$value]) {
-            $notinarray = False;
-            break;
+    if (!is_array($events)) {
+      $events = array($events);
+    }
+    foreach ($events as $event) {
+      if (!isset($this->_observers[$event])) {
+        $this->_observers[$event] = array($observer);
+      } else {
+        //check if this observer is bound to this event already
+        $elements = array_keys($this->_observers[$event], $o);
+        $notinarray = True;
+        foreach ($elements as $value) {
+          if ($observer === $this->_observers[$event][$value]) {
+              $notinarray = False;
+              break;
+          }
         }
-      }
-      if ($notinarray) {
-        $this->_observers[$event][] = $observer;
+        if ($notinarray) {
+          $this->_observers[$event][] = $observer;
+        }
       }
     }
     return array($event, count($this->_observers[$event])-1);
@@ -292,9 +310,13 @@ class Application {
     }
   }
   public function init() {
+    // start of application logic.
+    // loads dependencies, binds events, sets request variables, then attempts to render the current request.
+
     $this->startRender = microtime(true);
     set_error_handler('ErrorHandler', E_ALL & ~E_NOTICE);
     $this->_loadDependencies();
+    $this->_bindEvents();
 
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
       $this->user = new User($this, intval($_SESSION['id']));
