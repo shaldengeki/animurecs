@@ -64,7 +64,6 @@
           <div id='userFeed'>
 <?php
   if ($this->app->user->loggedIn()) {
-    $animeList = new AnimeList($this->app, 0);
     $anime = new Anime($this->app, 0);
     if (isset($this->app->user->animeList()->uniqueList()[$this->id])) {
       $thisEntry = $this->app->user->animeList()->uniqueList()[$this->id];
@@ -74,7 +73,7 @@
       $addText = "Add this anime to your list: ";
     }
 ?>              <div class='addListEntryForm'>
-                <?php echo $this->app->form(array('action' => $animeList->url("new", array('user_id' => intval($this->app->user->id))), 'class' => 'form-inline')); ?>
+                <?php echo $this->app->form(array('action' => $this->app->user->animeList()->url("new", array('user_id' => intval($this->app->user->id))), 'class' => 'form-inline')); ?>
                   <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->app->user->id); ?>' />
                   <?php echo $addText; ?>
                   <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='<?php echo intval($this->id); ?>' />
