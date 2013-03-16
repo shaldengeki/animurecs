@@ -193,6 +193,7 @@ class User extends BaseObject {
     // takes a user object and an action and returns a bool.
     switch($action) {
       /* cases where we want only this user + staff capable */
+      case 'globalFeed':
       case 'friendRecs':
       case 'recommendations':
       case 'mal_import':
@@ -732,6 +733,12 @@ class User extends BaseObject {
         } else {
           redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
         }
+        break;
+
+      /* feed views */
+      case 'globalFeed':
+        $title = escape_output("Global Feed");
+        $output = $this->view("globalFeed");
         break;
       /* Discover views */
       case 'recommendations':

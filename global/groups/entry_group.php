@@ -55,7 +55,7 @@ class EntryGroup extends BaseGroup {
     $userDict = [];
     $users = [];
     foreach ($this->entries() as $entry) {
-      if ($entry->parentId !== Null && method_exists($entry, 'parent')) {
+      if (method_exists($entry, 'parent') && $entry->parentId !== Null) {
         $userDict[$entry->parentId] = 1;
       }
       $userDict[$entry->userId] = 1;
@@ -68,7 +68,7 @@ class EntryGroup extends BaseGroup {
       }
       foreach ($this->entries() as $entry) {
         $setArray = array('user' => $users[$entry->userId]);
-        if ($entry->parentId !== Null && method_exists($entry, 'parent')) {
+        if (method_exists($entry, 'parent') && $entry->parentId !== Null) {
           $setArray['parent'] = $users[$entry->parentId];
         }
         $entry->set($setArray);

@@ -165,7 +165,8 @@ class Comment extends BaseObject {
     if ($this->app->id != 0) {
       try {
         $this->getInfo();
-      } catch (Exception $e) {
+      } catch (DbException $e) {
+        $this->app->logger->err($e->__toString());
         redirect_to('/feed.php', array('status' => 'This comment does not exist.', 'class' => 'error'));
       }
       $targetParent = $this->parent();
@@ -177,7 +178,8 @@ class Comment extends BaseObject {
         if ($targetParent !== Null) {
           $targetParent->getInfo();
         }
-      } catch (Exception $e) {
+      } catch (DbException $e) {
+        $this->app->logger->err($e->__toString());
         redirect_to($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
       }
 
@@ -187,7 +189,8 @@ class Comment extends BaseObject {
         try {
           $targetUser = new User($this->app, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
           $targetUser->getInfo();
-        } catch (Exception $e) {
+        } catch (DbException $e) {
+          $this->app->logger->err($e->__toString());
           redirect_to($this->app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
         }
       }
@@ -197,7 +200,7 @@ class Comment extends BaseObject {
       if ($targetComment->id !== 0) {
         $targetComment->getInfo();
       }
-    } catch (Exception $e) {
+    } catch (DbException $e) {
       $targetComment = new Comment($this->app, 0, $targetUser, $targetParent);
     }
     switch($this->app->action) {

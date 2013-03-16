@@ -1,10 +1,7 @@
 <?php
-require_once("global/includes.php");
-
-if (!$app->user->loggedIn()) {
-  header("Location: /?redirect_to=/feed.php");
-}
-$pageHTML = <<<EOD
+  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  $this->app->check_partial_include(__FILE__);
+?>
 <div class="row-fluid">
   <div class="span6">
     <h1>Welcome!</h1>
@@ -73,9 +70,6 @@ $pageHTML = <<<EOD
   </div>
   <div class='span6'>
     <h2>Your Feed</h2>
-    {$app->user->globalFeed()}
+    <?php echo $this->app->user->globalFeed(); ?>
   </div>
 </div>
-EOD;
-$app->render($pageHTML);
-?>

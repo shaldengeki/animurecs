@@ -40,6 +40,8 @@ abstract class BaseObject {
       return $this->$property();
     } elseif (property_exists($this, $property)) {
       return $this->$property;
+    } else {
+      throw new AppException($this->app, "Requested attribute does not exist: ".$property." on: ".$this->modelName());
     }
   }
   public function modelName() {
@@ -79,23 +81,24 @@ abstract class BaseObject {
   }
   public function getInfo() {
     // retrieves (from the cache or database) all direct properties of this object (not lists of other objects).
-    if ($this->id !== Null) {
-      $cacheKey = $this->modelName()."-".intval($this->id);
-      $info = $this->app->cache->get($cacheKey, $foo, $cas);
-      if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
-        // key is not yet set in cache. fetch from DB and set it in cache.
-        try {
-          $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
-        } catch (DbException $e) {
-          throw new DbException($this->modelName().' ID not found: '.$this->id);
-        }
-        // set cache for this object.
-        $this->app->cache->set($cacheKey, $info);
-      }
-      $this->set($info);
-      return True;
+    if ($this->id === Null) {
+      // should never reach here!
+      throw new DbException($this->modelName().' with null ID not found in database');
     }
-    return False;
+    $cacheKey = $this->modelName()."-".intval($this->id);
+    $info = $this->app->cache->get($cacheKey, $foo, $cas);
+    if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
+      // key is not yet set in cache. fetch from DB and set it in cache.
+      try {
+        $info = $this->dbConn->queryFirstRow("SELECT * FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
+      } catch (DbException $e) {
+        throw new DbException($this->modelName().' ID not found: '.$this->id);
+      }
+      // set cache for this object.
+      $this->app->cache->set($cacheKey, $info);
+    }
+    $this->set($info);
+    return True;
   }
   public function returnInfo($param) {
     // sets object property if not set, then returns requested property.
@@ -143,25 +146,25 @@ abstract class BaseObject {
   // e.g. User.afterCreate
   public function before_create() {
     $this->app->fire($this->modelName().'.beforeCreate', $this);
-    if (get_parent_class($this) !== FALSE) {
+    if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.beforeCreate', $this);
     }
   }
   public function after_create() {
     $this->app->fire($this->modelName().'.afterCreate', $this);
-    if (get_parent_class($this) !== FALSE) {
+    if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.afterCreate', $this);
     }
   }
   public function before_update($updateParams=Null) {
     $this->app->fire($this->modelName().'.beforeUpdate', $this, $updateParams);
-    if (get_parent_class($this) !== FALSE) {
+    if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.beforeUpdate', $this);
     }
   }
   public function after_update($updateParams=Null) {
     $this->app->fire($this->modelName().'.afterUpdate', $this, $updateParams);
-    if (get_parent_class($this) !== FALSE) {
+    if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.afterUpdate', $this);
     }
     // clear cache entries for this object.
@@ -169,13 +172,13 @@ abstract class BaseObject {
   }
   public function before_delete() {
     $this->app->fire($this->modelName().'.beforeDelete', $this);
-    if (get_parent_class($this) !== FALSE) {
+    if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.beforeDelete', $this);
     }
   }
   public function after_delete() {
     $this->app->fire($this->modelName().'.afterDelete', $this);
-    if (get_parent_class($this) !== FALSE) {
+    if (get_parent_class($this) !== False) {
       $this->app->fire(get_parent_class($this).'.afterDelete', $this);
     }
     // clear cache entries for this object.
@@ -186,9 +189,8 @@ abstract class BaseObject {
     // creates or updates a object based on the parameters passed in $object and this object's attributes.
     // assumes the existence of updated_at and created_at fields in the database.
     // returns False if failure, or the ID of the object if success.
-    if (!$this->validate($object)) {
-      return False;
-    }
+    $this->validate($object);
+
     $params = array();
     foreach ($object as $parameter => $value) {
       if (!is_array($value)) {
@@ -211,9 +213,10 @@ abstract class BaseObject {
 
       //update this object.
       $this->before_update($object);
-      $updateObject = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1");
+      $updateQuery = "UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1";
+      $updateObject = $this->dbConn->stdQuery($updateQuery);
       if (!$updateObject) {
-        return False;
+        throw new DbException("Could not update ".$this->modelTable.": ".$updateQuery);
       }
       $this->after_update($object);
     } else {
@@ -221,9 +224,10 @@ abstract class BaseObject {
       $params[] = '`created_at` = NOW()';
 
       $this->before_create();
-      $insertUser = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
+      $insertQuery = "INSERT INTO `".$this->modelTable."` SET ".implode(",", $params);
+      $insertUser = $this->dbConn->stdQuery($insertQuery);
       if (!$insertUser) {
-        return False;
+        throw new DbException("Could not insert into ".$this->modelTable.": ".$insertQuery);
       } else {
         $this->id = intval($this->dbConn->insert_id);
       }
@@ -241,7 +245,7 @@ abstract class BaseObject {
       $entries = [intval($this->id)];
     }
     if (!is_array($entries) && !is_numeric($entries)) {
-      return False;
+      throw new ValidationException($this, $this->app, "Invalid ID to delete");
     }
     if (is_numeric($entries)) {
       $entries = [$entries];
@@ -254,9 +258,10 @@ abstract class BaseObject {
     }
     $this->before_delete();
     if ($entryIDs) {
-      $dropEntries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
+      $deleteQuery = "DELETE FROM `".$this->modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs);
+      $dropEntries = $this->dbConn->stdQuery($deleteQuery);
       if (!$dropEntries) {
-        return False;
+        throw new DbException("Could not delete from ".$this->modelTable.": ".$deleteQuery);
       }
     }
     $this->after_delete();
@@ -269,7 +274,8 @@ abstract class BaseObject {
       include($file);
       return ob_get_clean();
     }
-    return False;
+    // Should never get here!
+    throw new AppException($this->app, "Requested view not found: ".$file);
   }
   public function render() {
     echo $this->app->render($this->view($this->app->action));

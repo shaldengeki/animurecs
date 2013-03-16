@@ -55,7 +55,7 @@
 <?php
   if ($this->user->loggedIn()) {
 ?>            <li class='divider-vertical'></li>
-            <li><a href='/feed.php'><i class='icon-th-list icon-white'></i> Feed</a></li>
+            <li><?php echo $this->user->link("globalFeed", "<i class='icon-th-list icon-white'></i> Feed", Null, True); ?></li>
             <li class='divider-vertical'></li>
             <li><?php echo $this->user->link("show", "<i class='icon-home icon-white'></i> You", Null, True); ?></li>
             <li class='divider-vertical'></li>
