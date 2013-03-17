@@ -415,7 +415,6 @@ class User extends BaseObject {
       $imagePath = $this->avatarPath();
     }
     $user['avatar_path'] = $imagePath;
-    $user['last_active'] = unixToMySQLDateTime(Null, Config::SERVER_TIMEZONE);
     $result = parent::create_or_update($user, $whereConditions);
     if (!$result) {
       return False;
@@ -448,7 +447,8 @@ class User extends BaseObject {
     return parent::delete();
   }
   public function updateLastActive($time=Null) {
-    $params = array();
+    $now = new DateTime("now", $this->app->serverTimeZone);
+    $params = array('last_active' => $now->format("Y-m-d H:i:s"));
     if ($time !== Null) {
       $params['last_active'] = $time->format("Y-m-d H:i:s");
     }
@@ -578,7 +578,6 @@ class User extends BaseObject {
     } else {
       return False;
     }
-
   }
   public function confirmFriend(User $requestedUser) {
     // confirms a friend request from requestedUser directed at the current user.
