@@ -122,12 +122,13 @@ class User extends BaseObject {
     }
     return $this->friends;
   }
-  public function getFriendRequests($status=0) {
+  public function getFriendRequests() {
     // returns a list of user,time,message arrays corresponding to all outstanding friend requests directed at this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
+    // NOTE: this does not include ignored friend requests.
     $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_1`, `time`, `message` FROM `users_friends`
-                                                WHERE (`user_id_2` = ".intval($this->id)." && `status` = ".intval($status).")
+                                                WHERE (`user_id_2` = ".intval($this->id)." && `status` = 0)
                                                 ORDER BY `time` DESC");
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
@@ -145,7 +146,7 @@ class User extends BaseObject {
     }
     return $this->friendRequests;
   }
-  public function getRequestedFriends($status=0) {
+  public function getRequestedFriends() {
     // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests originating from this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
@@ -205,8 +206,9 @@ class User extends BaseObject {
         }
         return False;
         break;
-      case 'confirm_friend':
       case 'request_friend':
+      case 'confirm_friend':
+      case 'ignore_friend':
         if ($authingUser->id !== 0 && $authingUser->loggedIn() && $this->id !== 0) {
           return True;
         }
@@ -561,18 +563,14 @@ class User extends BaseObject {
       return False;
     }
   }
-  public function confirmFriend(User $requestedUser) {
-    // confirms a friend request from requestedUser directed at the current user.
+  public function updateFriend(User $requestedUser, $status) {
+    // updates a friend request status from requestedUser directed at current user.
     // returns a boolean.
-    // check to see if this already exists in friends or requests.
-    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
-      // this friendship already exists.
-      return True;
-    }
-    // otherwise, go ahead and update this request.
+
     $this->before_update();
     $requestedUser->before_update();
-    $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = 1 WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." && `status` = 0 LIMIT 1");
+    $this->app->logger->err("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
+    $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
     if ($updateRequest) {
       $this->after_update();
       $requestedUser->after_update();
@@ -580,6 +578,33 @@ class User extends BaseObject {
     } else {
       return False;
     }
+
+  }
+  public function confirmFriend(User $requestedUser) {
+    // confirms a friend request from requestedUser directed at the current user.
+    // returns a boolean.
+    // check to see if this already exists in friends.
+    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
+      // this friendship already exists.
+      return True;
+    }
+    // otherwise, go ahead and confirm this request.
+    return $this->updateFriend($requestedUser, 1);
+  }
+  public function ignoreFriend(User $requestedUser) {
+    // ignores a friend request from requestedUser directed at the current user.
+    // returns a boolean.
+    // check to see if this already exists in friends.
+    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
+      // this friendship already exists.
+      return False;
+    }
+    if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
+      // this request does not exist.
+      return False;
+    }
+    // otherwise, go ahead and ignore this request.
+    return $this->updateFriend($requestedUser, -1);
   }
   public function addAchievement(BaseAchievement $achievement) {
     return $this->create_or_update(array('achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)));
@@ -598,20 +623,20 @@ class User extends BaseObject {
       // get user entry in database.
       $findUserID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." && `id` != ".$this->id." LIMIT 1"));
       if (!$findUserID) {
-        return array("location" => "/feed.php", "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error');
+        return array("location" => $this->url('globalFeed'), "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error');
       }
       $newUser = new User($this->app, $findUserID);
       $newUser->switchedUser = $_SESSION['id'];
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
-      return array("location" => "/feed.php", "status" => "You've switched to ".urlencode($newUser->username()).".", 'class' => 'success');
+      return array("location" => $newUser->url('globalFeed'), "status" => "You've switched to ".urlencode($newUser->username()).".", 'class' => 'success');
     } else {
       $newUser = new User($this->app, $username);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
-      return array("location" => "/feed.php", "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
+      return array("location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
     }
   }
   public function render() {
@@ -620,6 +645,9 @@ class User extends BaseObject {
       case 'request_friend':
         if ($this->id === $this->app->user->id) {
           redirect_to($this->app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
+        }
+        if (!isset($_POST['friend_request'])) {
+          $_POST['friend_request'] = array();
         }
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
@@ -634,6 +662,14 @@ class User extends BaseObject {
           redirect_to($this->url("show"), array('status' => "Hooray! You're now friends with ".urlencode($this->username()).".", 'class' => 'success'));
         } else {
           redirect_to($this->url("show"), array('status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
+        }
+        break;
+      case 'ignore_friend':
+        $ignoreFriend = $this->app->user->ignoreFriend($this);
+        if ($ignoreFriend) {
+          redirect_to($this->url("show"), array('status' => "You ignored a friend request from ".urlencode($this->username()).".", 'class' => 'success'));
+        } else {
+          redirect_to($this->url("show"), array('status' => 'An error occurred while ignoring this friend. Please try again.', 'class' => 'error'));
         }
         break;
       case 'switch_back':
@@ -714,7 +750,7 @@ class User extends BaseObject {
           if ($this->allow($this->app->user, 'comment')) {
             $blankComment = new Comment($this->app, 0, $this->app->user, $this);
             $output .= "                <div class='addListEntryForm'>
-                        ".$blankComment->view('inlineForm', $this->app, array('currentObject' => $this))."
+                        ".$blankComment->view('inlineForm', array('currentObject' => $this))."
                       </div>\n";
 
           }

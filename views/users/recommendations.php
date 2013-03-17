@@ -4,7 +4,8 @@
   $recs = $this->app->recsEngine->recommend($this);
 ?>
 
-<h1>Your Recs</h1>
+<h1>Recommended for you <small>Some series we think you'll like</small></h1>
+
 <ul class='item-grid recommendations'>
 <?php
   if (is_array($recs)) {

@@ -76,9 +76,7 @@
     if ($this->user->friendRequests) {
 ?>
               <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'><?php echo count($this->user->friendRequests); ?></span></a>
-                <ul class='dropdown-menu'>
-                  <?php echo $this->user->friendRequestsList(); ?>
-                </ul>
+              <?php echo $this->user->view('friendRequestList', $params); ?>
               </span>
 <?php
     }

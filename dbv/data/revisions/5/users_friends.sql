@@ -1,0 +1,1 @@
+ALTER TABLE  `users_friends` CHANGE  `status`  `status` TINYINT( 3 ) NOT NULL;

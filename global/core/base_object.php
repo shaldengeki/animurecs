@@ -126,6 +126,9 @@ abstract class BaseObject {
   // also should implement validate(), which takes an array of parameters and ensures that they are valid. returns a bool.
   public function validate(array $object) {
     $validationErrors = [];
+    if (!$object) {
+      $validationErrors[] = "Object must have some attributes set";
+    }
     if (isset($object['id']) && ( !is_numeric($object['id']) || intval($object['id']) != $object['id'] || intval($object['id']) < 0) ) {
       $validationErrors[] = "Object ID must be an integer greater than 0";
     }

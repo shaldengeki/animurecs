@@ -52,12 +52,38 @@ class BaseObjectTest extends PHPUnit_Framework_TestCase {
     $this->assertInstanceOf('DateTime', $this->baseObject->set(array('created_at' => '1/1/2001 05:23:12'))->createdAt);
     $this->assertInstanceOf('DateTime', $this->baseObject->set(array('updated_at' => '1/1/2001 05:23:12'))->updatedAt);
   }
-  public function testvalidate() {
+  public function testproperlyFormedBaseObjectPassesValidation() {
     $this->assertTrue($this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12')));
-    $this->assertFalse($this->baseObject->validate(array('id' => -1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12')));
-    $this->assertFalse($this->baseObject->validate(array('id' => 3.5, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12')));
-    $this->assertFalse($this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:62', 'updated_at' => '1/1/2001 05:23:12')));
-    $this->assertFalse($this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:62')));
+  }
+  /**
+   * @expectedException ValidationException
+   */
+  public function testemptyArrayThrowsValidationException() {
+    $this->baseObject->validate(array());
+  }
+  /**
+   * @expectedException ValidationException
+   */
+  public function testnegativeIDThrowsValidationException() {
+    $this->baseObject->validate(array('id' => -1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12'));
+  }
+  /**
+   * @expectedException ValidationException
+   */
+  public function testnonIntegralIDThrowsValidationException() {
+    $this->baseObject->validate(array('id' => 3.5, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12'));
+  }
+  /**
+   * @expectedException ValidationException
+   */
+  public function testinvalidCreatedAtThrowsValidationException() {
+    $this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:62', 'updated_at' => '1/1/2001 05:23:12'));
+  }
+  /**
+   * @expectedException ValidationException
+   */
+  public function testinvalidUpdatedAtThrowsValidationException() {
+    $this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:62'));
   }
   public function testbeforeCreate() {
     $observer = new BaseObjectTestObserver();

@@ -221,8 +221,10 @@ class BaseGroup implements Iterator, ArrayAccess {
     return new $className($this->app, $filteredObjects ? $filteredObjects : []);
   }
   public function sort($sortFunction) {
-    // sorts the objects in this group by the given sortFunction and returns the a new group.
+    // sorts the objects in this group by the given sortFunction and returns a new group.
     $className = get_class($this);
+
+    // since uasort works in-place, we have to make a copy of our list of objects.
     $sortedObjects = $this->_objects;
     @uasort($sortedObjects, $sortFunction);
     return new $className($this->app, $sortedObjects ? $sortedObjects : []);

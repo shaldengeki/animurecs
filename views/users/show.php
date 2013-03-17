@@ -43,7 +43,23 @@ if ($this->avatarPath() != '') {
               <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
               <?php echo $this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : ""; ?>
               <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
-              <?php echo (!$this->allow($this->app->user, 'request_friend') || $this->id === $this->app->user->id) ? "" : ((array_filter_by_key_property($this->friends(), 'user', 'id', $this->app->user->id)) ? "<span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friend</button></span>" : "<span class='pull-right'><a href='".$this->url("request_friend")."' class='btn btn-primary btn-large'>Friend</a></span>"); ?>
+              <?php 
+                if ($this->allow($this->app->user, 'request_friend') && $this->id != $this->app->user->id) {
+                  if (array_filter_by_key_property($this->friends(), 'user', 'id', $this->app->user->id)) {
+?>
+              <span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friends</button></span>
+<?php
+                  } elseif (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $this->app->user->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $this->app->user->id)) {
+?>
+              <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Requested</button></span>
+<?php                    
+                  } else {
+?>
+              <span class='pull-right'><a href='<?php echo $this->url("request_friend"); ?>' class='btn btn-primary btn-large'>Friend Request</a></span>
+<?php
+                  }
+                }
+?>
             </h1>
             <p class='lead'>
               <?php echo escape_output($this->about()); ?>
