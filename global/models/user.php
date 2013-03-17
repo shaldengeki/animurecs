@@ -126,16 +126,16 @@ class User extends BaseObject {
     // returns a list of user,time,message arrays corresponding to all outstanding friend requests directed at this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
-    // NOTE: this does not include ignored friend requests.
-    $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_1`, `time`, `message` FROM `users_friends`
-                                                WHERE (`user_id_2` = ".intval($this->id)." && `status` = 0)
+    $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_1`, `time`, `message`, `status` FROM `users_friends`
+                                                WHERE (`user_id_2` = ".intval($this->id)." && `status` <= 0)
                                                 ORDER BY `time` DESC");
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
       $friendReqs[] = array(
           'user' => new User($this->app, intval($req['user_id_1'])),
           'time' => $req['time'],
-          'message' => $req['message']
+          'message' => $req['message'],
+          'status' => $req['status']
         );
     }
     return $friendReqs;
@@ -146,19 +146,23 @@ class User extends BaseObject {
     }
     return $this->friendRequests;
   }
+  public function outstandingFriendRequests() {
+    return array_filter_by_key($this->friendRequests(), 'status', 0);
+  }
   public function getRequestedFriends() {
     // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests originating from this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
-    $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_2`, `time`, `message` FROM `users_friends`
-                                                WHERE (`user_id_1` = ".intval($this->id)." && `status` = ".intval($status).")
+    $friendReqsQuery = $this->dbConn->stdQuery("SELECT `user_id_2`, `time`, `message`, `status` FROM `users_friends`
+                                                WHERE (`user_id_1` = ".intval($this->id)." && `status` <= 0)
                                                 ORDER BY `time` DESC");
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
       $friendReqs[] = array(
           'user' => new User($this->app, intval($req['user_id_2'])),
           'time' => $req['time'],
-          'message' => $req['message']
+          'message' => $req['message'],
+          'status' => $req['status']
         );
     }
     return $friendReqs;
@@ -168,6 +172,9 @@ class User extends BaseObject {
       $this->requestedFriends = $this->getRequestedFriends();
     }
     return $this->requestedFriends;
+  }
+  public function outstandingRequestedFriends() {
+    return array_filter_by_key($this->requestedFriends(), 'status', 0);
   }
   public function animeList() {
     if ($this->animeList === Null) {
@@ -569,7 +576,6 @@ class User extends BaseObject {
 
     $this->before_update();
     $requestedUser->before_update();
-    $this->app->logger->err("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
     $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
     if ($updateRequest) {
       $this->after_update();
@@ -582,6 +588,11 @@ class User extends BaseObject {
   public function confirmFriend(User $requestedUser) {
     // confirms a friend request from requestedUser directed at the current user.
     // returns a boolean.
+    // check to ensure this is an extant request.
+    if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
+      return False;
+    }
+
     // check to see if this already exists in friends.
     if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
       // this friendship already exists.
@@ -593,13 +604,14 @@ class User extends BaseObject {
   public function ignoreFriend(User $requestedUser) {
     // ignores a friend request from requestedUser directed at the current user.
     // returns a boolean.
+    // check to ensure this is an extant request.
+    if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
+      return False;
+    }
+
     // check to see if this already exists in friends.
     if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
       // this friendship already exists.
-      return False;
-    }
-    if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
-      // this request does not exist.
       return False;
     }
     // otherwise, go ahead and ignore this request.

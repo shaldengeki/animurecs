@@ -73,9 +73,9 @@
 ?>
             <li id='navbar-alerts'>
 <?php
-    if ($this->user->friendRequests) {
+    if ($this->user->outstandingFriendRequests) {
 ?>
-              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'><?php echo count($this->user->friendRequests); ?></span></a>
+              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'><?php echo count($this->user->outstandingFriendRequests); ?></span></a>
               <?php echo $this->user->view('friendRequestList', $params); ?>
               </span>
 <?php

@@ -4,7 +4,7 @@
 ?>
 <ul class='dropdown-menu'>
 <?php
-  foreach ($this->app->user->friendRequests() as $request) {
+  foreach (array_sort_by_key($this->app->user->friendRequests(), 'status', 'desc') as $request) {
     $entryTime = new DateTime($request['time'], $this->app->serverTimeZone);
     $entryTime->setTimezone($this->app->outputTimeZone);
 ?>
