@@ -69,6 +69,9 @@
 ?>
           </ul>
           <ul class='nav pull-right'>
+<?php
+  if ($this->user->loggedIn()) {
+?>
             <?php echo $blankAnime->view('searchForm', array(
               'form' => array(
                   'class' => 'navbar-search'
@@ -79,9 +82,6 @@
                 ),
               'submitButton' => False
             )); ?>
-<?php
-  if ($this->user->loggedIn()) {
-?>
             <li id='navbar-alerts'>
 <?php
     if ($this->user->outstandingFriendRequests) {
