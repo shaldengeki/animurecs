@@ -3,8 +3,10 @@
   $this->app->check_partial_include(__FILE__);
   $animeTags = [];
   $blankTag = new Tag($this->app, 0);
-  foreach ($this->tags()->load('info') as $tag) {
-    $animeTags[] = array('id' => $tag->id, 'name' => $tag->name());
+  if ($this->tags()) {
+    foreach ($this->tags()->load('info') as $tag) {
+      $animeTags[] = array('id' => $tag->id, 'name' => $tag->name());
+    }
   }
   echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal'));
 ?>

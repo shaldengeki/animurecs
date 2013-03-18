@@ -427,7 +427,25 @@ class Application {
       $formAttrs[] = escape_output($key)."='".escape_output($value)."'";
     }
     $formAttrs = implode(" ", $formAttrs);
-    return "<form ".$formAttrs."><input type='hidden' name='".escape_output($this->csrfField)."' value='".escape_output($this->csrfToken)."' />\n";
+    return "<form ".$formAttrs.">".$this->csrfInput()."\n";
+  }
+  public function input(array $params=Null) {
+    if ($params == Null) {
+      $params = [];
+    }
+    $inputAttrs = [];
+    foreach ($params as $key=>$value) {
+      $inputAttrs[] = escape_output($key)."='".escape_output($value)."'";
+    }
+    $inputAttrs = implode(" ", $inputAttrs);
+    return "<input ".$inputAttrs." />\n";
+  }
+  public function csrfInput() {
+    return $this->input(array(
+      'type' => 'hidden',
+      'name' => $this->csrfField,
+      'value' => $this->csrfToken
+    ));
   }
   public function view($view="index", $params=Null) {
     // includes a provided application-level view.

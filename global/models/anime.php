@@ -277,7 +277,7 @@ class Anime extends BaseObject {
       $drop_tags = $this->drop_taggings($tagsToDrop);
       foreach ($anime['anime_tags'] as $tagToAdd) {
         // add any needed tags.
-        if (!array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
+        if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
           $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {
@@ -288,6 +288,13 @@ class Anime extends BaseObject {
     }
 
     return $this->id;
+  }
+  public function delete($entries=Null) {
+    // first, drop all taggings.
+    if (!$this->drop_taggings()) {
+      return False;
+    }
+    return parent::delete($entries);
   }
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
@@ -356,14 +363,22 @@ class Anime extends BaseObject {
     }
     return $this->ratingAvg; 
   }
-  public function predictedRating(RecsEngine $recsEngine, User $user) {
-    return $recsEngine->predict($user, $this);
+  public function predict(User $user) {
+    return $this->app->recsEngine->predict($user, $this);
+  }
+  public function similar($n=20) {
+    // Returns an AnimeGroup consisting of the n most-similar anime to the current anime.
+    return new AnimeGroup($this->app, array_map(function($a) {
+      return $a['id'];
+    }, $this->app->recsEngine->similarAnime($this, $n)));
   }
   public function render() {
     if (isset($_POST['anime']) && is_array($_POST['anime'])) {
       $updateAnime = $this->create_or_update($_POST['anime']);
       if ($updateAnime) {
-        redirect_to($this->url("show"), array('status' => "Successfully created or updated ".$this->title().".", 'class' => 'success'));
+        // fetch the new ID.
+        $newAnime = new Anime($this->app, $updateAnime);
+        redirect_to($newAnime->url("show"), array('status' => "Successfully created or updated ".$newAnime->title().".", 'class' => 'success'));
       } else {
         redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error'));
       }
@@ -442,9 +457,9 @@ class Anime extends BaseObject {
     }
     $this->app->render($output, array('title' => $title));
   }
-  public function scoreBar($score=False) {
+  public function scoreBar($score=Null) {
     // returns markup for a score bar for a score given to this anime.
-    if ($score === False || $score == 0) {
+    if ($score === Null || $score == 0) {
       return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div>Unknown</div>";
     }
     if ($score >= 7.5) {

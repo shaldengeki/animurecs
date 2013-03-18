@@ -8,5 +8,5 @@
       <input type='hidden' name='comment[type]' value='<?php echo escape_output(($this->id === 0) ? get_class($params['currentObject']) : $this->type()); ?>' />
       <input type='hidden' name='comment[parent_id]' value='<?php echo ($this->id === 0) ? intval($params['currentObject']->id) : $this->parent()->id; ?>' />
       <input type='text' name='comment[message]'<?php echo ($this->id === 0) ? "placeholder='Leave a comment!'" : "value='".escape_output($this->message())."'"; ?> />
-      <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Send" : "Update"; ?></button>
+      <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Post" : "Update"; ?></button>
     </form>

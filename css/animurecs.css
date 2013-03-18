@@ -1018,7 +1018,8 @@ body{padding-top:40px;}
 body>.container-fluid{padding-top:20px;}
 .navbar-inverse form{margin:5px 0 0 0;}.navbar-inverse form .btn{margin-top:0;}
 .navbar-inverse .divider-vertical{border-right-color:#2ea600;border-left-color:#2ea600;margin:0;}
-.navbar-inverse>.navbar-inner{margin-bottom:0 !important;border-color:transparent;background-color:#278c00;background:#278c00;color:#f5f5f5;color:#333333;}.navbar-inverse>.navbar-inner>.container-fluid>ul.nav>li#navbar-alerts{margin-top:10px;}
+.navbar-inverse>.navbar-inner{margin-bottom:0 !important;border-color:transparent;background-color:#278c00;background:#278c00;color:#f5f5f5;color:#333333;}.navbar-inverse>.navbar-inner>.container-fluid>ul.nav>form.navbar-search>input.search-query{color:#333333;background-color:#ffffff;}
+.navbar-inverse>.navbar-inner>.container-fluid>ul.nav>li#navbar-alerts{margin-top:10px;}
 .navbar-inverse>.navbar-inner>.container-fluid>ul.nav>li#navbar-user>a:hover{background-color:#2ea600;background:#2ea600;color:white;}
 .navbar-inverse>.navbar-inner>.container-fluid>ul.nav li#navbar-user.dropdown.open a.dropdown-toggle{background-color:#2ea600;background:#2ea600;color:white;}
 .navbar-inverse>.navbar-inner>.container-fluid>ul.nav li>a:hover{background-color:#2ea600;background:#2ea600;color:white;}
@@ -1053,7 +1054,7 @@ ul.media-list .media .feedText .feedUser a:hover{color:#0000ff;text-decoration:u
 ul.media-list .media .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.media-list .media .feedText .feedEntryMenu li{display:inline;white-space:nowrap;}
 div#userList ul#userListNav{margin:0 auto;width:100%;text-align:center;}div#userList ul#userListNav li{float:none;display:inline-block;}
 div#userList h2{margin-top:-40px;padding-top:40px;}
-ul.tagList{position:absolute;top:80px;left:-150px;width:140px;list-style:none;}ul.tagList li{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;}
+ul.tagList{width:100%;list-style:none;}ul.tagList li{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;}
 .tag-general{color:#006ffa;}
 .tag-studio{color:#aa0000;}
 .tag-va{color:#00aa00;}

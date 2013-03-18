@@ -16,15 +16,22 @@
 ?>
 <h1><?php echo escape_output(($this->type()->id != 1 ? $this->type()->name().":" : "").$this->name()).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
 <?php echo $this->description() ? "<p class='lead'>".escape_output($this->description())."</p>" : "" ?>
-<?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
-  <ul class='item-grid recommendations'>
-<?php
-  foreach ($animeGroup->load('info') as $anime) {
-?>
-    <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4>".$anime->imageTag(), True, array('title' => $anime->description(True))); echo ($animePredictions[$anime->id] instanceof Anime) ? "" : "<p><em>Predicted score: ".round($animePredictions[$anime->id], 1)."</em></p>"; ?></li>
-<?php
-  }
-?>
-  </ul>
-<?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
-<?php echo $animeGroup->tag_list(); ?>
+<div class='row-fluid'>
+  <div class='span2'>
+    <h2>Tags:</h2>
+    <?php echo $animeGroup->tag_list(); ?>
+  </div>
+  <div class='span10'>
+    <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
+    <ul class='item-grid recommendations'>
+    <?php
+      foreach ($animeGroup->load('info') as $anime) {
+    ?>
+      <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4>".$anime->imageTag(), True, array('title' => $anime->description(True))); echo ($animePredictions[$anime->id] instanceof Anime) ? "" : "<p><em>Predicted score: ".round($animePredictions[$anime->id], 1)."</em></p>"; ?></li>
+    <?php
+      }
+    ?>
+    </ul>
+    <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
+  </div>
+</div>

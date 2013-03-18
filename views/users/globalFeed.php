@@ -10,7 +10,8 @@
       <li>Anime
         <ul>
           <li>3/15/13- fixed these up a little; search on /anime/ and you can now browse anime through "discover"</li>
-          <li>need to add stuff like tabbed content up top for general info / vas / trailer / stats etc.</li>
+          <li>3/17/13- added info tabs atop anime pages and alpha version of "related" anime; will have stats later</li>
+          <li>3/17/13- you can also search for anime via the topbar now!!</li>
         </ul>
       </li>
       <li><s>Fee</s>d
@@ -26,6 +27,7 @@
           <li>1/1/13- now regenerates new features for users every hour on the hour using your newest ratings</li>
           <li>1/1/13- currently the way recs are ported from the original data to new animurecs users is <em>really</em> rough; lots of improvement to be had here</li>
           <li>3/15/13- i think i'm going to restructure recs in the backend a little so users can "dismiss" and otherwise handle them instead of having to manipulate their lists</li>
+          <li>3/17/13- improved accuracy of recs significantly; next is adding "dismiss" feature</li>
         </ul>
       </li>
       <li>Landing page

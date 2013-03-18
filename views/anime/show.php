@@ -18,6 +18,10 @@
 ?>          </div>
             </li>
           </ul>
+          <div>
+            <h2>Tags:</h2>
+            <?php echo $this->tagList($this->app->user); ?>
+          </div>
         </div>
         <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
@@ -25,43 +29,80 @@
               <?php echo escape_output($this->title()); ?>
               <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : ""; ?>
             </h1>
-            <p>
-              <?php echo escape_output($this->description()); ?>
-            </p>
+
+            <ul class="nav nav-tabs">
+              <li class="active">
+                <a href="#generalInfo" data-toggle="tab">General</a>
+              </li>
+              <li>
+                <a href="#relatedAnime" data-toggle="tab">Related</a>
+              </li>
+            </ul>
+            <div class='tab-content'>
+              <div class='tab-pane active' id='generalInfo'>
+                <p>
+                  <?php echo escape_output($this->description()); ?>
+                </p>
 <?php
   if ($this->app->user->loggedIn()) {
-?>            <ul class='thumbnails'>
-              <li class='span4'>
+?>
+                <ul class='thumbnails'>
+                  <li class='span4'>
+                    <p class='lead'>Global Average:</p>
+                    <?php echo $this->scoreBar($this->ratingAvg()); ?>
+                  </li>
+                  <li class='span4'>
 <?php
     if (!isset($this->app->user->animeList()->uniqueList()[$this->id]) || $this->app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
       $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
-?>                <p class='lead'>Predicted score:</p>
-                <?php echo $this->scoreBar($userRating); ?>
+?>
+                    <p class='lead'>Predicted score:</p>
+                    <?php echo $this->scoreBar($userRating); ?>
 <?php
     } else {
       $userRating = $this->app->user->animeList()->uniqueList()[$this->id]['score'];
-?>                <p class='lead'>You rated this:</p>
-                <?php echo $this->scoreBar($userRating); ?>
+?>
+                    <p class='lead'>You rated this:</p>
+                    <?php echo $this->scoreBar($userRating); ?>
 <?php
     }
     if ($userRating != 0) {
-?>(which is <?php echo abs(round($userRating - $this->app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $this->app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average score".($this->ratingCount() !== 0 ? " and ".abs(round($userRating - $this->ratingAvg(), 2))." points ".($userRating > $this->ratingAvg() ? "higher" : "lower")." than this anime's average score" : "").")";
+?>
+<p><small>(<?php echo abs(round($userRating - $this->app->user->animeList()->uniqueListAvg(), 2))." points ".($userRating > $this->app->user->animeList()->uniqueListAvg() ? "higher" : "lower")." than your average)"; ?></small></p>
+<?php
     }
   } else {
-?>            <ul class='thumbnails'>
-              <li class='span4'>
-                <p class='lead'>Predicted score:</p>
-                <p>Sign in to view your predicted score!</p>
+?>
+                <ul class='thumbnails'>
+                  <li class='span4'>
+                    <p class='lead'>Predicted score:</p>
+                    <p>Sign in to view your predicted score!</p>
 <?php
   }
-?>              </li>
-              <li class='span8'>
-                <p class='lead'>Tags:</p>
-                <?php echo $this->tagCloud($this->app->user); ?>
-              </li>
-            </ul>
-          </div>
-          <div id='userFeed'>
+?>
+                  </li>
+<?php /*
+                  <li class='span8'>
+                    <p class='lead'>Tags:</p>
+                    <?php echo $this->tagCloud($this->app->user); ?>
+                  </li>
+*/ ?>
+                </ul>
+              </div>
+              <div class='tab-pane' id='relatedAnime'>
+                <h2>Related series:</h2>
+                <ul class="item-grid recommendations">
+<?php
+  foreach ($this->similar(8)->load('info') as $anime) {
+?>
+                  <li><?php echo $anime->link("show", "<h4 title='".escape_output($anime->title)."'>".escape_output($anime->title)."</h4>".$anime->imageTag(array('title' => $anime->description(True))), Null, True); ?></li>
+<?php
+  }
+?>
+                </ul>
+              </div>
+            </div>
+            <div id='userFeed'>
 <?php
   if ($this->app->user->loggedIn()) {
     $anime = new Anime($this->app, 0);
@@ -72,7 +113,8 @@
       $thisEntry = [];
       $addText = "Add this anime to your list: ";
     }
-?>              <div class='addListEntryForm'>
+?>
+              <div class='addListEntryForm'>
                 <?php echo $this->app->form(array('action' => $this->app->user->animeList()->url("new", Null, array('user_id' => intval($this->app->user->id))), 'class' => 'form-inline')); ?>
                   <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->app->user->id); ?>' />
                   <?php echo $addText; ?>
@@ -91,8 +133,9 @@
               </div>
 <?php
   }
-?>          <?php echo $this->app->user->view('feed', $params); ?>
+?>
+           <?php echo $this->app->user->view('feed', $params); ?>
           </div>
         </div>
       </div>
-      <?php /* echo $this->tagList($this->app->user); */ ?>
+    </div>
