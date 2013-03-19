@@ -5,6 +5,6 @@ header("Location: index.php");
 }
 $_SESSION = array();
 session_destroy();
-redirect_to("index.php", array('status' => "You've been logged out. See you soon!", 'class' => 'success'));
+$app->redirect("index.php", array('status' => "You've been logged out. See you soon!", 'class' => 'success'));
 
 ?>

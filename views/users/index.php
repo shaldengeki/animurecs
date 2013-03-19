@@ -2,7 +2,9 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-      <h1>All Users</h1>
+      <div class='page-header'>
+        <h1>All Users</h1>
+      </div>
       <table class='table table-striped table-bordered dataTable'>
         <thead>
           <tr>

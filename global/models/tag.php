@@ -83,14 +83,14 @@ class Tag extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $this->before_update();
-    $anime->before_update();
+    $this->beforeUpdate(array());
+    $anime->beforeUpdate(array());
     $insertTagging = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertTagging) {
       return False;
     }
-    $this->after_update();
-    $anime->after_update();
+    $this->afterUpdate(array());
+    $anime->afterUpdate(array());
     $this->anime[intval($anime->id)] = array('id' => intval($anime->id), 'title' => $anime->title);
     return True;
   }
@@ -111,12 +111,20 @@ class Tag extends BaseObject {
       }
     }
     if ($animeIDs) {
-      $this->before_update();
+      $animeObjects = [];
+      foreach($animeIDs as $animeID) {
+        $animeObjects[$animeID] = new Anime($this->app, $animeID);
+        $animeObjects[$animeID]->beforeUpdate(array());
+      }
+      $this->beforeUpdate(array());
       $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
       if (!$drop_taggings) {
         return False;
       }
-      $this->after_update();
+      $this->afterUpdate(array());
+      foreach ($animeObjects as $anime) {
+        $anime->afterUpdate(array());
+      }
     }
     foreach ($animeIDs as $animeID) {
       unset($this->anime[intval($animeID)]);
@@ -273,9 +281,9 @@ class Tag extends BaseObject {
     if (isset($_POST['tag']) && is_array($_POST['tag'])) {
       $updateTag = $this->create_or_update($_POST['tag']);
       if ($updateTag) {
-        redirect_to($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
+        $this->app->redirect($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
       } else {
-        redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
+        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
       }
     }
     switch($this->app->action) {
@@ -312,9 +320,9 @@ class Tag extends BaseObject {
         $tagName = $this->name();
         $deleteTag = $this->delete();
         if ($deleteTag) {
-          redirect_to('/tags/', array('status' => 'Successfully deleted '.$tagName.'.', 'class' => 'success'));
+          $this->app->redirect('/tags/', array('status' => 'Successfully deleted '.$tagName.'.', 'class' => 'success'));
         } else {
-          redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$tagName.'.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while deleting '.$tagName.'.', 'class' => 'error'));
         }
         break;
       default:
@@ -323,7 +331,7 @@ class Tag extends BaseObject {
         $output = $this->view('index');
         break;
     }
-    $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('title' => $title));
   }
   public function url($action="show", $format=Null, array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.
@@ -334,7 +342,7 @@ class Tag extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($name))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($name))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

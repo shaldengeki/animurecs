@@ -6,7 +6,7 @@ class AnimeGroup extends BaseGroup {
   protected $_groupTableSingular = "anime";
   protected $_groupObject = "Anime";
   protected $_nameField = "title";
-  private $_tags=Null;
+  private $_tags, $_predictions=Null;
   
   public function anime() {
     return $this->objects();
@@ -83,6 +83,21 @@ class AnimeGroup extends BaseGroup {
     }
     $output .= "</ul>";
     return $output;
+  }
+
+  public function _getPredictions() {
+    return False;
+    /* TODO */
+  }
+
+  public function predictions() {
+    return False;
+    /* TODO
+    if ($this->_predictions === Null) {
+      $this->_predictions = $this->_getPredictions();
+    }
+    return $this->_predictions;
+    */
   }
 }
 ?>

@@ -7,7 +7,7 @@ if ($app->user->allow($app->user, 'new') && isset($_POST['username']) && isset($
   $registerUser = $app->user->register($_POST['username'], $_POST['email'], $_POST['password'], $_POST['password_confirmation']);
   $location = $registerUser['location'];
   unset($registerUser['location']);
-  redirect_to($location, $registerUser);
+  $app->redirect($location, $registerUser);
 } else {
   $app->render('<div class="row-fluid">
   <div class="span4">&nbsp;</div>

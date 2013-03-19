@@ -231,7 +231,9 @@ function loadAjaxTab(elt) {
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
   $(elt).find('.dropdown-toggle').dropdown();
-
+  $(elt).tooltip({
+    selector: "a[data-toggle=tooltip]"
+  });
   /* Datatable initialisation */
   $(elt).find('.dataTable').each(function() {
     initDataTable(this);
@@ -247,7 +249,11 @@ function initInterface(elt) {
     $(this).click( function() {
       $(this).off('click');
       $(this).addClass("disabled");
-      $(this).text("Loading...");
+      if (typeof $(this).attr('data-loading-text') == 'undefined') {
+        $(this).text("Loading...");
+      } else {
+        $(this).text($(this).attr('data-loading-text'));
+      }
     });
   });
 

@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `points` INT NOT NULL DEFAULT '0' AFTER `achievement_mask`;

@@ -60,22 +60,6 @@ function ago(DateInterval $dateInterval){
   return $o;
 }
 
-function redirect_to($location, array $params=Null) {
-  $paramString = "";
-  if (strpos($location, "?") === False) {
-    $connector = "?";
-  } else {
-    $connector = "&";
-  }
-  if ($params !== Null) {
-    $paramString = $connector.http_build_query($params);
-  }
-
-  $redirect = "Location: ".$location.$paramString;
-  header($redirect);
-  exit;
-}
-
 function js_redirect_to($redirect_array) {
   $location = (isset($redirect_array['location'])) ? $redirect_array['location'] : '/';
   $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
@@ -84,9 +68,9 @@ function js_redirect_to($redirect_array) {
   $redirect = Config::ROOT_URL."/".$location;
   if ($status != "") {
     if (strpos($location, "?") === FALSE) {
-      $redirect .= "?status=".urlencode($status)."&class=".urlencode($class);
+      $redirect .= "?status=".rawurlencode($status)."&class=".rawurlencode($class);
     } else {
-      $redirect .= "&status=".urlencode($status)."&class=".urlencode($class);
+      $redirect .= "&status=".rawurlencode($status)."&class=".rawurlencode($class);
     }
   }
   echo "window.location.replace(\"".$redirect."\");";

@@ -2,16 +2,23 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 
-  $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime()->anime(), 0, count($this->anime()->anime()));
-  if (is_array($predictedRatings)) {
-    arsort($predictedRatings);
+  $resultsPerPage = 24;
+  $blankAnime = new Anime($this->app, 0);
+
+  if ($this->app->user->loggedIn()) {
+    $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime()->anime(), 0, count($this->anime()->anime()));
+    if (is_array($predictedRatings)) {
+      arsort($predictedRatings);
+    } else {
+      $predictedRatings = $this->anime()->anime();
+    }    
+    $animePredictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True);
+    $animeGroup = new AnimeGroup($this->app, array_keys($animePredictions));
   } else {
-    $predictedRatings = $this->anime()->anime();
+    $animeGroup = new AnimeGroup($this->app, array_keys(array_slice($this->anime()->anime(), (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
+    $animePredictions = array();
   }
 
-  $resultsPerPage = 24;
-  $animePredictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True);
-  $animeGroup = new AnimeGroup($this->app, array_keys($animePredictions));
   $animePages = ceil(count($predictedRatings)/$resultsPerPage);
 ?>
 <h1><?php echo escape_output(($this->type()->id != 1 ? $this->type()->name().":" : "").$this->name()).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
@@ -23,15 +30,7 @@
   </div>
   <div class='span10'>
     <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
-    <ul class='item-grid recommendations'>
-    <?php
-      foreach ($animeGroup->load('info') as $anime) {
-    ?>
-      <li><?php echo $anime->link("show", "<h4>".escape_output($anime->title())."</h4>".$anime->imageTag(), True, array('title' => $anime->description(True))); echo ($animePredictions[$anime->id] instanceof Anime) ? "" : "<p><em>Predicted score: ".round($animePredictions[$anime->id], 1)."</em></p>"; ?></li>
-    <?php
-      }
-    ?>
-    </ul>
+    <?php echo $blankAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $animePredictions)); ?>
     <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
   </div>
 </div>

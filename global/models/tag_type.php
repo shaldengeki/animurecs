@@ -119,9 +119,9 @@ class TagType extends BaseObject {
     if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
       $updateTagType = $this->create_or_update($_POST['tag_type']);
       if ($updateTagType) {
-        redirect_to($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
+        $this->app->redirect($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
       } else {
-        redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
+        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag type.", 'class' => 'error'));
       }
     }
     switch($this->app->action) {
@@ -149,9 +149,9 @@ class TagType extends BaseObject {
         }
         $deleteTagType = $this->delete();
         if ($deleteTagType) {
-          redirect_to("/tag_types/", array('status' => 'Successfully deleted '.$this->name().'.', 'class' => 'success'));
+          $this->app->redirect("/tag_types/", array('status' => 'Successfully deleted '.$this->name().'.', 'class' => 'success'));
         } else {
-          redirect_to("/tag_types/".intval($this->id)."/show/", array('status' => 'An error occurred while deleting '.$this->name().'.', 'class' => 'error'));
+          $this->app->redirect("/tag_types/".intval($this->id)."/show/", array('status' => 'An error occurred while deleting '.$this->name().'.', 'class' => 'error'));
         }
         break;
       default:
@@ -160,7 +160,7 @@ class TagType extends BaseObject {
         $output = $this->view('index');
         break;
     }
-    $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('title' => $title));
   }
 }
 ?>

@@ -1,6 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+  $blankAnime = new Anime($this->app, 0);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -43,14 +44,14 @@
                 <p>
                   <?php echo escape_output($this->description()); ?>
                 </p>
-<?php
-  if ($this->app->user->loggedIn()) {
-?>
                 <ul class='thumbnails'>
                   <li class='span4'>
                     <p class='lead'>Global Average:</p>
                     <?php echo $this->scoreBar($this->ratingAvg()); ?>
                   </li>
+<?php
+  if ($this->app->user->loggedIn()) {
+?>
                   <li class='span4'>
 <?php
     if (!isset($this->app->user->animeList()->uniqueList()[$this->id]) || $this->app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
@@ -73,7 +74,6 @@
     }
   } else {
 ?>
-                <ul class='thumbnails'>
                   <li class='span4'>
                     <p class='lead'>Predicted score:</p>
                     <p>Sign in to view your predicted score!</p>
@@ -91,15 +91,7 @@
               </div>
               <div class='tab-pane' id='relatedAnime'>
                 <h2>Related series:</h2>
-                <ul class="item-grid recommendations">
-<?php
-  foreach ($this->similar(8)->load('info') as $anime) {
-?>
-                  <li><?php echo $anime->link("show", "<h4 title='".escape_output($anime->title)."'>".escape_output($anime->title)."</h4>".$anime->imageTag(array('title' => $anime->description(True))), Null, True); ?></li>
-<?php
-  }
-?>
-                </ul>
+                <?php echo $blankAnime->view('grid', array('anime' => $this->similar(8))); ?>
               </div>
             </div>
             <div id='userFeed'>

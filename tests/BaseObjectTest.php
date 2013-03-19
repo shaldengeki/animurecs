@@ -88,37 +88,37 @@ class BaseObjectTest extends PHPUnit_Framework_TestCase {
   public function testbeforeCreate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind($this->baseObject->modelName().'.beforeCreate', $observer);
-    $this->baseObject->before_create();
+    $this->baseObject->beforeCreate(array('beforeCreateTestParam' => 40.2));
     $this->assertEquals(40.2, $this->baseObject->beforeCreateTestParam);
   }
   public function testafterCreate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind($this->baseObject->modelName().'.afterCreate', $observer);
-    $this->baseObject->after_create();
+    $this->baseObject->afterCreate(array('beforeCreateTestParam' => 40.2));
     $this->assertEquals(41.2, $this->baseObject->afterCreateTestParam);
   }
   public function testbeforeUpdate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind($this->baseObject->modelName().'.beforeUpdate', $observer);
-    $this->baseObject->before_update(array('beforeUpdateTestParam' => 42.2));
+    $this->baseObject->beforeUpdate(array('beforeUpdateTestParam' => 42.2));
     $this->assertEquals(42.2, $this->baseObject->beforeUpdateTestParam);
   }
   public function testafterUpdate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind($this->baseObject->modelName().'.afterUpdate', $observer);
-    $this->baseObject->after_update(array('afterUpdateTestParam' => 43.2));
+    $this->baseObject->afterUpdate(array('afterUpdateTestParam' => 43.2));
     $this->assertEquals(43.2, $this->baseObject->afterUpdateTestParam);
   }
   public function testbeforeDelete() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind($this->baseObject->modelName().'.beforeDelete', $observer);
-    $this->baseObject->before_delete();
+    $this->baseObject->beforeDelete();
     $this->assertEquals(44.2, $this->baseObject->beforeDeleteTestParam);
   }
   public function testafterDelete() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind($this->baseObject->modelName().'.afterDelete', $observer);
-    $this->baseObject->after_delete();
+    $this->baseObject->afterDelete();
     $this->assertEquals(45.2, $this->baseObject->afterDeleteTestParam);
   }
 }

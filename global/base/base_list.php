@@ -81,7 +81,7 @@ abstract class BaseList extends BaseObject {
     // check to see if this is an update.
     $entryGroup = $this->entries();
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
-      $this->before_update($entry);
+      $this->beforeUpdate($entry);
       $updateDependency = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
@@ -95,12 +95,12 @@ abstract class BaseList extends BaseObject {
         }
       }
       $returnValue = intval($entry['id']);
-      $this->after_update();
+      $this->afterUpdate($entry);
     } else {
       if (!isset($entry['time'])) {
         $params[] = "`time` = NOW()";
       }
-      $this->before_create();
+      $this->beforeUpdate($entry);
       $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
       if (!$insertDependency) {
         return False;
@@ -113,7 +113,7 @@ abstract class BaseList extends BaseObject {
       } else {
         $this->uniqueList[intval($entry[$this->typeID])] = array($this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName]));
       }
-      $this->after_create();
+      $this->afterUpdate($entry);
     }
     $this->entries[intval($returnValue)] = $entry;
     return $returnValue;
@@ -140,12 +140,12 @@ abstract class BaseList extends BaseObject {
       }
     }
     if ($entryIDs) {
-      $this->before_delete();
+      $this->beforeDelete();
       $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$drop_entries) {
         return False;
       }
-      $this->after_delete();
+      $this->afterDelete();
     }
     foreach ($entryIDs as $entryID) {
       unset($this->entries[intval($entryID)]);
@@ -242,6 +242,12 @@ abstract class BaseList extends BaseObject {
       $this->uniqueList();
     }
     return $this->uniqueListStdDev;
+  }
+  public function length() {
+    return $this->entries()->length();
+  }
+  public function uniqueLength() {
+    return count($this->uniqueList());
   }
   public function listSection($status=Null, $score=Null) {
     // returns a section of this user's unique list.

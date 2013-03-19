@@ -7,3 +7,5 @@ less
 img/users/*
 img/anime/*
 ideas.txt
+composer.lock
+vendor/*

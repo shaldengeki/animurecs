@@ -20,7 +20,7 @@ class RecsEngine {
     } else {
       $requestFields = http_build_query($params);
     }
-    $url = "http://".$this->host.":".intval($this->port)."/".urlencode($model)."/".intval($id)."/".urlencode($action)."?".$requestFields;
+    $url = "http://".$this->host.":".intval($this->port)."/".rawurlencode($model)."/".intval($id)."/".rawurlencode($action)."?".$requestFields;
     $page = hitPage($url);
     return $page ? ($json ? json_decode($page, True) : $page) : False;
   }

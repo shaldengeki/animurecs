@@ -55,7 +55,8 @@ class Application {
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
   private $_config, $_classes, $_observers=[];
-  public $achievements=[];
+  protected $totalPoints=Null;
+  public $achievements,$delayedMessages=[];
   public $logger, $cache, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
   public $model,$action,$status,$class="";
@@ -111,6 +112,8 @@ class Application {
     // Creates a list of objects that can be accessed via URL.
 
     $this->_loadDependency("./global/config.php");
+
+    require_once(Config::APP_ROOT.'/vendor/autoload.php');
 
     require_once('Log.php');
     $this->logger = $this->_connectLogger();
@@ -195,6 +198,7 @@ class Application {
       $blankAchieve = new $achievementName($this);
       $this->achievements[$blankAchieve->id] = $blankAchieve;
     }
+    ksort($this->achievements);
   }
   private function _bindEvents() {
     // binds all event observers.
@@ -213,6 +217,13 @@ class Application {
     $this->bind(array('Anime.afterUpdate', 'Anime.afterDelete'), new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete($parent->modelName()."-".intval($parent->id)."-tagIDs");
     }));
+    $this->bind(array('AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeList.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->cache->delete("Anime-".intval($updateParams['anime_id'])."-similar");
+    }));
+    $this->bind(array('AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->cache->delete("Anime-".$parent->animeId()."-similar");
+    }));
+
   }
   private function _checkCSRF() {
     // only generate CSRF token if the user is logged in.
@@ -309,6 +320,32 @@ class Application {
       $this->display_error(404);
     }
   }
+  public function redirect($location, array $params=Null) {
+    $paramString = "";
+
+    // append any delayed messages onto the current status.
+    if (count($this->delayedMessages) > 0) {
+      if (isset($params['status'])) {
+        array_unshift($this->delayedMessages, $params['status']);
+      }
+      $params['status'] = implode(" \n", $this->delayedMessages);
+    }
+
+    // determine which connector we need to append to the location url.
+    if (strpos($location, "?") === False) {
+      $connector = "?";
+    } else {
+      $connector = "&";
+    }
+    if ($params !== Null) {
+      $paramString = $connector.http_build_query($params);
+    }
+
+    $redirect = "Location: ".$location.$paramString;
+    header($redirect);
+    exit;
+  }
+
   public function init() {
     // start of application logic.
     // loads dependencies, binds events, sets request variables, then attempts to render the current request.
@@ -376,21 +413,21 @@ class Application {
 
     if (isset($this->model) && $this->model !== "") {
       if (!class_exists($this->model)) {
-        redirect_to($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
+        $this->redirect($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
       }
 
       // kludge to allow model names in URLs.
-      if ($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") {
-        $this->target = new $this->model($this, Null, urldecode($this->id));
+      if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") && $this->id !== "") {
+        $this->target = new $this->model($this, Null, rawurldecode($this->id));
       } else {
-        $this->target = new $this->model($this, $this->id);
+        $this->target = new $this->model($this, intval($this->id));
       }
       if ($this->target->id !== 0) {
         try {
           $foo = $this->target->getInfo();
         } catch (DbException $e) {
           $blankModel = new $this->model($this);
-          redirect_to($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
+          $this->redirect($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
         }
         if ($this->action === "new") {
           $this->action = "edit";
@@ -404,11 +441,15 @@ class Application {
         $this->display_error(403);
       } else {
         try {
-          echo $this->target->render();
+          $renderOutput = $this->target->render();
+          echo $renderOutput;
+          exit;
         } catch (AppException $e) {
+          ob_end_clean();
           $this->logger->err($e->__toString());
           $this->display_exception($e);
         } catch (Exception $e) {
+          ob_end_clean();
           $this->logger->err($e->__toString());
           $this->display_error(500);
         }
@@ -466,8 +507,17 @@ class Application {
         $appVars[$key] = $value;
       }
     }
-    echo $this->view('header', $appVars).$text.$this->view('footer', $appVars);
-    exit;
+    return $this->view('header', $appVars).$text.$this->view('footer', $appVars);
+  }
+  public function totalPoints() {
+    // total number of points earnable by users.
+    if ($this->totalPoints == Null) {
+      $this->totalPoints = 0;
+      foreach ($this->achievements as $achievement) {
+        $this->totalPoints += $achievement->points;
+      }
+    }
+    return $this->totalPoints;
   }
 }
 

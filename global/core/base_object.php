@@ -145,44 +145,44 @@ abstract class BaseObject {
     }
   }
 
+  protected function fireParentEvents($eventName, $params=Null) {
+    $currentClass = new ReflectionClass($this);
+    while ($currentClass = $currentClass->getParentClass()) {
+      if ($params != Null) {
+        $this->app->fire($currentClass->getName().$eventName, $this, $params);
+      } else {
+        $this->app->fire($currentClass->getName().$eventName, $this);
+      }
+    }
+  }
+
   // event handlers for objects.
   // event names are of the form modelName.eventName
   // e.g. User.afterCreate
-  public function before_create() {
-    $this->app->fire($this->modelName().'.beforeCreate', $this);
-    if (get_parent_class($this) !== False) {
-      $this->app->fire(get_parent_class($this).'.beforeCreate', $this);
-    }
+  // events cascade up the object hierarchy
+  public function beforeCreate($createParams) {
+    $this->app->fire($this->modelName().'.beforeCreate', $this, $createParams);
+    $this->fireParentEvents('.beforeCreate', $createParams);
   }
-  public function after_create() {
-    $this->app->fire($this->modelName().'.afterCreate', $this);
-    if (get_parent_class($this) !== False) {
-      $this->app->fire(get_parent_class($this).'.afterCreate', $this);
-    }
+  public function afterCreate($createParams) {
+    $this->app->fire($this->modelName().'.afterCreate', $this, $createParams);
+    $this->fireParentEvents('.afterCreate', $createParams);
   }
-  public function before_update($updateParams=Null) {
+  public function beforeUpdate($updateParams) {
     $this->app->fire($this->modelName().'.beforeUpdate', $this, $updateParams);
-    if (get_parent_class($this) !== False) {
-      $this->app->fire(get_parent_class($this).'.beforeUpdate', $this);
-    }
+    $this->fireParentEvents('.beforeUpdate', $updateParams);
   }
-  public function after_update($updateParams=Null) {
+  public function afterUpdate($updateParams) {
     $this->app->fire($this->modelName().'.afterUpdate', $this, $updateParams);
-    if (get_parent_class($this) !== False) {
-      $this->app->fire(get_parent_class($this).'.afterUpdate', $this);
-    }
+    $this->fireParentEvents('.afterUpdate', $updateParams);
   }
-  public function before_delete() {
+  public function beforeDelete() {
     $this->app->fire($this->modelName().'.beforeDelete', $this);
-    if (get_parent_class($this) !== False) {
-      $this->app->fire(get_parent_class($this).'.beforeDelete', $this);
-    }
+    $this->fireParentEvents('.beforeDelete');
   }
-  public function after_delete() {
+  public function afterDelete() {
     $this->app->fire($this->modelName().'.afterDelete', $this);
-    if (get_parent_class($this) !== False) {
-      $this->app->fire(get_parent_class($this).'.afterDelete', $this);
-    }
+    $this->fireParentEvents('.afterDelete');
   }
 
   public function create_or_update(array $object, array $whereConditions=Null) {
@@ -212,18 +212,18 @@ abstract class BaseObject {
       $whereParams[] = "`id` = ".intval($this->id);
 
       //update this object.
-      $this->before_update($object);
+      $this->beforeUpdate($object);
       $updateQuery = "UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1";
       $updateObject = $this->dbConn->stdQuery($updateQuery);
       if (!$updateObject) {
         throw new DbException("Could not update ".$this->modelTable.": ".$updateQuery);
       }
-      $this->after_update($object);
+      $this->afterUpdate($object);
     } else {
       // add this object.
       $params[] = '`created_at` = NOW()';
 
-      $this->before_create();
+      $this->beforeCreate();
       $insertQuery = "INSERT INTO `".$this->modelTable."` SET ".implode(",", $params);
       $insertUser = $this->dbConn->stdQuery($insertQuery);
       if (!$insertUser) {
@@ -231,7 +231,7 @@ abstract class BaseObject {
       } else {
         $this->id = intval($this->dbConn->insert_id);
       }
-      $this->after_create();
+      $this->afterCreate();
     }
     return $this->id;
   }
@@ -256,7 +256,7 @@ abstract class BaseObject {
         $entryIDs[] = intval($entry);
       }
     }
-    $this->before_delete();
+    $this->beforeDelete();
     if ($entryIDs) {
       $deleteQuery = "DELETE FROM `".$this->modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs);
       $dropEntries = $this->dbConn->stdQuery($deleteQuery);
@@ -264,7 +264,7 @@ abstract class BaseObject {
         throw new DbException("Could not delete from ".$this->modelTable.": ".$deleteQuery);
       }
     }
-    $this->after_delete();
+    $this->afterDelete();
     return True;
   }
   public function view($view="index", array $params=Null) {
@@ -278,8 +278,7 @@ abstract class BaseObject {
     throw new AppException($this->app, "Requested view not found: ".$file);
   }
   public function render() {
-    echo $this->app->render($this->view($this->app->action));
-    exit;
+    return $this->app->render($this->view($this->app->action));
   }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.

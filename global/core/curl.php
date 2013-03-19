@@ -139,7 +139,7 @@ function parseMALList($username, $type="anime") {
   $serverTimezone = new DateTimeZone(Config::SERVER_TIMEZONE);
   $nowTime = new DateTime("now", $serverTimezone);
 
-	$xmlPage = hitPage("http://myanimelist.net/malappinfo.php?u=".urlencode($username)."&status=all&type=".urlencode($type));
+	$xmlPage = hitPage("http://myanimelist.net/malappinfo.php?u=".rawurlencode($username)."&status=all&type=".rawurlencode($type));
 	if (!$xmlPage) {
 		return False;
 	}

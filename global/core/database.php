@@ -70,8 +70,8 @@ class DbConn extends mysqli {
   public function queryFirstRow($query) {
     // pulls the first row returned from the query.
     $result = $this->stdQuery($query);
-    if ($result->num_rows < 1) {
-      return False;
+    if (!$result || $result->num_rows < 1) {
+      throw new DbException("No rows were found matching query: ".$query);
     }
     $returnValue = $result->fetch_assoc();
     $result->free();
@@ -81,7 +81,7 @@ class DbConn extends mysqli {
     // pulls the first key from the first row returned by the query.
     $result = $this->queryFirstRow($query);
     if (!$result || count($result) != 1) {
-      return False;
+      throw new DbException("No rows were found matching query: ".$query);
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
@@ -90,7 +90,7 @@ class DbConn extends mysqli {
     // pulls an associative array of columns for the first row returned by the query.
     $result = $this->stdQuery($query);
     if (!$result) {
-      return False;
+      throw new DbException("No rows were found matching query: ".$query);
     }
     if ($result->num_rows < 1) {
       return array();
@@ -116,7 +116,7 @@ class DbConn extends mysqli {
   public function queryCount($query, $column="*") {
     $result = $this->queryFirstRow($query);
     if (!$result) {
-      return False;
+      throw new DbException("No rows were found matching query: ".$query);
     }
     return intval($result['COUNT('.$column.')']);
   }

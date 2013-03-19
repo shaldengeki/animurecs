@@ -10,7 +10,7 @@
   }
 ?>
 <h1>Browse Anime</h1>
-<?php echo $newAnime->view('searchForm'); ?>
+<?php echo $newAnime->view('searchForm', array('form' => array('class' => 'form-inline pull-right'))); ?>
 <?php echo $params['numPages'] > 1 ? paginate($newAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
 <table class='table table-striped table-bordered dataTable' data-recordsPerPage='<?php echo $params['resultsPerPage']; ?>'>
   <thead>

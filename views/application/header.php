@@ -31,8 +31,6 @@
     <script src='<?php echo Config::ROOT_URL; ?>/js/d3-helpers.js' type='text/javascript'></script>
 
     <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js' type='text/javascript'></script>
-    <script src='<?php echo Config::ROOT_URL; ?>/js/bootstrap-dropdown.min.js' type='text/javascript'></script>
-
     <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js' type='text/javascript'></script>
     <script type="text/javascript">
       var _gaq = _gaq || [];

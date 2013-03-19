@@ -164,7 +164,7 @@ class AnimeEntry extends BaseEntry {
       default:
         break;
     }
-    redirect_to($location, array('status' => $status, 'class' => $class));
+    $this->app->redirect($location, array('status' => $status, 'class' => $class));
   }
 }
 

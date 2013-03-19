@@ -154,10 +154,12 @@ class BaseGroup implements Iterator, ArrayAccess {
         if ($cacheValues) {
           $objectsFound = [];
           foreach ($cacheValues as $cacheKey=>$cacheValue) {
-            // lop off the Object- from the cache key to get the ID, so we can set the appropriate object's values.
-            $objectID = intval(explode("-", $cacheKey)[1]);
-            $objectList[$idToListIndex[$objectID]]->set($cacheValue);
-            $objectsFound[] = $objectID;
+            if ($cacheValue) {
+              // lop off the Object- from the cache key to get the ID, so we can set the appropriate object's values.
+              $objectID = intval(explode("-", $cacheKey)[1]);
+              $objectList[$idToListIndex[$objectID]]->set($cacheValue);
+              $objectsFound[] = $objectID;
+            }
           }
           $inclusion = array_diff($inclusion, $objectsFound);
         }
@@ -184,7 +186,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     }
     return $this->_objects;
   }
-  public function size() {
+  public function length() {
     return count($this->_objects);
   }
   protected function _getTagCounts() {

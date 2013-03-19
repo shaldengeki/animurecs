@@ -38,29 +38,31 @@ if ($this->avatarPath() != '') {
         </div>
         <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
-            <h1>
-              <?php echo escape_output($this->username()); ?>
-              <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
-              <?php echo $this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : ""; ?>
-              <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
+            <div class='page-header'>
+              <h1>
+                <?php echo escape_output($this->username()); ?>
+                <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
+                <?php echo $this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : ""; ?>
+                <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
               <?php 
                 if ($this->allow($this->app->user, 'request_friend') && $this->id != $this->app->user->id) {
                   if (array_filter_by_key_property($this->friends(), 'user', 'id', $this->app->user->id)) {
 ?>
-              <span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friends</button></span>
+                <span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friends</button></span>
 <?php
                   } elseif (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $this->app->user->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $this->app->user->id)) {
 ?>
-              <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Requested</button></span>
+                <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Requested</button></span>
 <?php                    
                   } else {
 ?>
-              <span class='pull-right'><a href='<?php echo $this->url("request_friend"); ?>' class='btn btn-primary btn-large'>Friend Request</a></span>
+                <span class='pull-right'><a href='<?php echo $this->url("request_friend"); ?>' class='btn btn-primary btn-large'>Friend Request</a></span>
 <?php
                   }
                 }
 ?>
-            </h1>
+              </h1>
+            </div>
             <p class='lead'>
               <?php echo escape_output($this->about()); ?>
             </p>

@@ -132,14 +132,14 @@ class Anime extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $this->before_update();
-    $tag->before_update();
+    $this->beforeUpdate(array());
+    $tag->beforeUpdate(array());
     $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertDependency) {
       return False;
     }
-    $this->after_update();
-    $tag->after_update();
+    $this->afterUpdate(array());
+    $tag->afterUpdate(array());
     $this->tags[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
     return True;
   }
@@ -368,9 +368,17 @@ class Anime extends BaseObject {
   }
   public function similar($n=20) {
     // Returns an AnimeGroup consisting of the n most-similar anime to the current anime.
+    // pull from cache if possible.
+    $cas = "";
+    $cacheKey = "Anime-".$this->id."-similar";
+    $result = $this->app->cache->get($cacheKey, $cas);
+    if ($this->app->cache->resultCode() == Memcached::RES_NOTFOUND) {
+      $result = $this->app->recsEngine->similarAnime($this, $n);
+      $this->app->cache->set($cacheKey, $result);
+    }
     return new AnimeGroup($this->app, array_map(function($a) {
       return $a['id'];
-    }, $this->app->recsEngine->similarAnime($this, $n)));
+    }, $result));
   }
   public function render() {
     if (isset($_POST['anime']) && is_array($_POST['anime'])) {
@@ -378,9 +386,9 @@ class Anime extends BaseObject {
       if ($updateAnime) {
         // fetch the new ID.
         $newAnime = new Anime($this->app, $updateAnime);
-        redirect_to($newAnime->url("show"), array('status' => "Successfully created or updated ".$newAnime->title().".", 'class' => 'success'));
+        $this->app->redirect($newAnime->url("show"), array('status' => "Successfully created or updated ".$newAnime->title().".", 'class' => 'success'));
       } else {
-        redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error'));
+        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error'));
       }
     }
     switch($this->app->action) {
@@ -425,9 +433,9 @@ class Anime extends BaseObject {
         $animeTitle = $this->title();
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
-          redirect_to("/anime/", array('status' => 'Successfully deleted '.$animeTitle.'.', 'class' => 'success'));
+          $this->app->redirect("/anime/", array('status' => 'Successfully deleted '.$animeTitle.'.', 'class' => 'success'));
         } else {
-          redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
         }
         break;
       default:
@@ -455,7 +463,7 @@ class Anime extends BaseObject {
         $output = $this->view("index", array('anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage));
         break;
     }
-    $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('title' => $title));
   }
   public function scoreBar($score=Null) {
     // returns markup for a score bar for a score given to this anime.
@@ -506,7 +514,7 @@ class Anime extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

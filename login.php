@@ -8,8 +8,8 @@ if (isset($_POST['username'])) {
 
 	$loginResult = $app->user->logIn($username, $password);
 	if (isset($_REQUEST['redirect_to'])) {
-		$loginResult[0] = urldecode($_REQUEST['redirect_to']);
+		$loginResult[0] = rawurldecode($_REQUEST['redirect_to']);
 	}
-	redirect_to($loginResult[0], $loginResult[1]);
+	$app->redirect($loginResult[0], $loginResult[1]);
 }
 ?>

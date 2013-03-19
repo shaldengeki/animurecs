@@ -8,6 +8,7 @@ class User extends BaseObject {
   protected $about;
   protected $usermask;
   protected $achievementMask;
+  protected $points;
   protected $lastActive;
   protected $lastIP;
   protected $avatarPath;
@@ -30,7 +31,7 @@ class User extends BaseObject {
     if ($id === 0) {
       $this->username = "guest";
       $this->name = "Guest";
-      $this->usermask = 0;
+      $this->usermask = $this->points = 0;
       $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
       $this->animeList = new AnimeList($this->app, 0);
@@ -38,7 +39,7 @@ class User extends BaseObject {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
+      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
     }
   }
   public function username() {
@@ -77,6 +78,9 @@ class User extends BaseObject {
   }
   public function achievementMask() {
     return $this->returnInfo('achievementMask');
+  }
+  public function points() {
+    return $this->returnInfo('points');
   }
   public function lastActive() {
     return new DateTime($this->returnInfo('lastActive'), $this->app->serverTimeZone);
@@ -437,7 +441,7 @@ class User extends BaseObject {
     // delete this user from the database.
     // returns a boolean.
 
-    $this->before_update();
+    $this->beforeUpdate(array());
     // delete objects that belong to this user.
     foreach ($this->comments() as $comment) {
       if (!$comment->delete()) {
@@ -448,7 +452,7 @@ class User extends BaseObject {
     if (!$deleteList) {
       return False;
     }
-    $this->after_update();
+    $this->afterUpdate(array());
 
     // now delete this user.
     return parent::delete();
@@ -464,6 +468,12 @@ class User extends BaseObject {
       return False;
     }
     return True;
+  }
+  public function addPoints($points) {
+    if (!is_integer($points)) {
+      return False;
+    }
+    return $this->create_or_update(array('points' => $this->points() + intval($points)));
   }
   public function log_failed_login($username, $password) {
     $insert_log = $this->dbConn->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->quoteSmart($username).", ".$this->dbConn->quoteSmart($password).")");
@@ -524,6 +534,9 @@ class User extends BaseObject {
     // imports a user's MAL lists.
     // takes a MAL username and returns a boolean.
     $malList = parseMALList($malUsername);
+    if (!$malList) {
+      throw new AppException($this->app, "Could not parse MAL list");
+    }
     $listIDs = [];
     foreach($malList as $entry) {
       $entry['user_id'] = $this->id;
@@ -534,6 +547,10 @@ class User extends BaseObject {
         $listIDs[$entry['anime_id']] = False;
       }
     }
+
+    // fire an event for this.
+    $this->app->fire('User.importMAL', $this, $listIDs);
+
     if (in_array(False, $listIDs, True)) {
       return False;
     }
@@ -559,12 +576,12 @@ class User extends BaseObject {
       return True;
     }
     // otherwise, go ahead and create a request.
-    $this->before_update();
-    $requestedUser->before_update();
+    $this->beforeUpdate(array());
+    $requestedUser->beforeUpdate(array());
     $createRequest = $this->dbConn->stdQuery("INSERT INTO `users_friends` SET ".implode(", ",$params));
     if ($createRequest) {
-      $this->after_update();
-      $requestedUser->after_update();
+      $this->afterUpdate(array());
+      $requestedUser->afterUpdate(array());
       return True;
     } else {
       return False;
@@ -574,12 +591,12 @@ class User extends BaseObject {
     // updates a friend request status from requestedUser directed at current user.
     // returns a boolean.
 
-    $this->before_update();
-    $requestedUser->before_update();
+    $this->beforeUpdate();
+    $requestedUser->beforeUpdate();
     $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
     if ($updateRequest) {
-      $this->after_update();
-      $requestedUser->after_update();
+      $this->afterUpdate();
+      $requestedUser->afterUpdate();
       return True;
     } else {
       return False;
@@ -641,13 +658,13 @@ class User extends BaseObject {
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
-      return array("location" => $newUser->url('globalFeed'), "status" => "You've switched to ".urlencode($newUser->username()).".", 'class' => 'success');
+      return array("location" => $newUser->url('globalFeed'), "status" => "You've switched to ".rawurlencode($newUser->username()).".", 'class' => 'success');
     } else {
       $newUser = new User($this->app, $username);
       $_SESSION['id'] = $newUser->id;
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
-      return array("location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".urlencode($newUser->username()).".", 'class' => 'success');
+      return array("location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".rawurlencode($newUser->username()).".", 'class' => 'success');
     }
   }
   public function render() {
@@ -655,42 +672,42 @@ class User extends BaseObject {
       /* Topbar views */
       case 'request_friend':
         if ($this->id === $this->app->user->id) {
-          redirect_to($this->app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
+          $this->app->redirect($this->app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
         }
         if (!isset($_POST['friend_request'])) {
           $_POST['friend_request'] = array();
         }
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
-          redirect_to($this->url("show"), array('status' => "Your friend request has been sent to ".urlencode($this->username()).".", 'class' => 'success'));
+          $this->app->redirect($this->url("show"), array('status' => "Your friend request has been sent to ".rawurlencode($this->username()).".", 'class' => 'success'));
         } else {
-          redirect_to($this->url("show"), array('status' => 'An error occurred while requesting this friend. Please try again.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while requesting this friend. Please try again.', 'class' => 'error'));
         }
         break;
       case 'confirm_friend':
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
-          redirect_to($this->url("show"), array('status' => "Hooray! You're now friends with ".urlencode($this->username()).".", 'class' => 'success'));
+          $this->app->redirect($this->url("show"), array('status' => "Hooray! You're now friends with ".rawurlencode($this->username()).".", 'class' => 'success'));
         } else {
-          redirect_to($this->url("show"), array('status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while confirming this friend. Please try again.', 'class' => 'error'));
         }
         break;
       case 'ignore_friend':
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
-          redirect_to($this->url("show"), array('status' => "You ignored a friend request from ".urlencode($this->username()).".", 'class' => 'success'));
+          $this->app->redirect($this->url("show"), array('status' => "You ignored a friend request from ".rawurlencode($this->username()).".", 'class' => 'success'));
         } else {
-          redirect_to($this->url("show"), array('status' => 'An error occurred while ignoring this friend. Please try again.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while ignoring this friend. Please try again.', 'class' => 'error'));
         }
         break;
       case 'switch_back':
         $switchUser = $this->app->user->switchUser($_SESSION['switched_user'], False);
-        redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
+        $this->app->redirect($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
         break;
       case 'switch_user':
         if (isset($_POST['switch_username'])) {
           $switchUser = $this->app->user->switchUser($_POST['switch_username']);
-          redirect_to($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
+          $this->app->redirect($switchUser['location'], array('status' => $switchUser['status'], 'class' => $switchUser['class']));
         }
         $title = "Switch Users";
         $output = "<h1>Switch Users</h1>\n".$this->app->user->view("switchForm");
@@ -705,19 +722,19 @@ class User extends BaseObject {
         if (isset($_POST['user']) && is_array($_POST['user'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
           if (isset($_POST['user']['usermask']) && intval($_POST['user']['usermask']) > 1 && intval($_POST['user']['usermask']) >= $this->usermask()) {
-            redirect_to($this->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
+            $this->app->redirect($this->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
           }
           $updateErrors = False;
           try {
             $updateUser = $this->create_or_update($_POST['user']);
           } catch (ValidationException $e) {
             // validation exceptions don't need to be logged.
-            redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => $e->formatMessages(), 'class' => 'error'));
+            $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => $e->formatMessages(), 'class' => 'error'));
           }
           if ($updateUser) {
-            redirect_to($this->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
+            $this->app->redirect($this->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
           } else {
-            redirect_to(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this user.", 'class' => 'error'));
+            $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this user.", 'class' => 'error'));
           }
         }
         if ($this->id === 0) {
@@ -730,13 +747,13 @@ class User extends BaseObject {
       case 'mal_import':
         // import a MAL list for this user.
         if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {
-          redirect_to($this->url("edit"), array('status' => 'Please enter a MAL username.'));
+          $this->app->redirect($this->url("edit"), array('status' => 'Please enter a MAL username.'));
         }
         $importMAL = $this->importMAL($_POST['user']['mal_username']);
         if ($importMAL) {
-          redirect_to($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
+          $this->app->redirect($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
         } else {
-          redirect_to($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please check your list for errors and, if necessary, try again.', 'class' => 'error'));
+          $this->app->redirect($this->url("edit"), array('status' => 'An error occurred while importing your MAL. Please check your list for errors and, if necessary, try again.', 'class' => 'error'));
         }
         break;
 
@@ -786,9 +803,9 @@ class User extends BaseObject {
         $username = $this->username();
         $deleteUser = $this->delete();
         if ($deleteUser) {
-          redirect_to('/users/', array('status' => 'Successfully deleted '.$username.'.', 'class' => 'success'));
+          $this->app->redirect('/users/', array('status' => 'Successfully deleted '.$username.'.', 'class' => 'success'));
         } else {
-          redirect_to($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while deleting '.$username.'.', 'class' => 'error'));
         }
         break;
 
@@ -828,7 +845,7 @@ class User extends BaseObject {
         $output = $this->app->user->view('index');
         break;
     }
-    $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('title' => $title));
   }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
@@ -885,7 +902,7 @@ class User extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? urlencode(urlencode($username))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($username))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

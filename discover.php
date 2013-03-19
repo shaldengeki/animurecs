@@ -2,7 +2,7 @@
 require_once("global/includes.php");
 
 if (!$app->user->loggedIn()) {
-	redirect_to('/index.php', array('status' => 'You must be logged in to view recommendations.', 'redirect_to' => '/discover/'));
+	$app->redirect('/index.php', array('status' => 'You must be logged in to view recommendations.', 'redirect_to' => '/discover/'));
 }
 
 $blankAnime = new Anime($app, 0);

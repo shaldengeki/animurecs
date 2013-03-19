@@ -167,7 +167,7 @@ class Comment extends BaseObject {
         $this->getInfo();
       } catch (DbException $e) {
         $this->app->logger->err($e->__toString());
-        redirect_to('/feed.php', array('status' => 'This comment does not exist.', 'class' => 'error'));
+        $this->app->redirect('/feed.php', array('status' => 'This comment does not exist.', 'class' => 'error'));
       }
       $targetParent = $this->parent();
       $targetUser = $this->user();
@@ -180,7 +180,7 @@ class Comment extends BaseObject {
         }
       } catch (DbException $e) {
         $this->app->logger->err($e->__toString());
-        redirect_to($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+        $this->app->redirect($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
       }
 
       if (intval($_REQUEST['user_id']) === $this->app->user->id || intval($_POST['user_id']) === $this->app->user->id) {
@@ -191,7 +191,7 @@ class Comment extends BaseObject {
           $targetUser->getInfo();
         } catch (DbException $e) {
           $this->app->logger->err($e->__toString());
-          redirect_to($this->app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+          $this->app->redirect($this->app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
         }
       }
     }
@@ -208,18 +208,18 @@ class Comment extends BaseObject {
         if (isset($_POST['comment']) && is_array($_POST['comment']) && isset($_POST['comment']['type']) && isset($_POST['comment']['parent_id']) && is_numeric($_POST['comment']['parent_id'])) {
           // ensure that the thing to which this comment is going to belong exists.
           if ($targetParent === Null) {
-            redirect_to($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
+            $this->app->redirect($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
           }
 
           // ensure that the user has perms to create a comment for this user under this object.
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'new')) {
-            redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
+            $this->app->redirect($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
           }
           $createComment = $targetComment->create_or_update($_POST['comment']);
           if ($createComment) {
-            redirect_to($targetParent->url(), array('status' => "Succesfully commented.", 'class' => 'success'));
+            $this->app->redirect($targetParent->url(), array('status' => "Succesfully commented.", 'class' => 'success'));
           } else {
-            redirect_to($targetParent->url(), array('status' => "An error occurred while commenting on this.", 'class' => 'error'));
+            $this->app->redirect($targetParent->url(), array('status' => "An error occurred while commenting on this.", 'class' => 'error'));
           }
         }
         $title = "Add a comment";
@@ -236,10 +236,10 @@ class Comment extends BaseObject {
           try {
             $targetParent = new $commentType($this->app, intval($commentParentID));
           } catch (Exception $e) {
-            redirect_to('/feed.php', array('status' => "The thing you're trying to comment on doesn't exist anymore.", 'class' => 'error'));
+            $this->app->redirect('/feed.php', array('status' => "The thing you're trying to comment on doesn't exist anymore.", 'class' => 'error'));
           }
           if ($targetParent->id === 0) {
-            redirect_to($this->app->user->url(), array('status' => "Please provide something to comment on.", 'class' => 'error'));
+            $this->app->redirect($this->app->user->url(), array('status' => "Please provide something to comment on.", 'class' => 'error'));
           }
 
           // ensure that the user has perms to update a comment.
@@ -247,16 +247,16 @@ class Comment extends BaseObject {
             $targetComment = new Comment($this->app, $this->app->id);
           } catch (Exception $e) {
             // this non-zero commentID does not exist.
-            redirect_to($targetParent->url(), array('status' => 'This comment does not exist.', 'class' => 'error'));
+            $this->app->redirect($targetParent->url(), array('status' => 'This comment does not exist.', 'class' => 'error'));
           }
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'edit')) {
-            redirect_to($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
+            $this->app->redirect($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
           }
           $updateComment = $targetComment->create_or_update($_POST['comment']);
           if ($updateComment) {
-            redirect_to($targetParent->url(), array('status' => "Comment successfully updated.", 'class' => 'success'));
+            $this->app->redirect($targetParent->url(), array('status' => "Comment successfully updated.", 'class' => 'success'));
           } else {
-            redirect_to($targetParent->url(), array('status' => "An error occurred while creating or updating this comment.", 'class' => 'error'));
+            $this->app->redirect($targetParent->url(), array('status' => "An error occurred while creating or updating this comment.", 'class' => 'error'));
           }
         }
         $title = "Editing comment";
@@ -275,9 +275,9 @@ class Comment extends BaseObject {
         }
         $deleteComment = $targetComment->delete();
         if ($deleteComment) {
-          redirect_to($targetParent->url(), array('status' => 'Successfully deleted a comment.', 'class' => 'success'));
+          $this->app->redirect($targetParent->url(), array('status' => 'Successfully deleted a comment.', 'class' => 'success'));
         } else {
-          redirect_to($targetParent->url(), array('status' => 'An error occurred while deleting a comment.', 'class' => 'error'));
+          $this->app->redirect($targetParent->url(), array('status' => 'An error occurred while deleting a comment.', 'class' => 'error'));
         }
         break;
       default:
@@ -286,7 +286,7 @@ class Comment extends BaseObject {
         $output = $this->view('index');
         break;
     }
-    $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('title' => $title));
   }
 }
 ?>

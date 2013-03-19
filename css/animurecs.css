@@ -1044,7 +1044,7 @@ ul.item-grid li em{font-size:12px;}
 .rightColumn.span9{margin-left:0;}.rightColumn.span9 .profileUserInfo{padding-left:2.564102564102564%;min-height:230px;}.rightColumn.span9 .profileUserInfo h1{margin-top:0;}
 .rightColumn.span9 .profileTabs .nav-tabs{margin-bottom:0;}
 .rightColumn.span9 .profileTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding-top:20px;}
-ul.achievements li{width:12%;height:100px;margin-bottom:7px;}ul.achievements li a img{height:75px;max-width:50px;}
+ul.achievements li{width:20%;height:150px;margin-bottom:7px;}ul.achievements li img{height:75px;max-width:75px;}
 ul.achievements li em{font-size:10px;}
 #userFeed .addListEntryForm{text-align:center;}
 ul.media-list .media{border-bottom:1px solid #dddddd;padding:0 10px;}ul.media-list .media .feedDate{margin-right:10px;font-size:8pt;color:gray;}
