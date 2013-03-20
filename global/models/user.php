@@ -363,6 +363,9 @@ class User extends BaseObject {
     if (isset($user['last_ip']) && !preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $user['last_ip'])) {
       $validationErrors[] = "Malformed IP address";
     }
+    if (isset($user['points']) && !is_numeric($user['points'])) {
+      $validationErrors[] = "Your points must be numeric";
+    }
     if ($validationErrors) {
       throw new ValidationException($user, $this->app, $validationErrors);
     } else {
@@ -465,7 +468,7 @@ class User extends BaseObject {
     }
     $updateLastActive = $this->create_or_update($params);
     if (!$updateLastActive) {
-      return False;
+      throw new DbException("Could not update UserID ".$this->id."'s last-active: ".print_r($params['last_active'], True));
     }
     return True;
   }
@@ -591,12 +594,13 @@ class User extends BaseObject {
     // updates a friend request status from requestedUser directed at current user.
     // returns a boolean.
 
-    $this->beforeUpdate();
-    $requestedUser->beforeUpdate();
+    $updateArray = array('status' => intval($status));
+    $this->beforeUpdate($updateArray);
+    $requestedUser->beforeUpdate($updateArray);
     $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
     if ($updateRequest) {
-      $this->afterUpdate();
-      $requestedUser->afterUpdate();
+      $this->afterUpdate($updateArray);
+      $requestedUser->afterUpdate($updateArray);
       return True;
     } else {
       return False;
@@ -616,7 +620,10 @@ class User extends BaseObject {
       return True;
     }
     // otherwise, go ahead and confirm this request.
-    return $this->updateFriend($requestedUser, 1);
+    if ($this->updateFriend($requestedUser, 1)) {
+      $this->app->fire('User.confirmFriend', $this, array('id' => $requestedUser->id));
+      $this->app->fire('User.confirmFriend', $requestedUser, array('id' => $this->id));
+    }
   }
   public function ignoreFriend(User $requestedUser) {
     // ignores a friend request from requestedUser directed at the current user.
@@ -635,10 +642,10 @@ class User extends BaseObject {
     return $this->updateFriend($requestedUser, -1);
   }
   public function addAchievement(BaseAchievement $achievement) {
-    return $this->create_or_update(array('achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)));
+    return $this->create_or_update(array('points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)));
   }
   public function removeAchievement(BaseAchievement $achievement) {
-    return $this->create_or_update(array('achievement_mask' => $this->achievementMask() - pow(2, $achievement->id - 1)));
+    return $this->create_or_update(array('points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() - pow(2, $achievement->id - 1)));
   }
   public function switchUser($username, $switch_back=True) {
     /*

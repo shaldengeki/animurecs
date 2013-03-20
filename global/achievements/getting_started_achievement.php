@@ -1,5 +1,4 @@
 <?php
-
 class GettingStartedAchievement extends BaseAchievement {
   public $id=2;
   protected $name="Getting Started";

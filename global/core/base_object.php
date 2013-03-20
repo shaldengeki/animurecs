@@ -218,12 +218,14 @@ abstract class BaseObject {
       if (!$updateObject) {
         throw new DbException("Could not update ".$this->modelTable.": ".$updateQuery);
       }
-      $this->afterUpdate($object);
+      $modelName = $this->modelName();
+      $newObject = new $modelName($this->app, $this->id);
+      $newObject->afterUpdate($object);
     } else {
       // add this object.
       $params[] = '`created_at` = NOW()';
 
-      $this->beforeCreate();
+      $this->beforeCreate(array($object));
       $insertQuery = "INSERT INTO `".$this->modelTable."` SET ".implode(",", $params);
       $insertUser = $this->dbConn->stdQuery($insertQuery);
       if (!$insertUser) {
@@ -231,7 +233,9 @@ abstract class BaseObject {
       } else {
         $this->id = intval($this->dbConn->insert_id);
       }
-      $this->afterCreate();
+      $modelName = $this->modelName();
+      $newObject = new $modelName($this->app, $this->id);
+      $newObject->afterCreate($object);
     }
     return $this->id;
   }

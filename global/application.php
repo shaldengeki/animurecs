@@ -203,13 +203,6 @@ class Application {
   private function _bindEvents() {
     // binds all event observers.
 
-    // bind each achievement to its events.
-    foreach ($this->achievements as $achievement) {
-      foreach ($achievement->events() as $event) {
-        $this->bind($event, $achievement);
-      }
-    }
-
     // clear cache for a database object every time it's updated or deleted.
     $this->bind(array('BaseObject.afterUpdate', 'BaseObject.afterDelete'), new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete($parent->modelName()."-".intval($parent->id));
@@ -224,6 +217,12 @@ class Application {
       $parent->app->cache->delete("Anime-".$parent->animeId()."-similar");
     }));
 
+    // bind each achievement to its events.
+    foreach ($this->achievements as $achievement) {
+      foreach ($achievement->events() as $event) {
+        $this->bind($event, $achievement);
+      }
+    }
   }
   private function _checkCSRF() {
     // only generate CSRF token if the user is logged in.

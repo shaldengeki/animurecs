@@ -73,16 +73,16 @@ if ($this->avatarPath() != '') {
                 <p>Anime compatibility:</p>
                 <?php echo $this->animeList()->compatibilityBar($this->app->user->animeList()); ?>
               </li>
+<?php
+  }
+?>
               <li class='span4'>
-                
+                <?php echo $this->view('pointsBar'); ?>
               </li>
               <li class='span4'>
                 
               </li>
             </ul>
-<?php
-  }
-?>
           </div>
           <div class='profileTabs'>
             <ul class='nav nav-tabs'>
