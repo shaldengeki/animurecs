@@ -286,7 +286,7 @@ class Comment extends BaseObject {
         $output = $this->view('index');
         break;
     }
-    return $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('subtitle' => $title));
   }
 }
 ?>

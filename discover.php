@@ -24,5 +24,5 @@ $pageHTML = <<<EOD
   </div>
 </div>
 EOD;
-$app->render($pageHTML, array('title' => 'Your Recs'));
+$app->render($pageHTML, array('subtitle' => 'Your Recs'));
 ?>

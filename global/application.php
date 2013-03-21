@@ -10,6 +10,7 @@ class AppException extends Exception {
     }
     parent::__construct($this->formatMessages(), $code, $previous);
     $this->app = $app;
+    $this->app->statsd->increment('AppException');
   }
   public function getMessages() {
     return $this->messages;
@@ -54,10 +55,10 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_config, $_classes, $_observers=[];
+  private $_config, $_classes, $_observers=[], $_statsdConn;
   protected $totalPoints=Null;
   public $achievements,$delayedMessages=[];
-  public $logger, $cache, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
+  public $statsd, $logger, $cache, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
   public $model,$action,$status,$class="";
   public $id=0;
@@ -80,6 +81,13 @@ class Application {
     } else {
       throw new AppException($this, 'required library not found at '.$absPath);
     }
+  }
+  private function _connectStatsD() {
+    if ($this->statsd == Null) {
+      $this->_statsdConn = new \Domnikl\Statsd\Connection\Socket('localhost', 8125);
+      $this->statsd = new \Domnikl\Statsd\Client($this->_statsdConn, "shaldengeki.animurecs");
+    }
+    return $this->statsd;
   }
   private function _connectLogger() {
     if (Config::DEBUG_ON) {
@@ -112,8 +120,9 @@ class Application {
     // Creates a list of objects that can be accessed via URL.
 
     $this->_loadDependency("./global/config.php");
-
     require_once(Config::APP_ROOT.'/vendor/autoload.php');
+
+    $this->statsd = $this->_connectStatsD();
 
     require_once('Log.php');
     $this->logger = $this->_connectLogger();
@@ -154,12 +163,14 @@ class Application {
     try {
       $this->cache = $this->_connectCache();
     } catch (CacheException $e) {
+      $this->statsd->increment("CacheException");
       $this->logger->alert($e->__toString());
       $this->display_exception($e);
     }
     try {
       $this->dbConn = $this->_connectDB();
     } catch (DbException $e) {
+      $this->statsd->increment("DbException");
       $this->logger->alert($e->__toString());
       $this->display_exception($e);
     }
@@ -215,6 +226,55 @@ class Application {
     }));
     $this->bind(array('AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete("Anime-".$parent->animeId()."-similar");
+    }));
+
+
+    // statsd metrics.
+
+    $this->bind(array('Anime.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("anime.count");
+    }));
+    $this->bind(array('Anime.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->decrement("anime.count");
+    }));
+
+    $this->bind(array('Tag.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("tag.count");
+    }));
+    $this->bind(array('Tag.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->decrement("tag.count");
+    }));
+
+    $this->bind(array('AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeEntry.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("animelist.entries");
+    }));
+    $this->bind(array('AnimeEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->decrement("animelist.entries");
+    }));
+
+    // user stats metrics.
+    $this->bind(array('User.afterCreate', 'User.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->gauge("user.count", $parent->app->dbConn->queryCount("SELECT COUNT(*) FROM `users`"));
+    }));
+    $this->bind(array('User.requestFriend'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("user.friendrequests");
+    }));
+    $this->bind(array('User.confirmFriend'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("user.friendships");
+    }));
+    $this->bind(array('Comment.afterCreate', 'CommentEntry.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("user.comments");
+    }));
+    $this->bind(array('Comment.afterDelete', 'CommentEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->decrement("user.comments");
+    }));
+    $this->bind(array('User.addAchievement'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("user.achievements");
+      $parent->app->statsd->count("user.points.earned", $updateParams['points']);
+    }));
+    $this->bind(array('User.removeAchievement'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->decrement("user.achievements");
+      $parent->app->statsd->count("user.points.earned", -1 * $updateParams['points']);
     }));
 
     // bind each achievement to its events.
@@ -344,6 +404,20 @@ class Application {
     header($redirect);
     exit;
   }
+  public function jsRedirect($location, $redirect_array) {
+    $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
+    $class = (isset($redirect_array['class'])) ? $redirect_array['class'] : '';
+    
+    $redirect = Config::ROOT_URL."/".$location;
+    if ($status != "") {
+      if (strpos($location, "?") === FALSE) {
+        $redirect .= "?status=".rawurlencode($status)."&class=".rawurlencode($class);
+      } else {
+        $redirect .= "&status=".rawurlencode($status)."&class=".rawurlencode($class);
+      }
+    }
+    echo "window.location.replace(\"".$redirect."\");";
+  }
 
   public function init() {
     // start of application logic.
@@ -353,6 +427,8 @@ class Application {
     set_error_handler('ErrorHandler', E_ALL & ~E_NOTICE);
     $this->_loadDependencies();
     $this->_bindEvents();
+
+    $this->statsd->increment("hits");
 
     if (isset($_SESSION['id']) && is_numeric($_SESSION['id'])) {
       $this->user = new User($this, intval($_SESSION['id']));
@@ -415,16 +491,22 @@ class Application {
         $this->redirect($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
       }
 
-      // kludge to allow model names in URLs.
-      if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") && $this->id !== "") {
-        $this->target = new $this->model($this, Null, rawurldecode($this->id));
-      } else {
-        $this->target = new $this->model($this, intval($this->id));
+        try {
+        // kludge to allow model names in URLs.
+        if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") && $this->id !== "") {
+            $this->target = new $this->model($this, Null, rawurldecode($this->id));
+        } else {
+          $this->target = new $this->model($this, intval($this->id));
+        }
+      } catch (DbException $e) {
+        $this->statsd->increment("DbException");
+        $this->display_error(404);
       }
       if ($this->target->id !== 0) {
         try {
           $foo = $this->target->getInfo();
         } catch (DbException $e) {
+          $this->statsd->increment("DbException");
           $blankModel = new $this->model($this);
           $this->redirect($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
         }
@@ -442,6 +524,8 @@ class Application {
         try {
           $renderOutput = $this->target->render();
           echo $renderOutput;
+          $this->statsd->timing("pageload", microtime(True) - $this->startRender);
+          $this->statsd->memory('memory.peakusage');
           exit;
         } catch (AppException $e) {
           ob_end_clean();
@@ -449,6 +533,7 @@ class Application {
           $this->display_exception($e);
         } catch (Exception $e) {
           ob_end_clean();
+          $this->statsd->increment("Exception");
           $this->logger->err($e->__toString());
           $this->display_error(500);
         }

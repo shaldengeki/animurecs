@@ -9,7 +9,7 @@ if ($app->user->allow($app->user, 'new') && isset($_POST['username']) && isset($
   unset($registerUser['location']);
   $app->redirect($location, $registerUser);
 } else {
-  $app->render('<div class="row-fluid">
+  echo $app->render('<div class="row-fluid">
   <div class="span4">&nbsp;</div>
   <div class="span4">'.$app->user->view('register').'</div>
   <div class="span4">&nbsp;</div></div>');

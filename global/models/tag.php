@@ -331,7 +331,7 @@ class Tag extends BaseObject {
         $output = $this->view('index');
         break;
     }
-    return $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('subtitle' => $title));
   }
   public function url($action="show", $format=Null, array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.

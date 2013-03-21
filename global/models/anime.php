@@ -463,7 +463,7 @@ class Anime extends BaseObject {
         $output = $this->view("index", array('anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage));
         break;
     }
-    return $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('subtitle' => $title));
   }
   public function scoreBar($score=Null) {
     // returns markup for a score bar for a score given to this anime.

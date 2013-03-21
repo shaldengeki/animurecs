@@ -9,7 +9,10 @@
 <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
   <head>
     <meta content='text/html; charset=UTF-8' http-equiv='content-type' />
-    <title><?php echo (isset($params['title']) ? escape_output($params['title']) : "Animurecs").(isset($params['subtitle']) && $params['subtitle'] != '' ? ' - '.escape_output($params['subtitle']) : ''); ?></title>
+    <meta name='description' content="Animurecs is an anime-centric social network that gives you personalized recommendations by learning your tastes. Discover new anime you'll love today!" />
+    <meta name='keywords' content='anime, recommendations, anime list, recommend, top anime' />
+
+    <title><?php echo (isset($params['title']) ? escape_output($params['title']) : "Animurecs").(isset($params['subtitle']) && $params['subtitle'] != '' ? ' - '.escape_output($params['subtitle']) : ' - Social Anime Recommendations'); ?></title>
     <link href='/favicon.ico' rel='shortcut icon' />
 
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' type='text/css' />

@@ -1,4 +1,10 @@
 <?php
+class CacheException extends Exception {
+  public function __construct($message = null, $code = 0, Exception $previous = null) {
+    parent::__construct($message, $code, $previous);
+  }
+}
+
 class Cache {
   // Provides interface for memcached.
   private $memcached;
@@ -12,7 +18,7 @@ class Cache {
   public function set($key, $value) {
     // sets a key-value pair in the memcached server using CAS.
     if ($this->memcached === Null) {
-      return False;
+      throw new CacheException("No Memcached instance has been attached.");
     }
     do {
       $cachedValue = $this->memcached->get($key, Null, $cas);

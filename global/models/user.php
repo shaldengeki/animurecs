@@ -204,6 +204,15 @@ class User extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      /* post-register conversions - must be logged in, account must be less than a minute old */
+      case 'register_conversion':
+        $now = new DateTime('now', $this->app->serverTimeZone);
+        $diff = $now->diff($this->createdAt());
+        if ($this->loggedIn() && $diff->i < 1) {
+          return True;
+        }
+        return False;
+        break;
       /* cases where we want only this user + staff capable */
       case 'globalFeedEntries':
       case 'globalFeed':
@@ -531,7 +540,7 @@ class User extends BaseObject {
     $updateUser = array('last_ip' => $_SERVER['REMOTE_ADDR']);
     $this->create_or_update($updateUser);
 
-    return array("location" => $this->url("show"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
+    return array("location" => $this->url("register_conversion"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
   }
   public function importMAL($malUsername) {
     // imports a user's MAL lists.
@@ -585,6 +594,7 @@ class User extends BaseObject {
     if ($createRequest) {
       $this->afterUpdate(array());
       $requestedUser->afterUpdate(array());
+      $this->app->fire('User.requestFriend', $this, array('id' => $requestedUser->id));
       return True;
     } else {
       return False;
@@ -642,9 +652,11 @@ class User extends BaseObject {
     return $this->updateFriend($requestedUser, -1);
   }
   public function addAchievement(BaseAchievement $achievement) {
+    $this->app->fire('User.addAchievement', $this, array('id' => $achievement->id, 'points' => $achievement->points));
     return $this->create_or_update(array('points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)));
   }
   public function removeAchievement(BaseAchievement $achievement) {
+    $this->app->fire('User.removeAchievement', $this, array('id' => $achievement->id, 'points' => $achievement->points));
     return $this->create_or_update(array('points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() - pow(2, $achievement->id - 1)));
   }
   public function switchUser($username, $switch_back=True) {
@@ -718,6 +730,10 @@ class User extends BaseObject {
         }
         $title = "Switch Users";
         $output = "<h1>Switch Users</h1>\n".$this->app->user->view("switchForm");
+        break;
+      case 'register_conversion':
+        $title = "Redirecting...";
+        $output = $this->app->user->view("postRegisterConversion");
         break;
       case 'new':
         $title = "Sign Up";
@@ -852,7 +868,7 @@ class User extends BaseObject {
         $output = $this->app->user->view('index');
         break;
     }
-    return $this->app->render($output, array('title' => $title));
+    return $this->app->render($output, array('subtitle' => $title));
   }
   public function friendRequestsList() {
     // returns markup for the list of friend requests directed at this user.
