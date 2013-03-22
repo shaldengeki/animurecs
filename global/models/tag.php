@@ -1,5 +1,8 @@
 <?php
 class Tag extends BaseObject {
+  public static $modelTable = "tags";
+  public static $modelPlural = "tags";
+
   protected $name;
   protected $description;
   protected $type;
@@ -17,8 +20,6 @@ class Tag extends BaseObject {
       $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `name` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $name))." LIMIT 1"));
     }
     parent::__construct($app, $id);
-    $this->modelTable = "tags";
-    $this->modelPlural = "tags";
     if ($id === 0) {
       $this->name = "New Tag";
       $this->description = "";
@@ -342,7 +343,7 @@ class Tag extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($name))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(self::modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($name))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

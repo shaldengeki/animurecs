@@ -5,11 +5,11 @@ class Alias extends BaseObject {
   protected $type;
   protected $parentId;
   protected $parent;
+  public static $modelTable = "aliases";
+  public static $modelPlural = "aliases";
 
   public function __construct(Application $app, $id=Null, BaseObject $parent=Null) {
     parent::__construct($app, $id);
-    $this->modelTable = "aliases";
-    $this->modelPlural = "aliases";
     if ($id === 0) {
       $this->name = "";
       $this->parent = $parent;
@@ -86,10 +86,11 @@ class Alias extends BaseObject {
       $terms[$key] = "+".$term;
     }
     $text = implode(" ", $terms);
-    $search = $this->dbConn->stdQuery("SELECT `type`, `parent_id` FROM `".$this->modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+    $search = $this->dbConn->stdQuery("SELECT `type`, `parent_id` FROM `".static::$modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
     $objects = [];
     if ($this->id === 0) {
-      $objType = $this->parent()->modelName();
+      $parentClass = get_class($this->parent());
+      $objType = $parentClass::modelName();
     } else {
       $objType = $this->type();
     }
@@ -145,7 +146,7 @@ class Alias extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 

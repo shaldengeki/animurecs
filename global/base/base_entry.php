@@ -111,7 +111,7 @@ abstract class BaseEntry extends BaseObject {
     $entryGroup = $this->entries();
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
       $this->beforeUpdate($entry);
-      $updateDependency = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
+      $updateDependency = $this->dbConn->stdQuery("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
       }
@@ -122,7 +122,7 @@ abstract class BaseEntry extends BaseObject {
         $params[] = "`time` = NOW()";
       }
       $this->beforeCreate($entry);
-      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
+      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".static::$modelTable."` SET ".implode(",", $params));
       if (!$insertDependency) {
         return False;
       }

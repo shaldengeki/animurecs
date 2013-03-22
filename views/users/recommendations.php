@@ -10,9 +10,9 @@
     $predictions[$rec['id']] = $rec['predicted_score'];
   }
 
-  $blankAnime = new Anime($this->app, 0);
+  $firstAnime = Anime::first($this->app);
 ?>
 <div class='page-header'>
   <h1>Recommended for you <small>Some series we think you'll like</small></h1>
 </div>
-<?php echo $blankAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $predictions)); ?>
+<?php echo $firstAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $predictions)); ?>

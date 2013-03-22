@@ -1,6 +1,10 @@
 <?php
 
 class CommentEntry extends BaseEntry {
+  public static $modelTable = "comments";
+  public static $modelPlural = "comments";
+  public static $modelUrl = "comment_entries";
+
   protected $comment, $commentId;
   protected $parent;
 
@@ -12,9 +16,6 @@ class CommentEntry extends BaseEntry {
     } else {
       $this->comment = $this->commentId = Null;
     }
-    $this->modelTable = "comments";
-    $this->modelUrl = "comment_entries";
-    $this->modelPlural = "comments";
     $this->entryType = "Comment";
     $this->typeVerb = "watching";
     $this->feedType = "Comment";
@@ -79,7 +80,7 @@ class CommentEntry extends BaseEntry {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 

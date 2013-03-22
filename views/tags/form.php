@@ -5,16 +5,16 @@
   foreach ($this->anime()->load('info') as $anime) {
     $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title());
   }
-  $anime = new Anime($this->app, 0);
+  $anime = Anime::first($this->app);
 ?>
     <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-inline')); ?>
       <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />"; ?>
-      <input name='tag[created_user_id]' type='hidden' value=<?php echo $this->id === 0 ? intval($this->app->user->id) : $this->createdUser()->id; ?> />
+      <?php echo $this->input('created_user_id', ['type' => 'hidden', 'value' => ($this->id ? $this->createdUser()->id : $this->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag[name]'>Name</label>
           <div class='controls'>
-            <input name='tag[name]' type='text' class='input-xlarge' id='tag[name]'<?php echo ($this->id === 0) ? "" : " value='".escape_output($this->name())."'"; ?> />
+            <?php echo $this->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
@@ -32,7 +32,7 @@
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <input name='tag[anime_tags]' type='text' class='token-input input-small' data-field='title' data-url='<?php echo $anime->url('token_search'); ?>' data-value='<?php echo $this->id === 0 ? "[]" : escape_output(json_encode($tagAnime)); ?>' id='tag[anime_tags]' />
+            <?php echo $this->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'title', 'data-url' => $anime->url('token_search'), 'data-value' => ($this->id ? escape_output(json_encode($tagAnime)) : "[]")]); ?>
           </div>
         </div>
         <div class='form-actions'>

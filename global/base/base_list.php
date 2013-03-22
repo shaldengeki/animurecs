@@ -16,8 +16,6 @@ abstract class BaseList extends BaseObject {
 
   public function __construct(Application $app, $user_id=Null) {
     parent::__construct($app, $user_id);
-    $this->modelTable = "";
-    $this->modelPlural = "";
     $this->partName = "";
     $this->listType = "";
     $this->typeVerb = "";
@@ -82,7 +80,7 @@ abstract class BaseList extends BaseObject {
     $entryGroup = $this->entries();
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
       $this->beforeUpdate($entry);
-      $updateDependency = $this->dbConn->stdQuery("UPDATE `".$this->modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
+      $updateDependency = $this->dbConn->stdQuery("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
       }
@@ -101,7 +99,7 @@ abstract class BaseList extends BaseObject {
         $params[] = "`time` = NOW()";
       }
       $this->beforeUpdate($entry);
-      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".$this->modelTable."` SET ".implode(",", $params));
+      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".static::$modelTable."` SET ".implode(",", $params));
       if (!$insertDependency) {
         return False;
       }
@@ -141,7 +139,7 @@ abstract class BaseList extends BaseObject {
     }
     if ($entryIDs) {
       $this->beforeDelete();
-      $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
+      $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$drop_entries) {
         return False;
       }
@@ -159,7 +157,7 @@ abstract class BaseList extends BaseObject {
     return $this->user;
   }
   public function getInfo() {
-    $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id));
+    $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id));
     if (!$userInfo) {
       return False;
     }
@@ -175,7 +173,7 @@ abstract class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = [];
-    $entries = $this->dbConn->stdQuery("SELECT * FROM `".$this->modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
+    $entries = $this->dbConn->stdQuery("SELECT * FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryType = $this->listType."Entry";
     while ($entry = $entries->fetch_assoc()) {
@@ -196,11 +194,11 @@ abstract class BaseList extends BaseObject {
   }
   public function getUniqueList() {
     // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
-    $returnList = $this->dbConn->queryAssoc("SELECT `".$this->modelTable."`.`id`, `".$this->typeID."`, `time`, `score`, `status`, `".$this->partName."` FROM (
-                                              SELECT MAX(`id`) AS `id` FROM `".$this->modelTable."`
+    $returnList = $this->dbConn->queryAssoc("SELECT `".static::$modelTable."`.`id`, `".$this->typeID."`, `time`, `score`, `status`, `".$this->partName."` FROM (
+                                              SELECT MAX(`id`) AS `id` FROM `".static::$modelTable."`
                                               WHERE `user_id` = ".intval($this->user_id)."
                                               GROUP BY `".$this->typeID."`
-                                            ) `p` INNER JOIN `".$this->modelTable."` ON `".$this->modelTable."`.`id` = `p`.`id`
+                                            ) `p` INNER JOIN `".static::$modelTable."` ON `".static::$modelTable."`.`id` = `p`.`id`
                                             WHERE `status` != 0
                                             ORDER BY `status` ASC, `score` DESC", $this->typeID);
 
@@ -279,7 +277,7 @@ abstract class BaseList extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text=Null, $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current anime list, with action and text provided.

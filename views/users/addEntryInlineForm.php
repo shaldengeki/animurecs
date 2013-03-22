@@ -1,7 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $anime = new Anime($this->app, 0);
+  $anime = Anime::first($this->app);
 ?>
                 <div class='addListEntryForm'>
                   <?php echo $this->app->form(array('action' => $this->animeList()->url("new"), 'class' => 'form-inline')); ?>

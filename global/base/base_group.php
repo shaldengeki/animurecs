@@ -73,10 +73,11 @@ class BaseGroup implements Iterator, ArrayAccess {
   protected function _setObjectGroups() {
     $this->_objectGroups = [];
     foreach ($this->_objects as $key=>$object) {
-      if (!isset($this->_objectGroups[$object->modelTable])) {
-        $this->_objectGroups[$object->modelTable] = array($key=>$object);
+      $objectClass = get_class($object);
+      if (!isset($this->_objectGroups[$objectClass::$modelTable])) {
+        $this->_objectGroups[$objectClass::$modelTable] = array($key=>$object);
       } else {
-        $this->_objectGroups[$object->modelTable][$key] = $object;
+        $this->_objectGroups[$objectClass::$modelTable][$key] = $object;
       }
     }
   }
@@ -84,7 +85,10 @@ class BaseGroup implements Iterator, ArrayAccess {
   // returns the string name of the database table for the first object in this group.
   public function groupTable() {
     if ($this->_groupTable === Null) {
-      $this->_groupTable = count($objects) > 0 ? current($objects)->modelTable : Null;
+      if ($this->_objects) {
+        $objectClass = get_class(current($this->_objects));
+        $this->_groupTable = $objectClass::$modelTable;
+      }
     }
     return $this->_groupTable;
   }
@@ -92,7 +96,10 @@ class BaseGroup implements Iterator, ArrayAccess {
   // returns the string name of the first object in this group.
   public function groupObject() {
     if ($this->_groupObject === Null) {
-      $this->_groupObject = count($objects) > 0 ? current($objects)->modelName(): Null;
+      if ($this->_objects) {
+        $objectClass = get_class(current($this->_objects));
+        $this->_groupObject = $objectClass::modelName();
+      }
     }
     return $this->_groupObject;
   }
@@ -143,7 +150,8 @@ class BaseGroup implements Iterator, ArrayAccess {
         $idToListIndex[$object->id] = $key;
       }
       if ($inclusion) {
-        $modelName = current($objectList)->modelName();
+        $objectName = get_class(current($objectList));
+        $modelName = $objectName::modelName();
         $cacheKeys = array_map(function($id) use ($modelName) {
           return $modelName."-".$id;
         }, $inclusion);

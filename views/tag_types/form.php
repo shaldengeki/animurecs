@@ -4,12 +4,12 @@
 ?>
     <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-inline')); ?>
       <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />"; ?>
-      <input name='tag_type[created_user_id]' type='hidden' value='<?php echo $this->id === 0 ? intval($this->app->user->id) : $this->createdUser()->id; ?>' />
+      <?php echo $this->input('created_user_id', ['type' => 'hidden', 'value' => ($this->id ? $this->createdUser()->id : $this->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag_type[name]'>Name</label>
           <div class='controls'>
-            <input name='tag_type[name]' type='text' class='input-xlarge' id='tag_type[name]'<?php echo ($this->id === 0) ? "" : " value='".escape_output($this->name)."'"; ?> />
+            <?php echo $this->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>

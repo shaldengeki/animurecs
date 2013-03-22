@@ -1,12 +1,14 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+
+  // Takes a parameter at params['currentObject'] specifying the object this comment is being posted to.
 ?>
     <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')); ?>
       <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='comment[id]' value='".intval($this->id)."' />"; ?>
-      <input type='hidden' name='comment[user_id]' value='<?php echo intval($this->app->user->id); ?>' />
-      <input type='hidden' name='comment[type]' value='<?php echo escape_output(($this->id === 0) ? get_class($params['currentObject']) : $this->type()); ?>' />
-      <input type='hidden' name='comment[parent_id]' value='<?php echo ($this->id === 0) ? intval($params['currentObject']->id) : $this->parent()->id; ?>' />
+      <?php echo $this->input('user_id', ['type' => 'hidden', 'value' => $this->app->user->id]); ?>
+      <?php echo $this->input('type', ['type' => 'hidden', 'value' => escape_output(($this->id === 0) ? get_class($params['currentObject']) : $this->type())]); ?>
+      <?php echo $this->input('parent_id', ['type' => 'hidden', 'value' => ($this->id ? $params['currentObject']->id : $this->parent()->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='comment[message]'>Comment</label>

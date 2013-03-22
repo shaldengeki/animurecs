@@ -2,6 +2,9 @@
 class User extends BaseObject {
   use Commentable;
 
+  public static $modelTable = "users";
+  public static $modelPlural = "users";
+
   protected $username;
   protected $name;
   protected $email;
@@ -26,8 +29,6 @@ class User extends BaseObject {
       $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `users` WHERE `username` = ".$app->dbConn->quoteSmart($username)." LIMIT 1"));
     }
     parent::__construct($app, $id);
-    $this->modelTable = "users";
-    $this->modelPlural = "users";
     if ($id === 0) {
       $this->username = "guest";
       $this->name = "Guest";
@@ -925,7 +926,7 @@ class User extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($username))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(self::modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($username))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

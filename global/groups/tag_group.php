@@ -10,7 +10,7 @@ class TagGroup extends BaseGroup {
   protected function _getTypes() {
     $tagTypeDict = [];
     foreach ($this->tags() as $tag) {
-      $tagTypeDict[$tag->tagTypeId] = 1;
+      $tagTypeDict[intval($tag->type->id)] = 1;
     }
     $tagTypes = [];
     if ($tagTypeDict) {
@@ -49,7 +49,7 @@ class TagGroup extends BaseGroup {
         }
       }
       foreach ($this->tags() as $tag) {
-        $tag->set(array('type' => $tagTypes[$tag->tagTypeId]));
+        $tag->set(array('type' => $tagTypes[$tag->type->id]));
       }
     }
     return $tagTypes;

@@ -3,7 +3,7 @@
   $this->app->check_partial_include(__FILE__);
 
   $resultsPerPage = 24;
-  $blankAnime = new Anime($this->app, 0);
+  $firstAnime = Anime::first($this->app);
 
   if ($this->app->user->loggedIn()) {
     $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime()->anime(), 0, count($this->anime()->anime()));
@@ -30,7 +30,7 @@
   </div>
   <div class='span10'>
     <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
-    <?php echo $blankAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $animePredictions)); ?>
+    <?php echo $firstAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $animePredictions)); ?>
     <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
   </div>
 </div>

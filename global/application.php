@@ -187,9 +187,8 @@ class Application {
 
     // _classes is a modelUrl:modelName mapping for classes that are to be linked.
     foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $className) {
-      $blankClass = new $className($this, 0);
-      if (!isset($this->_classes[$blankClass->modelUrl()])) {
-        $this->_classes[$blankClass->modelUrl] = $className;
+      if (!isset($this->_classes[$className::modelUrl()])) {
+        $this->_classes[$className::modelUrl()] = $className;
       }
     }
 
@@ -216,10 +215,12 @@ class Application {
 
     // clear cache for a database object every time it's updated or deleted.
     $this->bind(array('BaseObject.afterUpdate', 'BaseObject.afterDelete'), new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete($parent->modelName()."-".intval($parent->id));
+      $parentClass = get_class($parent);
+      $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id));
     }));
     $this->bind(array('Anime.afterUpdate', 'Anime.afterDelete'), new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete($parent->modelName()."-".intval($parent->id)."-tagIDs");
+      $parentClass = get_class($parent);
+      $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id)."-tagIDs");
     }));
     $this->bind(array('AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeList.afterDelete'), new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete("Anime-".intval($updateParams['anime_id'])."-similar");
@@ -365,6 +366,7 @@ class Application {
   }
 
   public function display_error($code) {
+    http_response_code(intval($code));
     echo $this->view('header').$this->view(intval($code)).$this->view('footer');
     exit;
   }
@@ -491,7 +493,7 @@ class Application {
         $this->redirect($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
       }
 
-        try {
+      try {
         // kludge to allow model names in URLs.
         if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") && $this->id !== "") {
             $this->target = new $this->model($this, Null, rawurldecode($this->id));
@@ -517,7 +519,8 @@ class Application {
         $this->action = "new";
       }
       if (!$this->target->allow($this->user, $this->action)) {
-        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$this->target->modelName()." ID#".$this->target->id);
+        $targetClass = get_class($this->target);
+        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::modelName()." ID#".$this->target->id);
         $this->logger->warning($error->__toString());
         $this->display_error(403);
       } else {
@@ -540,6 +543,7 @@ class Application {
       }
     }
   }
+
   public function form(array $params=Null) {
     if (!isset($params['method'])) {
       $params['method'] = "POST";
@@ -572,6 +576,7 @@ class Application {
       'value' => $this->csrfToken
     ));
   }
+
   public function view($view="index", $params=Null) {
     // includes a provided application-level view.
     $file = joinPaths(Config::APP_ROOT, 'views', 'application', "$view.php");
@@ -593,6 +598,7 @@ class Application {
     }
     return $this->view('header', $appVars).$text.$this->view('footer', $appVars);
   }
+
   public function totalPoints() {
     // total number of points earnable by users.
     if ($this->totalPoints == Null) {

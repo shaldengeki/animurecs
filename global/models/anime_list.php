@@ -1,10 +1,12 @@
 <?php
 class AnimeList extends BaseList {
   // anime list.
+  public static $modelTable = "anime_lists";
+  public static $modelPlural = "animeLists";
+
+
   public function __construct(Application $app, $user_id=Null) {
     parent::__construct($app, $user_id);
-    $this->modelTable = "anime_lists";
-    $this->modelPlural = "animeLists";
     $this->partName = "episode";
     $this->listType = "Anime";
     $this->typeVerb = "watching";

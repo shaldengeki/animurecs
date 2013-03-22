@@ -2,6 +2,9 @@
 class Anime extends BaseObject {
   use Aliasable, Feedable, Commentable;
 
+  public static $modelTable = "anime";
+  public static $modelPlural = "anime";
+
   protected $title;
   protected $description;
   protected $episodeCount;
@@ -24,8 +27,6 @@ class Anime extends BaseObject {
       $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `title` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $title))." LIMIT 1"));
     }
     parent::__construct($app, $id);
-    $this->modelTable = "anime";
-    $this->modelPlural = "anime";
     if ($id === 0) {
       $this->title = "New Anime";
       $this->description = $this->imagePath = $this->approvedOn = "";
@@ -76,7 +77,7 @@ class Anime extends BaseObject {
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
-    if ($this->approvedOn() === '' or !$this->approvedOn()) {
+    if (!$this->approvedOn()) {
       return False;
     }
     return True;
@@ -514,7 +515,7 @@ class Anime extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(self::modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

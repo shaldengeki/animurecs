@@ -1,5 +1,8 @@
 <?php
 class TagType extends BaseObject {
+  public static $modelTable = "tag_types";
+  public static $modelPlural = "tagTypes";
+
   protected $name;
   protected $description;
 
@@ -7,8 +10,6 @@ class TagType extends BaseObject {
   protected $createdUser;
   public function __construct(Application $app, $id=Null) {
     parent::__construct($app, $id);
-    $this->modelTable = "tag_types";
-    $this->modelPlural = "tagTypes";
     if ($id === 0) {
       $this->name = $this->description = "";
       $this->tags = [];

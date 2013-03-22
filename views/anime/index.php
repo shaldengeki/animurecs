@@ -3,15 +3,15 @@
   $this->app->check_partial_include(__FILE__);
 
   // lists all anime.
-  $newAnime = new Anime($this->app, 0);
+  $firstAnime = Anime::first($this->app);
   $paginationArray = array('page' => '');
   if (isset($_REQUEST['search'])) {
     $paginationArray['search'] = $_REQUEST['search'];
   }
 ?>
 <h1>Browse Anime</h1>
-<?php echo $newAnime->view('searchForm', array('form' => array('class' => 'form-inline pull-right'))); ?>
-<?php echo $params['numPages'] > 1 ? paginate($newAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
+<?php echo $firstAnime->view('searchForm', array('form' => array('class' => 'form-inline pull-right'))); ?>
+<?php echo $params['numPages'] > 1 ? paginate($firstAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
 <table class='table table-striped table-bordered dataTable' data-recordsPerPage='<?php echo $params['resultsPerPage']; ?>'>
   <thead>
     <tr>
@@ -19,12 +19,12 @@
       <th>Description</th>
       <th>Length</th>
 <?php
-  if ($newAnime->allow($this->app->user, 'edit')) {
+  if ($firstAnime->allow($this->app->user, 'edit')) {
 ?>
       <th></th>
 <?php
   }
-  if ($newAnime->allow($this->app->user, 'delete')) {
+  if ($firstAnime->allow($this->app->user, 'delete')) {
 ?>
       <th></th>
 <?php
@@ -41,12 +41,12 @@
       <td><?php echo escape_output($thisAnime->description()); ?></td>
       <td><?php echo intval($thisAnime->episodeCount() * $thisAnime->episodeLength()); ?> minutes</td>
 <?php
-    if ($newAnime->allow($this->app->user, 'edit')) { 
+    if ($thisAnime->allow($this->app->user, 'edit')) { 
 ?>
       <td><?php echo $thisAnime->link("edit", "Edit"); ?></td>
 <?php
     }
-    if ($newAnime->allow($this->app->user, 'delete')) { 
+    if ($thisAnime->allow($this->app->user, 'delete')) { 
 ?>
       <td><?php echo $thisAnime->link("delete", "Delete"); ?></td>
 <?php
@@ -58,5 +58,5 @@
 ?>
   </tbody>
 </table>
-<?php echo $params['numPages'] > 1 ? paginate($newAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
-<?php echo $newAnime->allow($this->app->user, 'new') ? $newAnime->link("new", "Add an anime") : ""; ?>
+<?php echo $params['numPages'] > 1 ? paginate($firstAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
+<?php echo $firstAnime->allow($this->app->user, 'new') ? $firstAnime->link("new", "Add an anime") : ""; ?>

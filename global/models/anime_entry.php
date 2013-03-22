@@ -1,6 +1,10 @@
 <?php
 
 class AnimeEntry extends BaseEntry {
+  public static $modelTable = "anime_lists";
+  public static $modelUrl = "anime_entries";
+  public static $modelPlural = "animeLists";
+
   protected $anime, $animeId;
   protected $episode;
   protected $list;
@@ -8,15 +12,12 @@ class AnimeEntry extends BaseEntry {
 
   public function __construct(Application $app, $id=Null, $params=Null) {
     parent::__construct($app, $id, $params);
-    $this->modelTable = "anime_lists";
-    $this->modelUrl = "anime_entries";
-    $this->modelPlural = "animeLists";
     $this->entryType = "Anime";
     if ($id === 0) {
       $this->anime = new Anime($this->app, 0);
       $this->animeId = $this->userId = 0;
       $this->episode = 0;
-      $this->list = new AnimeList($this->app, 0);
+      $this->list = new AnimeList($this->app, $this->userId);
     } else {
       if (!is_numeric($this->animeId)) {
         $this->animeId = Null;

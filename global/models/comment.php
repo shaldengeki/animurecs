@@ -2,6 +2,9 @@
 class Comment extends BaseObject {
   use Feedable;
 
+  public static $modelTable = "comments";
+  public static $modelPlural = "comments";
+
   protected $userId;
   protected $user;
   protected $type;
@@ -15,8 +18,6 @@ class Comment extends BaseObject {
 
   public function __construct(Application $app, $id=Null, User $user=Null, BaseObject $parent=Null) {
     parent::__construct($app, $id);
-    $this->modelTable = "comments";
-    $this->modelPlural = "comments";
     if ($id === 0) {
       $this->message = "";
       $this->parent = $parent;
@@ -40,7 +41,8 @@ class Comment extends BaseObject {
   }
   public function depth() {
     if ($this->depth === Null) {
-      $this->depth = method_exists($this->parent(), 'depth') ? $this->parent()->depth() + 1 : ($this->parent->modelName() == "User" ? 0 : 1);
+      $parentClass = get_class($this->parent);
+      $this->depth = method_exists($this->parent(), 'depth') ? $this->parent()->depth() + 1 : ($parentClass::modelName() == "User" ? 0 : 1);
     }
     return $this->depth;
   }
@@ -159,7 +161,7 @@ class Comment extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output($this->modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function render() {
     if ($this->app->id != 0) {

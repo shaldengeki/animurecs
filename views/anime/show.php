@@ -1,7 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $blankAnime = new Anime($this->app, 0);
+  $firstAnime = Anime::first($this->app);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -91,13 +91,12 @@
               </div>
               <div class='tab-pane' id='relatedAnime'>
                 <h2>Related series:</h2>
-                <?php echo $blankAnime->view('grid', array('anime' => $this->similar(8))); ?>
+                <?php echo $firstAnime->view('grid', array('anime' => $this->similar(8))); ?>
               </div>
             </div>
             <div id='userFeed'>
 <?php
   if ($this->app->user->loggedIn()) {
-    $anime = new Anime($this->app, 0);
     if (isset($this->app->user->animeList()->uniqueList()[$this->id])) {
       $thisEntry = $this->app->user->animeList()->uniqueList()[$this->id];
       $addText = "Update this anime in your list: ";
@@ -108,17 +107,17 @@
 ?>
               <div class='addListEntryForm'>
                 <?php echo $this->app->form(array('action' => $this->app->user->animeList()->url("new", Null, array('user_id' => intval($this->app->user->id))), 'class' => 'form-inline')); ?>
-                  <input name='anime_list[user_id]' id='anime_list_user_id' type='hidden' value='<?php echo intval($this->app->user->id); ?>' />
+                  <?php echo $this->app->user->animeList()->input('user_id', ['type' => 'hidden', 'value' => $this->app->user->id]); ?>
                   <?php echo $addText; ?>
-                  <input name='anime_list[anime_id]' id='anime_list_anime_id' type='hidden' value='<?php echo intval($this->id); ?>' />
+                  <?php echo $this->app->user->animeList()->input('anime_id', ['type' => 'hidden', 'value' => $this->id]); ?>
                   <?php echo display_status_dropdown("anime_list[status]", "span3", $thisEntry['status'] ? $thisEntry['status'] : 1); ?>
                   <div class='input-append'>
-                    <input class='input-mini' name='anime_list[score]' id='anime_list_score' type='number' min='0' max='10' step='1' value='<?php echo intval($thisEntry['score']) == 0 ? "" : intval($thisEntry['score']); ?>' />
+                    <?php echo $this->app->user->animeList()->input('score', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => 10, 'step' => 1, 'value' => ($thisEntry['score'] ? intval($thisEntry['score']) : "")]); ?>
                     <span class='add-on'>/10</span>
                   </div>
                   <div class='input-prepend'>
                     <span class='add-on'>Ep</span>
-                    <input class='input-mini' name='anime_list[episode]' id='anime_list_episode' type='number' min='0' step='1' value='<?php echo intval($thisEntry['episode']); ?>' />
+                    <?php echo $this->app->user->animeList()->input('episode', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => $this->episodeCount(), 'step' => 1, 'value' => ($thisEntry['episode'] ? intval($thisEntry['episode']) : "")]); ?>
                   </div>
                   <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
                 </form>

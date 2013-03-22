@@ -2,20 +2,20 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
   $animeTags = [];
-  $blankTag = new Tag($this->app, 0);
+  $firstTag = Tag::first($this->app);
   if ($this->tags()) {
     foreach ($this->tags()->load('info') as $tag) {
-      $animeTags[] = array('id' => $tag->id, 'name' => $tag->name());
+      $animeTags[] = ['id' => $tag->id, 'name' => $tag->name()];
     }
   }
-  echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal'));
+  echo $this->app->form(['action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal']);
 ?>
-    <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='anime[id]' value='".intval($this->id)."' />"; ?>
+    <?php echo ($this->id === 0) ? "" : $this->input('id', ['type' => 'hidden']); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='anime[title]'>Series Title</label>
           <div class='controls'>
-            <input name='anime[title]' type='text' class='input-xlarge' id='anime[title]'<?php echo ($this->id === 0) ? "" : " value='".escape_output($this->title())."'"; ?> />
+            <?php echo $this->input('title', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
@@ -27,14 +27,14 @@
         <div class='control-group'>
           <label class='control-label' for='anime[episode_count]'>Episodes</label>
           <div class='controls'>
-            <input name='anime[episode_count]' type='number' min=0 step=1 class='input-small' id='anime[episode_count]'<?php echo ($this->id === 0) ? "" : " value=".intval($this->episodeCount()); ?> /> episodes at 
-            <input name='anime[episode_minutes]' type='number' min=0 step=1 class='input-small' id='anime[episode_minutes]'<?php echo ($this->id === 0) ? "" : " value=".intval($this->episodeLength()/60); ?> /> minutes per episode
+            <?php echo $this->input('episode_count', ['type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-small']); ?> episodes at 
+            <?php echo $this->input('episode_length', ['name' => 'anime[episode_minutes]', 'id' => 'anime[episode_minutes]', 'value' => round($this->episodeLength()/60, 2), 'type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-small']); ?> minutes per episode
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <input name='anime[anime_tags]' type='text' class='token-input input-small' data-field='name' data-url='<?php echo $blankTag->url("token_search"); ?>' data-value='<?php echo $this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))); ?>' id='anime[anime_tags]' />
+            <?php echo $this->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'name', 'data-url' => $firstTag->url("token_search"), 'data-value' => ($this->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))]); ?>
           </div>
         </div>
 <?php
@@ -42,7 +42,8 @@
 ?>        <div class='control-group'>
           <label class='control-label' for='anime_image'>Image</label>
           <div class='controls'>
-            <input name='anime_image' class='input-file' type='file' onChange='displayImagePreview(this.files);' /><span class='help-inline'>Max size 300x300, JPEG/PNG/GIF.</span>
+            <?php echo $this->input('anime_image', ['type' => 'file', 'class' => 'input-file', 'onChange' => 'displayImagePreview(this.files);']); ?>
+            <span class='help-inline'>Max size 300x300, JPEG/PNG/GIF.</span>
           </div>
         </div>
 <?php
@@ -51,9 +52,14 @@
 ?>        <div class='control-group'>
           <label class='control-label' for='anime[approved]'>Approved</label>
           <div class='controls'>
-            <input name='anime[approved]' type='checkbox' value=1 <?php echo $this->isApproved() ? "checked=checked" : ""; ?>/>
+            <?php 
+              $approvedParams = ['type' => 'checkbox', 'value' => 1];
+              if ($this->isApproved()) {
+                $approvedParams['checked'] = 'checked';
+              }
+              echo $this->input('approved', $approvedParams); ?>
           </div>
-          <input name='anime[approved_user_id]' type='hidden' value='<?php echo $this->isApproved() ? intval($this->approvedUser()->id) : $this->app->user->id; ?>' />
+          <?php echo $this->input('approved_user_id', ['type' => 'hidden', 'value' => ($this->isApproved() ? intval($this->approvedUser()->id) : intval($this->app->user->id))]); ?>
         </div>
 <?php
   }

@@ -4,7 +4,7 @@
 
   // lists all tags.
   $resultsPerPage = 25;
-  $newTag = new Tag($this->app, 0);
+  $firstTag = Tag::first($this->app);
   if ($this->app->user->isAdmin()) {
     $tag = $this->dbConn->stdQuery("SELECT `tags`.`id` FROM `tags` ORDER BY `tags`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tags`")/$resultsPerPage);
@@ -14,7 +14,7 @@
   }
 ?>
 <h1>All Tags</h1>
-<?php echo paginate($newTag->url("index", Null, array("page" => "")), intval($this->app->page), $tagPages); ?>
+<?php echo paginate($firstTag->url("index", Null, array("page" => "")), intval($this->app->page), $tagPages); ?>
 <table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -34,13 +34,13 @@
       <td><?php echo $thisTag->link("show", $thisTag->name()); ?></td>
       <td><?php echo escape_output($thisTag->description()); ?></td>
       <td><?php echo $thisTag->type->link("show", $thisTag->type()->name); ?></td>
-      <td><?php echo $this->app->user->isAdmin() ? $thisTag->link("edit", "Edit") : ""; ?></td>
-      <td><?php echo $this->app->user->isAdmin() ? $thisTag->link("delete", "Delete") : ""; ?></td>
+      <td><?php echo $thisTag->allow($this->app->user, "edit") ? $thisTag->link("edit", "Edit") : ""; ?></td>
+      <td><?php echo $thisTag->allow($this->app->user, "delete") ? $thisTag->link("delete", "Delete") : ""; ?></td>
     </tr>
 <?php
   }
 ?>
   </tbody>
 </table>
-<?php echo $newTag->link("new", "Add a tag"); ?>
-<?php echo paginate($newTag->url("index", Null, array("page" => "")), intval($this->app->page), $tagPages); ?>
+<?php echo $firstTag->link("new", "Add a tag"); ?>
+<?php echo paginate($firstTag->url("index", Null, array("page" => "")), intval($this->app->page), $tagPages); ?>

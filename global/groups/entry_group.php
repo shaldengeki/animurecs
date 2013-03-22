@@ -55,7 +55,7 @@ class EntryGroup extends BaseGroup {
     $userDict = [];
     $users = [];
     foreach ($this->entries() as $entry) {
-      if (method_exists($entry, 'parent') && $entry->parentId !== Null) {
+      if (method_exists($entry, 'parentId') && $entry->parentId !== Null) {
         $userDict[$entry->parentId] = 1;
       }
       $userDict[$entry->userId] = 1;
@@ -68,7 +68,7 @@ class EntryGroup extends BaseGroup {
       }
       foreach ($this->entries() as $entry) {
         $setArray = array('user' => $users[$entry->userId]);
-        if (method_exists($entry, 'parent') && $entry->parentId !== Null && isset($users[$entry->parentId])) {
+        if (method_exists($entry, 'parentId') && $entry->parentId !== Null && isset($users[$entry->parentId])) {
           $setArray['parent'] = $users[$entry->parentId];
         }
         $entry->set($setArray);
@@ -85,10 +85,11 @@ class EntryGroup extends BaseGroup {
   private function _getComments() {
     $commentDict = $comments = $commentFlatList = [];
     foreach ($this->entries() as $entry) {
+      $entryClass = get_class($entry);
       if (method_exists($entry, 'comment')) {
         $commentDict["(`id` = ".$entry->commentId.")"] = 1;
       }
-      $commentDict["(`type` = '".$entry->modelName()."' && `parent_id` = ".$entry->id.")"] = 1;
+      $commentDict["(`type` = '".$entryClass::modelName()."' && `parent_id` = ".$entry->id.")"] = 1;
     }
     if ($commentDict) {
       $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
@@ -107,11 +108,12 @@ class EntryGroup extends BaseGroup {
         $commentFlatList[$comment['id']] = $newComment;
       }
       foreach ($this->entries() as $entry) {
+        $entryClass = get_class($entry);
         if (method_exists($entry, 'comment')) {
           $entry->set(array('comment' => $comments[$entry->commentId]->comment()));
         }
-        if (isset($comments[$entry->modelName()][$entry->id])) {
-          $entry->set(array('comments' => $comments[$entry->modelName()][$entry->id]));
+        if (isset($comments[$entryClass::modelName()][$entry->id])) {
+          $entry->set(array('comments' => $comments[$entryClass::modelName()][$entry->id]));
         } else {
           $entry->set(array('comments' => []));
         }
