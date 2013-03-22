@@ -314,6 +314,38 @@ function initInterface(elt) {
     });
   });
 
+  // for autocomplete fields that shrink upon entry selection and display a hidden neighbor
+  // e.g. on inline list entry forms
+  $(".autocomplete-shrink").each(function() {
+    $(this).bind('autocompleteselect', function(e, ui) {
+      $(this).val(ui.item.label);
+      $($(this).attr('data-outputElement')).val(ui.item.value);
+
+      // fetch latest status for this user.
+      var statusUrl = $(this).attr('data-status-url') + "?anime_id=" + ui.item.value;
+      var statusContainer = $(this).parent().next();
+      $.getJSON(statusUrl, function(data) {
+        if (typeof data["status"] != "undefined" && data["status"] != "0") {
+          $(statusContainer).find('#anime_list\\[status\\]').val(data["status"]);
+        } else {
+          $(statusContainer).find('#anime_list\\[status\\]').val(1);
+        }
+        if (typeof data["score"] != "undefined" && data["score"] != "0") {
+          $(statusContainer).find('#anime_list\\[score\\]').val(data["score"]);
+        } else {
+          $(statusContainer).find('#anime_list\\[score\\]').val("");
+        }
+        if (typeof data["episode"] != "undefined" && data["episode"] != "0") {
+          $(statusContainer).find('#anime_list\\[episode\\]').val(data["episode"]);
+        } else {
+          $(statusContainer).find('#anime_list\\[episode\\]').val("");
+        }
+      });
+      $(this).parent().removeClass('span11').addClass('span3');
+      $(statusContainer).fadeIn().addClass('span8');
+    });
+  });
+
   /* ajax feed autoloading. */
   $(window).unbind("scroll");
   $(window).scroll(function() {

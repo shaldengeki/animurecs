@@ -12,7 +12,7 @@ class AppException extends Exception {
     $this->app = $app;
     $this->app->statsd->increment('AppException');
   }
-  public function getMessages() {
+  public function messages() {
     return $this->messages;
   }
   public function formatMessages() {
@@ -256,6 +256,12 @@ class Application {
     // user stats metrics.
     $this->bind(array('User.afterCreate', 'User.afterDelete'), new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->gauge("user.count", $parent->app->dbConn->queryCount("SELECT COUNT(*) FROM `users`"));
+    }));
+    $this->bind(array('User.logIn'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->increment("user.login");
+    }));
+    $this->bind(array('User.logOut'), new Observer(function($event, $parent, $updateParams) {
+      $parent->app->statsd->decrement("user.logOut");
     }));
     $this->bind(array('User.requestFriend'), new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.friendrequests");
@@ -546,7 +552,7 @@ class Application {
 
   public function form(array $params=Null) {
     if (!isset($params['method'])) {
-      $params['method'] = "POST";
+      $params['method'] = "post";
     }
     if (!isset($params['accept-charset'])) {
       $params['accept-charset'] = "UTF-8";

@@ -215,6 +215,7 @@ class User extends BaseObject {
         return False;
         break;
       /* cases where we want only this user + staff capable */
+      case 'anime':
       case 'globalFeedEntries':
       case 'globalFeed':
       case 'discover':
@@ -472,7 +473,7 @@ class User extends BaseObject {
   }
   public function updateLastActive($time=Null) {
     $now = new DateTime("now", $this->app->serverTimeZone);
-    $params = array('last_active' => $now->format("Y-m-d H:i:s"));
+    $params = ['last_active' => $now->format("Y-m-d H:i:s")];
     if ($time !== Null) {
       $params['last_active'] = $time->format("Y-m-d H:i:s");
     }
@@ -488,27 +489,22 @@ class User extends BaseObject {
     }
     return $this->create_or_update(array('points' => $this->points() + intval($points)));
   }
-  public function log_failed_login($username, $password) {
+  public function logFailedLogin($username, $password) {
     $insert_log = $this->dbConn->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->quoteSmart($username).", ".$this->dbConn->quoteSmart($password).")");
   }
   public function logIn($username, $password) {
     // rate-limit requests.
     $numFailedRequests = $this->dbConn->queryCount("SELECT COUNT(*) FROM `failed_logins` WHERE `ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR'])." AND `time` > NOW() - INTERVAL 1 HOUR");
     if ($numFailedRequests > 5) {
-      return array("location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error');
+      return ["location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error'];
     }
   
     $bcrypt = new Bcrypt();
     $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
-    if (!$findUsername) {
-      $this->log_failed_login($username, $password);
-      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
+    if (!$findUsername || !$bcrypt->verify($password, $findUsername['password_hash'])) {
+      $this->logFailedLogin($username, $password);
+      return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
     }
-    if (!$bcrypt->verify($password, $findUsername['password_hash'])) {
-      $this->log_failed_login($username, $password);
-      return array("location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error');
-    }
-    
     $this->id = $_SESSION['id'] = intval($findUsername['id']);
     $this->name = $_SESSION['name'] = $findUsername['name'];
     $this->username = $_SESSION['username'] = $findUsername['username'];
@@ -517,20 +513,28 @@ class User extends BaseObject {
     $this->avatarPath = $_SESSION['avatarPath'] = $findUsername['avatar_path'];
 
     //update last IP address and last active.
-    $updateUser = array('username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']);
+    $updateUser = ['username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']];
     $this->create_or_update($updateUser);
-    return array("/feed.php", array("status" => "Successfully logged in.", 'class' => 'success'));
+    $this->app->fire('User.logIn', $this);
+    return ["/feed.php", ["status" => "Successfully logged in.", 'class' => 'success']];
+  }
+  public function logOut() {
+    $_SESSION = array();
+    $this->app->fire('User.logOut', $this);
+    return session_destroy();
   }
   public function register($username, $email, $password, $password_confirmation) {
     // shorthand for create_or_update.
-    $user = array('username' => $username, 'about' => '', 'usermask' => array(1), 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation);
+    $user = ['username' => $username, 'about' => '', 'usermask' => [1], 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation];
     try {
       $registerUser = $this->create_or_update($user);
     } catch (ValidationException $e) {
-      return array("location" => "/register.php", "status" => "Some errors were found in registering you: ".$e->formatMessages());
+      // append these validation errors to the app's delayed messages.
+      $this->app->delayedMessages = array_merge($this->app->delayedMessages, $e->messages());
+      return ["location" => "/register.php", "status" => "Some errors were encountered in registering you:"];
     }
     if (!$registerUser) {
-      return array("location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error');
+      return ["location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error'];
     }
     $this->id = $_SESSION['id'] = intval($registerUser);
     $this->username = $_SESSION['username'] = $user['username'];
@@ -538,10 +542,11 @@ class User extends BaseObject {
     $this->usermask = $_SESSION['usermask'] = intval($user['usermask']);
 
     //update last IP address and last active.
-    $updateUser = array('last_ip' => $_SERVER['REMOTE_ADDR']);
+    $currTime = new DateTime("now", $this->app->serverTmeZone);
+    $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR'], 'last_active' => $currTime->format("Y-m-d H:i:s")];
     $this->create_or_update($updateUser);
 
-    return array("location" => $this->url("register_conversion"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success');
+    return ["location" => $this->url("register_conversion"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success'];
   }
   public function importMAL($malUsername) {
     // imports a user's MAL lists.
@@ -813,6 +818,20 @@ class User extends BaseObject {
         exit;
       case 'anime_list':
         echo $this->animeList()->view("show");
+        exit;
+      case 'anime':
+        if (!isset($_REQUEST['anime_id']) || !is_numeric($_REQUEST['anime_id'])) {
+          echo "Please specify a valid anime ID.";
+          exit;
+        }
+        if (!isset($this->animeList()->uniqueList[intval($_REQUEST['anime_id'])])) {
+          echo json_encode([]);
+          exit;
+        }
+        $latestEntry = $this->animeList()->uniqueList[intval($_REQUEST['anime_id'])];
+        $latestEntry['anime_id'] = $latestEntry['anime']->id;
+        unset($latestEntry['anime']);
+        echo json_encode($latestEntry);
         exit;
       case 'stats':
         echo $this->view('stats');

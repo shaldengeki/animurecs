@@ -3,24 +3,24 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $blankAnime = new Anime($this, 0);
+  $firstAnime = Anime::first($this);
 ?>
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    <meta content='text/html; charset=UTF-8' http-equiv='content-type' />
+    <meta charset="utf-8" />
     <meta name='description' content="Animurecs is an anime-centric social network that gives you personalized recommendations by learning your tastes. Discover new anime you'll love today!" />
     <meta name='keywords' content='anime, recommendations, anime list, recommend, top anime' />
 
     <title><?php echo (isset($params['title']) ? escape_output($params['title']) : "Animurecs").(isset($params['subtitle']) && $params['subtitle'] != '' ? ' - '.escape_output($params['subtitle']) : ' - Social Anime Recommendations'); ?></title>
     <link href='/favicon.ico' rel='shortcut icon' />
 
-    <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' type='text/css' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' type='text/css' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' type='text/css' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css' rel='stylesheet' type='text/css' />
+    <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.1' rel='stylesheet' />
 
-    <script src='//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js' type='text/javascript'></script>
+    <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' type='text/javascript'></script>
     <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js' type='text/javascript'></script>
 
     <!--<script type='text/javascript' src='<?php echo Config::ROOT_URL; ?>/jquery-ui-timepicker-addon.min.js'></script>-->
@@ -53,10 +53,11 @@
       <div class='navbar-inner'>
         <div class='container-fluid'>
           <a href='/' class='brand'>Animurecs</a>
-          <ul class='nav'>
 <?php
   if ($this->user->loggedIn()) {
-?>            <li class='divider-vertical'></li>
+?>
+          <ul class='nav'>
+            <li class='divider-vertical'></li>
             <li><?php echo $this->user->link("globalFeed", "<i class='icon-th-list icon-white'></i> Feed", Null, True); ?></li>
             <li class='divider-vertical'></li>
             <li><?php echo $this->user->link("show", "<i class='icon-home icon-white'></i> You", Null, True); ?></li>
@@ -65,15 +66,15 @@
             <li class='divider-vertical'></li>
             <li><?php echo $this->user->link("discover", "<i class='icon-star icon-white'></i> Discover", Null, True); ?></li>
             <li class='divider-vertical'></li>
+          </ul>
 <?php
   }
 ?>
-          </ul>
           <ul class='nav pull-right'>
 <?php
   if ($this->user->loggedIn()) {
 ?>
-            <?php echo $blankAnime->view('searchForm', array(
+            <?php echo $firstAnime->view('searchForm', array(
               'form' => array(
                   'class' => 'navbar-search'
                 ),
@@ -119,11 +120,9 @@
                 <li>
                   <?php echo $this->user->view('login'); ?>
                 </li>
-              </ul>
 <?php
   }
 ?>
-            </li>
           </ul>
         </div>
       </div>
