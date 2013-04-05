@@ -1,7 +1,11 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $recs = $this->app->recsEngine->recommend($this);
+
+  $animePerPage = 20;
+  $page = (intval($params['page']) > 0) ? intval($params['page']) : 1;
+
+  $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($page - 1), $animePerPage);
   $animeGroup = new AnimeGroup($this->app, array_map(function($a) {
     return $a['id'];
   }, $recs));

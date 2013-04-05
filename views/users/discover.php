@@ -11,7 +11,7 @@
   </ul>
   <div class='tab-content'>
     <div class='tab-pane active' id='yourRecs'>
-      <?php echo $this->view('recommendations'); ?>
+      <?php echo $this->view('recommendations', ['page' => $params['page']]); ?>
     </div>
     <div class='tab-pane' id='friendRecs'>
       Loading...

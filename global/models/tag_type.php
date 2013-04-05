@@ -148,6 +148,9 @@ class TagType extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
+        if (!$this->app->checkCSRF()) {
+          $this->app->display(403);
+        }
         $deleteTagType = $this->delete();
         if ($deleteTagType) {
           $this->app->redirect("/tag_types/", array('status' => 'Successfully deleted '.$this->name().'.', 'class' => 'success'));

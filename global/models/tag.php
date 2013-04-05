@@ -318,6 +318,9 @@ class Tag extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
+        if (!$this->app->checkCSRF()) {
+          $this->app->display(403);
+        }
         $tagName = $this->name();
         $deleteTag = $this->delete();
         if ($deleteTag) {

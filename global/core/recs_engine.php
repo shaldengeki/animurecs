@@ -45,12 +45,14 @@ class RecsEngine {
     }
     return $this->get("user", $user->id, "predict", array('start' => intval($start), 'n' => intval($n), 'anime' => $animeIDs));
   }
-  public function recommend(User $user, $n=20) {
-    return $this->get("user", $user->id, "recommend", array('n' => intval($n)));
+  public function recommend(User $user, $start=0, $n=20) {
+    return $this->get("user", $user->id, "recommend", array('start' => intval($start), 'n' => intval($n)));
   }
-  public function similarAnime(Anime $anime, $n=20) {
+  public function similarAnime(Anime $anime, $start=0, $n=20) {
     // fetches the top n most feature-similar anime for a given anime.
-    return $this->get("anime", $anime->id, "similar", array('n' => intval($n)));
+    $result = $this->get("anime", $anime->id, "similar", array('start' => intval($start), 'n' => intval($n)));
+    $anime->app->logger->err("Result: ".print_r($result, True));
+    return $result;
   }
   public function similarUsers(User $user, $n=20) {
     // fetches the top n most feature-similar users for a given user.

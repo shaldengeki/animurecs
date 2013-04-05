@@ -51,7 +51,7 @@ class DbConn extends mysqli {
       $result = $this->query($query);
     } catch (Exception $e) {
       if (Config::DEBUG_ON) {
-        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query."\n".$this->error."\nTime: ".time()."\nStack trace:\n<pre>".print_r(debug_backtrace(), True)."</pre>";
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query;
       } else {
         $exceptionText = "Could not query MySQL database.";
       }
@@ -59,7 +59,7 @@ class DbConn extends mysqli {
     }
     if (!$result) {
       if (Config::DEBUG_ON) {
-        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query."\n".$this->error."\nTime: ".time()."\nStack trace:<br /><pre>".print_r(debug_backtrace(), True)."</pre>";
+        $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query;
       } else {
         $exceptionText = "Could not query MySQL database.";
       }

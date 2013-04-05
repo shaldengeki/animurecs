@@ -406,13 +406,13 @@ class User extends BaseObject {
     }
 
     // process uploaded image.
-    $file_array = isset($_FILES['avatar_image']) ? $_FILES['avatar_image'] : array();
+    $file_array = isset($_FILES['users']) ? $_FILES['users'] : array();
     $imagePath = "";
-    if (isset($file_array['tmp_name']) && $file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
-      if ($file_array['error'] != UPLOAD_ERR_OK) {
+    if (isset($file_array['tmp_name']['avatar_image']) && $file_array['tmp_name']['avatar_image'] && is_uploaded_file($file_array['tmp_name']['avatar_image'])) {
+      if ($file_array['error']['avatar_image'] != UPLOAD_ERR_OK) {
         return False;
       }
-      $file_contents = file_get_contents($file_array['tmp_name']);
+      $file_contents = file_get_contents($file_array['tmp_name']['avatar_image']);
       if (!$file_contents) {
         return False;
       }
@@ -420,7 +420,7 @@ class User extends BaseObject {
       if (!$newIm) {
         return False;
       }
-      $imageSize = getimagesize($file_array['tmp_name']);
+      $imageSize = getimagesize($file_array['tmp_name']['avatar_image']);
       if ($imageSize[0] > 300 || $imageSize[1] > 300) {
         return False;
       }
@@ -428,12 +428,12 @@ class User extends BaseObject {
       if (!is_dir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)))) {
         mkdir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)));
       }
-      $imagePathInfo = pathinfo($file_array['tmp_name']);
+      $imagePathInfo = pathinfo($file_array['tmp_name']['avatar_image']);
       $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
       if ($this->avatarPath()) {
         $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
       }
-      if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
+      if (!move_uploaded_file($file_array['tmp_name']['avatar_image'], $imagePath)) {
         return False;
       }
     } else {
@@ -500,7 +500,12 @@ class User extends BaseObject {
     }
   
     $bcrypt = new Bcrypt();
-    $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
+    try {
+      $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
+    } catch (DbException $e) {
+      $this->logFailedLogin($username, $password);
+      return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
+    }
     if (!$findUsername || !$bcrypt->verify($password, $findUsername['password_hash'])) {
       $this->logFailedLogin($username, $password);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
@@ -536,6 +541,8 @@ class User extends BaseObject {
     if (!$registerUser) {
       return ["location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error'];
     }
+
+    // otherwise, log this user in.
     $this->id = $_SESSION['id'] = intval($registerUser);
     $this->username = $_SESSION['username'] = $user['username'];
     $this->email = $_SESSION['email'] = $user['email'];
@@ -559,6 +566,7 @@ class User extends BaseObject {
     foreach($malList as $entry) {
       $entry['user_id'] = $this->id;
       try {
+        $this->app->logger->err($entry);
         $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
       } catch (DbException $e) {
         $this->app->logger->err($e->__toString());
@@ -696,6 +704,9 @@ class User extends BaseObject {
     switch($this->app->action) {
       /* Topbar views */
       case 'request_friend':
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403);
+        }
         if ($this->id === $this->app->user->id) {
           $this->app->redirect($this->app->user->url("show"), array('status' => "You can't befriend yourself, silly!"));
         }
@@ -710,6 +721,9 @@ class User extends BaseObject {
         }
         break;
       case 'confirm_friend':
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403);
+        }
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
           $this->app->redirect($this->url("show"), array('status' => "Hooray! You're now friends with ".rawurlencode($this->username()).".", 'class' => 'success'));
@@ -718,6 +732,9 @@ class User extends BaseObject {
         }
         break;
       case 'ignore_friend':
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403);
+        }
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
           $this->app->redirect($this->url("show"), array('status' => "You ignored a friend request from ".rawurlencode($this->username()).".", 'class' => 'success'));
@@ -748,20 +765,20 @@ class User extends BaseObject {
 
       /* user setting views */
       case 'edit':
-        if (isset($_POST['user']) && is_array($_POST['user'])) {
+        if (isset($_POST['users']) && is_array($_POST['users'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
-          if (isset($_POST['user']['usermask']) && intval($_POST['user']['usermask']) > 1 && intval($_POST['user']['usermask']) >= $this->usermask()) {
+          if (isset($_POST['users']['usermask']) && intval($_POST['users']['usermask']) > 1 && intval($_POST['users']['usermask']) >= $this->usermask()) {
             $this->app->redirect($this->url("new"), array('status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error'));
           }
           $updateErrors = False;
           try {
-            $updateUser = $this->create_or_update($_POST['user']);
+            $updateUser = $this->create_or_update($_POST['users']);
           } catch (ValidationException $e) {
             // validation exceptions don't need to be logged.
             $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => $e->formatMessages(), 'class' => 'error'));
           }
           if ($updateUser) {
-            $this->app->redirect($this->url("show"), array('status' => (isset($_POST['user']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
+            $this->app->redirect($this->url("show"), array('status' => (isset($_POST['users']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!"), 'class' => 'success'));
           } else {
             $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this user.", 'class' => 'error'));
           }
@@ -775,10 +792,10 @@ class User extends BaseObject {
 
       case 'mal_import':
         // import a MAL list for this user.
-        if (!isset($_POST['user']) || !is_array($_POST['user']) || !isset($_POST['user']['mal_username'])) {
+        if (!isset($_POST['users']) || !is_array($_POST['users']) || !isset($_POST['users']['mal_username'])) {
           $this->app->redirect($this->url("edit"), array('status' => 'Please enter a MAL username.'));
         }
-        $importMAL = $this->importMAL($_POST['user']['mal_username']);
+        $importMAL = $this->importMAL($_POST['users']['mal_username']);
         if ($importMAL) {
           $this->app->redirect($this->url("show"), array('status' => 'Hooray! Your MAL was successfully imported.', 'class' => 'success'));
         } else {
@@ -842,6 +859,8 @@ class User extends BaseObject {
       case 'delete':
         if ($this->id == 0) {
           $this->app->display_error(404);
+        } elseif (!$this->app->checkCSRF()) {
+          $this->app->display_error(403);
         }
         $username = $this->username();
         $deleteUser = $this->delete();
@@ -871,11 +890,13 @@ class User extends BaseObject {
 
       /* Discover views */
       case 'discover':
+        $_REQUEST['page'] = isset($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
         $title = escape_output("Discover Anime");
-        $output = $this->view("discover");
+        $output = $this->view("discover", ['page' => intval($_REQUEST['page'])]);
         break;
       case 'recommendations':
-        echo $this->view('recommendations');
+        $_REQUEST['page'] = isset($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
+        echo $this->view('recommendations', ['page' => intval($_REQUEST['page'])]);
         exit;
         break;
       case 'friendRecs':

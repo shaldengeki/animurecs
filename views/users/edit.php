@@ -15,13 +15,20 @@
                 </div>
                 <div class='tab-pane' id='malImport'>
                   <p>To import your list, we'll need your MAL username:</p>
-                  <?php echo $this->app->form(array('action' => $this->url("mal_import"), 'class' => 'form form-inline')); ?>
-                    <input type='text' name='user[mal_username]' placeholder='MAL username' />
-                    <input type='submit' class='btn btn-primary' value='Import' />
+                  <?php echo $this->app->form(['action' => $this->url("mal_import"), 'class' => 'form form-inline']); ?>
+                    <?php echo $this->input('mal_username', ['type' => 'text', 'placeholder' => 'MAL username']); ?>
+                    <?php echo $this->input('import', ['type' => 'submit', 'class' => 'btn btn-primary', 'value' => 'Import']); ?>
                   </form>
                 </div>
                 <div class='tab-pane' id='privacySettings'>
-                  Coming soon!
+<?php
+/*
+                  <h2>Delete your account <small>(danger danger)</small></h2>
+                  <?php echo $this->app->form(['action' => $this->url("delete"), 'class' => 'form']); ?>
+                    <?php echo $this->input('delete', ['type' => 'submit', 'class' => 'btn btn-danger', 'value' => 'Delete my account']); ?>
+                  </form>
+*/
+?>
                 </div>
               </div>
             </div>

@@ -104,16 +104,21 @@ class AnimeList extends BaseList {
       case 'show':
         break;
       case 'delete':
-        if (!isset($_REQUEST['id'])) {
-          $_REQUEST['id'] = False;
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403);
         }
-        $deleteList = $this->app->user->animeList->delete([intval($_REQUEST['id'])]);
+        if (!isset($_REQUEST['id'])) {
+          $entryList = Null;
+        } else {
+          $entryList = [intval($_REQUEST['id'])];
+        }
+        $deleteList = $this->app->user->animeList->delete($entryList);
         if ($deleteList) {
-          $status = "Successfully updated your anime list.";
+          $status = "Successfully deleted entries from your anime list.";
           $class = "success";
           break;
         } else {
-          $status = "An error occurred while changing your anime list.";
+          $status = "An error occurred while deleting entries from your anime list.";
           $class = "error";
           break;
         }

@@ -103,6 +103,7 @@ class Anime extends BaseObject {
         break;
       case 'feed':
       case 'show':
+      case 'related':
         if ($this->isApproved() || $authingUser->isStaff()) {
           return True;
         }
@@ -367,14 +368,14 @@ class Anime extends BaseObject {
   public function predict(User $user) {
     return $this->app->recsEngine->predict($user, $this);
   }
-  public function similar($n=20) {
+  public function similar($start=0, $n=20) {
     // Returns an AnimeGroup consisting of the n most-similar anime to the current anime.
     // pull from cache if possible.
     $cas = "";
-    $cacheKey = "Anime-".$this->id."-similar";
+    $cacheKey = "Anime-".$this->id."-similar-".$start."-".$n;
     $result = $this->app->cache->get($cacheKey, $cas);
     if ($this->app->cache->resultCode() == Memcached::RES_NOTFOUND) {
-      $result = $this->app->recsEngine->similarAnime($this, $n);
+      $result = $this->app->recsEngine->similarAnime($this, $start, $n);
       $this->app->cache->set($cacheKey, $result);
     }
     return new AnimeGroup($this->app, array_map(function($a) {
@@ -409,6 +410,11 @@ class Anime extends BaseObject {
         echo json_encode($animus);
         exit;
         break;
+      case 'related':
+        $page = isset($_REQUEST['page']) && is_numeric($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
+        echo $this->view('related', ['page' => $page]);
+        exit;
+        break;
       case 'new':
         $title = "Add an anime";
         $output = $this->view('new');
@@ -430,6 +436,9 @@ class Anime extends BaseObject {
       case 'delete':
         if ($this->id == 0) {
           $this->app->display_error(404);
+        }
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403);
         }
         $animeTitle = $this->title();
         $deleteAnime = $this->delete();

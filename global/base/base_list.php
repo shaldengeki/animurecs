@@ -113,7 +113,7 @@ abstract class BaseList extends BaseObject {
       }
       $this->afterUpdate($entry);
     }
-    $this->entries[intval($returnValue)] = $entry;
+    //$this->entries[intval($returnValue)] = $entry;
     return $returnValue;
   }
   public function delete($entries=Null) {

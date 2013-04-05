@@ -174,9 +174,9 @@ class Comment extends BaseObject {
       $targetParent = $this->parent();
       $targetUser = $this->user();
     } else {
-      $type = isset($_POST['comment']['type']) ? $_POST['comment']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
+      $type = isset($_POST['comments']['type']) ? $_POST['comments']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
       try {
-        $targetParent = $type !== Null && (isset($_POST['comment']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($this->app, intval(isset($_POST['comment']['parent_id']) ? $_POST['comment']['parent_id'] : $_REQUEST['parent_id'])) : Null;
+        $targetParent = $type !== Null && (isset($_POST['comments']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($this->app, intval(isset($_POST['comments']['parent_id']) ? $_POST['comments']['parent_id'] : $_REQUEST['parent_id'])) : Null;
         if ($targetParent !== Null) {
           $targetParent->getInfo();
         }
@@ -189,7 +189,7 @@ class Comment extends BaseObject {
         $targetUser = $this->app->user;
       } else {
         try {
-          $targetUser = new User($this->app, isset($_POST['comment']['user_id']) ? intval($_POST['comment']['user_id']) : intval($_REQUEST['user_id']));
+          $targetUser = new User($this->app, isset($_POST['comments']['user_id']) ? intval($_POST['comments']['user_id']) : intval($_REQUEST['user_id']));
           $targetUser->getInfo();
         } catch (DbException $e) {
           $this->app->logger->err($e->__toString());
@@ -207,7 +207,7 @@ class Comment extends BaseObject {
     }
     switch($this->app->action) {
       case 'new':
-        if (isset($_POST['comment']) && is_array($_POST['comment']) && isset($_POST['comment']['type']) && isset($_POST['comment']['parent_id']) && is_numeric($_POST['comment']['parent_id'])) {
+        if (isset($_POST['comments']) && is_array($_POST['comments']) && isset($_POST['comments']['type']) && isset($_POST['comments']['parent_id']) && is_numeric($_POST['comments']['parent_id'])) {
           // ensure that the thing to which this comment is going to belong exists.
           if ($targetParent === Null) {
             $this->app->redirect($this->app->user->url(), array('status' => "The thing you're commenting on no longer exists.", 'class' => 'error'));
@@ -217,7 +217,7 @@ class Comment extends BaseObject {
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'new')) {
             $this->app->redirect($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
           }
-          $createComment = $targetComment->create_or_update($_POST['comment']);
+          $createComment = $targetComment->create_or_update($_POST['comments']);
           if ($createComment) {
             $this->app->redirect($targetParent->url(), array('status' => "Succesfully commented.", 'class' => 'success'));
           } else {
@@ -231,10 +231,10 @@ class Comment extends BaseObject {
         if ($targetComment->id == 0) {
           $this->app->display_error(404);
         }
-        if (isset($_POST['comment']) && is_array($_POST['comment'])) {
+        if (isset($_POST['comments']) && is_array($_POST['comments'])) {
           // ensure that the thing to which this comment belongs exists.
-          $commentType = !isset($_POST['comment']['type']) ? $targetComment->type : $_POST['comment']['type'];
-          $commentParentID = !isset($_POST['comment']['parent_id']) ? $targetComment->parent->id : $_POST['comment']['parent_id'];
+          $commentType = !isset($_POST['comments']['type']) ? $targetComment->type : $_POST['comments']['type'];
+          $commentParentID = !isset($_POST['comments']['parent_id']) ? $targetComment->parent->id : $_POST['comments']['parent_id'];
           try {
             $targetParent = new $commentType($this->app, intval($commentParentID));
           } catch (Exception $e) {
@@ -254,7 +254,7 @@ class Comment extends BaseObject {
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'edit')) {
             $this->app->redirect($targetParent->url(), array('status' => "You're not allowed to comment on this.", 'class' => 'error'));
           }
-          $updateComment = $targetComment->create_or_update($_POST['comment']);
+          $updateComment = $targetComment->create_or_update($_POST['comments']);
           if ($updateComment) {
             $this->app->redirect($targetParent->url(), array('status' => "Comment successfully updated.", 'class' => 'success'));
           } else {

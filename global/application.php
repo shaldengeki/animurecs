@@ -291,19 +291,21 @@ class Application {
       }
     }
   }
-  private function _checkCSRF() {
-    // only generate CSRF token if the user is logged in.
-    if ($this->user->id !== 0) {
-      $this->csrfToken = $this->_generateCSRFToken();
-      // if request came in through AJAX, or there isn't a POST, don't run CSRF filter.
-      if (!$this->ajax && !empty($_POST)) {
-        if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
-          $this->display_error(403);
-        }
-      }
-    }
-  }
 
+  public function checkCSRF() {
+    // compare the POSTed CSRF token to this app's CSRF token.
+    // if either is not set, returns False.
+    if (!isset($this->csrfField) || !isset($this->csrfToken) || $this->csrfField === Null || $this->csrfToken === Null) {
+      return False;
+    }
+    if (empty($_POST[$this->csrfField]) && isset($_REQUEST[$this->csrfField])) {
+      $_POST[$this->csrfField] = $_REQUEST[$this->csrfField];
+    }
+    if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
+      return False;
+    }
+    return True;
+  }
   // bind/unbind/fire event handlers for objects.
   // event names are of the form modelName.eventName
   // e.g. User.afterCreate
@@ -454,7 +456,14 @@ class Application {
     }
 
     // protect against CSRF attacks.
-    $this->_checkCSRF();
+    // only generate CSRF token if the user is logged in.
+    if ($this->user->id !== 0) {
+      $this->csrfToken = $this->_generateCSRFToken();
+      // if request came in through AJAX, or there isn't a POST, don't run CSRF filter.
+      if (!$this->ajax && !empty($_POST) && !$this->checkCSRF()) {
+        $this->display_error(403);
+      }
+    }
 
     // set model, action, ID, status, class from request parameters.
     if (isset($_REQUEST['status'])) {

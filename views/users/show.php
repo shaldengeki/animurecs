@@ -40,7 +40,7 @@ if ($this->avatarPath() != '') {
           <div class='profileUserInfo'>
             <div class='page-header'>
               <h1>
-                <?php echo escape_output($this->username()); ?>
+                <?php echo $this->link('show', $this->username()); ?>
                 <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
                 <?php echo $this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : ""; ?>
                 <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>

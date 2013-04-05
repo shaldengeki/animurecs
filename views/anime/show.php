@@ -1,7 +1,6 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $firstAnime = Anime::first($this->app);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -27,7 +26,7 @@
         <div class='span9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>
-              <?php echo escape_output($this->title()); ?>
+              <?php echo $this->link('show', $this->title()); ?>
               <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : ""; ?>
             </h1>
 
@@ -35,7 +34,7 @@
               <li class="active">
                 <a href="#generalInfo" data-toggle="tab">General</a>
               </li>
-              <li>
+              <li class="ajaxTab" data-url="<?php echo $this->url('related'); ?>">
                 <a href="#relatedAnime" data-toggle="tab">Related</a>
               </li>
             </ul>
@@ -90,8 +89,7 @@
                 </ul>
               </div>
               <div class='tab-pane' id='relatedAnime'>
-                <h2>Related series:</h2>
-                <?php echo $firstAnime->view('grid', array('anime' => $this->similar(8))); ?>
+                <p>Loading...</p>
               </div>
             </div>
             <div id='userFeed'>
