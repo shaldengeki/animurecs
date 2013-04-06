@@ -28,6 +28,13 @@
     <script src='//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/jquery.tokeninput.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/jquery.json-2.3.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jquery.jqplot.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.barRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.categoryAxisRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.dateAxisRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.pieRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.highlighter.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.trendline.min.js' type='text/javascript'></script>
 
     <script src='//www.google.com/jsapi' type='text/javascript'></script>
     <script src='//cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js' type='text/javascript'></script>

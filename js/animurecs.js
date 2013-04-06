@@ -228,6 +228,117 @@ function loadAjaxTab(elt) {
   $(pageTarget).addClass('active');
 }
 
+function mergeOptions(obj1, obj2) {
+  var obj3 = {};
+  for(var attrName in obj1) { obj3[attrName] = obj1[attrName]; }
+  for(var attrName in obj2) { obj3[attrName] = obj2[attrName]; }
+  return obj3;
+}
+
+function renderGraphs(elt) {
+  var globalSettings = {
+    animate: true,
+    seriesColors: ['#0064e1', '#00b9e1'],
+    grid: {
+      background: 'transparent',
+      drawGridlines: false,
+      drawBorder: false,
+      borderColor: '#e5e5e5', //ticks
+      shadow: false
+    }, seriesDefaults: {
+      shadow: false,
+      //color: '#0064e1',
+      rendererOptions: {
+        barPadding: 0,
+        barMargin: 0,
+        barWidth: 15,
+        highlightMouseDown: false
+      }
+    }, axesDefaults: {
+      tickOptions: {
+        fontSize: 10,
+        fontFamily: 'Tahoma, sans-serif'
+      }
+    },
+  };
+
+  //timelines
+  $(elt).find('.timeline').each(function() {
+    var data = [];
+    var maximum = -100000000;
+    var minimum = 100000000;
+    var integerValues = true;
+    var chartID = $(this).parent().attr('id');
+    $(this).children('ul').children('li').each(function() {
+      var x = $(this).text().split(': ');
+      var time = x[0];
+      var value = parseFloat(x[1]);
+      if ($(this).parent().children('li').length>7)
+        time = '<span style="display: none">' + time + '</span>' + time;
+      data.push([time, value]);
+      if (value > maximum)
+        maximum = value;
+      if (value < minimum)
+        minimum = value;
+      if (value % 1 != 0) {
+        integerValues = false;
+      }
+    });
+    if (integerValues) {
+      var highlightFormatString = '<p>%.0f</p>';
+    } else {
+      var highlightFormatString = '<p>%.2f</p>';
+    }
+    
+    if (data.length > 0) {
+      $(this).find('ul').replaceWith($('<div class="line-chart graph"></div>'));
+      var globalMean = parseFloat($('.score-dist p.large').text());
+      if (minimum < 0) {
+        globalMin = 1.1 * minimum;
+      } else {
+        globalMin = 0.9 * minimum;
+      }
+      if (maximum < 0) {
+        globalMax = 0.9 * maximum;
+      } else {
+        globalMax = 1.1 * maximum;
+      }
+      var data2 = [];
+      for (i in data)
+        data2[i] = [data[i][0], globalMean];
+      var settings = {
+        series: [
+          {   color: '#cce0ff', 
+            showMarker: false
+          }, { 
+            color: '#0064e1', 
+            showMarker: true, 
+            trendline: {
+              show: false,
+              type: 'linear'
+            } 
+          }
+        ], axes: {
+          xaxis: { renderer: $.jqplot.CategoryAxisRenderer, rendererOptions: { sortMergedLabels: false, drawBaseline: true }, tickOptions: { showMark: false } },
+          yaxis: { min: globalMin, max: globalMax, tickOptions: { formatString: '%.2f', showMark: true } },
+          labels: [ 'asd', 'asd' ]
+        }, highlighter: {
+          show: true,
+          sizeAdjust: 5,
+          lineWidthAdjust: 0,
+          showMarker: true,
+          tooltipLocation: 'n',
+          tooltipAxes: 'y',
+          formatString: highlightFormatString
+        }
+      };
+      $.jqplot(chartID + ' div.graph',
+        [data2, data],
+        mergeOptions(globalSettings, settings));
+    }
+  });
+}
+
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
   $(elt).find('.dropdown-toggle').dropdown();
@@ -243,6 +354,7 @@ function initInterface(elt) {
   if ($(elt).find('#vis').length > 0) {
     drawLargeD3Plot();
   }
+  renderGraphs(elt);
 
   /* Disable buttons on click */
   $(elt).find('.btn').each(function() {

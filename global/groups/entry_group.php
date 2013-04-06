@@ -32,6 +32,7 @@ class EntryGroup extends BaseGroup {
       }
     }
     if ($animeDict) {
+      // TODO: pull from memcached here.
       $getAnime = $this->dbConn->queryAssoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
       foreach ($getAnime as $anime) {
         $animes[$anime['id']] = new Anime($this->app, intval($anime['id']));
