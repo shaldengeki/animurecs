@@ -1,0 +1,2 @@
+ALTER TABLE `users` ADD `activation_code` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL AFTER `password_hash`;
+ALTER TABLE `users` ADD UNIQUE INDEX `activation_code` (`activation_code`(20));

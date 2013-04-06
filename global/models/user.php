@@ -8,6 +8,7 @@ class User extends BaseObject {
   protected $username;
   protected $name;
   protected $email;
+  protected $activationCode;
   protected $about;
   protected $usermask;
   protected $achievementMask;
@@ -51,6 +52,17 @@ class User extends BaseObject {
   }
   public function email() {
     return $this->returnInfo('email');
+  }
+  public function generateActivationCode() {
+    // 20 character-long string unique to this user at this moment in time.
+    do {
+      $code = bin2hex(openssl_random_pseudo_bytes(10));
+      $numResults = $this->app->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE `activation_code` = ".$this->app->dbConn->quoteSmart($code));
+    } while ($numResults > 0);
+    return $code;
+  }
+  public function activationCode() {
+    return $this->returnInfo('activationCode');
   }
   public function about() {
     return $this->returnInfo('about');
@@ -205,11 +217,9 @@ class User extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
-      /* post-register conversions - must be logged in, account must be less than a minute old */
+      /* post-register conversions - must be logged in */
       case 'register_conversion':
-        $now = new DateTime('now', $this->app->serverTimeZone);
-        $diff = $now->diff($this->createdAt());
-        if ($this->loggedIn() && $diff->i < 1) {
+        if ($this->loggedIn()) {
           return True;
         }
         return False;
@@ -236,8 +246,9 @@ class User extends BaseObject {
         }
         return False;
         break;
-      /* cases where we only want logged-in users */
+      /* cases where we only want non-logged-in users */
       case 'new':
+      case 'activate':
         if (!$authingUser->loggedIn()) {
           return True;
         }
@@ -361,6 +372,9 @@ class User extends BaseObject {
       if (($this->id === 0 || $user['email'] != $this->email()) && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`email`) = ".$this->dbConn->quoteSmart(strtolower($user['email']))) > 0) {
         $validationErrors[] = "This email has already been taken. Try resetting your password!";
       }
+    }
+    if (isset($user['activation_code']) && (strlen($user['activation_code']) < 0 || strlen($user['activation_code']) > 20)) {
+      $validationErrors[] = "Your activation code must be at most 20 characters";
     }
     if (isset($user['about']) && (strlen($user['about']) < 0 || strlen($user['about']) > 600)) {
       $validationErrors[] = "Your bio must be at most 600 characters";
@@ -492,6 +506,16 @@ class User extends BaseObject {
   public function logFailedLogin($username, $password) {
     $insert_log = $this->dbConn->stdQuery("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->quoteSmart($username).", ".$this->dbConn->quoteSmart($password).")");
   }
+  private function setCurrentSession() {
+    // sets the current session to this user.
+    $_SESSION['id'] = $this->id;
+    $_SESSION['name'] = $this->name();
+    $_SESSION['username'] = $this->username();
+    $_SESSION['email'] = $this->email();
+    $_SESSION['usermask'] = $this->usermask();
+    $_SESSION['avatarPath'] = $this->avatarPath();
+    return True;
+  }
   public function logIn($username, $password) {
     // rate-limit requests.
     $numFailedRequests = $this->dbConn->queryCount("SELECT COUNT(*) FROM `failed_logins` WHERE `ip` = ".$this->dbConn->quoteSmart($_SERVER['REMOTE_ADDR'])." AND `time` > NOW() - INTERVAL 1 HOUR");
@@ -501,7 +525,7 @@ class User extends BaseObject {
   
     $bcrypt = new Bcrypt();
     try {
-      $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." LIMIT 1");
+      $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." && `activation_code` IS NULL LIMIT 1");
     } catch (DbException $e) {
       $this->logFailedLogin($username, $password);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
@@ -510,12 +534,7 @@ class User extends BaseObject {
       $this->logFailedLogin($username, $password);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
     }
-    $this->id = $_SESSION['id'] = intval($findUsername['id']);
-    $this->name = $_SESSION['name'] = $findUsername['name'];
-    $this->username = $_SESSION['username'] = $findUsername['username'];
-    $this->email = $_SESSION['email'] = $findUsername['email'];
-    $this->usermask = $_SESSION['usermask'] = intval($findUsername['usermask']);
-    $this->avatarPath = $_SESSION['avatarPath'] = $findUsername['avatar_path'];
+    $this->setCurrentSession();
 
     //update last IP address and last active.
     $updateUser = ['username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']];
@@ -530,7 +549,7 @@ class User extends BaseObject {
   }
   public function register($username, $email, $password, $password_confirmation) {
     // shorthand for create_or_update.
-    $user = ['username' => $username, 'about' => '', 'usermask' => [1], 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation];
+    $user = ['username' => $username, 'about' => '', 'usermask' => [1], 'email' => $email, 'password' => $password, 'password_confirmation' => $password_confirmation, 'activation_code' => $this->generateActivationCode()];
     try {
       $registerUser = $this->create_or_update($user);
     } catch (ValidationException $e) {
@@ -541,19 +560,23 @@ class User extends BaseObject {
     if (!$registerUser) {
       return ["location" => "/register.php", "status" => "Database errors were encountered during registration. Please try again later.", 'class' => 'error'];
     }
+    $newUser = new User($this->app, $this->id);
 
-    // otherwise, log this user in.
-    $this->id = $_SESSION['id'] = intval($registerUser);
-    $this->username = $_SESSION['username'] = $user['username'];
-    $this->email = $_SESSION['email'] = $user['email'];
-    $this->usermask = $_SESSION['usermask'] = intval($user['usermask']);
+    // Create activation message
+    $message = Swift_Message::newInstance()
+      ->setSubject('Animurecs account activation')
+      ->setFrom(array('noreply@animurecs.com' => 'Animurecs'))
+      ->setTo(array($newUser->email() => $newUser->name()))
+      ->setBody($newUser->view('activationEmail'), 'text/html');
+    $result = $this->app->mailer->send($message);
 
-    //update last IP address and last active.
-    $currTime = new DateTime("now", $this->app->serverTmeZone);
-    $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR'], 'last_active' => $currTime->format("Y-m-d H:i:s")];
-    $this->create_or_update($updateUser);
-
-    return ["location" => $this->url("register_conversion"), "status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success'];
+    if (!$result) {
+      // activation error. rollback user.
+      $newUser->delete();
+      return ["location" => "/register.php", "status" => "We ran into an error trying to email you. Please check your email and try again.", 'class' => 'error'];
+    }
+    // otherwise, let this user know to activate their account.
+    return ["location" => "/", "status" => "Registration successful! Check your email to activate your account."];
   }
   public function importMAL($malUsername) {
     // imports a user's MAL lists.
@@ -566,7 +589,6 @@ class User extends BaseObject {
     foreach($malList as $entry) {
       $entry['user_id'] = $this->id;
       try {
-        $this->app->logger->err($entry);
         $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
       } catch (DbException $e) {
         $this->app->logger->err($e->__toString());
@@ -688,13 +710,13 @@ class User extends BaseObject {
       }
       $newUser = new User($this->app, $findUserID);
       $newUser->switchedUser = $_SESSION['id'];
+      $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
-      $_SESSION['id'] = $newUser->id;
       $_SESSION['switched_user'] = $newUser->switchedUser;
       return array("location" => $newUser->url('globalFeed'), "status" => "You've switched to ".rawurlencode($newUser->username()).".", 'class' => 'success');
     } else {
       $newUser = new User($this->app, $username);
-      $_SESSION['id'] = $newUser->id;
+      $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
       return array("location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".rawurlencode($newUser->username()).".", 'class' => 'success');
@@ -788,6 +810,22 @@ class User extends BaseObject {
         }
         $title = "Editing ".escape_output($this->username());
         $output = $this->view("edit");
+        break;
+
+      case 'activate':
+        if (!$this->activationCode() || !isset($_REQUEST['code']) || $_REQUEST['code'] != $this->activationCode()) {
+          $this->app->redirect("/", ['status' => 'The activation code you provided was incorrect. Please check your email and try again.', 'class' => 'error']);
+        } else {
+          $this->app->dbConn->stdQuery("UPDATE `users` SET `activation_code` = NULL WHERE `id` = ".intval($this->id));
+          $this->setCurrentSession();
+
+          //update last IP address and last active.
+          $currTime = new DateTime("now", $this->app->serverTmeZone);
+          $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR'], 'last_active' => $currTime->format("Y-m-d H:i:s")];
+          $this->create_or_update($updateUser);
+
+          $this->app->redirect($this->url("register_conversion"), ["status" => "Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'class' => 'success']);
+        }
         break;
 
       case 'mal_import':
@@ -962,11 +1000,7 @@ class User extends BaseObject {
     if ($username === Null) {
       $username = $this->username();
     }
-    $urlParams = "";
-    if (is_array($params)) {
-      $urlParams = http_build_query($params);
-    }
-    return "/".escape_output(self::modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($username))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return parent::url($action, $format, $params, $username);
   }
 }
 ?>

@@ -1,7 +1,8 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
-  $this->check_partial_include(__FILE__);
-
+  if (str_replace("\\", "/", __FILE__) === $_SERVER['SCRIPT_FILENAME']) {
+    echo "This partial cannot be rendered by itself.";
+    exit;
+  }
   // displays the rating timeline for a user or anime over the history of that user or anime's ratings.
   // MUST provide object ID.
   if (!isset($params['id'])) {
@@ -21,6 +22,7 @@
   $params['end'] = (isset($params['end']) && intval($params['end']) > 0) ? intval($params['end']) : microtime(true);
 
   // optional transform to calculate rating metric. default is arithmetic mean.
+  $params['title'] = (isset($params['title'])) ? $params['title'] : "Average rating over time";
   $params['metric'] = (isset($params['metric'])) ? $params['metric'] : "array_mean";
 
   // calculate interval size and set output format based on the interval size.
@@ -37,7 +39,7 @@
   echo "      <div class='fullwidth' id=".escape_output($params['chartDivID']).">
         <div class='timeline'>
           <header>
-          <h3>Average rating over time</h3>
+          <h3>".escape_output($params['title'])."</h3>
           </header>
           <ul>\n";
 

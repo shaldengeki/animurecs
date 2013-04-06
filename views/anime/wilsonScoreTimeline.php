@@ -22,6 +22,7 @@
     'intervals' => $params['intervals'],
     'start' => $startTime,
     'end' => $endTime,
+    'title' => 'Wilson score over time',
     'metric' => 'wilson_score'
   ]);
 

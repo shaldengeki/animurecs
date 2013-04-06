@@ -58,7 +58,7 @@ class Application {
   private $_config, $_classes, $_observers=[], $_statsdConn;
   protected $totalPoints=Null;
   public $achievements,$delayedMessages=[];
-  public $statsd, $logger, $cache, $dbConn, $recsEngine, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
+  public $statsd, $logger, $cache, $dbConn, $recsEngine, $mailer, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
   public $model,$action,$status,$class="";
   public $id=0;
@@ -114,6 +114,16 @@ class Application {
     }
     return $this->recsEngine;
   }
+  private function _connectMailer() {
+    if ($this->mailer === Null) {
+      // Create the Transport
+      $transporter = Swift_SmtpTransport::newInstance(Config::SMTP_HOST, Config::SMTP_PORT, 'ssl')
+        ->setUsername(Config::SMTP_USERNAME)
+        ->setPassword(Config::SMTP_PASSWORD);
+      $this->mailer = Swift_Mailer::newInstance($transporter);
+    }
+    return $this->mailer;
+  }
   private function _loadDependencies() {
     // Loads configuration and all application objects from library files.
     // Connects database, logger, recommendation engine.
@@ -147,19 +157,6 @@ class Application {
       foreach (glob(Config::APP_ROOT."/global/groups/*.php") as $filename) {
         $this->_loadDependency($filename);
       }
-
-      $nonLinkedClasses = count(get_declared_classes());
-
-      // models that have URLs.
-      foreach (glob(Config::APP_ROOT."/global/models/*.php") as $filename) {
-        $this->_loadDependency($filename);
-      }
-    } catch (AppException $e) {
-      $this->logger->alert($e);
-      $this->display_error(500);
-    }
-
-    session_start();
     try {
       $this->cache = $this->_connectCache();
     } catch (CacheException $e) {
@@ -176,11 +173,25 @@ class Application {
     }
     try {
       $this->recsEngine = $this->_connectRecsEngine();
+      $this->mailer = $this->_connectMailer();
     } catch (AppException $e) {
       $this->logger->warning($e->__toString());
       $this->display_exception($e);
     }
-    
+
+      $nonLinkedClasses = count(get_declared_classes());
+
+      // models that have URLs.
+      foreach (glob(Config::APP_ROOT."/global/models/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
+    } catch (AppException $e) {
+      $this->logger->alert($e);
+      $this->display_error(500);
+    }
+
+    session_start();
+
     date_default_timezone_set(Config::SERVER_TIMEZONE);
     $this->serverTimeZone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $this->outputTimeZone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
@@ -411,6 +422,7 @@ class Application {
     }
 
     $redirect = "Location: ".$location.$paramString;
+    $this->logger->err("Redirecting to: ".$redirect);
     header($redirect);
     exit;
   }

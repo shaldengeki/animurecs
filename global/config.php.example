@@ -13,6 +13,11 @@ class Config {
   const RECS_ENGINE_HOST = 'localhost';
   const RECS_ENGINE_PORT = 6275;
 
+  const SMTP_HOST = 'smtp.gmail.com';
+  const SMTP_PORT = 465;
+  const SMTP_USERNAME = 'SMTP_USERNAME';
+  const SMTP_PASSWORD = 'SMTP_PASSWORD';
+
   const APP_ROOT = '/var/www';         // no trailing backslash!
   const ROOT_URL = 'http://your.domain.here';  // no trailing backslashes!
 
