@@ -37,6 +37,9 @@
               <li class="ajaxTab" data-url="<?php echo $this->url('related'); ?>">
                 <a href="#relatedAnime" data-toggle="tab">Related</a>
               </li>
+              <li class="ajaxTab" data-url="<?php echo $this->url('stats'); ?>">
+                <a href="#stats" data-toggle="tab">Stats</a>
+              </li>
             </ul>
             <div class='tab-content'>
               <div class='tab-pane active' id='generalInfo'>
@@ -89,6 +92,9 @@
                 </ul>
               </div>
               <div class='tab-pane' id='relatedAnime'>
+                <p>Loading...</p>
+              </div>
+              <div class='tab-pane' id='stats'>
                 <p>Loading...</p>
               </div>
             </div>

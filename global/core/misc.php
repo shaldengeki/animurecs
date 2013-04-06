@@ -1,5 +1,5 @@
 <?php
-function dot($a, $b) {
+function dot(array $a, array $b) {
   $sum = 0;
   foreach ($a as $key=>$val) {
     if (isset($b[$key])) {
@@ -7,6 +7,47 @@ function dot($a, $b) {
     }
   }
   return $sum;
+}
+function array_mean(array $array) {
+  if (count($array) == 0) {
+    return False;
+  }
+  return array_sum($array)/count($array);
+}
+function standard_deviation(array $array, $sample=False) {
+  $arrayLength = count($array);
+  if ($arrayLength < 1) {
+    return 0;
+  }
+  $mean = array_mean($array);
+  $variance = 0.0;
+  foreach ($array as $i) {
+    $variance += pow($i - $mean, 2);
+  }
+  $variance /= ($sample ? $arrayLength - 1 : $arrayLength);
+  return (float) sqrt($variance);
+}
+function wilson_score(array $array, $min=1, $max=10) {
+  // computes the wilson score for a given array.
+  // assumes input of $key => $value (numeric) form.
+
+  $mean = array_mean($array);
+  $scaledMean = ($mean - $min) / ($max - $min);
+  $length = count($array);
+  if ($length < 1) {
+    return 0;
+  }
+  $stddev = standard_deviation($array);
+
+  $numerator = $scaledMean + ( pow($stddev, 2) / (2 * $length) ) - $stddev * pow($scaledMean * (1 - $scaledMean) / $length + pow($stddev, 2) / (4 * pow($length, 2)) , 0.5);
+  $denominator = (1 + pow($stddev, 2) / $length);
+
+  if ($denominator == 0) {
+    return 0;
+  } else {
+    // rescale the output to fit the input scale.
+    return (($max - $min) * $numerator / $denominator) + $min;
+  }
 }
 
 function joinPaths() {

@@ -104,6 +104,7 @@ class Anime extends BaseObject {
       case 'feed':
       case 'show':
       case 'related':
+      case 'stats':
         if ($this->isApproved() || $authingUser->isStaff()) {
           return True;
         }
@@ -413,6 +414,10 @@ class Anime extends BaseObject {
       case 'related':
         $page = isset($_REQUEST['page']) && is_numeric($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
         echo $this->view('related', ['page' => $page]);
+        exit;
+        break;
+      case 'stats':
+        echo $this->view('stats');
         exit;
         break;
       case 'new':
