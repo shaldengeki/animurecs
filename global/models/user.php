@@ -508,13 +508,16 @@ class User extends BaseObject {
   }
   private function setCurrentSession() {
     // sets the current session to this user.
-    $_SESSION['id'] = $this->id;
-    $_SESSION['name'] = $this->name();
-    $_SESSION['username'] = $this->username();
-    $_SESSION['email'] = $this->email();
-    $_SESSION['usermask'] = $this->usermask();
-    $_SESSION['avatarPath'] = $this->avatarPath();
-    return True;
+    if ($this->id) {
+      $_SESSION['id'] = $this->id;
+      $_SESSION['name'] = $this->name();
+      $_SESSION['username'] = $this->username();
+      $_SESSION['email'] = $this->email();
+      $_SESSION['usermask'] = $this->usermask();
+      $_SESSION['avatarPath'] = $this->avatarPath();
+      return True;
+    }
+    return False;
   }
   public function logIn($username, $password) {
     // rate-limit requests.
@@ -523,6 +526,7 @@ class User extends BaseObject {
       return ["location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error'];
     }
   
+    // check for existence of username and matching password.
     $bcrypt = new Bcrypt();
     try {
       $findUsername = $this->dbConn->queryFirstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->quoteSmart($username)." && `activation_code` IS NULL LIMIT 1");
@@ -534,12 +538,15 @@ class User extends BaseObject {
       $this->logFailedLogin($username, $password);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
     }
-    $this->setCurrentSession();
 
-    //update last IP address and last active.
-    $updateUser = ['username' => $this->username, 'email' => $this->email, 'last_ip' => $_SERVER['REMOTE_ADDR']];
-    $this->create_or_update($updateUser);
-    $this->app->fire('User.logIn', $this);
+    // sign user in.
+    $newUser = new User($this->app, Null, $findUsername['username']);
+    $newUser->setCurrentSession();
+
+    //update last IP address.
+    $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR']];
+    $newUser->create_or_update($updateUser);
+    $newUser->app->fire('User.logIn', $newUser);
     return ["/feed.php", ["status" => "Successfully logged in.", 'class' => 'success']];
   }
   public function logOut() {

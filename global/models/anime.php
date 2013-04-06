@@ -14,6 +14,7 @@ class Anime extends BaseObject {
   protected $imagePath;
 
   protected $entries;
+  protected $latestEntries;
   protected $ratings;
 
   protected $ratingCount;
@@ -323,6 +324,27 @@ class Anime extends BaseObject {
       $returnList[intval($entry['id'])] = $newEntry;
     }
     return $returnList;
+  }
+  public function getLatestEntries() {
+    // retrieves the latest entries for each user for this anime.
+    // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
+    $returnList = $this->dbConn->queryAssoc("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
+                                              SELECT MAX(`id`) AS `id` FROM `anime_lists`
+                                              WHERE `anime_id` = ".intval($this->id)."
+                                              GROUP BY `user_id`
+                                            ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
+                                            WHERE `status` != 0
+                                            ORDER BY `status` ASC, `score` DESC", 'user_id');
+    return $returnList;
+  }
+  public function latestEntries() {
+    if ($this->latestEntries === Null) {
+      $app = $this->app;
+      $this->latestEntries = new EntryGroup($this->app, array_map(function($a) use ($app) {
+        return new AnimeEntry($app, $a['id']);
+      }, $this->getLatestEntries()));
+    }
+    return $this->latestEntries;
   }
   public function getRatings() {
     $users = [];

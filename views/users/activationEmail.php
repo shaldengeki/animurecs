@@ -16,11 +16,11 @@
         </p>
         <h3>Getting Started</h3>
         <p>
-          After you've activated your account, there's a bunch of first steps you can take. If you've got a MyAnimelist account, you can import your list by going to "MAL Import" in <?php echo $this->link('edit', 'your settings'); ?> and typing in your MAL username. Or, you can start adding entries to your list straightaway by going to your profile. Once you've filled it out a little, we'll start to generate some recommendations for you to help you find more anime you'll love!
+          After you've activated your account, there's a bunch of first steps you can take. If you've got a MyAnimelist account, you can import your list by going to "MAL Import" in <a href='<?php echo Config::ROOT_URL.$this->url('edit'); ?>'>your settings</a> and typing in your MAL username. Or, you can start adding entries to your list straightaway by going to your profile. Once you've filled it out a little, we'll start to generate some recommendations for you to help you find more anime you'll love!
         </p>
         <h3>A side note</h3>
         <p>
-          Animurecs is still under pretty heavy development, so on occasion you'll (probably) run into some snags and bugs. If this happens, or if you've just got ideas about how to improve Animurecs, feel free to get in touch with me by <a href='https://animurecs.com/users/shaldengeki'>posting on my profile</a>, or messaging me on Twitter at <a href='http://twitter.com/guocharles'>@guocharles</a>. I'd love to hear from you, even if you don't have a problem to report!
+          Animurecs is still under pretty heavy development, so on occasion you'll (probably) run into some snags and bugs. If this happens, or if you have ideas about how to improve Animurecs, feel free to get in touch with me by <a href='https://animurecs.com/users/shaldengeki'>posting on my profile</a>, or messaging me on Twitter at <a href='http://twitter.com/guocharles'>@guocharles</a>. I'd love to hear from you, even if you don't have a problem to report!
         </p>
         <hr />
         <p>

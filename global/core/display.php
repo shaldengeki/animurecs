@@ -109,15 +109,19 @@ function paginate($baseLink, $currPage=1, $maxPages=1) {
     return $output;
 }
 
-function display_status_dropdown($select_id="anime_list[status]", $class="", $selected=False) {
-  $statuses = array(
+function statusArray() {
+  return [
       0 => "Remove",
       1 => "Currently Watching",
       2 => "Completed",
       3 => "On Hold",
       4 => "Dropped",
       6 => "Plan to Watch"
-  );
+  ];
+}
+
+function display_status_dropdown($select_id="anime_list[status]", $class="", $selected=False) {
+  $statuses = statusArray();
   $output = "<select class='".escape_output($class)."' id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
   foreach ($statuses as $id => $text) {
     $output .= "<option value='".intval($id)."'".(($selected == intval($id)) ? "selected='selected'" : "").">".escape_output($text)."</option>\n";
