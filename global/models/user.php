@@ -231,6 +231,7 @@ class User extends BaseObject {
       case 'discover':
       case 'friendRecs':
       case 'recommendations':
+      case 'groupwatches':
       case 'mal_import':
       case 'edit':
         if ($authingUser->id == $this->id || ( ($authingUser->isStaff()) && $authingUser->usermask > $this->usermask) ) {
@@ -947,7 +948,9 @@ class User extends BaseObject {
       case 'friendRecs':
         echo $this->view('friendRecs');
         exit;
-
+      case 'groupwatches':
+        echo $this->view('groupwatches');
+        exit;
       default:
       case 'index':
         $title = "All Users";

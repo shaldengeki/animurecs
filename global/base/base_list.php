@@ -78,6 +78,17 @@ abstract class BaseList extends BaseObject {
 
     // check to see if this is an update.
     $entryGroup = $this->entries();
+    if (!isset($entry['id'])) {
+      // see if there are any entries matching these params for this user.
+      try {
+        $checkExists = $this->dbConn->queryFirstValue("SELECT `id` FROM `".static::$modelTable."` WHERE ".implode(" && ", $params)." LIMIT 1");
+
+        // if entry exists, set its ID.
+        $entry['id'] = intval($checkExists);
+      } catch (DbException $e) {
+        // entry does not exist, no need to do anything.
+      }
+    }
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
       $this->beforeUpdate($entry);
       $updateDependency = $this->dbConn->stdQuery("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");

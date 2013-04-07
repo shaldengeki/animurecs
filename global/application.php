@@ -422,7 +422,6 @@ class Application {
     }
 
     $redirect = "Location: ".$location.$paramString;
-    $this->logger->err("Redirecting to: ".$redirect);
     header($redirect);
     exit;
   }
