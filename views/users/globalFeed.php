@@ -12,13 +12,15 @@
           <li>3/15/13- fixed these up a little; search on /anime/ and you can now browse anime through "discover"</li>
           <li>3/17/13- added info tabs atop anime pages and alpha version of "related" anime; will have stats later</li>
           <li>3/17/13- you can also search for anime via the topbar now!!</li>
+          <li>4/6/13- rudimentary anime stats tab.</li>
         </ul>
       </li>
       <li><s>Fee</s>d
         <ul>
           <li>3/16/13- infinite scrollback should now work for every activity feed on the site</li>
           <li>still need to implement fetching updates in real time</li>
-          <li>also, email notifications (should probably be in its own bullet) of events (signup, settings changed, big stuff happening)
+          <li>also, email notifications (should probably be in its own bullet) of events (signup, settings changed, big stuff happening)</li>
+          <li>4/6/13- email notification for user signup finished.</li>
         </ul>
       </li>
       <li><s>Recommend</s>ations
@@ -52,6 +54,7 @@
           <li>basic framework has been completed, one toy example added</li>
           <li>1/1/13- waiting on ideas from AKJ (and hopefully images) so i can start cranking these out</li>
           <li>3/15/13- have a bunch of ideas now, thanks akj. need images and a couple hours to get em all done at once.</li>
+          <li>4/6/13- a couple achieves are done but there's many more left. still need images.</li>
         </ul>
       </li>
       <li>Groups
