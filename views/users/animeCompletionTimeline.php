@@ -4,6 +4,7 @@
 
   $params['chartDivID'] = isset($params['chartDivID']) ? $params['chartDivID'] : "animeCompletionChart_div";
   $params['intervals'] = (intval($params['intervals']) > 0) ? intval($params['intervals']) : 12;
+  $params['title'] = isset($params['title']) ? $params['title'] : "Anime completion over time";
 
   // first, get time range of this user's anime completions.
   $times = $this->app->dbConn->queryFirstRow("SELECT UNIX_TIMESTAMP(MIN(`time`)) AS `min`, UNIX_TIMESTAMP(MAX(`time`)) AS `max` FROM `anime_lists` WHERE (`user_id` = ".intval($this->id)." && `status` = 2)");
@@ -22,15 +23,10 @@
                                               WHERE (`user_id` = ".intval($this->id)." && `status` = 2) 
                                               GROUP BY `groupedTime` 
                                               ORDER BY `groupedTime` ASC");
-  echo "      <div class='fullwidth' id=".escape_output($params['chartDivID']).">
-        <div class='timeline'>
-          <header>
-          <h3>Anime completion over time</h3>
-          </header>
-          <ul>\n";
   $lastTime = $userAnimeTimeline[0]['groupedTime'];
   $maxAnime = 0;
   $maxAnimeTime = 0;
+  $finishedTimeline = [];
   foreach ($userAnimeTimeline as $timePoint) {
     if ($timePoint['count'] > $maxAnime) {
       $maxAnime = $timePoint['count'];
@@ -39,13 +35,12 @@
     if ($timePoint['groupedTime'] - $lastTime > $groupBySeconds) {
       while ($lastTime < $timePoint['groupedTime'] - $groupBySeconds) {
         $lastTime += $groupBySeconds;
-        echo "            <li>".date($dateFormatString, $lastTime).": 0</li>\n";
+        $finishedTimeline[] = [date($dateFormatString, $lastTime), 0];
       }
     }
-    echo "            <li>".date($dateFormatString, $timePoint['groupedTime']).": ".intval($timePoint['count'])."</li>\n";
+    $finishedTimeline[] = [date($dateFormatString, $timePoint['groupedTime']), intval($timePoint['count'])];
     $lastTime = $timePoint['groupedTime'];
   }
-  echo "          </ul>
-        </div>
-      </div>\n";
+  $params['data'] = $finishedTimeline;
+  echo $this->app->view('timeline', $params);
 ?>

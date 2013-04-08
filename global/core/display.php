@@ -34,7 +34,7 @@ function format_mysql_timestamp($date) {
 }
 
 function escape_output($input) {
-  if ($input == '' || $input == 'NULL') {
+  if ($input === '' || $input === 'NULL') {
     return '';
   }
   return htmlspecialchars(html_entity_decode($input, ENT_QUOTES, "UTF-8"), ENT_QUOTES, "UTF-8");

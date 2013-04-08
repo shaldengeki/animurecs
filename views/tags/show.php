@@ -26,7 +26,7 @@
 <div class='row-fluid'>
   <div class='span2'>
     <h2>Tags:</h2>
-    <?php echo $animeGroup->tag_list(); ?>
+    <?php echo $animeGroup->tagList(); ?>
   </div>
   <div class='span10'>
     <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>

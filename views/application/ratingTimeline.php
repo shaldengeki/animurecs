@@ -36,30 +36,24 @@
   if ($groupBySeconds < 86400) {
     $groupBySeconds = 86400;
   }
-  echo "      <div class='fullwidth' id=".escape_output($params['chartDivID']).">
-        <div class='timeline'>
-          <header>
-          <h3>".escape_output($params['title'])."</h3>
-          </header>
-          <ul>\n";
-
   $timeline = $this->dbConn->stdQuery("SELECT `".$params['uniqueIDField']."`, UNIX_TIMESTAMP(`time`) AS `time`, `score` FROM `anime_lists`
                       WHERE (`".$params['idField']."` = ".intval($params['id'])." && `score` != 0 && `status` != 0)
                       ORDER BY `time` ASC");
   $currTime = $params['start'];
-  $ratings = array();
+  $ratings = [];
   $ratingSum = 0;
   $ratingNum = 0;
   $maxRating = 0;
   $maxRatingTime = 0;
+  $finishedTimeline = [];
   while ($timelinePoint = $timeline->fetch_assoc()) {
     if ($timelinePoint['time'] > $currTime + $groupBySeconds) {
       //done with this chunk. output its stats and continue.
       $currentAvg = round($params['metric']($ratings), 2);
-      echo "            <li>".date($dateFormatString, $currTime).": ".$currentAvg."</li>\n";
+      $finishedTimeline[] = [date($dateFormatString, $currTime), $currentAvg];
       $currTime += $groupBySeconds;
       while ($timelinePoint['time'] > $currTime + $groupBySeconds) {
-        echo "            <li>".date($dateFormatString, $currTime).": ".$currentAvg."</li>\n";
+        $finishedTimeline[] = [date($dateFormatString, $currTime), $currentAvg];
         $currTime += $groupBySeconds;
       }
     }
@@ -80,9 +74,9 @@
     $currTime = microtime(true);
   }
   $currentAvg = round($params['metric']($ratings), 2);
-  echo "            <li>".date($dateFormatString, $currTime).": ".$currentAvg."</li>
-          </ul>
-        </div>
-      </div>\n";
-
+  if ($currentAvg) {
+    $finishedTimeline[] = [date($dateFormatString, $currTime), $currentAvg];
+  }
+  $params['data'] = $finishedTimeline;
+  echo $this->view('timeline', $params);
 ?>

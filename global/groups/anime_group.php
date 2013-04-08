@@ -68,7 +68,7 @@ class AnimeGroup extends BaseGroup {
     return $this->_tags;
   }
 
-  public function tag_list($n=50) {
+  public function tagList($n=50) {
     // displays a list of tags for this group of anime, sorted by frequency of tag.
     $tagCounts = $this->tagCounts();
     $output = "<ul class='tagList'>\n";

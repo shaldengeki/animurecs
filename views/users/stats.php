@@ -11,6 +11,11 @@
   </div>
 </div>
 <div class='row-fluid'>
+  <div class='span12'>
+    <?php echo $this->view('favouriteTags'); ?>
+  </div>
+</div>
+<div class='row-fluid'>
   <div class='span6'>
     <?php echo $this->view('animeCompletionTimeline'); ?>
   </div>

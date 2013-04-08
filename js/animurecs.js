@@ -93,6 +93,10 @@ $.extend( $.fn.dataTableExt.oPagination, {
   }
 } );
 
+$.fn.hasAttr = function(name) {  
+   return this.attr(name) !== undefined;
+};
+
 function initDataTable(elt) {
   // see if there's a default-sort column. if not, default to the first column.
   defaultSortColumn = $(elt).find('thead > tr > th').index($(elt).find('thead > tr > th.dataTable-default-sort'));
@@ -100,17 +104,9 @@ function initDataTable(elt) {
     defaultSortColumn = 0;
     defaultSortOrder = "asc";
   } else {
-    if (typeof $(elt).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order") != 'undefined') {
-      defaultSortOrder = $(elt).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order");
-    } else {
-      defaultSortOrder = "asc";
-    }
+    defaultSortOrder = $(elt).find('thead > tr > th.dataTable-default-sort').hasAttr("data-sort-order") ? $(elt).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order") : "asc";
   }
-  if(typeof $(elt).attr('data-recordsPerPage') != 'undefined') {
-    recordsPerPage = $(elt).attr('data-recordsPerPage');
-  } else {
-    recordsPerPage = 25;
-  }
+  recordsPerPage = $(elt).hasAttr('data-recordsPerPage') ? $(elt).attr('data-recordsPerPage') : 25;
   $(elt).dataTable({
     "sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "sPaginationType": "bootstrap",
@@ -217,7 +213,7 @@ function loadAjaxTab(elt) {
   });
 
   // load page from data-url if necessary.
-  if (typeof $(elt).parent().attr('loaded') == 'undefined' && typeof $(elt).parent().attr('loading') == 'undefined') {
+  if (!$(elt).parent().hasAttr('loaded') && !$(elt).parent().hasAttr('loading')) {
     $(elt).parent().attr('loading', true);
     $(pageTarget).load(remoteTarget, function() {
       $(elt).parent().removeAttr('loading');
@@ -235,7 +231,8 @@ function mergeOptions(obj1, obj2) {
   return obj3;
 }
 
-function renderGraphs(elt) {
+function renderTimelines(elt) {
+  // jqplot timelines.
   var globalSettings = {
     animate: true,
     seriesColors: ['#0064e1', '#00b9e1'],
@@ -262,7 +259,7 @@ function renderGraphs(elt) {
     },
   };
 
-  //timelines
+  // render each timeline.
   $(elt).find('.timeline').each(function() {
     var data = [];
     var maximum = -100000000;
@@ -270,7 +267,7 @@ function renderGraphs(elt) {
     var integerValues = true;
     var chartID = $(this).parent().attr('id');
     $(this).children('ul').children('li').each(function() {
-      var x = $(this).text().split(': ');
+      var x = $(this).text().split(',');
       var time = x[0];
       var value = parseFloat(x[1]);
       if ($(this).parent().children('li').length>7)
@@ -339,6 +336,89 @@ function renderGraphs(elt) {
   });
 }
 
+function renderHistogram(elt) {
+  var chartID = $(elt).attr('id');
+  var chartDataID = chartID + "-csv";
+  var data = d3.csv.parse(d3.select("#" + chartDataID).text());
+  var valueLabelWidth = $(elt).hasAttr('data-valueLabelWidth') ? parseInt($(elt).attr('data-valueLabelWidth')): 40; // space reserved for value labels (right)
+  var barHeight = $(elt).hasAttr('data-barHeight') ? parseInt($(elt).attr('data-barHeight')): 20; // height of one bar
+  var barLabelWidth = $(elt).hasAttr('data-barLabelWidth') ? parseInt($(elt).attr('data-barLabelWidth')): 130; // space reserved for bar labels
+  var barLabelPadding = $(elt).hasAttr('data-barLabelPadding') ? parseInt($(elt).attr('data-barLabelPadding')): 5; // padding between bar and bar labels (left)
+  var gridLabelHeight = $(elt).hasAttr('data-gridLabelHeight') ? parseInt($(elt).attr('data-gridLabelHeight')): 18; // space reserved for gridline labels
+  var gridChartOffset = $(elt).hasAttr('data-gridChartOffset') ? parseInt($(elt).attr('data-gridChartOffset')): 3; // space between start of grid and first bar
+  var maxBarWidth = $(elt).hasAttr('data-maxBarWidth') ? parseInt($(elt).attr('data-maxBarWidth')): 275; // width of the bar with the max value
+  var ticks = $(elt).hasAttr('data-ticks') ? parseInt($(elt).attr('data-ticks')): 5; // number of gridlines
+
+  // accessor functions 
+  var barLabel = function(d) { return d['Category']; };
+  var barValue = function(d) { return parseFloat(d['Value']); };
+   
+  // scales
+  var yScale = d3.scale.ordinal().domain(d3.range(0, data.length)).rangeBands([0, data.length * barHeight]);
+  var y = function(d, i) { return yScale(i); };
+  var yText = function(d, i) { return y(d, i) + yScale.rangeBand() / 2; };
+  var x = d3.scale.linear().domain([0, d3.max(data, barValue)]).range([0, maxBarWidth]);
+
+  // svg container element
+  var chart = d3.select('#' + chartID).append("svg")
+    .attr('width', maxBarWidth + barLabelWidth + valueLabelWidth)
+    .attr('height', gridLabelHeight + gridChartOffset + data.length * barHeight);
+  // grid line labels
+  var gridContainer = chart.append('g')
+    .attr('transform', 'translate(' + barLabelWidth + ',' + gridLabelHeight + ')'); 
+  gridContainer.selectAll("text").data(x.ticks(ticks)).enter().append("text")
+    .attr("x", x)
+    .attr("dy", -3)
+    .attr("text-anchor", "middle")
+    .text(String);
+  // vertical grid lines
+  gridContainer.selectAll("line").data(x.ticks(ticks)).enter().append("line")
+    .attr("x1", x)
+    .attr("x2", x)
+    .attr("y1", 0)
+    .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
+    .style("stroke", "#ccc");
+  // bar labels
+  var labelsContainer = chart.append('g')
+    .attr('transform', 'translate(' + (barLabelWidth - barLabelPadding) + ',' + (gridLabelHeight + gridChartOffset) + ')'); 
+  labelsContainer.selectAll('text').data(data).enter().append('text')
+    .attr('y', yText)
+    .attr('stroke', 'none')
+    .attr('fill', 'black')
+    .attr("dy", ".35em") // vertical-align: middle
+    .attr('text-anchor', 'end')
+    .text(barLabel);
+  // bars
+  var barsContainer = chart.append('g')
+    .attr('transform', 'translate(' + barLabelWidth + ',' + (gridLabelHeight + gridChartOffset) + ')'); 
+  barsContainer.selectAll("rect").data(data).enter().append("rect")
+    .attr('y', y)
+    .attr('height', yScale.rangeBand())
+    .attr('width', function(d) { return x(barValue(d)); })
+    .attr('stroke', 'white')
+    .attr('fill', 'steelblue');
+  // bar value labels
+  barsContainer.selectAll("text").data(data).enter().append("text")
+    .attr("x", function(d) { return x(barValue(d)); })
+    .attr("y", yText)
+    .attr("dx", 3) // padding-left
+    .attr("dy", ".35em") // vertical-align: middle
+    .attr("text-anchor", "start") // text-align: right
+    .attr("fill", "black")
+    .attr("stroke", "none")
+    .text(function(d) { return d3.round(barValue(d), 2); });
+  // start line
+  barsContainer.append("line")
+    .attr("y1", -gridChartOffset)
+    .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
+    .style("stroke", "#000");
+}
+
+function renderGraphs(elt) {
+  // renders all the graphs.
+  renderTimelines(elt);
+}
+
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
   $(elt).find('.dropdown-toggle').dropdown();
@@ -350,10 +430,6 @@ function initInterface(elt) {
     initDataTable(this);
   });
 
-  /* D3 plot initialization */
-  if ($(elt).find('#vis').length > 0) {
-    drawLargeD3Plot();
-  }
   renderGraphs(elt);
 
   /* Disable buttons on click */
@@ -361,7 +437,7 @@ function initInterface(elt) {
     $(this).click( function() {
       $(this).off('click');
       $(this).addClass("disabled");
-      if (typeof $(this).attr('data-loading-text') == 'undefined') {
+      if (!$(this).hasAttr('data-loading-text')) {
         $(this).text("Loading...");
       } else {
         $(this).text($(this).attr('data-loading-text'));
@@ -371,16 +447,8 @@ function initInterface(elt) {
 
   /* token input initialization */
   $(elt).find('.token-input').each(function() {
-    if(typeof $(this).attr('data-tokenLimit') != 'undefined') {
-      tokenLimit = $(this).attr('data-tokenLimit');
-    } else {
-      tokenLimit = null;
-    }
-    if(typeof $(this).attr('data-value') != 'undefined') {
-      prePopulated = $.secureEvalJSON($(this).attr('data-value'));
-    } else {
-      prePopulated = null;
-    }
+    tokenLimit = $(this).hasAttr('data-tokenLimit') ? $(this).attr('data-tokenLimit') : null;
+    prePopulated = $(this).hasAttr('data-value') ? $.secureEvalJSON($(this).attr('data-value')) : null;
     $(this).tokenInput($(this).attr("data-url"), {
       queryParam: "term",
       minChars: 3,
@@ -394,21 +462,9 @@ function initInterface(elt) {
 
   /* autocomplete initialization */
   $(elt).find('.autocomplete').each(function() {
-    if(typeof $(this).attr('data-valueField') != 'undefined') {
-      valueField = $(this).attr('data-valueField');
-    } else {
-      valueField = "value";
-    }
-    if(typeof $(this).attr('data-labelField') != 'undefined') {
-      labelField = $(this).attr('data-labelField');
-    } else {
-      labelField = "label";
-    }
-    if(typeof $(this).attr('data-outputElement') != 'undefined') {
-      outputElement = $(this).attr('data-outputElement');
-    } else {
-      outputElement = $(this);
-    }
+    valueField = $(this).hasAttr('data-valueField') ? $(this).attr('data-valueField') : "value";
+    labelField = $(this).hasAttr('data-labelField') ? $(this).attr('data-labelField') : "label";
+    outputElement = $(this).hasAttr('data-outputElement') ? $(this).attr('data-outputElement') : $(this);
     $(this).autocomplete({
         source: $(this).attr('data-url'),
         minLength: 3,
@@ -462,7 +518,7 @@ function initInterface(elt) {
   $(window).unbind("scroll");
   $(window).scroll(function() {
     $(elt).find('ul.ajaxFeed:visible').each(function() {
-      if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && typeof $(this).attr('loading') == 'undefined') {
+      if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && !$(this).hasAttr('loading')) {
         //get last-loaded list change and load more past this.
         $(this).attr('loading', 'true');
         // find the lowest feedDate on the page.
@@ -470,14 +526,8 @@ function initInterface(elt) {
           return $(this).attr('data-time');
         }).get();
         var lastTime = Array.min(feedDates);
-        var anime_id = "";
-        if (typeof $(this).attr('anime_id') == 'undefined') {
-          anime_id = $(this).attr('anime_id');
-        }
-        var user_id = "";
-        if (typeof $(this).attr('user_id') == 'undefined') {
-          user_id = $(this).attr('user_id');
-        }
+        var anime_id = $(this).hasAttr('anime_id') ? $(this).attr('anime_id') : "";
+        var user_id = $(this).hasAttr('user_id') ? $(this).attr('user_id') : "";
         if ($(this).attr('data-url').indexOf('?') < 0) {
           joinChar = '?';
         } else {
