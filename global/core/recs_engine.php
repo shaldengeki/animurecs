@@ -50,9 +50,7 @@ class RecsEngine {
   }
   public function similarAnime(Anime $anime, $start=0, $n=20) {
     // fetches the top n most feature-similar anime for a given anime.
-    $result = $this->get("anime", $anime->id, "similar", array('start' => intval($start), 'n' => intval($n)));
-    $anime->app->logger->err("Result: ".print_r($result, True));
-    return $result;
+    return $this->get("anime", $anime->id, "similar", array('start' => intval($start), 'n' => intval($n)));
   }
   public function similarUsers(User $user, $n=20) {
     // fetches the top n most feature-similar users for a given user.
