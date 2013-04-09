@@ -85,7 +85,7 @@ function paginate($baseLink, $currPage=1, $maxPages=Null, $ajaxTarget=Null) {
   if ($ajaxTarget) {
     $link = "<a class='ajaxLink' data-url='".$baseLink."[PAGE]' data-target='".$ajaxTarget."' href='".$baseLink."[PAGE]'>";
   } else {
-    $link = "<a href='".$baseLink;
+    $link = "<a href='".$baseLink."[PAGE]'>";
   }
 
   $output = "<div class='pagination pagination-centered'>

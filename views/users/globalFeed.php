@@ -13,6 +13,7 @@
           <li>3/17/13- added info tabs atop anime pages and alpha version of "related" anime; will have stats later</li>
           <li>3/17/13- you can also search for anime via the topbar now!!</li>
           <li>4/6/13- rudimentary anime stats tab.</li>
+          <li>4/8/13- can now flip through pages of related anime</li>
         </ul>
       </li>
       <li><s>Fee</s>d
@@ -30,6 +31,7 @@
           <li>1/1/13- currently the way recs are ported from the original data to new animurecs users is <em>really</em> rough; lots of improvement to be had here</li>
           <li>3/15/13- i think i'm going to restructure recs in the backend a little so users can "dismiss" and otherwise handle them instead of having to manipulate their lists</li>
           <li>3/17/13- improved accuracy of recs significantly; next is adding "dismiss" feature</li>
+          <li>4/8/13- can now flip through pages of recs</li>
         </ul>
       </li>
       <li>Landing page
