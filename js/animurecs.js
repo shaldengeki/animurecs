@@ -97,6 +97,18 @@ $.fn.hasAttr = function(name) {
    return this.attr(name) !== undefined;
 };
 
+$.fn.disable = function() {
+    return this.each(function() {
+        if (typeof this.disabled != "undefined") this.disabled = true;
+    });
+};
+
+$.fn.enable = function() {
+    return this.each(function() {
+        if (typeof this.disabled != "undefined") this.disabled = false;
+    });
+};
+
 function initDataTable(elt) {
   // see if there's a default-sort column. if not, default to the first column.
   defaultSortColumn = $(elt).find('thead > tr > th').index($(elt).find('thead > tr > th.dataTable-default-sort'));
@@ -200,6 +212,21 @@ function submitListUpdate(elt) {
   $.post(url, { "anime_list[user_id]": user_id, "anime_list[anime_id]": anime_id, "anime_list[status]": status, "anime_list[score]": score, "anime_list[episode]": episode}).complete(function() {
     revertListEditForm(elt);
   });
+}
+
+function fetchAjax() {
+  var remoteTarget = $(this).attr('data-url');
+  var pageTarget = $(this).attr('data-target');
+
+  // fade target.
+  $(pageTarget).fadeTo("fast", 0.2);
+
+  // fetch data.
+  $(pageTarget).load(remoteTarget, function() {
+    $(pageTarget).fadeTo("fast", 1);
+    initInterface(pageTarget);
+  });
+  $(this).one('click', fetchAjax);
 }
 
 function loadAjaxTab(elt) {
@@ -554,6 +581,15 @@ function initInterface(elt) {
       loadAjaxTab(e.target); // activated tab
     });
   });
+
+  /* ajax link autoloading. */
+  $(elt).find('.ajaxLink').each(function() {
+    $(this).one('click', fetchAjax);
+    $(this).click(function(e) {
+      e.preventDefault();
+      $(e.target).one('click', fetchAjax);
+    });
+  })
 
   /* feed entry menu initialization */
   $(elt).find('.feedEntry').each(function() {

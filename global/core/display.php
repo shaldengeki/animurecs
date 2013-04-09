@@ -77,33 +77,47 @@ function js_redirect_to($redirect_array) {
   exit;
 }
 
-function paginate($baseLink, $currPage=1, $maxPages=1) {
+function paginate($baseLink, $currPage=1, $maxPages=Null, $ajaxTarget=Null) {
   // displays a pagination bar.
   //baseLink should be everything up to, say, &page=
   $pageIncrement = 10;
   $displayFirstPages = 10;
+  if ($ajaxTarget) {
+    $link = "<a class='ajaxLink' data-url='".$baseLink."[PAGE]' data-target='".$ajaxTarget."' href='".$baseLink."[PAGE]'>";
+  } else {
+    $link = "<a href='".$baseLink;
+  }
+
   $output = "<div class='pagination pagination-centered'>
   <ul>\n";
   $i = 1;
   if ($currPage > 1) {
-    $output .= "    <li><a href='".$baseLink.($currPage-1)."'>«</a></li>\n";
+    $output .= "    <li>".str_replace("[PAGE]", $currPage-1, $link)."«</a></li>\n";
   }
-  while ($i <= $maxPages) {
-  if ($i == $currPage) {
-    $output .= "    <li class='active'><a href='#'>".$i."</a></li>";     
-  } else {
-    $output .= "    <li><a href='".$baseLink.$i."'>".$i."</a></li>";
-  }
-      if ($i < $displayFirstPages || abs($currPage - $i) <= $pageIncrement ) {
-          $i++;
-      } elseif ($i >= $displayFirstPages && $maxPages <= $i + $pageIncrement) {
-          $i++;
-      } elseif ($i >= $displayFirstPages && $maxPages > $i + $pageIncrement) {
-          $i += $pageIncrement;
+  if ($maxPages !== Null) {
+    while ($i <= $maxPages) {
+      if ($i == $currPage) {
+        $output .= "    <li class='active'><a href='#'>".$i."</a></li>";     
+      } else {
+        $output .= "    <li>".str_replace("[PAGE]", $i, $link).$i."</a></li>";
       }
+      if ($i < $displayFirstPages || abs($currPage - $i) <= $pageIncrement ) {
+        $i++;
+      } elseif ($i >= $displayFirstPages && $maxPages <= $i + $pageIncrement) {
+        $i++;
+      } elseif ($i >= $displayFirstPages && $maxPages > $i + $pageIncrement) {
+        $i += $pageIncrement;
+      }
+    }
+  } else {
+    while ($i < $currPage) {
+        $output .= "    <li>".str_replace("[PAGE]", $i, $link).$i."</a></li>";
+        $i++;
+    }
+    $output .= "<li class='active'><a href='#'>".$currPage."</a></li>";
   }
-  if ($currPage < $maxPages) {
-    $output .= "    <li><a href='".$baseLink.($currPage+1)."'>»</a></li>\n";
+  if ($maxPages === Null || $currPage < $maxPages) {
+    $output .= "    <li>".str_replace("[PAGE]", $currPage+1, $link)."»</a></li>\n";
   }
   $output .= "  </ul>\n</div>\n";
     return $output;

@@ -16,7 +16,11 @@
 
   $firstAnime = Anime::first($this->app);
 ?>
-<div class='page-header'>
-  <h1>Recommended for you <small>Some series we think you'll like</small></h1>
+<div id='recommendation-content'>
+  <div class='page-header'>
+    <h1>Recommended for you <small>Some series we think you'll like</small></h1>
+  </div>
+  <?php echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content'); ?>
+  <?php echo $firstAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $predictions)); ?>
+  <?php echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content'); ?>
 </div>
-<?php echo $firstAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $predictions)); ?>
