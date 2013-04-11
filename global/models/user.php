@@ -554,7 +554,7 @@ class User extends BaseObject {
     $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR']];
     $newUser->create_or_update($updateUser);
     $newUser->app->fire('User.logIn', $newUser);
-    return ["/feed.php", ["status" => "Successfully logged in.", 'class' => 'success']];
+    return [$newUser->url("globalFeed"), ["status" => "Successfully logged in.", 'class' => 'success']];
   }
   public function logOut() {
     $_SESSION = array();

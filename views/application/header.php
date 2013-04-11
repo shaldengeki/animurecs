@@ -5,6 +5,8 @@
   }
   $firstAnime = Anime::first($this);
   $params['container'] = isset($params['container']) ? $params['container'] : True;
+  $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
+  $params['subtitle'] = isset($params['subtitle']) && $params['subtitle'] ? $params['subtitle'] : "Social Anime Recommendations";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,7 +15,7 @@
     <meta name='description' content="Animurecs is an anime-centric social network that gives you personalized recommendations by learning your tastes. Discover new anime you'll love today!" />
     <meta name='keywords' content='anime, recommendations, anime list, recommend, top anime' />
 
-    <title><?php echo (isset($params['title']) ? escape_output($params['title']) : "Animurecs").(isset($params['subtitle']) && $params['subtitle'] != '' ? ' - '.escape_output($params['subtitle']) : ' - Social Anime Recommendations'); ?></title>
+    <title><?php echo escape_output($params['title'])." - ".escape_output($params['subtitle']); ?></title>
     <link href='/favicon.ico' rel='shortcut icon' />
 
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
@@ -45,18 +47,6 @@
     <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js' type='text/javascript'></script>
     <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
     <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=0.3' type='text/javascript'></script>
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-37523517-1']);
-      var pluginUrl = '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
-      _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
-      _gaq.push(['_trackPageview']);
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
   </head>
   <body>
     <div class='navbar navbar-inverse navbar-fixed-top'>
@@ -84,16 +74,16 @@
 <?php
   if ($this->user->loggedIn()) {
 ?>
-            <li><?php echo $firstAnime->view('searchForm', array(
-              'form' => array(
+            <li><?php echo $firstAnime->view('searchForm', [
+              'form' => [
                   'class' => 'navbar-search'
-                ),
-              'searchInput' => array(
+                ],
+              'searchInput' => [
                   'id' => 'navbar-anime-search',
                   'class' => 'autocomplete search-query'
-                ),
+                ],
               'submitButton' => False
-            )); ?></li>
+            ]); ?></li>
             <li id='navbar-alerts'>
 <?php
     if ($this->user->outstandingFriendRequests) {
@@ -128,7 +118,7 @@
   } else {
 ?>
                 <li>
-                  <?php echo $this->user->view('login'); ?>
+                  <?php echo $this->user->view('login', $params); ?>
                 </li>
 <?php
   }
