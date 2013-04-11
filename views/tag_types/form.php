@@ -1,26 +1,36 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+  $firstTagType = TagType::first($this->app);
+  $tagType = isset($params['tagType']) ? $params['tagType'] : $this;
+
 ?>
-    <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-inline')); ?>
-      <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($this->id)."' />"; ?>
-      <?php echo $this->input('created_user_id', ['type' => 'hidden', 'value' => ($this->id ? $this->createdUser()->id : $this->app->user->id)]); ?>
+    <?php echo $tagType->app->form(array('action' => ($tagType->id === 0) ? $tagType->url("new") : $tagType->url("edit"), 'class' => 'form-inline')); ?>
+      <?php echo ($tagType->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($tagType->id)."' />"; ?>
+      <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser()->id : $tagType->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag_type[name]'>Name</label>
           <div class='controls'>
-            <?php echo $this->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
+            <?php echo $tagType->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag_type[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='tag_type[description]' rows='3' id='tag_type[description]'><?php echo ($this->id === 0) ? "" : escape_output($this->description); ?></textarea>
+            <textarea class='field span4' name='tag_type[description]' rows='3' id='tag_type[description]'><?php echo ($tagType->id === 0) ? "" : escape_output($tagType->description); ?></textarea>
           </div>
         </div>
         <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Create Tag Type" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <button type='submit' class='btn btn-primary'><?php echo ($tagType->id === 0) ? "Create Tag Type" : "Save changes"; ?></button>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($tagType->id === 0) ? "Go back" : "Discard changes"; ?></a>
+<?php
+  if ($tagType->id !== 0) {
+?>
+          <a class='btn btn-danger' href='<?php echo $tagType->url('delete', Null, ['csrf_token' => $this->app->csrfToken]); ?>'>Delete</a>
+<?php
+  }
+?>
         </div>
       </fieldset>
     </form>

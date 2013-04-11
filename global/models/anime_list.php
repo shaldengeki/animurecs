@@ -45,7 +45,7 @@ class AnimeList extends BaseList {
       $targetUser = $this->user();
     } else {
       try {
-        $targetUser = isset($_POST['anime_list']['user_id']) ? new User($this->app, intval($_POST['anime_list']['user_id'])) : $this->app->user;
+        $targetUser = isset($_POST['anime_lists']['user_id']) ? new User($this->app, intval($_POST['anime_lists']['user_id'])) : $this->app->user;
         if ($targetUser->id !== 0) {
           $targetUser->getInfo();
         } else {
@@ -69,27 +69,27 @@ class AnimeList extends BaseList {
         break;
       case 'new':
       case 'edit':
-        if (isset($_REQUEST['anime_list']) && is_array($_REQUEST['anime_list'])) {
-          $_POST['anime_list'] = $_REQUEST['anime_list'];
+        if (isset($_REQUEST['anime_lists']) && is_array($_REQUEST['anime_lists'])) {
+          $_POST['anime_lists'] = $_REQUEST['anime_lists'];
         }
-        if (isset($_POST['anime_list']) && is_array($_POST['anime_list'])) {
+        if (isset($_POST['anime_lists']) && is_array($_POST['anime_lists'])) {
           // filter out any blank values to fill them with the previous entry's values.
-          foreach ($_POST['anime_list'] as $key=>$value) {
-            if ($_POST['anime_list'][$key] === '') {
-              unset($_POST['anime_list'][$key]);
+          foreach ($_POST['anime_lists'] as $key=>$value) {
+            if ($_POST['anime_lists'][$key] === '') {
+              unset($_POST['anime_lists'][$key]);
             }
           }
-          if (!isset($_POST['anime_list']['id'])) {
+          if (!isset($_POST['anime_lists']['id'])) {
             // fill default values from the last entry for this anime.
-            $lastEntry = $this->uniqueList()[intval($_POST['anime_list']['anime_id'])];
+            $lastEntry = $this->uniqueList()[intval($_POST['anime_lists']['anime_id'])];
             if (!$lastEntry) {
               $lastEntry = [];
             } else {
               unset($lastEntry['id'], $lastEntry['time'], $lastEntry['anime']);
             }
-            $_POST['anime_list'] = array_merge($lastEntry, $_POST['anime_list']);
+            $_POST['anime_lists'] = array_merge($lastEntry, $_POST['anime_lists']);
           }
-          $updateList = $this->create_or_update($_POST['anime_list']);
+          $updateList = $this->create_or_update($_POST['anime_lists']);
           if ($updateList) {
             $status = "Successfully updated your anime list.";
             $class = "success";

@@ -538,9 +538,6 @@ class Application {
           $blankModel = new $this->model($this);
           $this->redirect($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
         }
-        if ($this->action === "new") {
-          $this->action = "edit";
-        }
       } elseif ($this->action === "edit") {
         $this->action = "new";
       }

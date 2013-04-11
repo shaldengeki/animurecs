@@ -1,43 +1,54 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+
+  $firstTag = Tag::first($this->app);
+  $tag = isset($params['tag']) ? $params['tag'] : $this;
+
   $tagAnime = [];
   foreach ($this->anime()->load('info') as $anime) {
     $tagAnime[] = array('id' => $anime->id, 'title' => $anime->title());
   }
   $anime = Anime::first($this->app);
 ?>
-    <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-inline')); ?>
-      <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($this->id)."' />"; ?>
-      <?php echo $this->input('created_user_id', ['type' => 'hidden', 'value' => ($this->id ? $this->createdUser()->id : $this->app->user->id)]); ?>
+    <?php echo $tag->app->form(array('action' => ($tag->id === 0) ? $tag->url("new") : $tag->url("edit"), 'class' => 'form-inline')); ?>
+      <?php echo ($tag->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($tag->id)."' />"; ?>
+      <?php echo $tag->input('created_user_id', ['type' => 'hidden', 'value' => ($tag->id ? $tag->createdUser()->id : $tag->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag[name]'>Name</label>
           <div class='controls'>
-            <?php echo $this->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
+            <?php echo $tag->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='tag[description]' rows='3' id='tag[description]'><?php echo ($this->id === 0) ? "" : escape_output($this->description()); ?></textarea>
+            <textarea class='field span4' name='tag[description]' rows='3' id='tag[description]'><?php echo ($tag->id === 0) ? "" : escape_output($tag->description()); ?></textarea>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[tag_type_id]'>Tag Type</label>
           <div class='controls'>
-            <?php echo $this->view('tagTypeDropdown'); ?>
+            <?php echo $tag->view('tagTypeDropdown'); ?>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='tag[anime_tags]'>Anime</label>
           <div class='controls'>
-            <?php echo $this->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'title', 'data-url' => $anime->url('token_search'), 'data-value' => ($this->id ? escape_output(json_encode($tagAnime)) : "[]")]); ?>
+            <?php echo $tag->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'title', 'data-url' => $anime->url('token_search'), 'data-value' => ($tag->id ? escape_output(json_encode($tagAnime)) : "[]")]); ?>
           </div>
         </div>
         <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Create Tag" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <button type='submit' class='btn btn-primary'><?php echo ($tag->id === 0) ? "Create Tag" : "Save changes"; ?></button>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($tag->id === 0) ? "Go back" : "Discard changes"; ?></a>
+<?php
+  if ($tag->id !== 0) {
+?>
+          <a class='btn btn-danger' href='<?php echo $tag->url('delete', Null, ['csrf_token' => $this->app->csrfToken]); ?>'>Delete</a>
+<?php
+  }
+?>
         </div>
       </fieldset>
     </form>

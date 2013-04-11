@@ -18,7 +18,7 @@
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.1' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.2' rel='stylesheet' />
 
     <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' type='text/javascript'></script>
     <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js' type='text/javascript'></script>
