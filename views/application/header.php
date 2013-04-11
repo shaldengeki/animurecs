@@ -4,6 +4,7 @@
     exit;
   }
   $firstAnime = Anime::first($this);
+  $params['container'] = isset($params['container']) ? $params['container'] : True;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,7 +19,7 @@
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.2' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.3' rel='stylesheet' />
 
     <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' type='text/javascript'></script>
     <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js' type='text/javascript'></script>
@@ -26,6 +27,7 @@
     <!--<script type='text/javascript' src='<?php echo Config::ROOT_URL; ?>/jquery-ui-timepicker-addon.min.js'></script>-->
     <script src='<?php echo Config::ROOT_URL; ?>/js/jquery.dropdownPlain.min.js' type='text/javascript'></script>
     <script src='//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js' type='text/javascript'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.3.1/jquery.cookie.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/jquery.tokeninput.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/jquery.json-2.3.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jquery.jqplot.min.js' type='text/javascript'></script>
@@ -41,7 +43,8 @@
     <script src='<?php echo Config::ROOT_URL; ?>/js/d3-helpers.js' type='text/javascript'></script>
 
     <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js' type='text/javascript'></script>
-    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js' type='text/javascript'></script>
+    <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
+    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=0.3' type='text/javascript'></script>
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-37523517-1']);
@@ -81,7 +84,7 @@
 <?php
   if ($this->user->loggedIn()) {
 ?>
-            <?php echo $firstAnime->view('searchForm', array(
+            <li><?php echo $firstAnime->view('searchForm', array(
               'form' => array(
                   'class' => 'navbar-search'
                 ),
@@ -90,7 +93,7 @@
                   'class' => 'autocomplete search-query'
                 ),
               'submitButton' => False
-            )); ?>
+            )); ?></li>
             <li id='navbar-alerts'>
 <?php
     if ($this->user->outstandingFriendRequests) {
@@ -134,8 +137,12 @@
         </div>
       </div>
     </div>
+<?php
+  if ($params['container']) {
+?>
     <div class='container-fluid'>
 <?php
+  }
   if ($this->status != '') {
 ?>
       <div class='alert alert-<?php echo isset($this->class) ? escape_output($this->class) : ""; ?>'>

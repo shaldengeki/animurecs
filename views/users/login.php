@@ -9,4 +9,5 @@
       <input type='checkbox'> Remember me
     </label>-->
     <button type='submit' class='btn btn-primary btn-small'>Sign in</button>
+    <a href="/register.php" class="btn btn-success btn-small">Sign Up</a>
   </form>

@@ -109,6 +109,13 @@ $.fn.enable = function() {
     });
 };
 
+Array.max = function( array ){
+    return Math.max.apply( Math, array );
+};
+Array.min = function( array ){
+   return Math.min.apply( Math, array );
+};
+
 function initDataTable(elt) {
   // see if there's a default-sort column. if not, default to the first column.
   defaultSortColumn = $(elt).find('thead > tr > th').index($(elt).find('thead > tr > th.dataTable-default-sort'));
@@ -445,9 +452,54 @@ function renderGraphs(elt) {
   // renders all the graphs.
   renderTimelines(elt);
 }
+/*
+function siteTour(elt, start, end) {
+  start = (typeof start === "undefined" || end === null) ? 1 : parseInt(start);
+  end = (typeof end === "undefined" || end === null) ? $('.tour-step').length : parseInt(end);
 
+  // get all tour elements.
+  var tourSteps = {};
+  $(elt).find('.tour-step').each(function() {
+    tourSteps[$(this).attr('data-step')] = $(this).attr('id');
+    $(this).attr('data-placement', $(this).hasAttr('data-placement') ? $(this).attr('data-placement') : 'bottom');
+  });
+
+  console.log(tourSteps);
+
+  var tour = new Tour();
+  // add steps to tour within this range.
+  for (var step = start; step <= end; step++) {
+    if (step in tourSteps) {
+      tourElt = $('#' + tourSteps[step]);
+      tour.addStep({
+        element: '#' + tourSteps[step],
+        placement: $(tourElt).attr('data-placement'),
+        title: $(tourElt).attr('data-title'),
+        content: $(tourElt).attr('data-content')
+      });
+    }
+  }
+  tour.start();
+}
+*/
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
+
+  // parse URL parameters.
+  var urlParams;
+  (window.onpopstate = function () {
+      var match,
+          pl     = /\+/g,  // Regex for replacing addition symbol with a space
+          search = /([^&=]+)=?([^&]*)/g,
+          decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+          query  = window.location.search.substring(1);
+
+      urlParams = {};
+      while (match = search.exec(query))
+         urlParams[decode(match[1])] = decode(match[2]);
+  })();
+
+
   $(elt).find('.dropdown-toggle').dropdown();
   $(elt).tooltip({
     selector: "a[data-toggle=tooltip]"
@@ -633,14 +685,15 @@ function initInterface(elt) {
       loadAjaxTab(thisTab);
     }
   }
+
+  // // start tour if requested.
+  // if ("tour" in urlParams && $(elt).find('.tour-step').length > 0) {
+  //   start = "tourStart" in urlParams ? parseInt(urlParams["tourStart"]) : 1;
+  //   end = "tourEnd" in urlParams ? parseInt(urlParams["tourEnd"]) : null;
+  //   siteTour(elt, start, end);
+  // }
 }
 
 $(document).ready(function () {
-  Array.max = function( array ){
-      return Math.max.apply( Math, array );
-  };
-  Array.min = function( array ){
-     return Math.min.apply( Math, array );
-  };
   initInterface(document);
 });

@@ -224,14 +224,20 @@ class User extends BaseObject {
         }
         return False;
         break;
-      /* cases where we want only this user + staff capable */
-      case 'anime':
-      case 'globalFeedEntries':
-      case 'globalFeed':
+      /* cases where we want only user+staff capable, keeping the first user public */
       case 'discover':
       case 'friendRecs':
       case 'recommendations':
       case 'groupwatches':
+        if ($this->id === 1 || ($authingUser->id == $this->id || ( ($authingUser->isStaff()) && $authingUser->usermask > $this->usermask) )) {
+          return True;
+        }
+        return False;
+        break;
+      /* cases where we want only this user + staff capable */
+      case 'anime':
+      case 'globalFeedEntries':
+      case 'globalFeed':
       case 'mal_import':
       case 'edit':
         if ($authingUser->id == $this->id || ( ($authingUser->isStaff()) && $authingUser->usermask > $this->usermask) ) {

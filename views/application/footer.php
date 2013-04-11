@@ -3,18 +3,27 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
+  $params['container'] = isset($params['container']) ? $params['container'] : True;
 ?>
-      <hr />
-      <p>Created and maintained by <a href='<?php echo Config::ROOT_URL; ?>/users/shaldengeki'>shaldengeki</a>.</p>
+      <footer>
+        <hr />
+        <p>Created and maintained by <a href='<?php echo Config::ROOT_URL; ?>/users/shaldengeki'>shaldengeki</a>.</p>
 <?php
   if (Config::DEBUG_ON) {
 ?>
-      <pre><?php echo escape_output(print_r($this->dbConn->queryLog, True)); ?></pre>
-      <pre>Rendering took <?php echo round((microtime(true) - $this->startRender)*1000, 2); ?>ms</pre>
-      <!--<pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>-->
+        <pre><?php echo escape_output(print_r($this->dbConn->queryLog, True)); ?></pre>
+        <pre>Rendering took <?php echo round((microtime(true) - $this->startRender)*1000, 2); ?>ms</pre>
+        <!--<pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>-->
 <?php
   }
 ?>
-    </div>
+    </footer>
+<?php
+  if ($params['container']) {
+?>
+      </div>
+<?php
+  }
+?>
   </body>
 </html>
