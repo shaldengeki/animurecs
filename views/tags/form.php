@@ -12,7 +12,7 @@
   $anime = Anime::first($this->app);
 ?>
     <?php echo $tag->app->form(array('action' => ($tag->id === 0) ? $tag->url("new") : $tag->url("edit"), 'class' => 'form-inline')); ?>
-      <?php echo ($tag->id === 0) ? "" : "<input type='hidden' name='tag[id]' value='".intval($tag->id)."' />"; ?>
+      <?php echo ($tag->id === 0) ? "" : $tag->input('id', ['type' => 'hidden']); ?>
       <?php echo $tag->input('created_user_id', ['type' => 'hidden', 'value' => ($tag->id ? $tag->createdUser()->id : $tag->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>

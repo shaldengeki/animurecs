@@ -105,34 +105,6 @@ class Alias extends BaseObject {
     }
     return $objects;
   }
-  public function form(User $currentUser, BaseObject $currentObject) {
-    $output = $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')).(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
-      <input type='hidden' name='alias[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
-      <input type='hidden' name='alias[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
-      <fieldset>
-        <div class='control-group'>
-          <label class='control-label' for='alias[name]'>Name</label>
-          <div class='controls'>
-            <input type='text' name='alias[name]' id='alias[name]' value='".(($this->id === 0) ? "" : escape_output($this->name()))."' />
-          </div>
-        </div>
-
-        <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add Alias" : "Save changes")."</button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
-        </div>
-      </fieldset>\n</form>\n";
-    return $output;
-  }
-  public function inlineForm(User $currentUser, BaseObject $currentObject) {
-    $output = $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')).(($this->id === 0) ? "" : "<input type='hidden' name='alias[id]' value='".intval($this->id)."' />")."
-      <input type='hidden' name='alias[type]' value='".escape_output(($this->id === 0) ? get_class($currentObject) : $this->type())."' />
-      <input type='hidden' name='alias[parent_id]' value='".(($this->id === 0) ? intval($currentObject->id) : $this->parent()->id)."' />
-      <input type='text' name='alias[name]'".(($this->id === 0) ? "placeholder='Add an alias'" : "value='".escape_output($this->name())."'")." />
-      <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add" : "Update")."</button>
-    </form>\n";
-    return $output;
-  }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.
     // if we're showing this comment, show its parent instead.

@@ -6,7 +6,7 @@
 
 ?>
     <?php echo $tagType->app->form(array('action' => ($tagType->id === 0) ? $tagType->url("new") : $tagType->url("edit"), 'class' => 'form-inline')); ?>
-      <?php echo ($tagType->id === 0) ? "" : "<input type='hidden' name='tag_type[id]' value='".intval($tagType->id)."' />"; ?>
+      <?php echo ($tagType->id === 0) ? "" : $tagType->input('id', ['type' => 'hidden']); ?>
       <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser()->id : $tagType->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>

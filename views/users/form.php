@@ -3,7 +3,7 @@
   $this->app->check_partial_include(__FILE__);
 ?>
     <?php echo $this->app->form(['action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal']); ?>
-      <?php echo ($this->id === 0) ? "" : "<input type='hidden' name='user[id]' value='".intval($this->id)."' />"; ?>
+      <?php echo ($this->id === 0) ? "" : $this->input('id', ['type' => 'hidden']); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='user[name]'>Name</label>
