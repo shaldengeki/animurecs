@@ -1085,4 +1085,5 @@ ul.token-input-list-facebook{display:inline-block;}
 .image-preview{border:1px solid black;-moz-border-radius:20px;-webkit-border-radius:20px;-khtml-border-radius:20px;border-radius:20px;}
 table>tbody>tr>td.control-group>input[class*="span"]{display:inline;}
 #login_form{margin:5px 8px;}
-footer{margin:0 auto;max-width:1000px;font-size:75%;}footer p{float:right;}
+footer{margin:0 auto;max-width:1000px;font-size:75%;}footer ul{float:right;list-style:none;display:inline-block;}footer ul li{float:left;margin-left:10px;}
+footer p{float:left;}

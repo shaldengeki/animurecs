@@ -4,10 +4,16 @@
     exit;
   }
   $params['container'] = isset($params['container']) ? $params['container'] : True;
+  $adminUser = new User($this, Null, 'shaldengeki');
 ?>
       <footer>
         <hr />
-        <p>Created and maintained by <a href='<?php echo Config::ROOT_URL; ?>/users/shaldengeki'>shaldengeki</a>.</p>
+        <ul>
+          <li><a href='/'>Home</a></li>
+          <li><a href='//shaldengeki.github.io/animurecs/'>Blog</a></li>
+          <li><a href='https://twitter.com/guocharles'>Twitter</a></li>
+        </ul>
+        <p>Created and maintained by <?php echo $adminUser->link('show', $adminUser->username); ?>.</p>
 <?php
   if (Config::DEBUG_ON) {
 ?>
