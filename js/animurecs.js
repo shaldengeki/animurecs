@@ -152,7 +152,7 @@ function displayListEditForm(elt) {
   } else {
     score = parseInt(score.split("/")[0]);
   }
-  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_list[score]' type='number' min=0 max=10 step=1 value='"+score+"' /><span class='add-on'>/10</span></div>");
+  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_lists[score]' type='number' min=0 max=10 step=1 value='"+score+"' /><span class='add-on'>/10</span></div>");
 
   episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
   episodeText = $(episodeNode).html();
@@ -163,7 +163,7 @@ function displayListEditForm(elt) {
     episodes = parseInt(episodeText.split("/")[0]);
     episodeTotal = parseInt(episodeText.split("/")[1]);
   }
-  $(episodeNode).html("<div class='input-append'><input class='input-mini' name='anime_list[episode]' type='number' min=0 step=1 value='"+episodes+"' /><span class='add-on'>/" + episodeTotal + "</span></div>");
+  $(episodeNode).html("<div class='input-append'><input class='input-mini' name='anime_lists[episode]' type='number' min=0 step=1 value='"+episodes+"' /><span class='add-on'>/" + episodeTotal + "</span></div>");
 
   editNode = $(elt).parent();
   url = $(elt).attr('data-url');
@@ -573,23 +573,23 @@ function initInterface(elt) {
       var statusContainer = $(this).parent().next();
       $.getJSON(statusUrl, function(data) {
         if (typeof data["status"] != "undefined" && data["status"] != "0") {
-          $(statusContainer).find('#anime_list\\[status\\]').val(data["status"]);
+          $(statusContainer).find('#anime_lists\\[status\\]').val(data["status"]);
         } else {
-          $(statusContainer).find('#anime_list\\[status\\]').val(1);
+          $(statusContainer).find('#anime_lists\\[status\\]').val(1);
         }
         if (typeof data["score"] != "undefined" && data["score"] != "0") {
-          $(statusContainer).find('#anime_list\\[score\\]').val(data["score"]);
+          $(statusContainer).find('#anime_lists\\[score\\]').val(data["score"]);
         } else {
-          $(statusContainer).find('#anime_list\\[score\\]').val("");
+          $(statusContainer).find('#anime_lists\\[score\\]').val("");
         }
         if (typeof data["episode"] != "undefined" && data["episode"] != "0") {
-          $(statusContainer).find('#anime_list\\[episode\\]').val(data["episode"]);
+          $(statusContainer).find('#anime_lists\\[episode\\]').val(data["episode"]);
         } else {
-          $(statusContainer).find('#anime_list\\[episode\\]').val("");
+          $(statusContainer).find('#anime_lists\\[episode\\]').val("");
         }
       });
-      $(this).parent().removeClass('span11').addClass('span3');
-      $(statusContainer).fadeIn().addClass('span8');
+      $(this).parent().removeClass('span12').addClass('span3');
+      $(statusContainer).fadeIn().addClass('span9');
     });
   });
 

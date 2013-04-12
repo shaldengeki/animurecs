@@ -134,7 +134,7 @@ function statusArray() {
   ];
 }
 
-function display_status_dropdown($select_id="anime_list[status]", $class="", $selected=False) {
+function display_status_dropdown($select_id="anime_lists[status]", $class="", $selected=False) {
   $statuses = statusArray();
   $output = "<select class='".escape_output($class)."' id='".escape_output($select_id)."' name='".escape_output($select_id)."'>\n";
   foreach ($statuses as $id => $text) {

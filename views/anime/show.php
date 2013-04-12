@@ -114,7 +114,7 @@
                   <?php echo $this->app->user->animeList()->input('user_id', ['type' => 'hidden', 'value' => $this->app->user->id]); ?>
                   <?php echo $addText; ?>
                   <?php echo $this->app->user->animeList()->input('anime_id', ['type' => 'hidden', 'value' => $this->id]); ?>
-                  <?php echo display_status_dropdown("anime_list[status]", "span3", $thisEntry['status'] ? $thisEntry['status'] : 1); ?>
+                  <?php echo display_status_dropdown("anime_lists[status]", "span3", $thisEntry['status'] ? $thisEntry['status'] : 1); ?>
                   <div class='input-append'>
                     <?php echo $this->app->user->animeList()->input('score', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => 10, 'step' => 1, 'value' => ($thisEntry['score'] ? intval($thisEntry['score']) : "")]); ?>
                     <span class='add-on'>/10</span>

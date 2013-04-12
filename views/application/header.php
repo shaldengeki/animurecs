@@ -21,7 +21,7 @@
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.3' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.4' rel='stylesheet' />
 
     <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' type='text/javascript'></script>
     <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js' type='text/javascript'></script>
@@ -46,7 +46,7 @@
 
     <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js' type='text/javascript'></script>
     <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
-    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=0.3' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=0.4' type='text/javascript'></script>
   </head>
   <body>
     <div class='navbar navbar-inverse navbar-fixed-top'>

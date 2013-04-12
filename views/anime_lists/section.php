@@ -32,7 +32,7 @@
               <td class='listEntryTitle'>
                 <?php echo $entry['anime']->link("show", $entry['anime']->title()); ?>
                 <span class='pull-right hidden listEntryStatus'>
-                  <?php echo display_status_dropdown("anime_list[status]", "span12", intval($entry['status'])); ?>
+                  <?php echo display_status_dropdown("anime_lists[status]", "span12", intval($entry['status'])); ?>
                 </span>
               </td>
               <td class='listEntryScore'><?php echo intval($entry['score']) > 0 ? intval($entry['score'])."/10" : ""; ?></td>

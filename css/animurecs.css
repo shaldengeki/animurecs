@@ -1030,7 +1030,7 @@ body>.container-fluid{padding-top:20px;}
 .thumbnail{background-color:rgba(238, 238, 238, 0.95);}.thumbnail h1,.thumbnail h2,.thumbnail h3,.thumbnail h4,.thumbnail p{color:#222;}
 .control-group.error input{background-color:#B94A48;color:white;}
 .landing{text-align:center;}.landing .landing-container{width:1000px;margin:0 auto;}.landing .landing-container .landing-box{-webkit-box-shadow:0px 0px 50px 0px rgba(60, 100, 60, 0.7);box-shadow:0px 0px 50px 0px rgba(60, 100, 60, 0.7);border-radius:7px;padding:20px 10px;margin:75px 0px;}.landing .landing-container .landing-box img{max-width:980px;}
-.landing .landing-banner{background-color:#278c00;color:white;border-top:1px solid #2ea600;padding:40px 0;margin-top:1px;}
+.landing .landing-banner{background:#175400;background:-moz-linear-gradient(45deg, #175400 0%, #278c00 48%, #6cba62 100%);background:-webkit-gradient(linear, left bottom, right top, color-stop(0%, #175400), color-stop(48%, #278c00), color-stop(100%, #6cba62));background:-webkit-linear-gradient(45deg, #175400 0%, #278c00 48%, #6cba62 100%);background:-o-linear-gradient(45deg, #175400 0%, #278c00 48%, #6cba62 100%);background:-ms-linear-gradient(45deg, #175400 0%, #278c00 48%, #6cba62 100%);background:linear-gradient(45deg, #175400 0%, #278c00 48%, #6cba62 100%);color:white;border-top:1px solid #2ea600;padding:40px 0;margin-top:1px;}
 .ui-timepicker-div .ui-widget-header{margin-bottom:8px;}
 .ui-timepicker-div dl{text-align:left;}
 .ui-timepicker-div dl dt{height:25px;margin-bottom:-25px;}
@@ -1051,7 +1051,8 @@ div.jqplot-highlighter-tooltip{background:rgba(0, 100, 255, 0.6);border:1px soli
 .jqplot-point-label{font-size:0.75em;z-index:2;}
 ul.achievements li{width:20%;height:150px;margin-bottom:7px;}ul.achievements li img{height:75px;max-width:75px;}
 ul.achievements li em{font-size:10px;}
-.addListEntryForm{text-align:center;margin-bottom:10px;}.addListEntryForm .addListEntryFormCol2{display:none;}
+.addListEntryForm{text-align:center;margin-bottom:10px;}.addListEntryForm .addListEntryFormCol1,.addListEntryForm .addListEntryFormCol2{margin-left:0;}
+.addListEntryForm .addListEntryFormCol2{display:none;}
 .addListEntryForm div{overflow:hidden;-webkit-transition:width 0.3s ease, margin 0.3s ease;-moz-transition:width 0.3s ease, margin 0.3s ease;-o-transition:width 0.3s ease, margin 0.3s ease;transition:width 0.3s ease, margin 0.3s ease;}
 ul.media-list .media{border-bottom:1px solid #dddddd;padding:0 10px;}ul.media-list .media .feedDate{margin-right:10px;font-size:8pt;color:gray;}
 ul.media-list .media .feedAvatar{width:40px;height:40px;margin:0 0 0 5px;text-align:center;}ul.media-list .media .feedAvatar img{max-width:40px;max-height:40px;}
