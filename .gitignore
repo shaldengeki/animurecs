@@ -4,8 +4,11 @@ dbv/data/meta/revision
 global/config.php
 Thumbs.db
 less
-img/users/*
-img/anime/*
+img/users
+img/anime
 ideas.txt
 composer.lock
-vendor/*
+vendor
+_site
+_includes
+_plugins
