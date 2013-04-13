@@ -1,0 +1,10 @@
+@import "pygment_trac.css";
+body{font-family:'Open Sans',Helvetica,Arial,sans-serif;color:#000;}
+.defaultLink{text-decoration:none;color:#0D8900;}.defaultLink:hover{color:#009F94;text-decoration:underline;}
+a{text-decoration:none;color:#0D8900;}a:hover{color:#009F94;text-decoration:underline;}
+small{font-weight:normal;font-size:75%;color:#999999;}
+.site{width:940px;margin:0 auto;}.site ul.title{display:inline-block;list-style:none;padding-left:0;margin:0;text-transform:uppercase;}.site ul.title a{text-decoration:none;color:#0D8900;}.site ul.title a:hover{color:#009F94;text-decoration:underline;}
+.site ul.title li{float:left;padding:0 10px;border-right:1px solid black;}
+article header{margin-bottom:10px;}article header h2{margin-bottom:5px;}
+article .byline{font-size:75%;font-style:italic;margin:0;padding:0;}
+article p{font-size:90%;}article p a{text-decoration:none;color:#0D8900;}article p a:hover{color:#009F94;text-decoration:underline;}

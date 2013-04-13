@@ -1,0 +1,12 @@
+---
+layout: post
+author: shaldengeki
+date: 12 Apr 2013
+title: New blog!
+---
+
+I've set up a blog via Github pages; we're using Jekyll + git to manage posts. From time to time, we'll talk about updates to Animurecs and related material here; some of the posts will probably be pretty technical, so hopefully you'll find it interesting!
+
+As things stand now, we're very quickly approaching a point where Animurecs will "officially" be in beta status. Any updates you make right now will be preserved when beta starts, so don't worry about losing data! I think I'm largely satisfied with how user profiles look for now; I know people were asking for a way to dismiss recommendations that you're not interested in, and I'm still figuring out exactly how I want to implement that -- that sort of implicit information might be useful in generating further recommendations, so I want to be able to work it into the recommendation engine somehow. 
+
+After that, I want to tackle the "Connect" page; as it stands now it's just an ugly alphabetical listing of every user on the site. That'll probably entail further developments to the friend system, so stay tuned!

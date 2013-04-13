@@ -1,0 +1,21 @@
+---
+layout: default
+---
+{% assign author = site.authors[page.author] %}
+<article class="post">
+  <header>
+    <h2><a href="{{ page.url }}">{{ page.title }}</a></h2>
+    <p class="byline">
+      Posted on <span class="date">{{ page.date | date: "%B %e, %Y" }}</span> by {{ author.display_name }}  - <a href="{{ page.url }}" class="permalink" title="Permalink">Permalink</a>
+    </p>
+  </header>
+  {{ content }}
+</article>
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    {% for post in site.related_posts limit:3 %}
+      <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
+    {% endfor %}
+  </ul>
+</div>

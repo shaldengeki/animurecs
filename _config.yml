@@ -1,3 +1,10 @@
-safe: true
 lsi: false
 pygments: true
+
+authors:
+  shaldengeki:
+    name: Charles Guo
+    display_name: shaldengeki
+    email: shaldengeki@animurecs.com
+    twitter: guocharles
+    github: shaldengeki
