@@ -10,7 +10,7 @@
         <hr />
         <ul>
           <li><a href='/'>Home</a></li>
-          <li><a href='//blog.animurecs.com'>Blog</a></li>
+          <li><a href='http://blog.animurecs.com'>Blog</a></li>
           <li><a href='https://twitter.com/guocharles'>Twitter</a></li>
         </ul>
         <p>Created and maintained by <?php echo $adminUser->link('show', $adminUser->username); ?>.</p>
