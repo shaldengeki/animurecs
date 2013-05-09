@@ -1049,7 +1049,7 @@ ul.item-grid li em{font-size:12px;}
 .rightColumn.span9 .profileTabs .tab-content{border-right:1px solid #dddddd;border-bottom:1px solid #dddddd;border-left:1px solid #dddddd;overflow:hidden;padding:10px;}
 div.jqplot-highlighter-tooltip{background:rgba(0, 100, 255, 0.6);border:1px solid rgba(0, 100, 255, 0.7);border-radius:3px;box-shadow:0 0 4px rgba(0, 100, 255, 0.5),inset 0 0 2px rgba(0, 100, 255, 0.5);color:black;font-size:12px;font-family:Tahoma,sans-serif;padding:1px 1px;}
 .jqplot-point-label{font-size:0.75em;z-index:2;}
-ul.achievements li{width:20%;height:150px;margin-bottom:7px;}ul.achievements li img{height:75px;max-width:75px;}
+ul.achievements li{width:20%;height:150px;margin-bottom:7px;}ul.achievements li img{height:100px;max-width:100px;}
 ul.achievements li em{font-size:10px;}
 .addListEntryForm{text-align:center;margin-bottom:10px;}.addListEntryForm .addListEntryFormCol1,.addListEntryForm .addListEntryFormCol2{margin-left:0;}
 .addListEntryForm .addListEntryFormCol2{display:none;}

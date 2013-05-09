@@ -23,11 +23,13 @@ abstract class BaseAchievement extends BaseObject {
   }
   public function imageTag(array $params=Null) {
     $imageParams = [];
+    $params['class'] = isset($params['class']) ? $params['class'] .= " img-circle" : "img-circle";
     if (is_array($params) && $params) {
       foreach ($params as $key => $value) {
         $imageParams[] = escape_output($key)."='".escape_output($value)."'";
       }
     }
+    $imgPath = $this->imagePath() ? $this->imagePath() : "http://placehold.it/75x75";
     return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->imagePath()))."' ".implode(" ", $imageParams)." />";
   }
   public function events() {

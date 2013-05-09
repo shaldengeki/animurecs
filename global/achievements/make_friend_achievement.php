@@ -5,7 +5,7 @@ class MakeFriendAchievement extends BaseAchievement {
   protected $points=50;
   protected $description="Made a friend on Animurecs.";
   protected $imagePath="img/achievements/4/4.png";
-  protected $events=array('User.confirmFriend');
+  protected $events=['User.confirmFriend'];
   protected $dependencies=[];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {

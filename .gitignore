@@ -6,6 +6,7 @@ Thumbs.db
 less
 img/users
 img/anime
+*.psd
 ideas.txt
 composer.lock
 vendor

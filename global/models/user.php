@@ -670,7 +670,9 @@ class User extends BaseObject {
     // confirms a friend request from requestedUser directed at the current user.
     // returns a boolean.
     // check to ensure this is an extant request.
+    $this->app->logger->err(print_r($this->friendRequests(), True));
     if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
+      $this->app->logger->err("A");
       return False;
     }
 
@@ -681,9 +683,13 @@ class User extends BaseObject {
     }
     // otherwise, go ahead and confirm this request.
     if ($this->updateFriend($requestedUser, 1)) {
+      $this->afterUpdate([]);
       $this->app->fire('User.confirmFriend', $this, array('id' => $requestedUser->id));
       $this->app->fire('User.confirmFriend', $requestedUser, array('id' => $this->id));
+      return True;
     }
+    $this->app->logger->err("B");
+    return False;
   }
   public function ignoreFriend(User $requestedUser) {
     // ignores a friend request from requestedUser directed at the current user.

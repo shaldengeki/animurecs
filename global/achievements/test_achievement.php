@@ -6,7 +6,7 @@ class TestAchievement extends BaseAchievement {
   protected $points=10;
   protected $description="Updated your bio.";
   protected $imagePath="img/achievements/1/1.png";
-  protected $events=array('User.afterUpdate');
+  protected $events=['User.afterUpdate'];
   protected $dependencies=[];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {

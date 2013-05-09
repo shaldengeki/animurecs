@@ -5,7 +5,7 @@ class GettingStartedAchievement extends BaseAchievement {
   protected $points=10;
   protected $description="Added an entry to your list.";
   protected $imagePath="img/achievements/2/2.png";
-  protected $events=array('AnimeList.afterUpdate');
+  protected $events=['AnimeList.afterUpdate'];
   protected $dependencies=[];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {

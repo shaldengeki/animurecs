@@ -11,8 +11,8 @@
   <li class='friendRequestEntry'>
     <strong><?php echo $request['user']->link('show', $request['user']->username()); ?></strong> requested to be your friend on <?php echo $entryTime->format('G:i n/j/y'); ?>.
     <div class='row-fluid'>
-      <div class='span6'><?php echo $this->link('confirm_friend', "Accept", Null, True, Null, Null, $request['user']->username); ?></div>
-      <div class='span6'><?php echo $this->link('ignore_friend', "Ignore", Null, True, Null, Null, $request['user']->username); ?></div>
+      <div class='span6'><?php echo $this->app->form(['action' => $this->url('confirm_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-primary'>Confirm</button></form></div>
+      <div class='span6'><?php echo $this->app->form(['action' => $this->url('ignore_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-warning'>Ignore</button></form></div>
     </div>
   </li>
 <?php

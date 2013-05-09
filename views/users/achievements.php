@@ -2,6 +2,9 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
+<div class='page-header'>
+  <h3>Achievements:</h3>
+</div>
 <ul class='item-grid achievements'>
 <?php
   $noAchieves = True;
@@ -9,7 +12,7 @@
     if ($achievement->alreadyAwarded($this)) {
       $noAchieves = False;
 ?>
-  <li><h4><?php echo escape_output($achievement->name()); ?></h4><?php echo $achievement->imageTag(); ?><p><em><?php echo escape_output($achievement->description()); ?></em></p></li>
+  <li><?php echo $achievement->imageTag(); ?><p><em><?php echo escape_output($achievement->description()); ?></em></p></li>
 <?php
     }
   }
