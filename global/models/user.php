@@ -916,6 +916,7 @@ class User extends BaseObject {
         }
         $latestEntry = $this->animeList()->uniqueList[intval($_REQUEST['anime_id'])];
         $latestEntry['anime_id'] = $latestEntry['anime']->id;
+        $latestEntry['episode_count'] = $latestEntry['anime']->episodeCount;
         unset($latestEntry['anime']);
         echo json_encode($latestEntry);
         exit;

@@ -587,6 +587,11 @@ function initInterface(elt) {
         } else {
           $(statusContainer).find('#anime_lists\\[episode\\]').val("");
         }
+        if (typeof data["episode_count"] != "undefined" && data["episode_count"] != "0") {
+          $(statusContainer).find('#anime_lists\\[episode\\]').next().text("/" + data["episode_count"].toString());
+        } else {
+          $(statusContainer).find('#anime_lists\\[episode\\]').next().text("/?");
+        }
       });
       $(this).parent().removeClass('span12').addClass('span3');
       $(statusContainer).fadeIn().addClass('span9');

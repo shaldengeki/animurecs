@@ -17,9 +17,10 @@
                         <?php echo $this->animeList()->input('score', ['type' => 'number', 'class' => 'input-mini', 'min' => 0, 'max' => 10, 'value' => '']); ?>
                         <span class='add-on'>/10</span>
                       </div>
-                      <div class='input-prepend'>
+                      <div class='input-prepend input-append'>
                         <span class='add-on'>Ep</span>
                         <?php echo $this->animeList()->input('episode', ['type' => 'number', 'class' => 'input-mini', 'min' => 0, 'step' => 1, 'value' => '']); ?>
+                        <span class='add-on'></span>
                       </div>
                       <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
                     </div>
