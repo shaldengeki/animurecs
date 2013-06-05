@@ -82,14 +82,16 @@ abstract class BaseList extends BaseObject {
       // see if there are any entries matching these params for this user.
       try {
         $checkExists = $this->dbConn->queryFirstValue("SELECT `id` FROM `".static::$modelTable."` WHERE ".implode(" && ", $params)." LIMIT 1");
-
-        // if entry exists, set its ID.
-        $entry['id'] = intval($checkExists);
+        if ($checkExists) {
+          // if entry exists, set its ID.
+          $entry['id'] = intval($checkExists);
+        }
       } catch (DbException $e) {
         // entry does not exist, no need to do anything.
       }
     }
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
+      // this is an update.
       $this->beforeUpdate($entry);
       $updateDependency = $this->dbConn->stdQuery("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
@@ -106,6 +108,7 @@ abstract class BaseList extends BaseObject {
       $returnValue = intval($entry['id']);
       $this->afterUpdate($entry);
     } else {
+      // this is a new entry.
       if (!isset($entry['time'])) {
         $params[] = "`time` = NOW()";
       }
@@ -311,6 +314,9 @@ abstract class BaseList extends BaseObject {
       return False;
     }
     return $similaritySum / ($this->uniqueListStdDev() * $currentList->uniqueListStdDev() * ($similarityCount - 1));
+  }
+  public function compatibility(BaseList $currentList) {
+    return (1 + $this->similarity($currentList)) / 2.0;
   }
   public function compatibilityBar(BaseList $currentList) {
     // returns markup for a compatibility bar between this list and the current user's list.

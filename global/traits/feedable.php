@@ -43,43 +43,6 @@ trait Feedable {
     }
   }
 
-  public function feedEntry(BaseEntry $entry, $nested=False) {
-    // takes a feed entry from the current object and outputs feed markup for this feed entry.
-    $nowTime = new DateTime("now", $this->app->outputTimeZone);
-
-    $diffInterval = $nowTime->diff($entry->time());
-
-    $feedMessage = $entry->formatFeedEntry();
-
-    $blankEntryComment = new Comment($this->app, 0, $this->app->user, $entry);
-
-    $entryType = $nested ? "div" : "li";
-
-    $output = "      <".$entryType." class='media'>
-        <div class='pull-right feedDate' data-time='".$entry->time()->format('U')."'>".ago($diffInterval)."</div>
-        ".$entry->user->link("show", $entry->user->avatarImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left'])."
-        <div class='media-body feedText'>
-          <div class='feedEntry'>
-            <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>
-            ".$feedMessage['text']."\n";
-    if ($entry->allow($this->app->user, 'delete')) {
-      $output .= "            <ul class='feedEntryMenu hidden'><li>".$entry->link("delete", "<i class='icon-trash'></i> Delete", Null, True)."</li></ul>\n";
-    }
-    $output .= "          </div>\n";
-    if ($entry->comments) {
-      $commentGroup = new EntryGroup($this->app, $entry->comments);
-      foreach ($commentGroup->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
-        $output .= $this->feedEntry($commentEntry, True);
-      }
-    }
-    if ($entry->allow($this->app->user, 'comment') && $blankEntryComment->depth() < 2) {
-      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', ['currentObject' => $entry])."</div>\n";
-    }
-    $output .= "          </div>
-      </".$entryType.">\n";
-    return $output;
-  }
-
   public function feed(EntryGroup $entries, $numEntries=50, $emptyFeedText="") {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
@@ -95,7 +58,7 @@ trait Feedable {
       $output = "<ul class='media-list ajaxFeed' data-url='".$this->url("feed")."'>\n";
       $feedOutput = [];
       foreach ($entryGroup->load('info')->load('users')->load('anime')->load('comments')->entries() as $entry) {
-        $feedOutput[] = $this->feedEntry($entry);
+        $feedOutput[] = $this->app->user->view('feedEntry', ['entry' => $entry]);
       }
       $output .= implode("\n", $feedOutput);
       $output .= "</ul>\n";

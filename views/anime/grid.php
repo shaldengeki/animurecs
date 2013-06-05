@@ -13,16 +13,27 @@
     foreach ($animeGroup->load('info') as $anime) {
 ?>
   <li>
+<?php 
+      try {
+?>
     <?php echo $anime->link("show", "<h4>".escape_output($anime->title)."</h4>", Null, True, ['title' => $anime->title, 'data-toggle' => 'tooltip']); ?>
     <?php echo $anime->link("show", $anime->imageTag, Null, True, ['title' => $anime->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
     <?php if (isset($params['predictions'][$anime->id])) { ?><p><em>Predicted score: <?php echo round($params['predictions'][$anime->id], 1); ?></em></p><?php } ?>
+<?php
+      } catch (DbException $e) {
+        $this->app->logger->err($e->__toString());
+?>
+        There's an invalid anime reference here; please notify an administrator to get this fixed!
+<?php
+      }
+?>
   </li>
 <?php
     }
   } catch (DbException $e) {
     $this->app->logger->err($e->__toString());
 ?>
-  There's an invalid anime reference on this anime's page; please notify an administrator to get this fixed!
+  There's an invalid anime reference on this page; please notify an administrator to get this fixed!
 <?php
   }
 ?>

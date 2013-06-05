@@ -73,17 +73,19 @@ class AnimeEntry extends BaseEntry {
     if ($partChanged && ($this->{$this->list->partName} != $this->anime()->{$this->list->partName."Count"} || $this->status() != 2)) {
       $statusTexts[] = $this->list->partStrings[intval($statusChanged || $scoreChanged)];
     }
-    $statusText = implode(" ", $statusTexts);
+    $statusText = "";
+    if ($statusTexts) {
+      $statusText = implode(" ", $statusTexts);
 
-    // replace placeholders.
-    $statusText = str_replace("[TYPE_VERB]", $this->list->typeVerb, $statusText);
-    $statusText = str_replace("[PART_NAME]", $this->list->partName, $statusText);
-    $statusText = str_replace("[TITLE]", $this->anime()->link("show", $this->anime()->title), $statusText);
-    $statusText = str_replace("[SCORE]", $this->score(), $statusText);
-    $statusText = str_replace("[PART]", $this->{$this->list->partName}, $statusText);
-    $statusText = str_replace("/[TOTAL_PARTS]", $this->anime()->{$this->list->partName."Count"} ? "/".$this->anime()->{$this->list->partName."Count"} : "", $statusText);
-    $statusText = ucfirst($statusText).".";
-
+      // replace placeholders.
+      $statusText = str_replace("[TYPE_VERB]", $this->list->typeVerb, $statusText);
+      $statusText = str_replace("[PART_NAME]", $this->list->partName, $statusText);
+      $statusText = str_replace("[TITLE]", $this->anime()->link("show", $this->anime()->title), $statusText);
+      $statusText = str_replace("[SCORE]", $this->score(), $statusText);
+      $statusText = str_replace("[PART]", $this->{$this->list->partName}, $statusText);
+      $statusText = str_replace("/[TOTAL_PARTS]", $this->anime()->{$this->list->partName."Count"} ? "/".$this->anime()->{$this->list->partName."Count"} : "", $statusText);
+      $statusText = ucfirst($statusText).".";
+    }
     return ['title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText];
   }
   public function render() {

@@ -56,6 +56,17 @@ class RecsEngine {
     // fetches the top n most feature-similar users for a given user.
     return $this->get("user", $user->id, "similar", ['n' => intval($n)]);
   }
-  
+  public function compatibilities(User $user, $users) {
+    // fetches compatibilities between a user and a single user or group of users.
+    if (is_array($users)) {
+      $userIDs = [];
+      foreach ($users as $u) {
+        $userIDs[intval($u->id)] = intval($u->id);
+      }
+    } else {
+      $userIDs = [intval($users->id) => intval($users->id)];
+    }
+    return $this->get("user", $user->id, "compatibilities", ['users' => $userIDs]);
+  } 
 }
 ?>

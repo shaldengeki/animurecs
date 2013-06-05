@@ -20,7 +20,7 @@
           </ul>
           <div>
             <h2>Tags:</h2>
-            <?php echo $this->tagList($this->app->user); ?>
+            <?php echo $this->view('tagList'); ?>
           </div>
         </div>
         <div class='span9 userProfileColumn rightColumn'>

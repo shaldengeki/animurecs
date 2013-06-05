@@ -1,17 +1,19 @@
 + Bug: Anime list episode increment for currently-airing shows error
-Bug: MAL Import displays error when none is encountered?
++ Bug: MAL Import displays error when none is encountered?
+  May be related to "____ blank entries"; attempting duplicate insert throws error
 + Bug: Updating user->about results in no change
 Bug: Middle-click broken in Firefox
 Bug: Some shows in database with same title
 Bug: Sorting #userList by score puts 10 between 1 and 2
   Only happens on Firefox
-Bug: ______ blank entries
++ Bug: ______ blank entries
   Manually entering, then MAL Importing results in this
 + Bug: Compatibilities sometimes above 100%
 
 Enhancement: Larger avatars (300x300?)
 Enhancement: Recommendations not individual enough?
   Particular series: Tenchi in Tokyo, Karneval being rated extremely high
+    Blogpost about this: tikhonov not sufficiently high?
 Enhancement: Default second-sort by title on user#userList tables
 Enhancement: Faster initial generation of recommendations
 Enhancement: Refactor request status into $_SESSION messages
@@ -20,11 +22,14 @@ Enhancement: Multiple tag query search (ex. )
 Enhancement: Toggle plan-to-watch series on /discover
 Enhancement: Split favourite/least-favourite tags out by type
 Enhancement: Option to permanently sync MAL list (? need to consider conflict resolution)
+Enhancement: Display anime aliases on anime search results page
++ Enhancement: Split tag listings on anime/show and tag/show out by type
 
-Feature: Complete friends listing somewhere
++ Feature: Complete friends listing somewhere
 Feature: Discover friends (graph search)
 Feature: Achievements
 Feature: Threads
 Feature: Dismiss recommendations
 Feature: Anime relationships (sequels, spinoffs, remakes)
   Enhancement: Hide related series in /discover
+  "I'm in the mood for something..." ~> (good, different)

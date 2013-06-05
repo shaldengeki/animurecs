@@ -288,7 +288,7 @@ abstract class BaseObject {
     return True;
   }
   public function view($view="index", array $params=Null) {
-    $file = joinPaths(Config::APP_ROOT, 'views', static::$modelTable, "$view.php");
+    $file = joinPaths(Config::APP_ROOT, 'views', static::modelUrl(), "$view.php");
     if (file_exists($file)) {
       ob_start();
       include($file);

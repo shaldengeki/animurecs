@@ -146,6 +146,10 @@ class User extends BaseObject {
     }
     return $this->friends;
   }
+  public function isFriend(User $potentialFriend) {
+    // returns a bool reflecting whether or not current user is a friend of $potentialFriend.
+    return isset($this->friends()[$potentialFriend->id]);
+  }
   public function getFriendRequests() {
     // returns a list of user,time,message arrays corresponding to all outstanding friend requests directed at this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
@@ -182,7 +186,7 @@ class User extends BaseObject {
                                                 ORDER BY `time` DESC");
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
-      $friendReqs[] = [
+      $friendReqs[intval($req['user_id_2'])] = [
           'user' => new User($this->app, intval($req['user_id_2'])),
           'time' => $req['time'],
           'message' => $req['message'],
@@ -199,6 +203,103 @@ class User extends BaseObject {
   }
   public function outstandingRequestedFriends() {
     return array_filter_by_key($this->requestedFriends(), 'status', 0);
+  }
+  public function hasRequestedFriend(User $potentialFriend) {
+    // returns a bool reflecting whether or not this user has requested to be friends with $potentialFriend.
+    return isset($this->requestedFriends()[$potentialFriend->id]);
+  }
+  public function hasFriendRequestFrom(User $potentialFriend) {
+    return isset($this->friendRequests()[$potentialFriend->id]);
+  }
+  public function hasFriendRequestWith(User $potentialFriend) {
+    // returns a bool reflecting whether or not this user has an outstanding friend request with $potentialFriend, REGARDLESS of who initiated it.
+    return $this->hasFriendRequestFrom($potentialFriend) || $this->hasRequestedFriend($potentialFriend);
+  }
+  public function requestFriend(User $requestedUser, array $request) {
+    // generates a friend request from the current user to requestedUser.
+    // returns a boolean.
+    $params = [];
+    $params[] = "`message` = ".(isset($request['message']) ? $this->dbConn->quoteSmart($request['message']) : '""');
+    $params[] = "`user_id_1` = ".intval($this->id);
+    $params[] = "`user_id_2` = ".intval($requestedUser->id);
+    $params[] = "`status` = 0";
+    $params[] = "`time` = NOW()";
+
+    // check to see if this already exists in friends or requests.
+    if ($this->isFriend($requestedUser)) {
+      // this friendship already exists.
+      return True;
+    }
+    if ($this->hasFriendRequestWith($requestedUser)) {
+      // this request already exists.
+      return True;
+    }
+    // otherwise, go ahead and create a request.
+    $this->beforeUpdate([]);
+    $requestedUser->beforeUpdate([]);
+    $createRequest = $this->dbConn->stdQuery("INSERT INTO `users_friends` SET ".implode(", ",$params));
+    if ($createRequest) {
+      $this->afterUpdate([]);
+      $requestedUser->afterUpdate([]);
+      $this->app->fire('User.requestFriend', $this, ['id' => $requestedUser->id]);
+      return True;
+    } else {
+      return False;
+    }
+  }
+  public function updateFriend(User $requestedUser, $status) {
+    // updates a friend request status from requestedUser directed at current user.
+    // returns a boolean.
+
+    $updateArray = ['status' => intval($status)];
+    $this->beforeUpdate($updateArray);
+    $requestedUser->beforeUpdate($updateArray);
+    $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
+    if ($updateRequest) {
+      $this->afterUpdate($updateArray);
+      $requestedUser->afterUpdate($updateArray);
+      return True;
+    } else {
+      return False;
+    }
+  }
+  public function confirmFriend(User $requestedUser) {
+    // confirms a friend request from requestedUser directed at the current user.
+    // returns a boolean.
+    // check to ensure this is an extant request.
+    if (!$this->hasFriendRequestFrom($requestedUser)) {
+      return False;
+    }
+
+    // check to see if this already exists in friends.
+    if ($this->isFriend($requestedUser)) {
+      // this friendship already exists.
+      return True;
+    }
+    // otherwise, go ahead and confirm this request.
+    if ($this->updateFriend($requestedUser, 1)) {
+      $this->afterUpdate([]);
+      $this->app->fire('User.confirmFriend', $this, ['id' => $requestedUser->id]);
+      $this->app->fire('User.confirmFriend', $requestedUser, ['id' => $this->id]);
+      return True;
+    }
+    return False;
+  }
+  public function ignoreFriend(User $requestedUser) {
+    // ignores a friend request from requestedUser directed at the current user.
+    // returns a boolean.
+    // check to ensure this is an extant request.
+    if (!$this->hasFriendRequestFrom($requestedUser)) {
+      return False;
+    }
+
+    // check to see if this already exists in friends.
+    if ($this->isFriend($requestedUser)) {
+      // this friendship already exists.
+      return False;
+    }
+    // otherwise, go ahead and ignore this request.
+    return $this->updateFriend($requestedUser, -1);
   }
   public function animeList() {
     if ($this->animeList === Null) {
@@ -295,6 +396,7 @@ class User extends BaseObject {
       case 'feed':
       case 'anime_list':
       case 'stats':
+      case 'friends':
       case 'achievements':
       case 'achievements2':
         return True;
@@ -608,7 +710,9 @@ class User extends BaseObject {
       throw new AppException($this->app, "Could not parse MAL list");
     }
     $listIDs = [];
+
     foreach($malList as $entry) {
+      // ensure that the user doesn't already have this entry in their list.
       $entry['user_id'] = $this->id;
       try {
         $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
@@ -622,95 +726,6 @@ class User extends BaseObject {
     $this->app->fire('User.importMAL', $this, $listIDs);
 
     return $listIDs;
-  }
-  public function requestFriend(User $requestedUser, array $request) {
-    // generates a friend request from the current user to requestedUser.
-    // returns a boolean.
-    $params = [];
-    $params[] = "`message` = ".(isset($request['message']) ? $this->dbConn->quoteSmart($request['message']) : '""');
-    $params[] = "`user_id_1` = ".intval($this->id);
-    $params[] = "`user_id_2` = ".intval($requestedUser->id);
-    $params[] = "`status` = 0";
-    $params[] = "`time` = NOW()";
-
-    // check to see if this already exists in friends or requests.
-    if (array_filter_by_key_property($this->friends(), 'user', 'id', $requestedUser->id)) {
-      // this friendship already exists.
-      return True;
-    }
-    if (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $requestedUser->id)) {
-      // this request already exists.
-      return True;
-    }
-    // otherwise, go ahead and create a request.
-    $this->beforeUpdate([]);
-    $requestedUser->beforeUpdate([]);
-    $createRequest = $this->dbConn->stdQuery("INSERT INTO `users_friends` SET ".implode(", ",$params));
-    if ($createRequest) {
-      $this->afterUpdate([]);
-      $requestedUser->afterUpdate([]);
-      $this->app->fire('User.requestFriend', $this, ['id' => $requestedUser->id]);
-      return True;
-    } else {
-      return False;
-    }
-  }
-  public function updateFriend(User $requestedUser, $status) {
-    // updates a friend request status from requestedUser directed at current user.
-    // returns a boolean.
-
-    $updateArray = ['status' => intval($status)];
-    $this->beforeUpdate($updateArray);
-    $requestedUser->beforeUpdate($updateArray);
-    $updateRequest = $this->dbConn->stdQuery("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
-    if ($updateRequest) {
-      $this->afterUpdate($updateArray);
-      $requestedUser->afterUpdate($updateArray);
-      return True;
-    } else {
-      return False;
-    }
-  }
-  public function confirmFriend(User $requestedUser) {
-    // confirms a friend request from requestedUser directed at the current user.
-    // returns a boolean.
-    // check to ensure this is an extant request.
-    $this->app->logger->err(print_r($this->friendRequests(), True));
-    if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
-      $this->app->logger->err("A");
-      return False;
-    }
-
-    // check to see if this already exists in friends.
-    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
-      // this friendship already exists.
-      return True;
-    }
-    // otherwise, go ahead and confirm this request.
-    if ($this->updateFriend($requestedUser, 1)) {
-      $this->afterUpdate([]);
-      $this->app->fire('User.confirmFriend', $this, ['id' => $requestedUser->id]);
-      $this->app->fire('User.confirmFriend', $requestedUser, ['id' => $this->id]);
-      return True;
-    }
-    $this->app->logger->err("B");
-    return False;
-  }
-  public function ignoreFriend(User $requestedUser) {
-    // ignores a friend request from requestedUser directed at the current user.
-    // returns a boolean.
-    // check to ensure this is an extant request.
-    if (!array_filter_by_key_property($this->friendRequests(), 'user', 'id', $requestedUser->id)) {
-      return False;
-    }
-
-    // check to see if this already exists in friends.
-    if (array_filter_by_key($this->friends(), 'user_id_1', $requestedUser->id) || array_filter_by_key($this->friends(), 'user_id_2', $requestedUser->id)) {
-      // this friendship already exists.
-      return False;
-    }
-    // otherwise, go ahead and ignore this request.
-    return $this->updateFriend($requestedUser, -1);
   }
   public function addAchievement(BaseAchievement $achievement) {
     $this->app->fire('User.addAchievement', $this, ['id' => $achievement->id, 'points' => $achievement->points]);
@@ -929,6 +944,9 @@ class User extends BaseObject {
         exit;
       case 'stats':
         echo $this->view('stats');
+        exit;
+      case 'friends':
+        echo $this->view('friends');
         exit;
       case 'achievements':
         echo $this->view('achievements');

@@ -5,6 +5,8 @@ class BaseGroup implements Iterator, ArrayAccess {
   // you can treat this as if it were an array of objects
   // e.g. foreach($group->load('info') as $object) or $group->load('info')[1]
 
+  public static $modelUrl;
+
   protected $_objects,$_objectGroups,$_objectKeys = [];
   private $position = 0;
   protected $_tagCounts=Null;
@@ -202,7 +204,11 @@ class BaseGroup implements Iterator, ArrayAccess {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    return $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON  `tags`.`id` =  `tag_id` WHERE  `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    $tagCountList = $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON `tags`.`id` =  `tag_id` WHERE `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    foreach ($tagCountList as $id=>$count) {
+      $tagCountList[$id] = ['tag' => new Tag($this->app, intval($id)), 'count' => intval($count)];
+    }
+    return $tagCountList;
   }
   public function tagCounts() {
     if ($this->_tagCounts === Null) {
@@ -244,6 +250,16 @@ class BaseGroup implements Iterator, ArrayAccess {
     $className = get_class($this);
     $limitedObjects = array_slice($this->_objects, 0, $n);
     return new $className($this->app, $limitedObjects ? $limitedObjects : []);
+  }
+  public function view($view="index", array $params=Null) {
+    $file = joinPaths(Config::APP_ROOT, 'views', static::$modelUrl, "$view.php");
+    if (file_exists($file)) {
+      ob_start();
+      include($file);
+      return ob_get_clean();
+    }
+    // Should never get here!
+    throw new AppException($this->app, "Requested view not found: ".$file);
   }
 }
 

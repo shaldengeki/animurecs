@@ -521,15 +521,6 @@ class Anime extends BaseObject {
   public function formatFeedEntry(BaseEntry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);
   }
-  public function tagList(User $currentUser) {
-    $output = "<ul class='tagList'>\n";
-    $tagCounts = $this->tags()->load('info')->tagCounts();
-    foreach ($tagCounts as $tagID => $count) {
-      $output .= "<li>".$this->tags()[$tagID]->link("show", $this->tags()[$tagID]->name)." ".intval($count)."</li>\n";
-    }
-    $output .= "</ul>\n";
-    return $output;
-  }
   public function url($action="show", $format=Null, array $params=Null, $title=Null) {
     // returns the url that maps to this object and the given action.
     if ($title === Null) {

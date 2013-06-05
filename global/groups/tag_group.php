@@ -63,7 +63,11 @@ class TagGroup extends BaseGroup {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    return $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `anime_tags` WHERE  `tag_id` IN (".implode(", ", $inclusion).") GROUP BY  `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    $tagCountList = $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `anime_tags` WHERE `tag_id` IN (".implode(", ", $inclusion).") GROUP BY `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    foreach ($tagCountList as $id=>$count) {
+      $tagCountList[$id] = ['tag' => $this->tags()[$id], 'count' => intval($count)];
+    }
+    return $tagCountList;
   }
   public function tags() {
     return $this->objects();

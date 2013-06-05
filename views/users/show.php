@@ -46,14 +46,19 @@ if ($this->avatarPath() != '') {
                 <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
               <?php 
                 if ($this->allow($this->app->user, 'request_friend') && $this->id != $this->app->user->id) {
-                  if (array_filter_by_key_property($this->friends(), 'user', 'id', $this->app->user->id)) {
+                  if ($this->isFriend($this->app->user)) {
 ?>
                 <span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friends</button></span>
 <?php
-                  } elseif (array_filter_by_key_property($this->friendRequests(), 'user', 'id', $this->app->user->id) || array_filter_by_key_property($this->requestedFriends(), 'user', 'id', $this->app->user->id)) {
+                  } elseif ($this->hasFriendRequestFrom($this->app->user)) {
 ?>
                 <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Requested</button></span>
 <?php                    
+                  } elseif ($this->hasRequestedFriend($this->app->user)) {
+                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Confirm Request'];
+?>
+                <span class='pull-right'><?php echo $this->app->form(['action' => $this->url('confirm_friend')]).$this->app->input($buttonParams); ?></form></span>
+<?php
                   } else {
                     $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Friend Request'];
 ?>
@@ -91,6 +96,7 @@ if ($this->avatarPath() != '') {
               <li class='ajaxTab' data-url='<?php echo $this->url("anime_list"); ?>'><a href='#userList' data-toggle='tab'>List</a></li>
               <li class='ajaxTab' data-url='<?php echo $this->url("stats"); ?>'><a href='#userStats' data-toggle='tab'>Stats</a></li>
               <!--<li class='ajaxTab' data-url='<?php //echo $this->url("achievements"); ?>'><a href='#userAchievements' data-toggle='tab'>Achievements</a></li>-->
+              <li class='ajaxTab' data-url='<?php echo $this->url("friends"); ?>'><a href='#friends' data-toggle='tab'>Friends</a></li>
               <li class='ajaxTab' data-url='<?php echo $this->url("achievements2"); ?>'><a href='#userAchievements2' data-toggle='tab'>Achievements (beta)</a></li>
             </ul>
             <div class='tab-content'>
@@ -116,7 +122,7 @@ if ($this->avatarPath() != '') {
               <div class='tab-pane' id='userStats'>
                 Loading...
               </div>
-              <div class='tab-pane' id='userAchievements'>
+              <div class='tab-pane' id='friends'>
                 Loading...
               </div>
               <div class='tab-pane' id='userAchievements2'>
