@@ -16,14 +16,25 @@
     $tagTypeObj = new TagType($this->app, intval($tagType['id']));
     $tagTypes[] = $tagTypeObj->set(['name' => $tagType['name']]);
   }
-  $tagCounts = $this->tagCounts();
+  $tagCounts = [];
+  foreach ($this->tagCounts() as $id=>$countArray) {
+    $tagCounts[$id] = $countArray['count'];
+  }
+
   $tagsByTagType = [];
+  $tagCountsByType = [];
+
   foreach ($this->tags() as $tag) {
-    if (!isset($tagsByTagType[$tag->type->id])) {
-      $tagsByTagType[$tag->type->id] = [$tag];
+    if (!isset($tagCountsByType[$tag->type->id])) {
+      $tagCountsByType[$tag->type->id] = [$tag->id => $tagCounts[$tag->id]];
     } else {
-      $tagsByTagType[$tag->type->id][] = $tag;
+      $tagCountsByType[$tag->type->id][$tag->id] = $tagCounts[$tag->id];
     }
+  }
+
+  // go back and sort by count.
+  foreach ($tagCountsByType as $tagTypeID => $tags) {
+    arsort($tagCountsByType[$tagTypeID]);
   }
 ?>
 <ul class='tagList'>
@@ -34,7 +45,7 @@
   <li class='tagType-heading'><?php echo escape_output($tagType->name).":"; ?></li>
   <li>
 <?php
-    if (!isset($tagsByTagType[$tagType->id])) {
+    if (!isset($tagCountsByType[$tagType->id])) {
 ?>
     <em>No tags under this category.</em>
 <?php
@@ -43,9 +54,9 @@
 ?>
     <ul class='tagTypeTags'>
 <?php
-    foreach ($tagsByTagType[$tagType->id] as $tag) {
+    foreach ($tagCountsByType[$tagType->id] as $tagID => $count) {
 ?>
-      <li><?php echo $tag->link("show", $tag->name)." ".intval($tagCounts[$tag->id]['count']); ?></li>
+      <li><?php echo $this->tags()[$tagID]->link("show", $this->tags()[$tagID]->name)." ".intval($count); ?></li>
 <?php
       if ($tagsDisplayed >= $params['numTags']) {
         break;
