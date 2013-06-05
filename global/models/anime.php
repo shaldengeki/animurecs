@@ -25,7 +25,7 @@ class Anime extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $title=Null) {
     if ($title !== Null) {
-      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `title` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $title))." LIMIT 1"));
+      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `".static::$modelTable."` WHERE `title` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $title))." LIMIT 1"));
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -136,15 +136,15 @@ class Anime extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $this->beforeUpdate(array());
-    $tag->beforeUpdate(array());
+    $this->beforeUpdate([]);
+    $tag->beforeUpdate([]);
     $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertDependency) {
       return False;
     }
-    $this->afterUpdate(array());
-    $tag->afterUpdate(array());
-    $this->tags[intval($tag->id)] = array('id' => intval($tag->id), 'name' => $tag->name);
+    $this->afterUpdate([]);
+    $tag->afterUpdate([]);
+    $this->tags[intval($tag->id)] = ['id' => intval($tag->id), 'name' => $tag->name];
     return True;
   }
   public function drop_taggings(array $tags=Null) {
@@ -272,7 +272,7 @@ class Anime extends BaseObject {
     // now process any taggings.
     if (isset($anime['anime_tags'])) {
       // drop any unneeded  tags.
-      $tagsToDrop = array();
+      $tagsToDrop = [];
       foreach ($this->tags() as $tag) {
         if (!in_array($tag->id, $anime['anime_tags'])) {
           $tagsToDrop[] = intval($tag->id);
@@ -411,16 +411,16 @@ class Anime extends BaseObject {
       if ($updateAnime) {
         // fetch the new ID.
         $newAnime = new Anime($this->app, $updateAnime);
-        $this->app->redirect($newAnime->url("show"), array('status' => "Successfully created or updated ".$newAnime->title().".", 'class' => 'success'));
+        $this->app->redirect($newAnime->url("show"), ['status' => "Successfully created or updated ".$newAnime->title().".", 'class' => 'success']);
       } else {
-        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error'));
+        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), ['status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error']);
       }
     }
     switch($this->app->action) {
       case 'feed':
         $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
         $entries = $this->entries($maxTime, 50);
-        echo $this->app->user->view('feed', array('entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => ''));
+        echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         exit;
         break;
       case 'token_search':
@@ -428,7 +428,7 @@ class Anime extends BaseObject {
         $searchResults = $blankAlias->search($_REQUEST['term']);
         $animus = [];
         foreach ($searchResults as $anime) {
-          $animus[] = array('id' => $anime->id, 'title' => $anime->title());
+          $animus[] = ['id' => $anime->id, 'title' => $anime->title()];
         }
         echo json_encode($animus);
         exit;
@@ -458,7 +458,7 @@ class Anime extends BaseObject {
           $this->app->display_error(404);
         }
         $title = escape_output($this->title());
-        $output = $this->view("show", array('entries' => $this->animeFeed(Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"));
+        $output = $this->view("show", ['entries' => $this->entries(Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
         break;
       case 'delete':
         if ($this->id == 0) {
@@ -470,9 +470,9 @@ class Anime extends BaseObject {
         $animeTitle = $this->title();
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
-          $this->app->redirect("/anime/", array('status' => 'Successfully deleted '.$animeTitle.'.', 'class' => 'success'));
+          $this->app->redirect("/anime/", ['status' => 'Successfully deleted '.$animeTitle.'.', 'class' => 'success']);
         } else {
-          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), ['status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error']);
         }
         break;
       default:
@@ -481,11 +481,11 @@ class Anime extends BaseObject {
         $resultsPerPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $animeIDs = $this->dbConn->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
-            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `anime`")/$resultsPerPage);
+            $animeIDs = $this->dbConn->stdQuery("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `".static::$modelTable."`")/$resultsPerPage);
           } else {
-            $animeIDs = $this->dbConn->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
-            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
+            $animeIDs = $this->dbConn->stdQuery("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` WHERE `approved_on` != '' ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `".static::$modelTable."` WHERE `approved_on` != ''")/$resultsPerPage);
           }
           $anime = [];
           while ($animeID = $animeIDs->fetch_assoc()) {
@@ -497,10 +497,10 @@ class Anime extends BaseObject {
           $anime = array_slice($searchResults, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage));
           $numPages = ceil(count($searchResults)/$resultsPerPage);
         }
-        $output = $this->view("index", array('anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage));
+        $output = $this->view("index", ['anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
         break;
     }
-    return $this->app->render($output, array('subtitle' => $title));
+    return $this->app->render($output, ['subtitle' => $title]);
   }
   public function scoreBar($score=Null) {
     // returns markup for a score bar for a score given to this anime.
@@ -520,18 +520,6 @@ class Anime extends BaseObject {
   }
   public function formatFeedEntry(BaseEntry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);
-  }
-  public function animeFeed(DateTime $maxTime=Null, $numEntries=50) {
-    // returns an EntryGroup consisting of entries in this anime's feed.
-    return $this->entries($maxTime, $numEntries);
-  }
-  public function tagCloud(User $currentUser) {
-    $output = "<ul class='tagCloud'>";
-    foreach ($this->tags()->load('info') as $tag) {
-      $output .= "<li class='".escape_output($tag->type->name)."'><p>".$tag->link("show", $tag->name, Null, False, array('title' => "(".$tag->numAnime.")"))."</p>".($tag->allow($currentUser, "edit") ? "<span>".$this->link("remove_tag", "×", Null, False, Null, array('tag_id' => $tag->id))."</span>" : "")."</li>";
-    }
-    $output .= "</ul>\n";
-    return $output;
   }
   public function tagList(User $currentUser) {
     $output = "<ul class='tagList'>\n";

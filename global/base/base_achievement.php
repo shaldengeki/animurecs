@@ -6,7 +6,7 @@ abstract class BaseAchievement extends BaseObject {
 
   // getter methods.
   public function __construct(Application $app, $id=Null) {
-//    parent::__construct($app, $id);
+    // parent::__construct($app, $id);
     parent::__construct($app, $this->id);
   }
   public function name() {
@@ -21,15 +21,18 @@ abstract class BaseAchievement extends BaseObject {
   public function imagePath() {
     return $this->returnInfo('imagePath');
   }
+  public function dependencies() {
+    return $this->returnInfo('dependencies');
+  }
   public function imageTag(array $params=Null) {
     $imageParams = [];
-    $params['class'] = isset($params['class']) ? $params['class'] .= " img-circle" : "img-circle";
+    // $params['class'] = isset($params['class']) ? $params['class'] .= " img-circle" : "img-circle";
     if (is_array($params) && $params) {
       foreach ($params as $key => $value) {
         $imageParams[] = escape_output($key)."='".escape_output($value)."'";
       }
     }
-    $imgPath = $this->imagePath() ? $this->imagePath() : "http://placehold.it/75x75";
+    $imgPath = $this->imagePath() ? $this->imagePath() : "http://placehold.it/100x100";
     return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->imagePath()))."' ".implode(" ", $imageParams)." />";
   }
   public function events() {
@@ -70,7 +73,7 @@ abstract class BaseAchievement extends BaseObject {
   }
   public function dependenciesPresent(User $user) {
     foreach ($this->dependencies as $dependency) {
-      if (!$dependency->alreadyAwarded($user)) {
+      if (!$this->app->achievements[$dependency]->alreadyAwarded($user)) {
         return False;
       }
     }
@@ -91,7 +94,30 @@ abstract class BaseAchievement extends BaseObject {
     }
   }
 
+  public function level() {
+    if (!$this->dependencies()) {
+      return 1;
+    } else {
+      return max(array_map(function($dep) {return $dep->level() + 1; }, $this->app->achievements[$this->id]->dependencies()));
+    }
+  }
+
+  public function children() {
+    $children = [];
+    foreach ($this->app->achievements as $id=>$achievement) {
+      if (in_array($this->id, $achievement->dependencies())) {
+        $children[] = $achievement;
+      }
+    }
+    return $children;
+  }
+
   // returns bool indicating whether user is able to recieve this achievement.
   abstract public function validateUser($event, BaseObject $parent, array $updateParams=Null);
+
+  // returns float indicating current progress towards this achievement.
+  abstract public function progress(BaseObject $parent);
+
+  abstract public function progressString(BaseObject $parent);
 }
 ?>

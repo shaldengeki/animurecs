@@ -29,7 +29,7 @@ class BaseObjectTest extends PHPUnit_Framework_TestCase {
 
   public function __construct() {
     $this->app = new Application();
-    $this->baseObject = $this->getMockForAbstractClass('BaseObject', array($this->app));
+    $this->baseObject = $this->getMockForAbstractClass('BaseObject', [$this->app]);
     $this->baseObject->expects($this->any())
                       ->method('allow')
                       ->will($this->returnValue(True));
@@ -46,68 +46,68 @@ class BaseObjectTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals('false', $this->baseObject->humanizeParameter('false'));
   }
   public function testset() {
-    $this->assertEquals('test value', $this->baseObject->set(array('test_parameter' => 'test value'))->testParameter);
-    $this->assertEquals(3.5, $this->baseObject->set(array('test_parameter' => 3.5))->testParameter);
-    $this->assertEquals(false, $this->baseObject->set(array('testing_0' => false))->testing0);
-    $this->assertEquals('test value', $this->baseObject->set(array('123' => 'test value'))->{123});
-    $this->assertInstanceOf('DateTime', $this->baseObject->set(array('created_at' => '1/1/2001 05:23:12'))->createdAt);
-    $this->assertInstanceOf('DateTime', $this->baseObject->set(array('updated_at' => '1/1/2001 05:23:12'))->updatedAt);
+    $this->assertEquals('test value', $this->baseObject->set(['test_parameter' => 'test value'])->testParameter);
+    $this->assertEquals(3.5, $this->baseObject->set(['test_parameter' => 3.5])->testParameter);
+    $this->assertEquals(false, $this->baseObject->set(['testing_0' => false])->testing0);
+    $this->assertEquals('test value', $this->baseObject->set(['123' => 'test value'])->{123});
+    $this->assertInstanceOf('DateTime', $this->baseObject->set(['created_at' => '1/1/2001 05:23:12'])->createdAt);
+    $this->assertInstanceOf('DateTime', $this->baseObject->set(['updated_at' => '1/1/2001 05:23:12'])->updatedAt);
   }
   public function testproperlyFormedBaseObjectPassesValidation() {
-    $this->assertTrue($this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12')));
+    $this->assertTrue($this->baseObject->validate(['id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12']));
   }
   /**
    * @expectedException ValidationException
    */
   public function testemptyArrayThrowsValidationException() {
-    $this->baseObject->validate(array());
+    $this->baseObject->validate([]);
   }
   /**
    * @expectedException ValidationException
    */
   public function testnegativeIDThrowsValidationException() {
-    $this->baseObject->validate(array('id' => -1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12'));
+    $this->baseObject->validate(['id' => -1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12']);
   }
   /**
    * @expectedException ValidationException
    */
   public function testnonIntegralIDThrowsValidationException() {
-    $this->baseObject->validate(array('id' => 3.5, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12'));
+    $this->baseObject->validate(['id' => 3.5, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:12']);
   }
   /**
    * @expectedException ValidationException
    */
   public function testinvalidCreatedAtThrowsValidationException() {
-    $this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:62', 'updated_at' => '1/1/2001 05:23:12'));
+    $this->baseObject->validate(['id' => 1, 'created_at' => '1/1/2001 05:23:62', 'updated_at' => '1/1/2001 05:23:12']);
   }
   /**
    * @expectedException ValidationException
    */
   public function testinvalidUpdatedAtThrowsValidationException() {
-    $this->baseObject->validate(array('id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:62'));
+    $this->baseObject->validate(['id' => 1, 'created_at' => '1/1/2001 05:23:12', 'updated_at' => '1/1/2001 05:23:62']);
   }
   public function testbeforeCreate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind({$this->baseObjectClass}::modelName().'.beforeCreate', $observer);
-    $this->baseObject->beforeCreate(array('beforeCreateTestParam' => 40.2));
+    $this->baseObject->beforeCreate(['beforeCreateTestParam' => 40.2]);
     $this->assertEquals(40.2, $this->baseObject->beforeCreateTestParam);
   }
   public function testafterCreate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind({$this->baseObjectClass}::modelName().'.afterCreate', $observer);
-    $this->baseObject->afterCreate(array('beforeCreateTestParam' => 40.2));
+    $this->baseObject->afterCreate(['beforeCreateTestParam' => 40.2]);
     $this->assertEquals(41.2, $this->baseObject->afterCreateTestParam);
   }
   public function testbeforeUpdate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind({$this->baseObjectClass}::modelName().'.beforeUpdate', $observer);
-    $this->baseObject->beforeUpdate(array('beforeUpdateTestParam' => 42.2));
+    $this->baseObject->beforeUpdate(['beforeUpdateTestParam' => 42.2]);
     $this->assertEquals(42.2, $this->baseObject->beforeUpdateTestParam);
   }
   public function testafterUpdate() {
     $observer = new BaseObjectTestObserver();
     $this->app->bind({$this->baseObjectClass}::modelName().'.afterUpdate', $observer);
-    $this->baseObject->afterUpdate(array('afterUpdateTestParam' => 43.2));
+    $this->baseObject->afterUpdate(['afterUpdateTestParam' => 43.2]);
     $this->assertEquals(43.2, $this->baseObject->afterUpdateTestParam);
   }
   public function testbeforeDelete() {

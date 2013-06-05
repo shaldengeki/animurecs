@@ -65,7 +65,7 @@ class CommentEntry extends BaseEntry {
       $feedTitle .= " to ".$receivingUser;
     }
     $feedTitle .= ":";
-    return array('title' => $feedTitle, 'text' => escape_output($this->comment()->message()));
+    return ['title' => $feedTitle, 'text' => escape_output($this->comment()->message())];
   }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.

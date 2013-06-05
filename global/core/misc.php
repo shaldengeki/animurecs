@@ -52,7 +52,7 @@ function wilson_score(array $array, $min=1, $max=10) {
 
 function joinPaths() {
   $args = func_get_args();
-  $paths = array();
+  $paths = [];
 
   foreach($args as $arg) {
     $paths = array_merge($paths, (array)$arg);
@@ -259,7 +259,7 @@ function buildMethodSorter($method, $methodArgs, $order) {
       if (!method_exists($b, $method)) {
         return 1*$order;
       } else {
-        return ((call_user_func_array(array($a, $method), $methodArgs) < call_user_func_array(array($b, $method), $methodArgs)) ? -1 : 1)*$order;
+        return ((call_user_func_array([$a, $method], $methodArgs) < call_user_func_array([$b, $method], $methodArgs)) ? -1 : 1)*$order;
       }
     }
   };

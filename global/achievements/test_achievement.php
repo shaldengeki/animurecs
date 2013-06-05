@@ -15,6 +15,15 @@ class TestAchievement extends BaseAchievement {
     }
     return False;
   }
+  public function level() {
+    return 1;
+  }
+  public function progress(BaseObject $parent) {
+    return $this->user($parent)->about ? 1.0 : 0.0;
+  }
+  public function progressString(BaseObject $parent) {
+    return intval((bool) $this->user($parent)->about)."/1";
+  }
 }
 
 ?>

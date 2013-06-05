@@ -75,7 +75,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     foreach ($this->_objects as $key=>$object) {
       $objectClass = get_class($object);
       if (!isset($this->_objectGroups[$objectClass::$modelTable])) {
-        $this->_objectGroups[$objectClass::$modelTable] = array($key=>$object);
+        $this->_objectGroups[$objectClass::$modelTable] = [$key=>$object];
       } else {
         $this->_objectGroups[$objectClass::$modelTable][$key] = $object;
       }

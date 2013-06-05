@@ -2,7 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-    <?php echo $this->app->form(array('action' => $this->url("switch_user"), 'class' => 'form-horizontal')); ?>
+    <?php echo $this->app->form(['action' => $this->url("switch_user"), 'class' => 'form-horizontal']); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='switch_username'>Username</label>

@@ -171,13 +171,13 @@ function parseMALList($username, $type="anime") {
 		}
 		$time->setTimezone($serverTimezone);
 
-		$animeList[intval($animeID)] = array(
+		$animeList[intval($animeID)] = [
 			'anime_id' => $animeID,
 			'episode' => $episode,
 			'score' => $score,
 			'status' => $status,
 			'time' => $time->format("Y-m-d H:i:s")
-		);
+		];
 	}
 	return $animeList;
 }

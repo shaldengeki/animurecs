@@ -22,7 +22,7 @@ abstract class BaseObject {
   public static $modelTable, $modelUrl, $modelPlural, $modelName;
 
   protected $createdAt, $updatedAt;
-  protected $observers = array();
+  protected $observers = [];
 
   public function __construct(Application $app, $id=Null) {
     $this->app = $app;
@@ -61,6 +61,9 @@ abstract class BaseObject {
   public static function first($app) {
     $className = static::modelName();
     return new $className($app, intval($app->dbConn->queryFirstValue("SELECT `id` FROM ".static::$modelTable." ORDER BY `id` ASC LIMIT 1")));
+  }
+  public static function count($app) {
+    return intval($app->dbConn->queryCount("SELECT COUNT(*) FROM ".static::$modelTable));
   }
   public static function find($app, $id=Null) {
     if ($id === Null) {
@@ -204,7 +207,7 @@ abstract class BaseObject {
     // returns False if failure, or the ID of the object if success.
     $this->validate($object);
 
-    $params = array();
+    $params = [];
     foreach ($object as $parameter => $value) {
       if (!is_array($value)) {
         $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
@@ -214,7 +217,7 @@ abstract class BaseObject {
 
     //go ahead and create or update this object.
     if ($this->id != 0) {
-      $whereParams = array();
+      $whereParams = [];
       if ($whereConditions !== Null && is_array($whereConditions)) {
         foreach ($whereConditions as $parameter => $value) {
           if (!is_array($value)) {
@@ -238,7 +241,7 @@ abstract class BaseObject {
       // add this object.
       $params[] = '`created_at` = NOW()';
 
-      $this->beforeCreate(array($object));
+      $this->beforeCreate([$object]);
       $insertQuery = "INSERT INTO `".static::$modelTable."` SET ".implode(",", $params);
       $insertUser = $this->dbConn->stdQuery($insertQuery);
       if (!$insertUser) {
@@ -306,7 +309,7 @@ abstract class BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output(self::modelUrl())."/".($action !== "index" ? escape_output($id)."/".escape_output($action) : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".rawurlencode(self::modelUrl())."/".($action !== "index" ? rawurlencode($id)."/".rawurlencode($action) : "").($format !== Null ? ".".rawurlencode($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

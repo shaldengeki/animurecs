@@ -24,21 +24,21 @@ abstract class BaseList extends BaseObject {
     $this->typeID = $this->listTypeLower.'_id';
     // strings with which to build feed messages.
     // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
-    $this->statusStrings = array(0 => array(0 => "did something mysterious with [TITLE]",
+    $this->statusStrings = [0 => [0 => "did something mysterious with [TITLE]",
                                       1 => "is now [TYPE_VERB] [TITLE]",
                                       2 => "marked [TITLE] as completed",
                                       3 => "marked [TITLE] as on-hold",
                                       4 => "marked [TITLE] as dropped",
-                                      6 => "plans to watch [TITLE]"),
-                                  1 => array(0 => "removed [TITLE]",
+                                      6 => "plans to watch [TITLE]"],
+                                  1 => [0 => "removed [TITLE]",
                                             1 => "started [TYPE_VERB] [TITLE]",
                                             2 => "finished [TITLE]",
                                             3 => "put [TITLE] on hold",
                                             4 => "dropped [TITLE]",
-                                            6 => "now plans to watch [TITLE]"));
-    $this->scoreStrings = array(0 => array("rated [TITLE] a [SCORE]/10", "and rated it a [SCORE]/10"),
-                          1 => array("unrated [TITLE]", "and unrated it"));
-    $this->partStrings = array("just finished [PART_NAME] [PART]/[TOTAL_PARTS] of [TITLE]", "and finished [PART_NAME] [PART]/[TOTAL_PARTS]");
+                                            6 => "now plans to watch [TITLE]"]];
+    $this->scoreStrings = [0 => ["rated [TITLE] a [SCORE]/10", "and rated it a [SCORE]/10"],
+                          1 => ["unrated [TITLE]", "and unrated it"]];
+    $this->partStrings = ["just finished [PART_NAME] [PART]/[TOTAL_PARTS] of [TITLE]", "and finished [PART_NAME] [PART]/[TOTAL_PARTS]"];
     $this->uniqueListAvg = $this->uniqueListStdDev = $this->entryAvg = $this->entryStdDev = Null;
     $this->user = Null;
     if ($user_id === 0) {
@@ -100,7 +100,7 @@ abstract class BaseList extends BaseObject {
         if (intval($entry['status']) == 0) {
           unset($this->uniqueList[intval($entry[$this->typeID])]);
         } else {
-          $this->uniqueList[intval($entry[$this->typeID])] = array($this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName]));
+          $this->uniqueList[intval($entry[$this->typeID])] = [$this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName])];
         }
       }
       $returnValue = intval($entry['id']);
@@ -120,7 +120,7 @@ abstract class BaseList extends BaseObject {
       if (intval($entry['status']) == 0) {
         unset($this->uniqueList[intval($entry[$this->typeID])]);
       } else {
-        $this->uniqueList[intval($entry[$this->typeID])] = array($this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName]));
+        $this->uniqueList[intval($entry[$this->typeID])] = [$this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName])];
       }
       $this->afterUpdate($entry);
     }

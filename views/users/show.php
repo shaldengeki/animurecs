@@ -10,7 +10,7 @@
 <?php
 if ($this->avatarPath() != '') {
 ?>
-                <?php echo $this->avatarImage(array('class' => 'img-rounded', 'alt' => '')); ?>
+                <?php echo $this->avatarImage(['class' => 'img-rounded', 'alt' => '']); ?>
 <?php
 } else {
 ?>
@@ -29,7 +29,7 @@ if ($this->avatarPath() != '') {
   shuffle($friendSlice);
   $friendSlice = array_slice($friendSlice, 0, 4);
   foreach ($friendSlice as $friendEntry) {
-?>            <li class='friendGridEntry'><?php echo $friendEntry['user']->link("show", $friendEntry['user']->avatarImage(array('class' => 'friendGridImage'))."<div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", Null, True); ?></li>
+?>            <li class='friendGridEntry'><?php echo $friendEntry['user']->link("show", $friendEntry['user']->avatarImage(['class' => 'friendGridImage'])."<div class='friendGridUsername'>".escape_output($friendEntry['user']->username)."</div>", Null, True); ?></li>
 <?php
   }
 ?>
@@ -91,6 +91,7 @@ if ($this->avatarPath() != '') {
               <li class='ajaxTab' data-url='<?php echo $this->url("anime_list"); ?>'><a href='#userList' data-toggle='tab'>List</a></li>
               <li class='ajaxTab' data-url='<?php echo $this->url("stats"); ?>'><a href='#userStats' data-toggle='tab'>Stats</a></li>
               <li class='ajaxTab' data-url='<?php echo $this->url("achievements"); ?>'><a href='#userAchievements' data-toggle='tab'>Achievements</a></li>
+              <li class='ajaxTab' data-url='<?php echo $this->url("achievements2"); ?>'><a href='#userAchievements2' data-toggle='tab'>Achievements (beta)</a></li>
             </ul>
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>
@@ -102,12 +103,12 @@ if ($this->avatarPath() != '') {
     $blankComment = new Comment($this->app, 0, $this->app->user, $this);
 ?>
                 <div class='addListEntryForm'>
-                  <?php echo $blankComment->view('inlineForm', array('currentObject' => $this)); ?>
+                  <?php echo $blankComment->view('inlineForm', ['currentObject' => $this]); ?>
                 </div>
 <?php
   }
 ?>
-                <?php echo $this->view('feed', array('entries' => $this->profileFeed(), 'numEntries' => 50, 'feedURL' => $this->url('feed'))); ?>
+                <?php echo $this->view('feed', ['entries' => $this->profileFeed(), 'numEntries' => 50, 'feedURL' => $this->url('feed')]); ?>
               </div>
               <div class='tab-pane' id='userList'>
                 Loading...
@@ -116,6 +117,9 @@ if ($this->avatarPath() != '') {
                 Loading...
               </div>
               <div class='tab-pane' id='userAchievements'>
+                Loading...
+              </div>
+              <div class='tab-pane' id='userAchievements2'>
                 Loading...
               </div>
             </div>

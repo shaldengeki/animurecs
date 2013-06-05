@@ -40,7 +40,7 @@ class EntryGroup extends BaseGroup {
       }
       foreach ($this->entries() as $entry) {
         if (method_exists($entry, 'anime') && $entry->animeId !== Null) {
-          $entry->set(array('anime' => $animes[$entry->animeId]));
+          $entry->set(['anime' => $animes[$entry->animeId]]);
         }
       }
     }
@@ -68,7 +68,7 @@ class EntryGroup extends BaseGroup {
         $users[$user['id']]->set($user);
       }
       foreach ($this->entries() as $entry) {
-        $setArray = array('user' => $users[$entry->userId]);
+        $setArray = ['user' => $users[$entry->userId]];
         if (method_exists($entry, 'parentId') && $entry->parentId !== Null && isset($users[$entry->parentId])) {
           $setArray['parent'] = $users[$entry->parentId];
         }
@@ -98,10 +98,10 @@ class EntryGroup extends BaseGroup {
         $newComment = new CommentEntry($this->app, intval($comment['id']));
         $newComment->comment()->set($comment);
         if (!isset($comments[$comment['type']])) {
-          $comments[$comment['type']] = array();
+          $comments[$comment['type']] = [];
         }
         if (!isset($comments[$comment['type']][$comment['parent_id']])) {
-          $comments[$comment['type']][$comment['parent_id']] = array($newComment->id => $newComment);
+          $comments[$comment['type']][$comment['parent_id']] = [$newComment->id => $newComment];
         } else {
           $comments[$comment['type']][$comment['parent_id']][$newComment->id] = $newComment;
         }
@@ -111,12 +111,12 @@ class EntryGroup extends BaseGroup {
       foreach ($this->entries() as $entry) {
         $entryClass = get_class($entry);
         if (method_exists($entry, 'comment')) {
-          $entry->set(array('comment' => $comments[$entry->commentId]->comment()));
+          $entry->set(['comment' => $comments[$entry->commentId]->comment()]);
         }
         if (isset($comments[$entryClass::modelName()][$entry->id])) {
-          $entry->set(array('comments' => $comments[$entryClass::modelName()][$entry->id]));
+          $entry->set(['comments' => $comments[$entryClass::modelName()][$entry->id]]);
         } else {
-          $entry->set(array('comments' => []));
+          $entry->set(['comments' => []]);
         }
       }
     }

@@ -1,60 +1,60 @@
 <?php
 
-class AnimeGroup extends BaseGroup {
-  // class to provide mass-querying functions for groups of animeIDs or anime objects.
-  protected $_groupTable = "anime";
-  protected $_groupTableSingular = "anime";
-  protected $_groupObject = "Anime";
+class ThreadGroup extends BaseGroup {
+  // class to provide mass-querying functions for groups of threadIDs or thread objects.
+  protected $_groupTable = "threads";
+  protected $_groupTableSingular = "thread";
+  protected $_groupObject = "Thread";
   protected $_nameField = "title";
   private $_tags, $_predictions=Null;
   
-  public function anime() {
+  public function threads() {
     return $this->objects();
   }
 
   private function _getTags() {
-    $animeIDs = array_map(function($anime) {
-      return intval($anime->id);
-    }, $this->anime());
+    $threadIDs = array_map(function($thread) {
+      return intval($thread->id);
+    }, $this->threads());
 
-    if ($animeIDs) {
-      $cacheKeys = array_map(function($animeID) {
-        return "Anime-".$animeID."-tagIDs";
-      }, $animeIDs);
+    if ($threadIDs) {
+      $cacheKeys = array_map(function($threadID) {
+        return "Thread-".$threadID."-tagIDs";
+      }, $threadIDs);
       $casTokens = [];
 
       $tags = [];
       // fetch as many tags as we can from the cache.
       $cacheValues = $this->app->cache->get($cacheKeys, $casTokens);
       if ($cacheValues) {
-        $animeFound = [];
+        $threadFound = [];
         foreach ($cacheValues as $cacheKey=>$tagIDs) {
           foreach ($tagIDs as $tagID) {
             $tags[$tagID] = $tagID;
           }
           // split the ID off from the cacheKey.
-          $animeFound[] = intval(explode("-", $cacheKey)[1]);
+          $threadFound[] = intval(explode("-", $cacheKey)[1]);
         }
-        $animeIDs = array_diff($animeIDs, $animeFound);
+        $threadIDs = array_diff($threadIDs, $threadFound);
 
       }
-      if ($animeIDs) {
+      if ($threadIDs) {
         // now fetch the non-cached results from the db, building a record so we can cache it after.
-        $animeTags = [];
-        $fetchTaggings = $this->dbConn->stdQuery("SELECT `anime_id`, `tag_id` FROM `anime_tags` WHERE `anime_id` IN (".implode(",", $animeIDs).")");
+        $threadTags = [];
+        $fetchTaggings = $this->dbConn->stdQuery("SELECT `thread_id`, `tag_id` FROM `anime_tags` WHERE `thread_id` IN (".implode(",", $threadIDs).")");
         while ($tagging = $fetchTaggings->fetch_assoc()) {
-          $animeID = intval($tagging['anime_id']);
+          $threadID = intval($tagging['thread_id']);
           $tagID = intval($tagging['tag_id']);
           $tags[$tagID] = $tagID;
-          if (isset($animeTags[$animeID])) {
-            $animeTags[$animeID][] = $tagID;
+          if (isset($threadTags[$threadID])) {
+            $threadTags[$threadID][] = $tagID;
           } else {
-            $animeTags[$animeID] = [$tagID];
+            $threadTags[$threadID] = [$tagID];
           }
         }
         // finally, store these new records in the cache.
-        foreach ($animeTags as $animeID => $tagIDs) {
-          $cacheKey = "Anime-".$animeID."-tagIDs";
+        foreach ($threadTags as $threadID => $tagIDs) {
+          $cacheKey = "Thread-".$threadID."-tagIDs";
           $this->app->cache->set($cacheKey, $tagIDs);
         }
       }
@@ -75,9 +75,7 @@ class AnimeGroup extends BaseGroup {
     $i = 1;
     $this->tags()->load('info');
     foreach ($tagCounts as $id=>$count) {
-      if (isset($this->tags()[$id])) {
-        $output .= "<li>".$this->tags()[$id]->link("show", $this->tags()[$id]->name)." ".intval($count)."</li>\n";
-      }
+      $output .= "<li>".$this->tags()[$id]->link("show", $this->tags()[$id]->name)." ".intval($count)."</li>\n";
       if ($i >= $n) {
         break;
       }

@@ -29,7 +29,7 @@ class DbConn extends mysqli {
   public function quoteSmart($value) {
     //escapes input values for insertion into a query.
     if(is_array($value)) {
-      return array_map(array($this, $this->quoteSmart), $value);
+      return array_map([$this, $this->quoteSmart], $value);
     } else {
       if(get_magic_quotes_gpc()) {
         $value = stripslashes($value);
@@ -85,9 +85,9 @@ class DbConn extends mysqli {
       throw new DbException("No rows were found matching query: ".$query);
     }
     if ($result->num_rows < 1) {
-      return array();
+      return [];
     }
-    $returnValue = array();
+    $returnValue = [];
     while ($row = $result->fetch_assoc()) {
       if ($idKey === Null && $valKey === Null) {
         $returnValue[] = $row;

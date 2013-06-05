@@ -41,20 +41,20 @@ class RecsEngine {
         $animeIDs[intval($a->id)] = intval($a->id);
       }
     } else {
-      $animeIDs = array(intval($anime->id) => intval($anime->id));
+      $animeIDs = [intval($anime->id) => intval($anime->id)];
     }
-    return $this->get("user", $user->id, "predict", array('start' => intval($start), 'n' => intval($n), 'anime' => $animeIDs));
+    return $this->get("user", $user->id, "predict", ['start' => intval($start), 'n' => intval($n), 'anime' => $animeIDs]);
   }
   public function recommend(User $user, $start=0, $n=20) {
-    return $this->get("user", $user->id, "recommend", array('start' => intval($start), 'n' => intval($n)));
+    return $this->get("user", $user->id, "recommend", ['start' => intval($start), 'n' => intval($n)]);
   }
   public function similarAnime(Anime $anime, $start=0, $n=20) {
     // fetches the top n most feature-similar anime for a given anime.
-    return $this->get("anime", $anime->id, "similar", array('start' => intval($start), 'n' => intval($n)));
+    return $this->get("anime", $anime->id, "similar", ['start' => intval($start), 'n' => intval($n)]);
   }
   public function similarUsers(User $user, $n=20) {
     // fetches the top n most feature-similar users for a given user.
-    return $this->get("user", $user->id, "similar", array('n' => intval($n)));
+    return $this->get("user", $user->id, "similar", ['n' => intval($n)]);
   }
   
 }

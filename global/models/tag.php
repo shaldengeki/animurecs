@@ -84,15 +84,15 @@ class Tag extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $this->beforeUpdate(array());
-    $anime->beforeUpdate(array());
+    $this->beforeUpdate([]);
+    $anime->beforeUpdate([]);
     $insertTagging = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertTagging) {
       return False;
     }
-    $this->afterUpdate(array());
-    $anime->afterUpdate(array());
-    $this->anime[intval($anime->id)] = array('id' => intval($anime->id), 'title' => $anime->title);
+    $this->afterUpdate([]);
+    $anime->afterUpdate([]);
+    $this->anime[intval($anime->id)] = ['id' => intval($anime->id), 'title' => $anime->title];
     return True;
   }
   public function drop_taggings(array $animus=Null) {
@@ -115,16 +115,16 @@ class Tag extends BaseObject {
       $animeObjects = [];
       foreach($animeIDs as $animeID) {
         $animeObjects[$animeID] = new Anime($this->app, $animeID);
-        $animeObjects[$animeID]->beforeUpdate(array());
+        $animeObjects[$animeID]->beforeUpdate([]);
       }
-      $this->beforeUpdate(array());
+      $this->beforeUpdate([]);
       $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
       if (!$drop_taggings) {
         return False;
       }
-      $this->afterUpdate(array());
+      $this->afterUpdate([]);
       foreach ($animeObjects as $anime) {
-        $anime->afterUpdate(array());
+        $anime->afterUpdate([]);
       }
     }
     foreach ($animeIDs as $animeID) {
@@ -189,7 +189,7 @@ class Tag extends BaseObject {
     // now process any taggings.
     if (isset($tag['anime_tags'])) {
       // drop any unneeded access rules.
-      $animeToDrop = array();
+      $animeToDrop = [];
       foreach ($this->anime() as $anime) {
         if (!in_array($anime->id, $tag['anime_tags'])) {
           $animeToDrop[] = intval($anime->id);
@@ -268,6 +268,21 @@ class Tag extends BaseObject {
     }
     return $this->anime;
   }
+  public function getThreads() {
+    // retrieves a list of thread objects corresponding to threads tagged with this tag.
+    $threads = [];
+    $threadIDs = $this->dbConn->stdQuery("SELECT `thread_id` FROM `thread_tags` WHERE `tag_id` = ".intval($this->id));
+    while ($threadID = $threadIDs->fetch_assoc()) {
+      $threads[intval($threadID['thread_id'])] = new Thread($this->app, intval($threadID['thread_id']));
+    }
+    return new ThreadGroup($this->app, $threads);
+  }
+  public function threads() {
+    if ($this->threads === Null) {
+      $this->threads = $this->getThreads();
+    }
+    return $this->threads;
+  }
   public function getNumAnime() {
     // retrieves the number of anime tagged with this tag.
     return $this->dbConn->queryCount("SELECT COUNT(*) FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
@@ -282,9 +297,9 @@ class Tag extends BaseObject {
     if (isset($_POST['tag']) && is_array($_POST['tag'])) {
       $updateTag = $this->create_or_update($_POST['tag']);
       if ($updateTag) {
-        $this->app->redirect($this->url("show"), array('status' => "Successfully updated.", 'class' => 'success'));
+        $this->app->redirect($this->url("show"), ['status' => "Successfully updated.", 'class' => 'success']);
       } else {
-        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), array('status' => "An error occurred while creating or updating this tag.", 'class' => 'error'));
+        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), ['status' => "An error occurred while creating or updating this tag.", 'class' => 'error']);
       }
     }
     switch($this->app->action) {
@@ -312,7 +327,7 @@ class Tag extends BaseObject {
           $this->app->display_error(404);
         }
         $title = "Tag: ".escape_output($this->name());
-        $output = $this->view('show', array('recsEngine' => $this->app->recsEngine));
+        $output = $this->view('show', ['recsEngine' => $this->app->recsEngine]);
         break;
       case 'delete':
         if ($this->id == 0) {
@@ -324,9 +339,9 @@ class Tag extends BaseObject {
         $tagName = $this->name();
         $deleteTag = $this->delete();
         if ($deleteTag) {
-          $this->app->redirect('/tags/', array('status' => 'Successfully deleted '.$tagName.'.', 'class' => 'success'));
+          $this->app->redirect('/tags/', ['status' => 'Successfully deleted '.$tagName.'.', 'class' => 'success']);
         } else {
-          $this->app->redirect($this->url("show"), array('status' => 'An error occurred while deleting '.$tagName.'.', 'class' => 'error'));
+          $this->app->redirect($this->url("show"), ['status' => 'An error occurred while deleting '.$tagName.'.', 'class' => 'error']);
         }
         break;
       default:
@@ -335,7 +350,7 @@ class Tag extends BaseObject {
         $output = $this->view('index');
         break;
     }
-    return $this->app->render($output, array('subtitle' => $title));
+    return $this->app->render($output, ['subtitle' => $title]);
   }
   public function url($action="show", $format=Null, array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.
@@ -352,7 +367,7 @@ class Tag extends BaseObject {
     // returns an HTML link to the current object's profile, with text provided.
     $linkParams = [];
     if (!is_array($params)) {
-      $params = array();
+      $params = [];
     }
     if (!isset($params['title'])) {
       $params['title'] = $this->name();

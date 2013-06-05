@@ -5,22 +5,35 @@
   $animePerPage = 20;
   $page = (intval($params['page']) > 0) ? intval($params['page']) : 1;
 
-  $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($page - 1), $animePerPage);
-  $animeGroup = new AnimeGroup($this->app, array_map(function($a) {
-    return $a['id'];
-  }, $recs));
+  $recs = [];
+  $animeGroup = new AnimeGroup($this->app, []);
   $predictions = [];
-  foreach ($recs as $rec) {
-    $predictions[$rec['id']] = $rec['predicted_score'];
+  $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($page - 1), $animePerPage);
+  if ($recs) {
+    $animeGroup = new AnimeGroup($this->app, array_map(function($a) {
+      return $a['id'];
+    }, $recs));
+    $predictions = [];
+    foreach ($recs as $rec) {
+      $predictions[$rec['id']] = $rec['predicted_score'];
+    }
   }
-
   $firstAnime = Anime::first($this->app);
+    
 ?>
 <div id='recommendation-content'>
   <div class='page-header'>
     <h1>Recommended for you <small>Some series we think you'll like</small></h1>
   </div>
-  <?php echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content'); ?>
-  <?php echo $firstAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $predictions)); ?>
-  <?php echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content'); ?>
+<?php
+  if ($animeGroup->length() < 1) {
+?>
+    Aww, there's no recommendations for you at the moment. We're cook em up every hour, so please check back then!
+<?php
+  } else {
+    echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content');
+    echo $firstAnime->view('grid', ['anime' => $animeGroup, 'predictions' => $predictions]);
+    echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content');
+  }
+?>
 </div>

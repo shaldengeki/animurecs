@@ -50,11 +50,11 @@ class AnimeList extends BaseList {
           $targetUser->getInfo();
         } else {
           // This user does not exist.
-          $this->app->redirect($this->app->user->url(), array('status' => "This user ID doesn't exist.", 'class' => 'error'));
+          $this->app->redirect($this->app->user->url(), ['status' => "This user ID doesn't exist.", 'class' => 'error']);
         }
       } catch (Exception $e) {
         // this non-zero userID does not exist.
-        $this->app->redirect($this->app->user->url(), array('status' => "This user doesn't exist.", 'class' => 'error'));
+        $this->app->redirect($this->app->user->url(), ['status' => "This user doesn't exist.", 'class' => 'error']);
       }
     }
     $location = $this->user()->url();
@@ -126,7 +126,7 @@ class AnimeList extends BaseList {
       default:
         break;
     }
-    $this->app->redirect($location, array('status' => $status, 'class' => $class));
+    $this->app->redirect($location, ['status' => $status, 'class' => $class]);
   }
 }
 ?>

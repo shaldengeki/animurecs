@@ -16,7 +16,7 @@
   ?>
         <<?php echo $entryType; ?> class='media'>
       <div class='pull-right feedDate' data-time='<?php echo $params['entry']->time()->format('U'); ?>'><?php echo ago($diffInterval); ?></div>
-      <?php echo $params['entry']->user->link("show", $params['entry']->user->avatarImage(array('class' => 'feedAvatarImg')), Null, True, array('class' => 'feedAvatar pull-left')); ?>
+      <?php echo $params['entry']->user->link("show", $params['entry']->user->avatarImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left']); ?>
       <div class='media-body feedText'>
         <div class='feedEntry'>
           <h4 class='media-heading feedUser'><?php echo $feedMessage['title']; ?></h4>
@@ -33,12 +33,12 @@
   if ($params['entry']->comments) {
     $commentGroup = new EntryGroup($this->app, $params['entry']->comments);
     foreach ($commentGroup->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
-      echo $this->view('feedEntry', array('entry' => $commentEntry, 'nested' => True));
+      echo $this->view('feedEntry', ['entry' => $commentEntry, 'nested' => True]);
     }
   }
   if ($params['entry']->allow($this->app->user, 'comment') && $blankEntryComment->depth() < 2) {
 ?>
-        <div class='entryComment'><?php echo $blankEntryComment->view('inlineForm', array('currentObject' => $params['entry'])); ?></div>
+        <div class='entryComment'><?php echo $blankEntryComment->view('inlineForm', ['currentObject' => $params['entry']]); ?></div>
 <?php
   }
 ?>

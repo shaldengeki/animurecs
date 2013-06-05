@@ -4,7 +4,7 @@
 
   // Takes a parameter at params['currentObject'] specifying the object this comment is being posted to.
 ?>
-    <?php echo $this->app->form(array('action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal')); ?>
+    <?php echo $this->app->form(['action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'class' => 'form-horizontal']); ?>
       <?php echo ($this->id === 0) ? "" : $this->input('id', ['type' => 'hidden']); ?>
       <?php echo $this->input('user_id', ['type' => 'hidden', 'value' => $this->app->user->id]); ?>
       <?php echo $this->input('type', ['type' => 'hidden', 'value' => escape_output(($this->id === 0) ? get_class($params['currentObject']) : $this->type())]); ?>

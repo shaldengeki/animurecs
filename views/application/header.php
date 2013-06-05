@@ -88,12 +88,16 @@
 <?php
     if ($this->user->outstandingFriendRequests) {
 ?>
-              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='badge badge-info'><?php echo count($this->user->outstandingFriendRequests); ?></span></a>
-              <?php echo $this->user->view('friendRequestList', $params); ?>
-              </span>
+              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-white'></i> <span class='msg-count'><span class='msg-count-inner'><?php echo count($this->user->outstandingFriendRequests); ?></span></span></a>
+<?php
+    } else {
+?>
+              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-inactive'></i></a>
 <?php
     }
 ?>
+              <?php echo $this->user->view('friendRequestList', $params); ?>
+              </span>
             </li>
             <li id='navbar-user' class='dropdown'>
               <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i><?php echo escape_output($this->user->username); ?><b class='caret'></b></a>

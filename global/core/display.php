@@ -146,7 +146,7 @@ function display_status_dropdown($select_id="anime_lists[status]", $class="", $s
 
 function display_month_year_dropdown($select_id="", $select_name_prefix="form_entry", $selected=False) {
   if ($selected === false) {
-    $selected = array( 0 => intval(date('n')), 1 => intval(date('Y')));
+    $selected = [0 => intval(date('n')), 1 => intval(date('Y'))];
   }
   echo "<select id='".escape_output($select_id)."' name='".escape_output($select_name_prefix)."[qa_month]'>\n";
   for ($month_i = 1; $month_i <= 12; $month_i++) {
@@ -161,7 +161,7 @@ function display_month_year_dropdown($select_id="", $select_name_prefix="form_en
 
 function display_history_json(DbConn $database, User $user, array $fields = array(), array $machines=array()) {
   header('Content-type: application/json');
-  $return_array = array();
+  $return_array = [];
   
   if (!$user->loggedIn()) {
     $return_array['error'] = "You must be logged in to view history data.";
@@ -170,16 +170,16 @@ function display_history_json(DbConn $database, User $user, array $fields = arra
   } else {
     foreach ($fields as $field) {
       foreach ($machines as $machine) {
-        $line_array = array();
+        $line_array = [];
         $values = $database->stdQuery("SELECT `form_field_id`, `form_entries`.`machine_id`, `form_entries`.`qa_month`, `form_entries`.`qa_year`, `value` FROM `form_values`
                                     LEFT OUTER JOIN `form_entries` ON `form_entry_id` = `form_entries`.`id`
                                     WHERE `form_field_id` = ".intval($field)." && `machine_id` = ".intval($machine)."
                                     ORDER BY `qa_year` ASC, `qa_month` ASC");
         while ($value = mysqli_fetch_assoc($values)) {
-          $line_array[] = array('x' => intval($value['qa_month'])."/".intval($value['qa_year']),
+          $line_array[] = ['x' => intval($value['qa_month'])."/".intval($value['qa_year']),
                                   'y' => doubleval($value['value']),
                                   'machine' => intval($value['machine_id']),
-                                  'field' => intval($value['form_field_id']));
+                                  'field' => intval($value['form_field_id'])];
         }
         if (count($line_array) > 1) {
           $return_array[] = $line_array;

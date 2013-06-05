@@ -2,9 +2,6 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-<div class='page-header'>
-  <h3>Achievements:</h3>
-</div>
 <ul class='item-grid achievements'>
 <?php
   $noAchieves = True;

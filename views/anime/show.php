@@ -9,7 +9,7 @@
               <div class='thumbnail profileAvatar'>
 <?php
   if ($this->imagePath() != '') {
-?>                <?php echo $this->imageTag(array('class' => 'img-rounded', 'alt' => '')); ?>
+?>                <?php echo $this->imageTag(['class' => 'img-rounded', 'alt' => '']); ?>
 <?php
   } else {
 ?>                <img src='/img/anime/blank.png' class='img-rounded' alt=''>
@@ -86,7 +86,7 @@
 <?php /*
                   <li class='span8'>
                     <p class='lead'>Tags:</p>
-                    <?php echo $this->tagCloud($this->app->user); ?>
+                    <?php echo $this->view('tagCloud', ['user' => $this->app->user]); ?>
                   </li>
 */ ?>
                 </ul>
@@ -110,7 +110,7 @@
     }
 ?>
               <div class='addListEntryForm'>
-                <?php echo $this->app->form(array('action' => $this->app->user->animeList()->url("new", Null, array('user_id' => intval($this->app->user->id))), 'class' => 'form-inline')); ?>
+                <?php echo $this->app->form(['action' => $this->app->user->animeList()->url("new", Null, ['user_id' => intval($this->app->user->id)]), 'class' => 'form-inline']); ?>
                   <?php echo $this->app->user->animeList()->input('user_id', ['type' => 'hidden', 'value' => $this->app->user->id]); ?>
                   <?php echo $addText; ?>
                   <?php echo $this->app->user->animeList()->input('anime_id', ['type' => 'hidden', 'value' => $this->id]); ?>

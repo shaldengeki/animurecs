@@ -16,7 +16,7 @@
     $animeGroup = new AnimeGroup($this->app, array_keys($animePredictions));
   } else {
     $animeGroup = new AnimeGroup($this->app, array_keys(array_slice($this->anime()->anime(), (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
-    $animePredictions = array();
+    $animePredictions = [];
   }
 
   $animePages = ceil(count($predictedRatings)/$resultsPerPage);
@@ -29,8 +29,8 @@
     <?php echo $animeGroup->tagList(); ?>
   </div>
   <div class='span10'>
-    <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
-    <?php echo $firstAnime->view('grid', array('anime' => $animeGroup, 'predictions' => $animePredictions)); ?>
-    <?php echo paginate($this->url("show", Null, array("page" => "")), intval($this->app->page), $animePages); ?>
+    <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $animePages); ?>
+    <?php echo $firstAnime->view('grid', ['anime' => $animeGroup, 'predictions' => $animePredictions]); ?>
+    <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $animePages); ?>
   </div>
 </div>

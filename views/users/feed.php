@@ -11,7 +11,7 @@
   $params['numEntries'] = (isset($params['numEntries']) && is_numeric($params['numEntries'])) ? intval($params['numEntries']) : 50;
 
   // sort by key and grab only the latest numEntries.
-  $params['entries'] = array_sort_by_method($params['entries']->load('comments')->entries(), 'time', array(), 'desc');
+  $params['entries'] = array_sort_by_method($params['entries']->load('comments')->entries(), 'time', [], 'desc');
   $params['entries'] = array_slice($params['entries'], 0, $params['numEntries']);
   if (!$params['entries']) {
     echo (isset($params['emptyFeedText']) ? $params['emptyFeedText'] : "<blockquote><p>No entries yet. Be the first!</p></blockquote>");
@@ -22,7 +22,7 @@
 <ul class='media-list ajaxFeed' data-url='<?php echo (isset($params['feedURL']) ? $params['feedURL'] : $this->url("feed")); ?>'>
 <?php
     foreach ($entryGroup->load('info')->load('users')->load('anime')->load('comments')->entries() as $entry) {
-      echo $this->view('feedEntry', array('entry' => $entry))."\n";
+      echo $this->view('feedEntry', ['entry' => $entry])."\n";
     }
 ?>
 </ul>

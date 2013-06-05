@@ -6,7 +6,7 @@ class AppException extends Exception {
     if (is_array($messages)) {
       $this->messages = $messages;
     } else {
-      $this->messages = array($messages);
+      $this->messages = [$messages];
     }
     parent::__construct($this->formatMessages(), $code, $previous);
     $this->app = $app;
@@ -91,9 +91,9 @@ class Application {
   }
   private function _connectLogger() {
     if (Config::DEBUG_ON) {
-      return log::factory('file', Config::LOG_FILE, 'Animurecs', array(), PEAR_LOG_DEBUG);
+      return log::factory('file', Config::LOG_FILE, 'Animurecs', [], PEAR_LOG_DEBUG);
     } else {
-      return log::factory('file', Config::LOG_FILE, 'Animurecs', array(), PEAR_LOG_WARNING);
+      return log::factory('file', Config::LOG_FILE, 'Animurecs', [], PEAR_LOG_WARNING);
     }
   }
   private function _connectCache() {
@@ -225,72 +225,72 @@ class Application {
     // binds all event observers.
 
     // clear cache for a database object every time it's updated or deleted.
-    $this->bind(array('BaseObject.afterUpdate', 'BaseObject.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['BaseObject.afterUpdate', 'BaseObject.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parentClass = get_class($parent);
       $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id));
     }));
-    $this->bind(array('Anime.afterUpdate', 'Anime.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Anime.afterUpdate', 'Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parentClass = get_class($parent);
       $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id)."-tagIDs");
     }));
-    $this->bind(array('AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeList.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeList.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete("Anime-".intval($updateParams['anime_id'])."-similar");
     }));
-    $this->bind(array('AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete("Anime-".$parent->animeId()."-similar");
     }));
 
 
     // statsd metrics.
 
-    $this->bind(array('Anime.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Anime.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("anime.count");
     }));
-    $this->bind(array('Anime.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("anime.count");
     }));
 
-    $this->bind(array('Tag.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Tag.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("tag.count");
     }));
-    $this->bind(array('Tag.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Tag.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("tag.count");
     }));
 
-    $this->bind(array('AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeEntry.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeEntry.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("animelist.entries");
     }));
-    $this->bind(array('AnimeEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("animelist.entries");
     }));
 
     // user stats metrics.
-    $this->bind(array('User.afterCreate', 'User.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.afterCreate', 'User.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->gauge("user.count", $parent->app->dbConn->queryCount("SELECT COUNT(*) FROM `users`"));
     }));
-    $this->bind(array('User.logIn'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.logIn'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.login");
     }));
-    $this->bind(array('User.logOut'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.logOut'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("user.logOut");
     }));
-    $this->bind(array('User.requestFriend'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.requestFriend'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.friendrequests");
     }));
-    $this->bind(array('User.confirmFriend'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.confirmFriend'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.friendships");
     }));
-    $this->bind(array('Comment.afterCreate', 'CommentEntry.afterCreate'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Comment.afterCreate', 'CommentEntry.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.comments");
     }));
-    $this->bind(array('Comment.afterDelete', 'CommentEntry.afterDelete'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Comment.afterDelete', 'CommentEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("user.comments");
     }));
-    $this->bind(array('User.addAchievement'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.addAchievement'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.achievements");
       $parent->app->statsd->count("user.points.earned", $updateParams['points']);
     }));
-    $this->bind(array('User.removeAchievement'), new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['User.removeAchievement'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("user.achievements");
       $parent->app->statsd->count("user.points.earned", -1 * $updateParams['points']);
     }));
@@ -331,11 +331,11 @@ class Application {
       }
     }
     if (!is_array($events)) {
-      $events = array($events);
+      $events = [$events];
     }
     foreach ($events as $event) {
       if (!isset($this->_observers[$event])) {
-        $this->_observers[$event] = array($observer);
+        $this->_observers[$event] = [$observer];
       } else {
         //check if this observer is bound to this event already
         $elements = array_keys($this->_observers[$event], $o);
@@ -351,7 +351,7 @@ class Application {
         }
       }
     }
-    return array($event, count($this->_observers[$event])-1);
+    return [$event, count($this->_observers[$event])-1];
   }
   public function unbind($observer) {
     // callback is array of form [event_name, position]
@@ -516,13 +516,13 @@ class Application {
 
     if (isset($this->model) && $this->model !== "") {
       if (!class_exists($this->model)) {
-        $this->redirect($this->user->url(), array("status" => "This thing doesn't exist!", "class" => "error"));
+        $this->redirect($this->user->url(), ["status" => "This thing doesn't exist!", "class" => "error"]);
       }
 
       try {
         // kludge to allow model names in URLs.
-        if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag") && $this->id !== "") {
-            $this->target = new $this->model($this, Null, rawurldecode($this->id));
+        if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag" || $this->model === "Thread") && $this->id !== "") {
+          $this->target = new $this->model($this, Null, rawurldecode($this->id));
         } else {
           $this->target = new $this->model($this, intval($this->id));
         }
@@ -536,7 +536,7 @@ class Application {
         } catch (DbException $e) {
           $this->statsd->increment("DbException");
           $blankModel = new $this->model($this);
-          $this->redirect($blankModel->url("index"), array("status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"));
+          $this->redirect($blankModel->url("index"), ["status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"]);
         }
       } elseif ($this->action === "edit") {
         $this->action = "new";
@@ -593,11 +593,11 @@ class Application {
     return "<input ".$inputAttrs." />\n";
   }
   public function csrfInput() {
-    return $this->input(array(
+    return $this->input([
       'type' => 'hidden',
       'name' => $this->csrfField,
       'value' => $this->csrfToken
-    ));
+    ]);
   }
 
   public function view($view="index", $params=Null) {

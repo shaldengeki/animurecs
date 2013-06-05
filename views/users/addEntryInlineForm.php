@@ -4,7 +4,7 @@
   $anime = Anime::first($this->app);
 ?>
                 <div class='row-fluid addListEntryForm'>
-                  <?php echo $this->app->form(array('action' => $this->animeList()->url("new"), 'class' => 'form-inline')); ?>
+                  <?php echo $this->app->form(['action' => $this->animeList()->url("new"), 'class' => 'form-inline']); ?>
                     <div class='addListEntryFormCol1 span12'>
                       <?php echo $this->animeList()->input('user_id', ['type' => 'hidden', 'value' => intval($this->id)]); ?>
                       <input name='anime_lists[user_id]' id='anime_lists_user_id' type='hidden' value='<?php echo intval($this->id); ?>' />

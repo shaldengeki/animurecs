@@ -84,7 +84,7 @@ class AnimeEntry extends BaseEntry {
     $statusText = str_replace("[TOTAL_PARTS]", $this->anime()->{$this->list->partName."Count"}, $statusText);
     $statusText = ucfirst($statusText).".";
 
-    return array('title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText);
+    return ['title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText];
   }
   public function render() {
     $location = $this->app->user->url();
@@ -110,7 +110,7 @@ class AnimeEntry extends BaseEntry {
             $class = "error";
             break;
           }
-          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), array('user' => $targetUser));
+          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser]);
           if (!$targetEntry->allow($this->app->user, $this->app->action)) {
             $location = $targetUser->url();
             $status = "You can't update someone else's anime list.";
@@ -168,7 +168,7 @@ class AnimeEntry extends BaseEntry {
       default:
         break;
     }
-    $this->app->redirect($location, array('status' => $status, 'class' => $class));
+    $this->app->redirect($location, ['status' => $status, 'class' => $class]);
   }
 }
 

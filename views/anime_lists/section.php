@@ -3,11 +3,11 @@
   $this->app->check_partial_include(__FILE__);
   $params['status'] = isset($params['status']) ? $params['status'] : 1;
   // returns markup for one status section of a user's anime list.
-  $statusStrings = array(1 => array('id' => 'currentlyWatching', 'title' => 'Currently Watching'),
-                        2 => array('id' => 'completed', 'title' => 'Completed'),
-                        3 => array('id' => 'onHold', 'title' => 'On Hold'),
-                        4 => array('id' => 'dropped', 'title' => 'Dropped'),
-                        6 => array('id' => 'planToWatch', 'title' => 'Plan to Watch'));
+  $statusStrings = [1 => ['id' => 'currentlyWatching', 'title' => 'Currently Watching'],
+                        2 => ['id' => 'completed', 'title' => 'Completed'],
+                        3 => ['id' => 'onHold', 'title' => 'On Hold'],
+                        4 => ['id' => 'dropped', 'title' => 'Dropped'],
+                        6 => ['id' => 'planToWatch', 'title' => 'Plan to Watch']];
   $relevantEntries = $this->listSection($params['status']);
 ?>
       <div id='<?php echo escape_output($statusStrings[$params['status']]['id']); ?>'>

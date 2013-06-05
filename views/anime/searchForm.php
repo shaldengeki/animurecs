@@ -2,12 +2,12 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
   $anime = Anime::first($this->app);
-  $defaultParams['form'] = array(
+  $defaultParams['form'] = [
                             'method' => 'get',
                             'class' => 'form-inline',
                             'action' => $anime->url('index')
-                          );
-  $defaultParams['searchInput'] = array(
+                          ];
+  $defaultParams['searchInput'] = [
                                     'name' => 'search',
                                     'id' => 'search',
                                     'type' => 'text',
@@ -19,7 +19,7 @@
                                     'data-outputElement' => '#anime_title',
                                     'value' =>  isset($_REQUEST['search']) ? $_REQUEST['search'] : "",
                                     'placeholder' => 'Search for an anime'
-                                  );
+                                  ];
 
   $params['submitButton'] = isset($params['submitButton']) ? $params['submitButton'] : True;
   $params['form'] = array_merge($defaultParams['form'], is_array($params['form']) ? $params['form'] : []);

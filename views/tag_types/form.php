@@ -5,7 +5,7 @@
   $tagType = isset($params['tagType']) ? $params['tagType'] : $this;
 
 ?>
-    <?php echo $tagType->app->form(array('action' => ($tagType->id === 0) ? $tagType->url("new") : $tagType->url("edit"), 'class' => 'form-inline')); ?>
+    <?php echo $tagType->app->form(['action' => ($tagType->id === 0) ? $tagType->url("new") : $tagType->url("edit"), 'class' => 'form-inline']); ?>
       <?php echo ($tagType->id === 0) ? "" : $tagType->input('id', ['type' => 'hidden']); ?>
       <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser()->id : $tagType->app->user->id)]); ?>
       <fieldset>

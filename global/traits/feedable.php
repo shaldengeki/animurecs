@@ -35,7 +35,11 @@ trait Feedable {
       }
       return new EntryGroup($this->app, $returnList);
     } else {
-      return new EntryGroup($this->app, $this->entries);
+      if ($this->entries instanceof EntryGroup) {
+        return $this->entries;
+      } else {
+        return new EntryGroup($this->app, $this->entries);
+      }
     }
   }
 
@@ -53,7 +57,7 @@ trait Feedable {
 
     $output = "      <".$entryType." class='media'>
         <div class='pull-right feedDate' data-time='".$entry->time()->format('U')."'>".ago($diffInterval)."</div>
-        ".$entry->user->link("show", $entry->user->avatarImage(array('class' => 'feedAvatarImg')), Null, True, array('class' => 'feedAvatar pull-left'))."
+        ".$entry->user->link("show", $entry->user->avatarImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left'])."
         <div class='media-body feedText'>
           <div class='feedEntry'>
             <h4 class='media-heading feedUser'>".$feedMessage['title']."</h4>
@@ -69,7 +73,7 @@ trait Feedable {
       }
     }
     if ($entry->allow($this->app->user, 'comment') && $blankEntryComment->depth() < 2) {
-      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', array('currentObject' => $entry))."</div>\n";
+      $output .= "<div class='entryComment'>".$blankEntryComment->view('inlineForm', ['currentObject' => $entry])."</div>\n";
     }
     $output .= "          </div>
       </".$entryType.">\n";
@@ -80,7 +84,7 @@ trait Feedable {
     // takes a list of entries (given by entries()) and returns markup for the resultant feed.
 
     // sort by key and grab only the latest numEntries.
-    $entries = array_sort_by_method($entries->load('comments')->entries(), 'time', array(), 'desc');
+    $entries = array_sort_by_method($entries->load('comments')->entries(), 'time', [], 'desc');
     $entries = array_slice($entries, 0, $numEntries);
     if (!$entries) {
       $output .= $emptyFeedText;

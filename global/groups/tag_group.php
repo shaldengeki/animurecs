@@ -49,7 +49,7 @@ class TagGroup extends BaseGroup {
         }
       }
       foreach ($this->tags() as $tag) {
-        $tag->set(array('type' => $tagTypes[$tag->type->id]));
+        $tag->set(['type' => $tagTypes[$tag->type->id]]);
       }
     }
     return $tagTypes;

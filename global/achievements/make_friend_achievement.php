@@ -14,5 +14,11 @@ class MakeFriendAchievement extends BaseAchievement {
     }
     return False;
   }
+  public function progress(BaseObject $parent) {
+    return $this->user($parent)->friends ? 1.0 : 0.0;
+  }
+  public function progressString(BaseObject $parent) {
+    return intval((bool) $this->user($parent)->friends)."/1";
+  }
 }
 ?>
