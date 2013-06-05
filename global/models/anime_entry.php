@@ -81,7 +81,7 @@ class AnimeEntry extends BaseEntry {
     $statusText = str_replace("[TITLE]", $this->anime()->link("show", $this->anime()->title), $statusText);
     $statusText = str_replace("[SCORE]", $this->score(), $statusText);
     $statusText = str_replace("[PART]", $this->{$this->list->partName}, $statusText);
-    $statusText = str_replace("[TOTAL_PARTS]", $this->anime()->{$this->list->partName."Count"}, $statusText);
+    $statusText = str_replace("/[TOTAL_PARTS]", $this->anime()->{$this->list->partName."Count"} ? "/".$this->anime()->{$this->list->partName."Count"} : "", $statusText);
     $statusText = ucfirst($statusText).".";
 
     return ['title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText];

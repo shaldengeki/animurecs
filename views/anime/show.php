@@ -119,9 +119,10 @@
                     <?php echo $this->app->user->animeList()->input('score', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => 10, 'step' => 1, 'value' => ($thisEntry['score'] ? intval($thisEntry['score']) : "")]); ?>
                     <span class='add-on'>/10</span>
                   </div>
-                  <div class='input-prepend'>
+                  <div class='input-prepend<?php echo $this->episodeCount() ? " input-append" : ""; ?>'>
                     <span class='add-on'>Ep</span>
-                    <?php echo $this->app->user->animeList()->input('episode', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => $this->episodeCount(), 'step' => 1, 'value' => ($thisEntry['episode'] ? intval($thisEntry['episode']) : "")]); ?>
+                    <?php echo $this->app->user->animeList()->input('episode', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => $this->episodeCount() > 0 ? $this->episodeCount() : 1000, 'step' => 1, 'value' => ($thisEntry['episode'] ? intval($thisEntry['episode']) : "")]); ?>
+                    <?php echo $this->episodeCount() ? "<span class='add-on'>/".($this->episodeCount() ? intval($this->episodeCount()) : "?")."</span>" : ""; ?>
                   </div>
                   <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
                 </form>
