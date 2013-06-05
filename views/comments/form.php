@@ -11,9 +11,9 @@
       <?php echo $this->input('parent_id', ['type' => 'hidden', 'value' => ($this->id ? $params['currentObject']->id : $this->parent()->id)]); ?>
       <fieldset>
         <div class='control-group'>
-          <label class='control-label' for='comment[message]'>Comment</label>
+          <label class='control-label' for='comments[message]'>Comment</label>
           <div class='controls'>
-            <textarea class='field span4' name='comment[message]' rows='3' id='comment[message]'><?php echo ($this->id === 0) ? "" : escape_output($this->message()); ?></textarea>
+            <?php echo $this->textArea('message', ['class' => 'field span4', 'rows' => 3], ($this->id === 0) ? "" : escape_output($this->message())); ?>
           </div>
         </div>
 

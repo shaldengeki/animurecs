@@ -10,15 +10,15 @@
       <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser()->id : $tagType->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
-          <label class='control-label' for='tag_type[name]'>Name</label>
+          <label class='control-label' for='tag_types[name]'>Name</label>
           <div class='controls'>
             <?php echo $tagType->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='tag_type[description]'>Description</label>
+          <label class='control-label' for='tag_types[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='tag_type[description]' rows='3' id='tag_type[description]'><?php echo ($tagType->id === 0) ? "" : escape_output($tagType->description); ?></textarea>
+            <?php echo $tagType->textArea('description', ['class' => 'field span4', 'rows' => 3], ($tagType->id === 0) ? "" : escape_output($tagType->description)); ?>
           </div>
         </div>
         <div class='form-actions'>

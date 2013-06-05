@@ -89,6 +89,13 @@ class User extends BaseObject {
     }
     return implode(", ", $roles);
   }
+  public function calculateUsermask(array $permArray) {
+    // takes an array like [1, 2, 3] of userlevels that this user has
+    // converts it to the proper usermask.
+    return array_sum(array_map(function($perm) {
+      return is_numeric($perm) ? pow(2, intval($perm)) : 0;
+    }, $permArray));
+  }
   public function achievementMask() {
     return $this->returnInfo('achievementMask');
   }
@@ -414,7 +421,7 @@ class User extends BaseObject {
       unset($user['usermask']);
     }
 
-    $this->validate($user);      
+    $this->validate($user);
 
     // filter some parameters out first and replace them with their corresponding db fields.
     if (isset($user['password']) && $user['password'] != '') {
@@ -807,8 +814,8 @@ class User extends BaseObject {
       case 'edit':
         if (isset($_POST['users']) && is_array($_POST['users'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
-          if (isset($_POST['users']['usermask']) && intval($_POST['users']['usermask']) > 1 && intval($_POST['users']['usermask']) >= $this->usermask()) {
-            $this->app->redirect($this->url("new"), ['status' => "You can't set permissions beyond your own userlevel.", 'class' => 'error']);
+          if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->usermask()) || $this->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask())) {
+            $this->app->redirect($this->url("edit"), ['status' => "You can't set permissions beyond your own userlevel: ".array_sum($_POST['users']['usermask']), 'class' => 'error']);
           }
           $updateErrors = False;
           try {

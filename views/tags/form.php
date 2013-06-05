@@ -16,25 +16,25 @@
       <?php echo $tag->input('created_user_id', ['type' => 'hidden', 'value' => ($tag->id ? $tag->createdUser()->id : $tag->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
-          <label class='control-label' for='tag[name]'>Name</label>
+          <label class='control-label' for='tags[name]'>Name</label>
           <div class='controls'>
             <?php echo $tag->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='tag[description]'>Description</label>
+          <label class='control-label' for='tags[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='tag[description]' rows='3' id='tag[description]'><?php echo ($tag->id === 0) ? "" : escape_output($tag->description()); ?></textarea>
+            <?php echo $tag->textArea('description', ['class' => 'field span4', 'rows' => 3], ($tag->id === 0) ? "" : escape_output($tag->description())); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='tag[tag_type_id]'>Tag Type</label>
+          <label class='control-label' for='tags[tag_type_id]'>Tag Type</label>
           <div class='controls'>
             <?php echo $tag->view('tagTypeDropdown'); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='tag[anime_tags]'>Anime</label>
+          <label class='control-label' for='tags[anime_tags]'>Anime</label>
           <div class='controls'>
             <?php echo $tag->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'title', 'data-url' => $anime->url('token_search'), 'data-value' => ($tag->id ? escape_output(json_encode($tagAnime)) : "[]")]); ?>
           </div>

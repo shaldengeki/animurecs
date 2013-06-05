@@ -351,6 +351,21 @@ abstract class BaseObject {
     $params = array_merge($defaultVals, $params);
     return $this->app->input($params);
   }
+  public function textarea($attr, $params=Null, $textValue=Null) {
+    if ($params === Null) {
+      $params = [];
+    }
+    $defaultVals = ['name' => escape_output(self::modelUrl())."[".escape_output($attr)."]"];
+    $defaultVals['id'] = $defaultVals['name'];
+    $humanizedAttr = $this->humanizeParameter($attr);
+    if (method_exists($this, $humanizedAttr) && $this->$humanizedAttr()) {
+      $defaultVals['value'] = $this->$humanizedAttr();
+    } elseif (property_exists($this, $humanizedAttr) && $this->$humanizedAttr) {
+      $defaultVals['value'] = $this->$humanizedAttr;
+    }
+    $params = array_merge($defaultVals, $params);
+    return $this->app->textarea($params, $textValue);
+  }
 
  }
 ?>

@@ -3,7 +3,7 @@
   $this->app->check_partial_include(__FILE__);
 
   if (!isset($params['select_id'])) {
-    $params['select_id'] = 'user[usermask][]';
+    $params['select_id'] = 'users[usermask][]';
   }
   if (!isset($params['selected'])) {
     if ($this->usermask()) {

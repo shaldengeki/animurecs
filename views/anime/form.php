@@ -25,7 +25,7 @@
         <div class='control-group'>
           <label class='control-label' for='anime[description]'>Description</label>
           <div class='controls'>
-            <textarea class='field span4' name='anime[description]' rows='3' id='anime[description]'><?php echo ($anime->id === 0) ? "" : escape_output($anime->description()); ?></textarea>
+            <?php echo $anime->textArea('description', ['class' => 'field span4', 'rows' => 3], ($anime->id === 0) ? "" : escape_output($anime->description())); ?>
           </div>
         </div>
         <div class='control-group'>

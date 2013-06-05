@@ -1,9 +1,10 @@
-Bug: Anime list episode increment for currently-airing shows error
++ Bug: Anime list episode increment for currently-airing shows error
 Bug: MAL Import displays error when none is encountered?
-Bug: Updating user->about results in no change
++ Bug: Updating user->about results in no change
 Bug: Middle-click broken in Firefox
 Bug: Some shows in database with same title
 Bug: Sorting #userList by score puts 10 between 1 and 2
+  Only happens on Firefox
 Bug: ______ blank entries
   Manually entering, then MAL Importing results in this
 + Bug: Compatibilities sometimes above 100%
@@ -18,6 +19,7 @@ Enhancement: Refactor password confirmation out of non-critical user settings
 Enhancement: Multiple tag query search (ex. )
 Enhancement: Toggle plan-to-watch series on /discover
 Enhancement: Split favourite/least-favourite tags out by type
+Enhancement: Option to permanently sync MAL list (? need to consider conflict resolution)
 
 Feature: Complete friends listing somewhere
 Feature: Discover friends (graph search)

@@ -591,7 +591,21 @@ class Application {
       $inputAttrs[] = escape_output($key)."='".escape_output($value)."'";
     }
     $inputAttrs = implode(" ", $inputAttrs);
-    return "<input ".$inputAttrs." />\n";
+    return "<input ".$inputAttrs." />";
+  }
+  public function textarea(array $params=Null, $textValue=Null) {
+    if ($params == Null) {
+      $params = [];
+    }
+    if ($textValue == Null) {
+      $textValue = "";
+    }
+    $inputAttrs = [];
+    foreach ($params as $key=>$value) {
+      $inputAttrs[] = escape_output($key)."='".escape_output($value)."'";
+    }
+    $inputAttrs = implode(" ", $inputAttrs);
+    return "<textarea ".$inputAttrs." >".escape_output($textValue)."</textarea>";
   }
   public function csrfInput() {
     return $this->input([

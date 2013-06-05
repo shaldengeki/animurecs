@@ -6,7 +6,7 @@
       <?php echo ($this->id === 0) ? "" : $this->input('id', ['type' => 'hidden']); ?>
       <fieldset>
         <div class='control-group'>
-          <label class='control-label' for='user[name]'>Name</label>
+          <label class='control-label' for='users[name]'>Name</label>
           <div class='controls'>
             <?php echo $this->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
@@ -14,7 +14,7 @@
 <?php
   if ($this->id === 0) {
 ?>        <div class='control-group'>
-          <label class='control-label' for='user[username]'>Username</label>
+          <label class='control-label' for='users[username]'>Username</label>
           <div class='controls'>
             <?php echo $this->input('username', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
@@ -26,27 +26,27 @@
 <?php
   }
 ?>        <div class='control-group'>
-          <label class='control-label' for='user[password]'>Password</label>
+          <label class='control-label' for='users[password]'>Password</label>
           <div class='controls'>
             <?php echo $this->input('password', ['type' => 'password', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='user[password_confirmation]'>Confirm Password</label>
+          <label class='control-label' for='users[password_confirmation]'>Confirm Password</label>
           <div class='controls'>
             <?php echo $this->input('password_confirmation', ['type' => 'password', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='user[email]'>Email</label>
+          <label class='control-label' for='users[email]'>Email</label>
           <div class='controls'>
             <?php echo $this->input('email', ['type' => 'email', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
         <div class='control-group'>
-          <label class='control-label' for='user[about]'>About</label>
+          <label class='control-label' for='users[about]'>About</label>
           <div class='controls'>
-            <textarea name='user[about]' id='user[about]' rows='5'><?php echo ($this->id === 0) ? "" : escape_output($this->about()); ?></textarea>
+            <?php echo $this->textArea('about', ['rows' => 5], ($this->id === 0) ? "" : escape_output($this->about())); ?>
           </div>
         </div>
 <?php
@@ -61,14 +61,14 @@
   }
   if ($this->allow($this->app->user, $this->id === 0 ? 'new' : 'edit') && $this->app->user->isStaff()) {
 ?>      <div class='control-group'>
-          <label class='control-label' for='user[usermask]'>Role(s)</label>
+          <label class='control-label' for='users[usermask]'>Role(s)</label>
           <div class='controls'>
             <?php echo $this->view('roleCheckboxes'); ?>
           </div>
         </div>
 <?php
   } else {
-?>      <input type='hidden' name='user[usermask][]' value='<?php echo $this->id === 0 ? 1 : intval($this->usermask()); ?>' />
+?>      <input type='hidden' name='users[usermask][]' value='<?php echo $this->id === 0 ? 1 : intval($this->usermask()); ?>' />
 <?php
         }
 ?>      <div class='form-actions'>
