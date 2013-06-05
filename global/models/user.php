@@ -109,7 +109,7 @@ class User extends BaseObject {
     return $this->returnInfo('lastIP');
   }
   public function avatarPath() {
-    return $this->returnInfo('avatarPath') ? $this->returnInfo('avatarPath') : "img/user-blank.png";
+    return $this->returnInfo('avatarPath') ? $this->returnInfo('avatarPath') : "img/blank.png";
   }
   public function avatarImage(array $params=Null) {
     $imageParams = [];

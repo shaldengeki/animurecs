@@ -56,7 +56,7 @@ class Anime extends BaseObject {
     return new DateTime($this->returnInfo('updatedAt'), $this->app->serverTimeZone);
   }
   public function imagePath() {
-    return $this->returnInfo('imagePath');
+    return $this->returnInfo('imagePath') ? $this->returnInfo('imagePath') : "img/blank.png";
   }
   public function imageTag(array $params=Null) {
     $imageParams = [];
