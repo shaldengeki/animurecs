@@ -159,7 +159,7 @@ class User extends BaseObject {
                                                 ORDER BY `time` DESC");
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch_assoc()) {
-      $friendReqs[] = [
+      $friendReqs[intval($req['user_id_1'])] = [
           'user' => new User($this->app, intval($req['user_id_1'])),
           'time' => $req['time'],
           'message' => $req['message'],
