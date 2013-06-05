@@ -549,6 +549,7 @@ class Application {
       } else {
         try {
           $renderOutput = $this->target->render();
+          header('X-Frame-Options: SAMEORIGIN');
           echo $renderOutput;
           $this->statsd->timing("pageload", microtime(True) - $this->startRender);
           $this->statsd->memory('memory.peakusage');
