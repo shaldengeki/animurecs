@@ -1056,13 +1056,15 @@ class User extends BaseObject {
     foreach ($this->friends() as $friend) {
       $feedEntries->append($friend['user']->animeList()->entries($maxTime, $numEntries));
       $comments = [];
+
       $friendComments = $friend['user']->ownComments()->filter(function($a) use ($maxTime) {
-        return $a->time < $maxTime;
+        return $a->time() < $maxTime;
       });
-      foreach ($friendComments as $comment) {
+
+      foreach ($friendComments->entries() as $commentEntry) {
         // only append top-level comments.
-        if ($comment->depth() === 0) {
-          $comments[] = new CommentEntry($this->app, intval($comment->id));
+        if ($commentEntry->depth() === 0) {
+          $comments[] = new CommentEntry($this->app, intval($commentEntry->id));
         }
       }
       $feedEntries->append(new EntryGroup($this->app, $comments));
