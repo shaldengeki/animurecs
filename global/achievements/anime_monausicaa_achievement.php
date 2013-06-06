@@ -9,18 +9,18 @@ class SomeKindOfMonausicaaAchievement extends BaseAchievement {
   protected $dependencies=[8];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
-    $nausiaa = new User($parent->app, Null, "monausicaa");
+    $nausicaa = new User($parent->app, Null, "monausicaa");
     if ($this->alreadyAwarded($this->user($parent)) || $parent->uniqueLength > $nausicaa->animeList()->uniqueLength()) {
       return True;
     }
     return False;
   }
   public function progress(BaseObject $parent) {
-    $nausiaa = new User($parent->app, Null, "monausicaa");
+    $nausicaa = new User($parent->app, Null, "monausicaa");
     return $this->user($parent)->animeList()->uniqueLength() >= $nausicaa->animeList()->uniqueLength() ? 1.0 : floatval($this->user($parent)->animeList()->uniqueLength()) / $nausicaa->animeList()->uniqueLength();
   }
   public function progressString(BaseObject $parent) {
-    $nausiaa = new User($parent->app, Null, "monausicaa");
+    $nausicaa = new User($parent->app, Null, "monausicaa");
     return $this->user($parent)->animeList()->uniqueLength()."/".$nausicaa->animeList()->uniqueLength()." anime";
   }
 }

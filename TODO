@@ -10,7 +10,9 @@ Bug: Sorting #userList by score puts 10 between 1 and 2
   Manually entering, then MAL Importing results in this
 + Bug: Compatibilities sometimes above 100%
 
-Enhancement: Larger avatars (300x300?)
++ Enhancement: Larger avatars (300x300?)
+    Enhancement: Thumbnails where appropriate
+Enhancement: Anime cover thumbnails where appropriate
 Enhancement: Recommendations not individual enough?
   Particular series: Tenchi in Tokyo, Karneval being rated extremely high
     Blogpost about this: tikhonov not sufficiently high?
