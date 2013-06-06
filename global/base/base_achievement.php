@@ -100,7 +100,7 @@ abstract class BaseAchievement extends BaseObject {
     if (!$this->dependencies()) {
       return 1;
     } else {
-      return max(array_map(function($dep) {return $dep->level() + 1; }, $this->app->achievements[$this->id]->dependencies()));
+      return max(array_map(function($dep) {return $this->app->achievements[$dep]->level() + 1; }, $this->app->achievements[$this->id]->dependencies()));
     }
   }
 
