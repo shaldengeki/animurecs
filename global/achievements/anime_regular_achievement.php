@@ -15,10 +15,10 @@ class AnimeRegularAchievement extends BaseAchievement {
     return False;
   }
   public function progress(BaseObject $parent) {
-    return $this->user($parent)->animeList->uniqueLength() >= 100 ? 1.0 : floatval($this->user($parent)->animeList->uniqueLength()) / 100.0;
+    return $this->user($parent)->animeList()->uniqueLength() >= 100 ? 1.0 : floatval($this->user($parent)->animeList()->uniqueLength()) / 100.0;
   }
   public function progressString(BaseObject $parent) {
-    return $this->user($parent)->animeList->uniqueLength()."/100 anime";
+    return $this->user($parent)->animeList()->uniqueLength()."/100 anime";
   }
 }
 ?>

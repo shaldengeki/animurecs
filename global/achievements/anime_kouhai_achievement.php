@@ -15,10 +15,10 @@ class AnimeKouhaiAchievement extends BaseAchievement {
     return False;
   }
   public function progress(BaseObject $parent) {
-    return $this->user($parent)->animeList->uniqueLength() >= 50 ? 1.0 : floatval($this->user($parent)->animeList->uniqueLength()) / 50.0;
+    return $this->user($parent)->animeList()->uniqueLength() >= 50 ? 1.0 : floatval($this->user($parent)->animeList()->uniqueLength()) / 50.0;
   }
   public function progressString(BaseObject $parent) {
-    return $this->user($parent)->animeList->uniqueLength()."/50 anime";
+    return $this->user($parent)->animeList()->uniqueLength()."/50 anime";
   }
 }
 ?>

@@ -24,6 +24,7 @@ Enhancement: Split favourite/least-favourite tags out by type
 Enhancement: Option to permanently sync MAL list (? need to consider conflict resolution)
 Enhancement: Display anime aliases on anime search results page
 + Enhancement: Split tag listings on anime/show and tag/show out by type
+Enhancement: Rewatches (should count for number of eps, time, etc)
 
 + Feature: Complete friends listing somewhere
 Feature: Discover friends (graph search)

@@ -298,33 +298,44 @@ abstract class BaseList extends BaseObject {
     $text = ($text === Null) ? "List" : $text;
     return parent::link($action, $text, $format, $raw, $params, $urlParams, $id);
   }
-  public function similarity(BaseList $currentList) {
+  public function similarity(BaseList $currentList, $minAnime=10) {
     // calculates pearson's r between this list and the current user's list.
     if ($this->uniqueListStdDev() == 0 || $currentList->uniqueListStdDev() == 0) {
       return False;
     }
-    $similaritySum = $similarityCount = 0;
-    foreach($this->uniqueList() as $entryID=>$entry) {
-      if (intval($entry['score']) != 0 && isset($currentList->uniqueList()[$entryID]) && intval($currentList->uniqueList()[$entryID]['score']) != 0) {
-        $similaritySum += (intval($entry['score']) - $this->uniqueListAvg) * (intval($currentList->uniqueList()[$entryID]['score']) - $currentList->uniqueListAvg);
-        $similarityCount++;
-      }
-    }
-    if ($similarityCount < 10) {
+    $thisUniques = $this->uniqueList();
+    $currentUniques = $currentList->uniqueList();
+    
+    // filter keys not in common to both of these lists out.
+    $commonIDs = array_intersect_key($currentUniques, $this->uniqueList());
+
+    if (count($commonIDs) < $minAnime) {
       return False;
     }
-    return $similaritySum / ($this->uniqueListStdDev() * $currentList->uniqueListStdDev() * ($similarityCount - 1));
+
+    $thisScores = [];
+    $currentScores = [];
+    foreach (array_keys($commonIDs) as $animeID) {
+      if ($this->uniqueList()[$animeID]['score'] != 0 && $currentUniques[$animeID]['score'] != 0) {
+        $thisScores[$animeID] = $this->uniqueList()[$animeID]['score'];
+        $currentScores[$animeID] = $currentUniques[$animeID]['score'];
+      }
+    }
+    if (count($thisScores) < $minAnime) {
+      return False;
+    }
+    return correlation($thisScores, $currentScores);
   }
   public function compatibility(BaseList $currentList) {
-    return (1 + $this->similarity($currentList)) / 2.0;
+    $similarity = $this->similarity($currentList);
+    return $similarity ? 100 * (1 + $this->similarity($currentList)) / 2.0 : False;
   }
   public function compatibilityBar(BaseList $currentList) {
     // returns markup for a compatibility bar between this list and the current user's list.
-    $compatibility = $this->similarity($currentList);
+    $compatibility = $this->compatibility($currentList);
     if ($compatibility === False) {
       return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div>Unknown</div>";
     }
-    $compatibility = 100 * (1 + $compatibility) / 2.0;
     if ($compatibility >= 75) {
       $barClass = "danger";
     } elseif ($compatibility >= 50) {

@@ -543,28 +543,36 @@ class User extends BaseObject {
       if ($file_array['error']['avatar_image'] != UPLOAD_ERR_OK) {
         return False;
       }
-      $file_contents = file_get_contents($file_array['tmp_name']['avatar_image']);
-      if (!$file_contents) {
-        return False;
+      // load image and resize it.
+      try {
+        $avatarImage = new Imagick($file_array['tmp_name']['avatar_image']);
+        $avatarImage->setImageFormat('png');
+        $thumbnailImage = clone $avatarImage;
+        $avatarImage->thumbnailImage(300, 300, True);
+        $thumbnailImage->thumbnailImage(100, 100, True);
+      } catch (ImagickException $e) {
+        $this->app->statsd->increment("ImagickException");
+        $this->app->logger->err($e->__toString());
+        throw $e;
       }
-      $newIm = @imagecreatefromstring($file_contents);
-      if (!$newIm) {
-        return False;
-      }
-      $imageSize = getimagesize($file_array['tmp_name']['avatar_image']);
-      if ($imageSize[0] > 300 || $imageSize[1] > 300) {
-        return False;
-      }
+
       // move file to destination and save path in db.
       if (!is_dir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)))) {
         mkdir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)));
       }
       $imagePathInfo = pathinfo($file_array['tmp_name']['avatar_image']);
-      $imagePath = joinPaths("img", "users", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
+      $imagePath = joinPaths("img", "users", intval($this->id), $this->id.'.png');
+      $thumbnailPath = joinPaths("img", "users", intval($this->id), $this->id.'-thumb.png');
       if ($this->avatarPath()) {
-        $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
+        try {
+          $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
+          $oldThumbPath = implode(".", array_slice(explode(".", $this->avatarPath()), 0, -1))."-thumb.png";
+          $removeOldThumb = unlink($oldThumbPath);
+        } catch (ErrorException $e) {
+          // we're trying to unlink a file we don't have permissions to. this happens when user doesn't have a previous avatar.
+        }
       }
-      if (!move_uploaded_file($file_array['tmp_name']['avatar_image'], $imagePath)) {
+      if (!$avatarImage->writeImage($imagePath) || !$thumbnailImage->writeImage($thumbnailPath)) {
         return False;
       }
     } else {

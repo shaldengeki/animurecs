@@ -16,18 +16,20 @@
 <?php
       if ($achievement->children) {
         $child = $achievement->children[0];
-        $barClass = "bar";
-        if ($child->progress($this) > 0.75) {
-          $barClass .= " bar-danger";
-        } elseif ($child->progress($this) > 0.5) {
-          $barClass .= " bar-warning";
-        }
+        if ($child->progress($this) < 1.0) {
+          $barClass = "bar";
+          if ($child->progress($this) > 0.75) {
+            $barClass .= " bar-danger";
+          } elseif ($child->progress($this) > 0.5) {
+            $barClass .= " bar-warning";
+          }
 ?>
       <p><em>Progress to next achievement (<?php echo escape_output($child->name); ?>):</em></p>
       <div class="progress">
         <div class="<?php echo $barClass; ?>" style="width: <?php echo round($child->progress($this) * 100, 2); ?>%;"><?php echo $child->progressString($this); ?></div>
       </div>
 <?php
+        }
       }
 ?>
     </div>

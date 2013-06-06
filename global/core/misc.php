@@ -27,6 +27,29 @@ function standard_deviation(array $array, $sample=False) {
   $variance /= ($sample ? $arrayLength - 1 : $arrayLength);
   return (float) sqrt($variance);
 }
+function correlation($arr1, $arr2) {
+  //calculates pearson's r.
+  //assumes arr1 and arr2 are both filled to have the same keys.
+  if (count($arr1) <= 1 || count($arr2) <= 1) {
+    return FALSE;
+  }
+  $correlation = 0;
+  $arr1_stddev = standard_deviation($arr1);
+  $arr2_stddev = standard_deviation($arr2);
+  if ($arr1_stddev == 0 && $arr2_stddev == 0) {
+    return 1;
+  }
+  if ($arr1_stddev == 0 || $arr2_stddev == 0) {
+    return 0;
+  }
+
+  $arr1_mean = array_mean($arr1);
+  $arr2_mean = array_mean($arr2);
+  foreach ($arr1 as $key => $arr1_value) {
+    $correlation += (($arr1[$key] - $arr1_mean)/$arr1_stddev) * (($arr2[$key] - $arr2_mean)/$arr2_stddev);
+  }
+  return $correlation / (count($arr1));
+}
 function wilson_score(array $array, $min=1, $max=10) {
   // computes the wilson score for a given array.
   // assumes input of $key => $value (numeric) form.
