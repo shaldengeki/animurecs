@@ -9,16 +9,16 @@ class AnimeRegularAchievement extends BaseAchievement {
   protected $dependencies=[5];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
-    if ($this->alreadyAwarded($this->user($parent)) || $parent->length() >= 100) {
+    if ($this->alreadyAwarded($this->user($parent)) || $parent->uniqueLength() >= 100) {
       return True;
     }
     return False;
   }
   public function progress(BaseObject $parent) {
-    return count($this->user($parent)->animeList->uniqueList) >= 100 ? 1.0 : floatval(count($this->user($parent)->animeList->uniqueList)) / 100.0;
+    return $this->user($parent)->animeList->uniqueLength() >= 100 ? 1.0 : floatval($this->user($parent)->animeList->uniqueLength()) / 100.0;
   }
   public function progressString(BaseObject $parent) {
-    return count($this->user($parent)->animeList->uniqueList)."/100 anime";
+    return $this->user($parent)->animeList->uniqueLength()."/100 anime";
   }
 }
 ?>

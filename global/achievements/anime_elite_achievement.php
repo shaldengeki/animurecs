@@ -9,16 +9,16 @@ class AnimeEliteAchievement extends BaseAchievement {
   protected $dependencies=[7];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
-    if ($this->alreadyAwarded($this->user($parent)) || $parent->length() >= 500) {
+    if ($this->alreadyAwarded($this->user($parent)) || $parent->uniqueLength() >= 500) {
       return True;
     }
     return False;
   }
   public function progress(BaseObject $parent) {
-    return count($this->user($parent)->animeList->uniqueList) >= 500 ? 1.0 : floatval(count($this->user($parent)->animeList->uniqueList)) / 500.0;
+    return $this->user($parent)->animeList->uniqueLength() >= 500 ? 1.0 : floatval($this->user($parent)->animeList->uniqueLength()) / 500.0;
   }
   public function progressString(BaseObject $parent) {
-    return count($this->user($parent)->animeList->uniqueList)."/500 anime";
+    return $this->user($parent)->animeList->uniqueLength()."/500 anime";
   }
 }
 ?>
