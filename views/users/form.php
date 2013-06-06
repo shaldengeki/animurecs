@@ -54,7 +54,7 @@
 ?>        <div class='control-group'>
           <label class='control-label' for='avatar_image'>Avatar</label>
           <div class='controls'>
-            <?php echo $this->input('avatar_image', ['type' => 'file', 'class' => 'input-file', 'onChange' => 'displayImagePreview(this.files);']); ?><span class='help-inline'>Max size 300x300, JPEG/PNG/GIF.</span>
+            <?php echo $this->input('avatar_image', ['type' => 'file', 'class' => 'input-file', 'onChange' => 'displayImagePreview(this.files);']); ?><span class='help-inline'>Will be downscaled (but not upscaled) to 300x300, preserving aspect ratio.</span>
           </div>
         </div>
 <?php

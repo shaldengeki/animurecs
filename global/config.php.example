@@ -29,6 +29,12 @@ class Config {
 
   // settings for debugging in development environments.
   const DEBUG_ON = False;
+
+  // avatar maximum width and height, in pixels.
+  public static $MAX_AVATAR_DIMENSIONS = [300, 300];
+
+  // thumbnail width and height, in pixels.
+  public static $THUMB_AVATAR_DIMENSIONS = [100, 100];
 }
 date_default_timezone_set(Config::SERVER_TIMEZONE);
 error_reporting(E_ALL ^ E_NOTICE);

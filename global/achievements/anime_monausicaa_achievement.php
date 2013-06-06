@@ -9,19 +9,19 @@ class SomeKindOfMonausicaaAchievement extends BaseAchievement {
   protected $dependencies=[8];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
-    $nausicaa = new User($parent->app, Null, "monausicaa");
+    $nausicaa = new User($this->user($parent)->app, Null, "monausicaa");
     if ($this->alreadyAwarded($this->user($parent)) || $parent->uniqueLength > $nausicaa->animeList()->uniqueLength()) {
       return True;
     }
     return False;
   }
   public function progress(BaseObject $parent) {
-    $nausicaa = new User($parent->app, Null, "monausicaa");
-    return $this->user($parent)->animeList()->uniqueLength() >= $nausicaa->animeList()->uniqueLength() ? 1.0 : floatval($this->user($parent)->animeList()->uniqueLength()) / $nausicaa->animeList()->uniqueLength();
+    $nausicaa = new User($this->user($parent)->app, Null, "monausicaa");
+    return $this->user($parent)->animeList()->uniqueLength() > $nausicaa->animeList()->uniqueLength() ? 1.0 : floatval($this->user($parent)->animeList()->uniqueLength()) / ($nausicaa->animeList()->uniqueLength() + 1);
   }
   public function progressString(BaseObject $parent) {
-    $nausicaa = new User($parent->app, Null, "monausicaa");
-    return $this->user($parent)->animeList()->uniqueLength()."/".$nausicaa->animeList()->uniqueLength()." anime";
+    $nausicaa = new User($this->user($parent)->app, Null, "monausicaa");
+    return $this->user($parent)->animeList()->uniqueLength()."/".($nausicaa->animeList()->uniqueLength() + 1)." anime";
   }
 }
 ?>

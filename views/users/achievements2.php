@@ -16,7 +16,7 @@
 <?php
       if ($achievement->children) {
         $child = $achievement->children[0];
-        if ($child->progress($this) < 1.0) {
+        if (!$child->alreadyAwarded($this)) {
           $barClass = "bar";
           if ($child->progress($this) > 0.75) {
             $barClass .= " bar-danger";

@@ -1,0 +1,1 @@
+ALTER TABLE  `users` ADD  `thumb_path` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_bin NULL AFTER  `avatar_path`

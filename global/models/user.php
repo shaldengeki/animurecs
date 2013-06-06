@@ -34,14 +34,14 @@ class User extends BaseObject {
       $this->username = "guest";
       $this->name = "Guest";
       $this->usermask = $this->points = 0;
-      $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = "";
+      $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
       $this->animeList = new AnimeList($this->app, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
+      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
     }
   }
   public function username() {
@@ -111,6 +111,9 @@ class User extends BaseObject {
   public function avatarPath() {
     return $this->returnInfo('avatarPath') ? $this->returnInfo('avatarPath') : "img/blank.png";
   }
+  public function thumbPath() {
+    return $this->returnInfo('thumbPath') ? $this->returnInfo('thumbPath') : $this->avatarPath();
+  }
   public function avatarImage(array $params=Null) {
     $imageParams = [];
     if (is_array($params) && $params) {
@@ -119,6 +122,15 @@ class User extends BaseObject {
       }
     }
     return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->avatarPath()))."' ".implode(" ", $imageParams)." />";
+  }
+  public function thumbImage(array $params=Null) {
+    $imageParams = [];
+    if (is_array($params) && $params) {
+      foreach ($params as $key => $value) {
+        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
+      }
+    }
+    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->thumbPath()))."' ".implode(" ", $imageParams)." />";
   }
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
@@ -543,17 +555,61 @@ class User extends BaseObject {
       if ($file_array['error']['avatar_image'] != UPLOAD_ERR_OK) {
         return False;
       }
+
+      $acceptableFormats = ["GIF", "GIF87", "BMP", "BMP2", "BMP3", "GIF", "GIF87", "ICO", "JPEG", "JPG", "PNG", "PNG24", "PNG32", "PNG8", "TGA", "TIFF", "TIFF64", "WBMP"];
       // load image and resize it.
       try {
         $avatarImage = new Imagick($file_array['tmp_name']['avatar_image']);
-        $avatarImage->setImageFormat('png');
-        $thumbnailImage = clone $avatarImage;
-        $avatarImage->thumbnailImage(300, 300, True);
-        $thumbnailImage->thumbnailImage(100, 100, True);
+        $avatarFormat = $avatarImage->getImageFormat();
+        $avatarIterations = $avatarImage->getImageIterations();
+        if (!in_array($avatarFormat, $acceptableFormats)) {
+          $this->app->logger->err("Unacceptable image format for user ".intval($this->id).": ".$avatarFormat);
+          return False;
+        }
+        $imageProperties = $avatarImage->getImageGeometry();
+        if ($avatarIterations) {
+          // animated image. convert to gif.
+          $imageExtension = "gif";
+        }  else {
+          // convert to png.
+          $imageExtension = "png";
+        }
+        $avatarImage->setImageFormat($imageExtension);
+
+        // only create thumbnail if necessary.
+        $thumbnailImage = Null;
+        if ($imageProperties['width'] > Config::$THUMB_AVATAR_DIMENSIONS[0] || $imageProperties['height'] > Config::$THUMB_AVATAR_DIMENSIONS[1]) {
+          $this->app->logger->err("Generating thumbnail.");
+          $thumbnailImage = clone $avatarImage;
+          $thumbnailImage->coalesceImages();
+          foreach ($thumbnailImage as $frame) {
+            /* Thumbnail each frame */
+            $frame->thumbnailImage(Config::$THUMB_AVATAR_DIMENSIONS[0], Config::$THUMB_AVATAR_DIMENSIONS[1], True);
+
+            /* Set virtual canvas size to 100x100 */
+            $frame->setImagePage(Config::$THUMB_AVATAR_DIMENSIONS[0], Config::$THUMB_AVATAR_DIMENSIONS[1], 0, 0);
+          }
+          $thumbnailImage = $thumbnailImage->deconstructImages();
+          $thumbnailImage->setImageIterations(0);
+        }
+        // only resize avatar if necessary.
+        if ($imageProperties['width'] > Config::$MAX_AVATAR_DIMENSIONS[0] || $imageProperties['height'] > Config::$MAX_AVATAR_DIMENSIONS[1]) {
+          $this->app->logger->err("Resizing avatar.");
+          $avatarImage->coalesceImages();
+          foreach ($avatarImage as $frame) {
+            /* Thumbnail each frame */
+            $frame->thumbnailImage(Config::$MAX_AVATAR_DIMENSIONS[0], Config::$MAX_AVATAR_DIMENSIONS[1], True);
+
+            /* Set virtual canvas size to 100x100 */
+            $frame->setImagePage(Config::$MAX_AVATAR_DIMENSIONS[0], Config::$MAX_AVATAR_DIMENSIONS[1], 0, 0);
+          }
+          $avatarImage = $avatarImage->deconstructImages();
+          $avatarImage->setImageIterations(0);
+        }
       } catch (ImagickException $e) {
         $this->app->statsd->increment("ImagickException");
         $this->app->logger->err($e->__toString());
-        throw $e;
+        return False;
       }
 
       // move file to destination and save path in db.
@@ -561,24 +617,33 @@ class User extends BaseObject {
         mkdir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)));
       }
       $imagePathInfo = pathinfo($file_array['tmp_name']['avatar_image']);
-      $imagePath = joinPaths("img", "users", intval($this->id), $this->id.'.png');
-      $thumbnailPath = joinPaths("img", "users", intval($this->id), $this->id.'-thumb.png');
+      $imagePath = joinPaths("img", "users", intval($this->id), $this->id.'.'.$imageExtension);
+      $thumbnailPath = joinPaths("img", "users", intval($this->id), $this->id.'-thumb.'.$imageExtension);
       if ($this->avatarPath()) {
         try {
+          $this->app->logger->err("Removing old avatar.");
           $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
-          $oldThumbPath = implode(".", array_slice(explode(".", $this->avatarPath()), 0, -1))."-thumb.png";
+          $oldThumbPathParts = explode(".", $this->avatarPath());
+          $oldThumbPath = implode(".", array_slice($oldThumbPathParts, 0, -1))."-thumb.".array_slice($oldThumbPathParts, -1, 1);
           $removeOldThumb = unlink($oldThumbPath);
         } catch (ErrorException $e) {
           // we're trying to unlink a file we don't have permissions to. this happens when user doesn't have a previous avatar.
         }
       }
-      if (!$avatarImage->writeImage($imagePath) || !$thumbnailImage->writeImage($thumbnailPath)) {
+      $this->app->logger->err("Writing avatar.");
+      if ($imageExtension == "gif") {
+        $writeImages = $avatarImage->writeImages($imagePath, True) && ($thumbnailImage === Null || $thumbnailImage->writeImages($thumbnailPath, True));
+      } else {
+        $writeImages = $avatarImage->writeImage($imagePath) && ($thumbnailImage === Null || $thumbnailImage->writeImage($thumbnailPath));
+      }
+      if (!$writeImages) {
         return False;
       }
     } else {
       $imagePath = $this->avatarPath();
     }
     $user['avatar_path'] = $imagePath;
+    $user['thumb_path'] = $thumbnailImage ? $thumbnailPath : "";
 
     $this->app->logger->err("Updating user base: ".$this->id." | ".print_r($user, True));
     $result = parent::create_or_update($user, $whereConditions);
