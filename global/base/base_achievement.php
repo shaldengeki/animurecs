@@ -84,7 +84,9 @@ abstract class BaseAchievement extends BaseObject {
   public function update($event, BaseObject $parent, array $updateParams=Null) {
     if (!$this->alreadyAwarded($this->user($parent)) && $this->dependenciesPresent($this->user($parent)) && $this->validateUser($event, $parent, $updateParams)) {
       // award achievement and notify user.
+      $parent->app->logger->err("Awarding achievement ".$this->id." to ".$this->user($parent)->id);
       if ($this->user($parent)->addAchievement($this)) {
+        $parent->app->logger->err("Awarded achievement ".$this->id." to ".$this->user($parent)->id);
         $parent->app->delayedMessages[] = "Congrats, you've been awarded the achievement ".$this->name()."!";
       }
     } elseif ($this->alreadyAwarded($this->user($parent)) && (!$this->dependenciesPresent($this->user($parent)) || !$this->validateUser($event, $parent, $updateParams))) {

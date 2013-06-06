@@ -1,7 +1,7 @@
 <?php
-class AnimeInternAchievement extends BaseAchievement {
+class AnimeKouhaiAchievement extends BaseAchievement {
   public $id=5;
-  protected $name="Anime Intern";
+  protected $name="Kouhai";
   protected $points=30;
   protected $description="You've got a couple of titles tucked under your belt. But don't get cocky! A vast expanse of genres lies unexplored.<br />Have 50 or more anime in your list.";
   protected $imagePath="";
@@ -21,5 +21,4 @@ class AnimeInternAchievement extends BaseAchievement {
     return count($this->user($parent)->animeList->uniqueList)."/50 anime";
   }
 }
-
 ?>

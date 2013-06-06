@@ -376,6 +376,7 @@ class Application {
     if (!isset($this->_observers[$event])) {
       return;
     }
+    $this->logger->err("Firing event: ".$event." | observers: ".count($this->_observers[$event]));
     foreach ($this->_observers[$event] as $observer) {
       if (!method_exists($observer, 'update')) {
         continue;

@@ -571,6 +571,8 @@ class User extends BaseObject {
       $imagePath = $this->avatarPath();
     }
     $user['avatar_path'] = $imagePath;
+
+    $this->app->logger->err("Updating user base: ".$this->id." | ".print_r($user, True));
     $result = parent::create_or_update($user, $whereConditions);
     if (!$result) {
       return False;
@@ -729,7 +731,9 @@ class User extends BaseObject {
   }
   public function addAchievement(BaseAchievement $achievement) {
     $this->app->fire('User.addAchievement', $this, ['id' => $achievement->id, 'points' => $achievement->points]);
-    return $this->create_or_update(['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)]);
+    $updateArray = ['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)];
+    $this->app->logger->err("Updating user points and mask: ".print_r($updateArray, True));
+    return $this->create_or_update($updateArray);
   }
   public function removeAchievement(BaseAchievement $achievement) {
     $this->app->fire('User.removeAchievement', $this, ['id' => $achievement->id, 'points' => $achievement->points]);
