@@ -62,8 +62,9 @@ class AnimeList extends BaseList {
     $class = "";
     switch($this->app->action) {
       case 'feed':
-        $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
-        $entries = $this->entries($maxTime, 50);
+        $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
+        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
+        $entries = $this->entries($minTime, $maxTime, 50);
         echo $this->feed($entries, 50, "");
         exit;
         break;

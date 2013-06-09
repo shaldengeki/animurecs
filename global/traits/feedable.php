@@ -6,25 +6,23 @@ trait Feedable {
   // any feedable class must define a way to retrieve entries (from the database, presumably)
   abstract protected function getEntries();
   
-  public function entries(DateTime $maxTime=Null, $limit=Null) {
+  public function entries(DateTime $minTime=Null, DateTime $maxTime=Null, $limit=Null) {
     // returns a list of feed entries, up to $maxTime and with at most $limit entries.
     // feed entries contain at a minimum an object, time and user field.
 
     if ($this->entries === Null) {
       $this->entries = $this->getEntries();
     }
-    if ($maxTime !== Null || $limit !== Null) {
+    if ($minTime !== Null || $maxTime !== Null || $limit !== Null) {
       // Returns a list of up to $limit entries up to $maxTime.
-      if ($maxTime === Null) {
-        // set time ceiling to now.
-        $maxTime = new DateTime("now", $this->app->outputTimeZone);
-      }
+      $maxTime = $maxTime === Null ? new DateTime("now", $this->app->outputTimeZone) : $maxTime;
+      $minTime = $minTime === Null ? new DateTime("@0", $this->app->outputTimeZone) : $minTime;
 
       // loop through all of this feedable's entries until we reach the end or our limit.
       $returnList = [];
       $entryCount = 0;
       foreach ($this->entries()->entries() as $entry) {
-        if ($entry->time() >= $maxTime) {
+        if ($entry->time() >= $maxTime || $entry->time() <= $minTime) {
           continue;
         }
         $returnList[] = $entry;

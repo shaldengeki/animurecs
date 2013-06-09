@@ -418,8 +418,9 @@ class Anime extends BaseObject {
     }
     switch($this->app->action) {
       case 'feed':
-        $maxTime = new DateTime('@'.intval($_REQUEST['maxTime']));
-        $entries = $this->entries($maxTime, 50);
+        $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
+        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
+        $entries = $this->entries($minTime, $maxTime, 50);
         echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         exit;
         break;
@@ -458,7 +459,7 @@ class Anime extends BaseObject {
           $this->app->display_error(404);
         }
         $title = escape_output($this->title());
-        $output = $this->view("show", ['entries' => $this->entries(Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
+        $output = $this->view("show", ['entries' => $this->entries(Null, Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
         break;
       case 'delete':
         if ($this->id == 0) {

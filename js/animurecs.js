@@ -1,3 +1,5 @@
+var windowIntervals = [];
+
 /* Default class modification */
 $.extend( $.fn.dataTableExt.oStdClasses, {
   "sWrapper": "dataTables_wrapper form-inline"
@@ -482,6 +484,40 @@ function siteTour(elt, start, end) {
   tour.start();
 }
 */
+
+function updateTitleItems(numItems) {
+  var numPrevNewFeedItems = (document.title.match(/\([0-9]+\)/i) == null) ? 0 : parseInt(document.title.match(/[0-9]+/i)[0]);
+  document.title = document.title.replace(/\([0-9]+\)\ /i, '');
+  if (!isNaN(numPrevNewFeedItems)) {
+    document.title = "(" + (numItems + numPrevNewFeedItems) + ") " + document.title;
+  } else {
+    document.title = "(" + numItems + ") " + document.title;
+  }
+}
+
+function updateFeedTimes() {
+  //updates each feed item's displayed time.
+  var currentTime = Math.round(Date.now()/1000);
+  $('.feedDate').each(function() {
+    var timeDiff = currentTime - parseInt($(this).attr('data-time'));
+    if (timeDiff < 60) {
+      $(this).text(timeDiff + "s");
+    } else if (timeDiff < 3600) {
+      $(this).text(Math.floor(timeDiff/60) + "min");
+    } else if (timeDiff < 86400) {
+      $(this).text(Math.floor(timeDiff/3600) + "h");
+    } else if (timeDiff < 604800) {
+      $(this).text(Math.floor(timeDiff/86400) + "d");   
+    } else if (timeDiff < 2629744) {
+      $(this).text(Math.floor(timeDiff/604800) + "wk");
+    } else if (timeDiff < 31556926) {
+      $(this).text(Math.floor(timeDiff/2629744) + "mo");    
+    }  else {
+      $(this).text(Math.floor(timeDiff/31556926) + "yr");   
+    } 
+  });
+}
+
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
 
@@ -599,6 +635,33 @@ function initInterface(elt) {
   });
 
   /* ajax feed autoloading. */
+  $(elt).find('ul.ajaxFeed:visible').each(function() {
+    var feedNode = this;
+    if ($(this).attr('data-url').indexOf('?') < 0) {
+      joinChar = '?';
+    } else {
+      joinChar = '&';
+    }
+    windowIntervals.push(window.setInterval(function() {
+      var feedDates = $(feedNode).children().map(function() {
+        return $(this).find('div.feedDate').attr('data-time');
+      }).get();
+      console.log(feedDates);
+      var lastTime = Array.max(feedDates);
+      console.log(lastTime);
+      $.ajax({
+        url: $(feedNode).attr('data-url') + joinChar + 'minTime=' + encodeURIComponent(lastTime)
+      }).done(function(data) {
+        if (data.length > 0) {
+          if ($('body').attr('blurred') == "true") {
+            updateTitleItems(data.match(/\<li/gi).length);
+          }
+          $(feedNode).prepend($(data).find('li'));
+        }
+      });
+      updateFeedTimes();
+    }, 10000));
+  });
   $(window).unbind("scroll");
   $(window).scroll(function() {
     $(elt).find('ul.ajaxFeed:visible').each(function() {
@@ -656,8 +719,6 @@ function initInterface(elt) {
       $(this).find('.feedEntryMenu').addClass('hidden');
     });
   });
-
-  // TOOD: automatically fill status, score, episode count from previous entry when user types anime name into title search box.
 
   // fills episode count automatically when user marks anime as completed in dropdown AND the total episode count has already been loaded as an input add-on.
   $('select[name=anime_list\\[status\\]]').each(function() {

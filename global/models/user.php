@@ -563,7 +563,6 @@ class User extends BaseObject {
         $avatarFormat = $avatarImage->getImageFormat();
         $avatarIterations = $avatarImage->getImageIterations();
         if (!in_array($avatarFormat, $acceptableFormats)) {
-          $this->app->logger->err("Unacceptable image format for user ".intval($this->id).": ".$avatarFormat);
           return False;
         }
         $imageProperties = $avatarImage->getImageGeometry();
@@ -579,7 +578,6 @@ class User extends BaseObject {
         // only create thumbnail if necessary.
         $thumbnailImage = Null;
         if ($imageProperties['width'] > Config::$THUMB_AVATAR_DIMENSIONS[0] || $imageProperties['height'] > Config::$THUMB_AVATAR_DIMENSIONS[1]) {
-          $this->app->logger->err("Generating thumbnail.");
           $thumbnailImage = clone $avatarImage;
           $thumbnailImage->coalesceImages();
           foreach ($thumbnailImage as $frame) {
@@ -594,7 +592,6 @@ class User extends BaseObject {
         }
         // only resize avatar if necessary.
         if ($imageProperties['width'] > Config::$MAX_AVATAR_DIMENSIONS[0] || $imageProperties['height'] > Config::$MAX_AVATAR_DIMENSIONS[1]) {
-          $this->app->logger->err("Resizing avatar.");
           $avatarImage->coalesceImages();
           foreach ($avatarImage as $frame) {
             /* Thumbnail each frame */
@@ -621,7 +618,6 @@ class User extends BaseObject {
       $thumbnailPath = joinPaths("img", "users", intval($this->id), $this->id.'-thumb.'.$imageExtension);
       if ($this->avatarPath()) {
         try {
-          $this->app->logger->err("Removing old avatar.");
           $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
           $oldThumbPathParts = explode(".", $this->avatarPath());
           $oldThumbPath = implode(".", array_slice($oldThumbPathParts, 0, -1))."-thumb.".array_slice($oldThumbPathParts, -1, 1);
@@ -630,7 +626,6 @@ class User extends BaseObject {
           // we're trying to unlink a file we don't have permissions to. this happens when user doesn't have a previous avatar.
         }
       }
-      $this->app->logger->err("Writing avatar.");
       if ($imageExtension == "gif") {
         $writeImages = $avatarImage->writeImages($imagePath, True) && ($thumbnailImage === Null || $thumbnailImage->writeImages($thumbnailPath, True));
       } else {
@@ -645,7 +640,6 @@ class User extends BaseObject {
     $user['avatar_path'] = $imagePath;
     $user['thumb_path'] = $thumbnailImage ? $thumbnailPath : "";
 
-    $this->app->logger->err("Updating user base: ".$this->id." | ".print_r($user, True));
     $result = parent::create_or_update($user, $whereConditions);
     if (!$result) {
       return False;
@@ -805,7 +799,6 @@ class User extends BaseObject {
   public function addAchievement(BaseAchievement $achievement) {
     $this->app->fire('User.addAchievement', $this, ['id' => $achievement->id, 'points' => $achievement->points]);
     $updateArray = ['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)];
-    $this->app->logger->err("Updating user points and mask: ".print_r($updateArray, True));
     return $this->create_or_update($updateArray);
   }
   public function removeAchievement(BaseAchievement $achievement) {
@@ -998,7 +991,8 @@ class User extends BaseObject {
           }
         }
         $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
-        $output .= $this->view('feed', ['entries' => $this->profileFeed($maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
+        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['maxTime']) , $this->app->serverTimeZone) : Null;
+        $output .= $this->view('feed', ['entries' => $this->profileFeed($minTime, $maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         echo $output;
         exit;
       case 'anime_list':
@@ -1059,7 +1053,12 @@ class User extends BaseObject {
           $maxTime = "now";
         }
         $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
-        $output .= $this->view('feed', ['entries' => $this->globalFeed($maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => '']);
+        if (isset($_REQUEST['minTime']) && is_numeric($_REQUEST['minTime'])) {
+          $minTime = new DateTime('@'.intval($_REQUEST['minTime']), $this->app->serverTimeZone);
+        } else {
+          $minTime = Null;
+        }
+        $output .= $this->view('feed', ['entries' => $this->globalFeed($minTime, $maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => '']);
         echo $output;
         exit;
 
@@ -1098,32 +1097,32 @@ class User extends BaseObject {
     }
     return $output;
   }
-  public function profileFeed(DateTime $maxTime=Null, $numEntries=50) {
+  public function profileFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
     // returns an EntryGroup consisting of entries for this user's profile feed.
     if ($maxTime == Null) {
       $maxTime = new DateTime("now", $this->app->serverTimeZone);
     }
-    $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
+    $feedEntries = $this->animeList()->entries($minTime, $maxTime, $numEntries);
     $feedEntries->append($this->comments()->filter(function($a) use ($maxTime) {
       return $a->time < $maxTime;
     })->sort(buildPropertySorter("time", -1))->limit($numEntries));
     return $feedEntries;
     //return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
-  public function globalFeed(DateTime $maxTime=Null, $numEntries=50) {
+  public function globalFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
     // returns an EntryGroup of entries corresponding to this user's global feed.
     if ($maxTime == Null) {
       $maxTime = new DateTime("now", $this->app->serverTimeZone);
     }
 
     // add each user's personal feed to the global feed.
-    $feedEntries = $this->animeList()->entries($maxTime, $numEntries);
+    $feedEntries = $this->animeList()->entries($minTime, $maxTime, $numEntries);
     foreach ($this->friends() as $friend) {
-      $feedEntries->append($friend['user']->animeList()->entries($maxTime, $numEntries));
+      $feedEntries->append($friend['user']->animeList()->entries($minTime, $maxTime, $numEntries));
       $comments = [];
 
-      $friendComments = $friend['user']->ownComments()->filter(function($a) use ($maxTime) {
-        return $a->time() < $maxTime;
+      $friendComments = $friend['user']->ownComments()->filter(function($a) use ($maxTime,$minTime) {
+        return $a->time() < $maxTime && $a->time() > $minTime;
       });
 
       foreach ($friendComments->entries() as $commentEntry) {
