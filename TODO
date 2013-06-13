@@ -1,6 +1,6 @@
 + Bug: Anime list episode increment for currently-airing shows error
 + Bug: MAL Import displays error when none is encountered?
-  May be related to "____ blank entries"; attempting duplicate insert throws error
++   May be related to "____ blank entries"; attempting duplicate insert throws error
 + Bug: Updating user->about results in no change
 Bug: Middle-click broken in Firefox
 Bug: Some shows in database with same title
@@ -9,6 +9,8 @@ Bug: Sorting #userList by score puts 10 between 1 and 2
 + Bug: ______ blank entries
   Manually entering, then MAL Importing results in this
 + Bug: Compatibilities sometimes above 100%
+Bug: monausicaa achievement counts non-completed anime
+Bug: Setting userlevel doesn't work
 
 + Enhancement: Larger avatars (300x300?)
     Enhancement: Thumbnails where appropriate
@@ -29,6 +31,9 @@ Enhancement: Option to permanently sync MAL list (? need to consider conflict re
 Enhancement: Display anime aliases on anime search results page
 + Enhancement: Split tag listings on anime/show and tag/show out by type
 Enhancement: Rewatches (should count for number of eps, time, etc)
+Enhancement: sort by predicted score in list view
+Enhancement: extend stuff we're scraping
+  series ratings (stats for this)
 
 + Feature: Complete friends listing somewhere
 Feature: Discover friends (graph search)
@@ -38,3 +43,4 @@ Feature: Dismiss recommendations
 Feature: Anime relationships (sequels, spinoffs, remakes)
   Enhancement: Hide related series in /discover
   "I'm in the mood for something..." ~> (good, different)
+Feature: Currently-airing for discover / next season (implicit feature determination through users who pick it up?)

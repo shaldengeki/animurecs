@@ -25,7 +25,7 @@
   ?>
         <<?php echo $entryType; ?> class='media'>
       <div class='pull-right feedDate' data-time='<?php echo $params['entry']->time()->format('U'); ?>'><?php echo ago($diffInterval); ?></div>
-      <?php echo $params['entry']->user->link("show", $params['entry']->user->avatarImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left']); ?>
+      <?php echo $params['entry']->user->link("show", $params['entry']->user->thumbImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left']); ?>
       <div class='media-body feedText'>
         <div class='feedEntry'>
           <h4 class='media-heading feedUser'><?php echo $feedMessage['title']; ?></h4>

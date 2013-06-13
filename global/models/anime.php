@@ -59,13 +59,7 @@ class Anime extends BaseObject {
     return $this->returnInfo('imagePath') ? $this->returnInfo('imagePath') : "img/blank.png";
   }
   public function imageTag(array $params=Null) {
-    $imageParams = [];
-    if (is_array($params) && $params) {
-      foreach ($params as $key => $value) {
-        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
-      }
-    }
-    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->imagePath()))."' ".implode(" ", $imageParams)." />";
+    return $this->image($this->imagePath(), $params);
   }
   public function approvedOn() {
     return $this->returnInfo('approvedOn');
@@ -419,7 +413,7 @@ class Anime extends BaseObject {
     switch($this->app->action) {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
-        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
+        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
         $entries = $this->entries($minTime, $maxTime, 50);
         echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         exit;

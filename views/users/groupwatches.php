@@ -55,7 +55,7 @@
           foreach ($groupwatch['users'] as $friend) {
 ?>
           <li>
-            <?php echo $friend->link("show", "<h5>".escape_output($friend->username())."</h5>".$friend->avatarImage(), Null, True); ?>
+            <?php echo $friend->link("show", "<h5>".escape_output($friend->username())."</h5>".$friend->thumbImage(), Null, True); ?>
             <?php echo "<p><em>".($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'] ? "On episode ".intval($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'])."" : "Hasn't started")."</em></p>"; ?>
           </li>
 <?php        

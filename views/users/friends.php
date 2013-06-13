@@ -22,7 +22,7 @@
     foreach ($friendCompats as $friendID=>$compat) {
       $friend = $this->friends()[intval($friendID)]['user'];
 ?>
-  <li class='friendGridEntry'><?php echo $friend->link("show", $friend->avatarImage(['class' => 'friendGridImage'])."<div class='friendGridUsername'>".escape_output($friend->username)."</div>", Null, True); ?><p><em><?php echo floatval($compat) <= 0 ? "No compat" : round($compat)."% compatible"; ?></em></p></li>
+  <li class='friendGridEntry'><?php echo $friend->link("show", $friend->thumbImage(['class' => 'friendGridImage'])."<div class='friendGridUsername'>".escape_output($friend->username)."</div>", Null, True); ?><p><em><?php echo floatval($compat) <= 0 ? "No compat" : round($compat)."% compatible"; ?></em></p></li>
 <?php
     }
   }

@@ -115,22 +115,10 @@ class User extends BaseObject {
     return $this->returnInfo('thumbPath') ? $this->returnInfo('thumbPath') : $this->avatarPath();
   }
   public function avatarImage(array $params=Null) {
-    $imageParams = [];
-    if (is_array($params) && $params) {
-      foreach ($params as $key => $value) {
-        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
-      }
-    }
-    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->avatarPath()))."' ".implode(" ", $imageParams)." />";
+    return $this->image($this->avatarPath(), $params);
   }
   public function thumbImage(array $params=Null) {
-    $imageParams = [];
-    if (is_array($params) && $params) {
-      foreach ($params as $key => $value) {
-        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
-      }
-    }
-    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($this->thumbPath()))."' ".implode(" ", $imageParams)." />";
+    return $this->image($this->thumbPath(), $params);
   }
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.

@@ -237,6 +237,7 @@ abstract class BaseObject {
       if (!$updateObject) {
         throw new DbException("Could not update ".static::$modelTable.": ".$updateQuery);
       }
+      $this->set($object);
       $modelName = static::modelName();
       $newObject = new $modelName($this->app, $this->id);
       $newObject->afterUpdate($object);
@@ -339,7 +340,7 @@ abstract class BaseObject {
     }
     return $this->link($action, $text, Null, $raw, $params, $urlParams, $id);
   }
-  public function input($attr, $params=Null) {
+  public function input($attr, array $params=Null) {
     if ($params === Null) {
       $params = [];
     }
@@ -354,7 +355,7 @@ abstract class BaseObject {
     $params = array_merge($defaultVals, $params);
     return $this->app->input($params);
   }
-  public function textarea($attr, $params=Null, $textValue=Null) {
+  public function textarea($attr, array $params=Null, $textValue=Null) {
     if ($params === Null) {
       $params = [];
     }
@@ -368,6 +369,15 @@ abstract class BaseObject {
     }
     $params = array_merge($defaultVals, $params);
     return $this->app->textarea($params, $textValue);
+  }
+  public function image($path, array $params=Null) {
+    $imageParams = [];
+    if ($params) {
+      foreach ($params as $key => $value) {
+        $imageParams[] = escape_output($key)."='".escape_output($value)."'";
+      }
+    }
+    return "<img src='".joinPaths(Config::ROOT_URL, escape_output($path))."' ".implode(" ", $imageParams)." />";
   }
 
  }
