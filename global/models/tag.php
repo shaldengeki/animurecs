@@ -297,9 +297,11 @@ class Tag extends BaseObject {
     if (isset($_POST['tag']) && is_array($_POST['tag'])) {
       $updateTag = $this->create_or_update($_POST['tag']);
       if ($updateTag) {
-        $this->app->redirect($this->url("show"), ['status' => "Successfully updated.", 'class' => 'success']);
+        $this->app->delayedMessage("Successfully updated.", "success");
+        $this->app->redirect($this->url("show"));
       } else {
-        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), ['status' => "An error occurred while creating or updating this tag.", 'class' => 'error']);
+        $this->app->delayedMessage("An error occurred while creating or updating this tag.", "error");
+        $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
       }
     }
     switch($this->app->action) {
@@ -339,9 +341,11 @@ class Tag extends BaseObject {
         $tagName = $this->name();
         $deleteTag = $this->delete();
         if ($deleteTag) {
-          $this->app->redirect('/tags/', ['status' => 'Successfully deleted '.$tagName.'.', 'class' => 'success']);
+          $this->app->delayedMessage('Successfully deleted '.$tagName.'.', "success");
+          $this->app->redirect('/tags/');
         } else {
-          $this->app->redirect($this->url("show"), ['status' => 'An error occurred while deleting '.$tagName.'.', 'class' => 'error']);
+          $this->app->delayedMessage('An error occurred while deleting '.$tagName.'.', "error");
+          $this->app->redirect($this->url("show"));
         }
         break;
       default:

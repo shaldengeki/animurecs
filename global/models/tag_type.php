@@ -120,9 +120,11 @@ class TagType extends BaseObject {
     if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
       $updateTagType = $this->create_or_update($_POST['tag_type']);
       if ($updateTagType) {
-        $this->app->redirect($this->url("show"), ['status' => "Successfully updated.", 'class' => 'success']);
+        $this->app->delayedMessage("Successfully updated.", "success");
+        $this->app->redirect($this->url("show"));
       } else {
-        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), ['status' => "An error occurred while creating or updating this tag type.", 'class' => 'error']);
+         $this->app->delayedMessage("An error occurred while creating or updating this tag type.", "error");
+        $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
       }
     }
     switch($this->app->action) {
@@ -153,9 +155,11 @@ class TagType extends BaseObject {
         }
         $deleteTagType = $this->delete();
         if ($deleteTagType) {
-          $this->app->redirect("/tag_types/", ['status' => 'Successfully deleted '.$this->name().'.', 'class' => 'success']);
+          $this->app->delayedMessage('Successfully deleted '.$this->name().'.', "success");
+          $this->app->redirect("/tag_types/");
         } else {
-          $this->app->redirect("/tag_types/".intval($this->id)."/show/", ['status' => 'An error occurred while deleting '.$this->name().'.', 'class' => 'error']);
+          $this->app->delayedMessage('An error occurred while deleting '.$this->name().'.', 'error');
+          $this->app->redirect($this->url());
         }
         break;
       default:

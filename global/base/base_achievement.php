@@ -79,11 +79,11 @@ abstract class BaseAchievement extends BaseObject {
       $parent->app->logger->err("Awarding achievement ".$this->id." to ".$this->user($parent)->id);
       if ($this->user($parent)->addAchievement($this)) {
         $parent->app->logger->err("Awarded achievement ".$this->id." to ".$this->user($parent)->id);
-        $parent->app->delayedMessages[] = "Congrats, you've been awarded the achievement ".$this->name()."!";
+        $parent->app->delayedMessage("Congrats, you've been awarded the achievement ".$this->name()."!", "success");
       }
     } elseif ($this->alreadyAwarded($this->user($parent)) && (!$this->dependenciesPresent($this->user($parent)) || !$this->validateUser($event, $parent, $updateParams))) {
       if ($this->user($parent)->removeAchievement($this)) {
-        $parent->app->delayedMessages[] = "Unfortunately, you no longer meet the requirements for the achievement ".$this->name().", so it's been removed.";
+        $parent->app->delayedMessages("Unfortunately, you no longer meet the requirements for the achievement ".$this->name().", so it's been removed.");
       }
     }
   }

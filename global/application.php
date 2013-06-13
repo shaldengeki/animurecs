@@ -55,9 +55,9 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_config, $_classes, $_observers=[], $_statsdConn;
+  private $_classes,$_observers,$messages=[], $_statsdConn;
   protected $totalPoints=Null;
-  public $achievements,$delayedMessages=[];
+  public $achievements=[];
   public $statsd, $logger, $cache, $dbConn, $recsEngine, $mailer, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
   public $model,$action,$status,$class="";
@@ -401,44 +401,64 @@ class Application {
       $this->display_error(404);
     }
   }
-  public function redirect($location, array $params=Null) {
-    $paramString = "";
-
-    // append any delayed messages onto the current status.
-    if (count($this->delayedMessages) > 0) {
-      if (isset($params['status'])) {
-        array_unshift($this->delayedMessages, $params['status']);
-      }
-      $params['status'] = implode(" \n", $this->delayedMessages);
+  public function delayedMessage($message, $class=Null) {
+    // appends message to delayed message queue.
+    if (!isset($_SESSION['delayedMessages'])) {
+      $_SESSION['delayedMessages'] = [];
     }
-
-    // determine which connector we need to append to the location url.
-    if (strpos($location, "?") === False) {
-      $connector = "?";
-    } else {
-      $connector = "&";
+    if (!is_array($message)) {
+      $message = ['text' => $message];
     }
-    if ($params !== Null) {
-      $paramString = $connector.http_build_query($params);
+    if ($class) {
+      $message['class'] = $class;
     }
-
-    $redirect = "Location: ".$location.$paramString;
-    header($redirect);
+    $_SESSION['delayedMessages'][] = $message;
+  }
+  public function delayedMessages() {
+    // returns delayed message queue.
+    if (!isset($_SESSION['delayedMessages'])) {
+      $_SESSION['delayedMessages'] = [];
+    }
+    return $_SESSION['delayedMessages'];    
+  }
+  public function clearDelayedMessages() {
+    // empties delayed message queue.
+    $_SESSION['delayedMessages'] = [];
+    return True;
+  }
+  public function message($message) {
+    // appends message to message queue.
+    if (!is_array($message)) {
+      $message = ['text' => $message];
+    }
+    if ($class) {
+      $message['class'] = $class;
+    }
+    $this->messages[] = $message;
+  }
+  public function messages() {
+    // returns message queue.
+    return $this->messages;
+  }
+  public function clearMessages() {
+    // clears message queue.
+    $this->messages = [];
+    return True;
+  }
+  public function allMessages() {
+    // returns delayed and immediate message queues.
+    return array_merge($this->delayedMessages(), $this->messages());
+  }
+  public function clearAllMessages() {
+    // clears delayed and immediate message queues.
+    return $this->clearMessages() && $this->clearDelayedMessages();
+  }
+  public function redirect($location) {
+    header("Location: ".$location);
     exit;
   }
-  public function jsRedirect($location, $redirect_array) {
-    $status = (isset($redirect_array['status'])) ? $redirect_array['status'] : '';
-    $class = (isset($redirect_array['class'])) ? $redirect_array['class'] : '';
-    
-    $redirect = Config::ROOT_URL."/".$location;
-    if ($status != "") {
-      if (strpos($location, "?") === FALSE) {
-        $redirect .= "?status=".rawurlencode($status)."&class=".rawurlencode($class);
-      } else {
-        $redirect .= "&status=".rawurlencode($status)."&class=".rawurlencode($class);
-      }
-    }
-    echo "window.location.replace(\"".$redirect."\");";
+  public function jsRedirect($location) {
+    echo "window.location.replace(\"".Config::ROOT_URL."/".$location."\");";
   }
 
   public function init() {
@@ -517,7 +537,8 @@ class Application {
 
     if (isset($this->model) && $this->model !== "") {
       if (!class_exists($this->model)) {
-        $this->redirect($this->user->url(), ["status" => "This thing doesn't exist!", "class" => "error"]);
+        $this->delayedMessage("This thing doesn't exist!", "error");
+        $this->redirect($this->user->url());
       }
 
       try {
@@ -537,7 +558,8 @@ class Application {
         } catch (DbException $e) {
           $this->statsd->increment("DbException");
           $blankModel = new $this->model($this);
-          $this->redirect($blankModel->url("index"), ["status" => "The ".strtolower($this->model)." you specified does not exist.", "class" => "error"]);
+          $this->delayedMessage("The ".strtolower($this->model)." you specified does not exist.", "error");
+          $this->redirect($blankModel->url("index"));
         }
       } elseif ($this->action === "edit") {
         $this->action = "new";

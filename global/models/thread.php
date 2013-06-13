@@ -238,9 +238,11 @@ class Thread extends BaseObject {
       if ($updateAnime) {
         // fetch the new ID.
         $newAnime = new Anime($this->app, $updateAnime);
-        $this->app->redirect($newAnime->url("show"), ['status' => "Successfully created or updated ".$newAnime->title().".", 'class' => 'success']);
+        $this->app->delayedMessage("Successfully created or updated ".$newAnime->title().".", "success");
+        $this->app->redirect($newAnime->url("show"));
       } else {
-        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")), ['status' => "An error occurred while creating or updating ".$this->title().".", 'class' => 'error']);
+        $this->app->delayedMessage("An error occurred while creating or updating ".$this->title().".", "error");
+        $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
       }
     }
     switch($this->app->action) {
@@ -298,9 +300,11 @@ class Thread extends BaseObject {
         $animeTitle = $this->title();
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
-          $this->app->redirect("/anime/", ['status' => 'Successfully deleted '.$animeTitle.'.', 'class' => 'success']);
+          $this->app->delayedMessage('Successfully deleted '.$animeTitle.'.', "success");
+          $this->app->redirect("/anime/");
         } else {
-          $this->app->redirect($this->url("show"), ['status' => 'An error occurred while deleting '.$animeTitle.'.', 'class' => 'error']);
+          $this->app->delayedMessage('An error occurred while deleting '.$animeTitle.'.', "error");
+          $this->app->redirect($this->url("show"));
         }
         break;
       default:

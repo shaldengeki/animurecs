@@ -7,7 +7,10 @@ if ($app->user->allow($app->user, 'new') && isset($_POST['username']) && isset($
   $registerUser = $app->user->register($_POST['username'], $_POST['email'], $_POST['password'], $_POST['password_confirmation']);
   $location = $registerUser['location'];
   unset($registerUser['location']);
-  $app->redirect($location, $registerUser);
+  if (isset($registerUser['status'])) {
+    $app->delayedMessage($registerUser['status'], isset($registerUser['class']) ? $registerUser['class'] : Null);
+  }
+  $app->redirect($location);
 } else {
   echo $app->render('<div class="row-fluid">
   <div class="span4">&nbsp;</div>

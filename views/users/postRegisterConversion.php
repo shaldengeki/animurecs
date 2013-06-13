@@ -1,6 +1,8 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+
+  $this->app->delayedMessage("Congrats! You're now signed in as ".$this->username().". Why not start out by adding some anime to your list?", "success");
 ?>
 <!-- Google Code for Register Conversion Page -->
 <script type="text/javascript">
@@ -19,10 +21,10 @@ var google_conversion_value = 0;
 <div style="display:inline;">
 <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/1002810615/?value=0&amp;label=AAoeCJHY1gUQ99mW3gM&amp;guid=ON&amp;script=0"/>
 </div>
-<?php echo $this->link('show', 'Click here to continue', Null, False, Null, ['status' => "Congrats! You're now signed in as ".escape_output($this->username()).". Why not start out by adding some anime to your list?", 'class' => 'success']); ?>
+<?php echo $this->link('show', 'Click here to continue', Null, False, Null); ?>
 </noscript>
 <script type="text/javascript">
   $(document).ready(function() {
-    <?php echo $this->app->jsRedirect($this->url('show'), ['status' => "Congrats! You're now signed in as ".escape_output($this->username()).". Why not start out by adding some anime to your list?", 'class' => 'success']); ?>
+    <?php echo $this->app->jsRedirect($this->url('show')); ?>
   });
 </script>

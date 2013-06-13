@@ -137,11 +137,12 @@
     <div class='container-fluid'>
 <?php
   }
-  if ($this->status != '') {
+  foreach ($this->allMessages() as $message) {
 ?>
-      <div class='alert alert-<?php echo isset($this->class) ? escape_output($this->class) : ""; ?>'>
+      <div class='alert<?php echo isset($message['class']) ? " alert-".escape_output($message['class']) : ""; ?>'>
     <button class='close' data-dismiss='alert' href='#'>×</button>
-  <?php echo escape_output($this->status); ?></div>
+  <?php echo escape_output($message['text']); ?></div>
 <?php
   }
+  $this->clearAllMessages();
 ?>
