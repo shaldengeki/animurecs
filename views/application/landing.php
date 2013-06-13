@@ -23,7 +23,7 @@
         </div>
         <div class="landing-box">
           <p class='lead'>Stay current with friends. Find and join groupwatches effortlessly.</p>
-          <?php echo $firstUser->link('discover#groupwatches', "<img src='img/animurecs-groupwatches.png' alt='List of potential groupwatches with friends' />", Null, True); ?>
+          <a href='/users/shaldengeki/discover#groupwatches' ><img src='img/animurecs-groupwatches.png' alt='List of potential groupwatches with friends' /></a>
         </div>
       </div>
       <div class='row-fluid landing-container'>

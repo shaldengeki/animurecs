@@ -28,7 +28,7 @@
 <?php
   if ($animeGroup->length() < 1) {
 ?>
-    Aww, there's no recommendations for you at the moment. We're cook em up every half-hour, so please check back then!
+    Aww, there are no recommendations for you at the moment. We cook em up every half-hour, so please check back then!
 <?php
   } else {
     echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content');

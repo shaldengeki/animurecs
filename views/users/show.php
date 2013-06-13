@@ -52,7 +52,7 @@ if ($this->avatarPath() != '') {
 <?php
                   } elseif ($this->hasFriendRequestFrom($this->app->user)) {
 ?>
-                <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Requested</button></span>
+                <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Request Sent</button></span>
 <?php                    
                   } elseif ($this->hasRequestedFriend($this->app->user)) {
                     $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Confirm Request'];
@@ -60,7 +60,7 @@ if ($this->avatarPath() != '') {
                 <span class='pull-right'><?php echo $this->app->form(['action' => $this->url('confirm_friend')]).$this->app->input($buttonParams); ?></form></span>
 <?php
                   } else {
-                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Friend Request'];
+                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Add Friend'];
 ?>
                 <span class='pull-right'><?php echo $this->app->form(['action' => $this->url('request_friend')]).$this->app->input($buttonParams); ?></form></span>
 <?php
