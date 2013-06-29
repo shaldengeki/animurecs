@@ -167,7 +167,9 @@ class AnimeEntry extends BaseEntry {
       default:
         break;
     }
-    $this->app->delayedMessage($status, $class);
+    if ($status) {
+      $this->app->delayedMessage($status, $class);
+    }
     $this->app->redirect();
   }
 }
