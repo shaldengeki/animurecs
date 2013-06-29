@@ -206,7 +206,6 @@ abstract class BaseObject {
     // assumes the existence of updated_at and created_at fields in the database.
     // returns False if failure, or the ID of the object if success.
     $this->validate($object);
-    $this->app->logger->err("Validated: ".print_r($object, True));
 
     $params = [];
     foreach ($object as $parameter => $value) {
@@ -230,8 +229,6 @@ abstract class BaseObject {
 
       //update this object.
       $this->beforeUpdate($object);
-      $this->app->logger->err("Updating: ".print_r($params, True));
-      $this->app->logger->err("WhereParams: ".print_r($whereParams, True));
       $updateQuery = "UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1";
       $updateObject = $this->dbConn->stdQuery($updateQuery);
       if (!$updateObject) {

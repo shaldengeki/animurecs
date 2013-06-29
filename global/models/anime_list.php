@@ -51,15 +51,14 @@ class AnimeList extends BaseList {
         } else {
           // This user does not exist.
           $this->app->delayedMessage("This user ID doesn't exist.", "error");
-          $this->app->redirect($this->app->user->url());
+          $this->app->redirect();
         }
       } catch (Exception $e) {
         // this non-zero userID does not exist.
         $this->app->delayedMessage("This user doesn't exist.", "error");
-        $this->app->redirect($this->app->user->url());
+        $this->app->redirect();
       }
     }
-    $location = $this->user()->url();
     $status = "";
     $class = "";
     switch($this->app->action) {
@@ -130,7 +129,7 @@ class AnimeList extends BaseList {
         break;
     }
     $this->app->delayedMessage($status, $class);
-    $this->app->redirect($location);
+    $this->app->redirect();
   }
 }
 ?>

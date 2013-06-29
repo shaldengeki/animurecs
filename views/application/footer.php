@@ -23,11 +23,11 @@
 <?php
   }
 ?>
-    </footer>
+      </footer>
 <?php
   if ($params['container']) {
 ?>
-      </div>
+    </div>
 <?php
   }
 ?>

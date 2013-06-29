@@ -233,16 +233,18 @@ class Application {
       $parentClass = get_class($parent);
       $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id)."-tagIDs");
     }));
+    $this->bind(['Anime.afterUpdate', 'Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
+      $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id)."-similar");
+    }));
     $this->bind(['AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeList.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete("Anime-".intval($updateParams['anime_id'])."-similar");
+      $parent->app->cache->delete("AnimeEntry-".intval($updateParams['id']));
     }));
     $this->bind(['AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete("Anime-".$parent->animeId()."-similar");
+      $parent->app->cache->delete("AnimeEntry-".intval($parent->id));
     }));
 
 
     // statsd metrics.
-
     $this->bind(['Anime.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("anime.count");
     }));
@@ -376,7 +378,7 @@ class Application {
     if (!isset($this->_observers[$event])) {
       return;
     }
-    $this->logger->err("Firing event: ".$event." | observers: ".count($this->_observers[$event]));
+    $this->logger->debug("Firing event: ".$event." | observers: ".count($this->_observers[$event]));
     foreach ($this->_observers[$event] as $observer) {
       if (!method_exists($observer, 'update')) {
         continue;
@@ -453,7 +455,22 @@ class Application {
     // clears delayed and immediate message queues.
     return $this->clearMessages() && $this->clearDelayedMessages();
   }
-  public function redirect($location) {
+  public function currentUrl() {
+    return $_SERVER['REQUEST_URI'];
+  }
+  public function previousUrl() {
+    if (!isset($_SESSION['prev_url'])) {
+      $_SESSION['prev_url'] = '/';
+    }
+    return $_SESSION['prev_url'];
+  }
+  public function setPreviousUrl($url=Null) {
+    $_SESSION['prev_url'] = $url === Null ? $_SERVER['REQUEST_URI'] : $url;
+  }
+  public function redirect($location=Null) {
+    if ($location === Null) {
+      $location = $this->previousUrl();
+    }
     header("Location: ".$location);
     exit;
   }
@@ -570,12 +587,12 @@ class Application {
         $this->logger->warning($error->__toString());
         $this->display_error(403);
       } else {
+        header('X-Frame-Options: SAMEORIGIN');
         try {
-          $renderOutput = $this->target->render();
-          header('X-Frame-Options: SAMEORIGIN');
-          echo $renderOutput;
+          echo $this->target->render();
           $this->statsd->timing("pageload", microtime(True) - $this->startRender);
           $this->statsd->memory('memory.peakusage');
+          $this->setPreviousUrl();
           exit;
         } catch (AppException $e) {
           ob_end_clean();

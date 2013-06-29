@@ -342,10 +342,10 @@ class Tag extends BaseObject {
         $deleteTag = $this->delete();
         if ($deleteTag) {
           $this->app->delayedMessage('Successfully deleted '.$tagName.'.', "success");
-          $this->app->redirect('/tags/');
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while deleting '.$tagName.'.', "error");
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         }
         break;
       default:

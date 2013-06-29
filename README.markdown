@@ -1,5 +1,5 @@
-Animurecs
-=========
+[Animurecs](https://animurecs.com)
+==================================
 
 Animurecs is a PHP / MySQL social network aimed at making enjoying anime a communal experience. It uses `memcached` to store and retrieve frequently-queried data.
 

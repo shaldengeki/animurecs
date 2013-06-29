@@ -118,6 +118,7 @@ abstract class BaseList extends BaseObject {
         return False;
       }
       $returnValue = intval($this->dbConn->insert_id);
+      $entry['id'] = $returnValue;
       // insert list locally.
       $this->uniqueList();
       if (intval($entry['status']) == 0) {

@@ -156,10 +156,10 @@ class TagType extends BaseObject {
         $deleteTagType = $this->delete();
         if ($deleteTagType) {
           $this->app->delayedMessage('Successfully deleted '.$this->name().'.', "success");
-          $this->app->redirect("/tag_types/");
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while deleting '.$this->name().'.', 'error');
-          $this->app->redirect($this->url());
+          $this->app->redirect();
         }
         break;
       default:

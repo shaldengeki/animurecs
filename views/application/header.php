@@ -122,7 +122,7 @@
   } else {
 ?>
                 <li>
-                  <?php echo $this->user->view('login', $params); ?>
+                  <?php echo $this->user->view('loginInline', $params); ?>
                 </li>
 <?php
   }

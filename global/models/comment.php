@@ -170,7 +170,7 @@ class Comment extends BaseObject {
       } catch (DbException $e) {
         $this->app->logger->err($e->__toString());
         $this->app->delayedMessage('This comment does not exist.', 'error');
-        $this->app->redirect($this->app->user->url());
+        $this->app->redirect($this->parent()->url());
       }
       $targetParent = $this->parent();
       $targetUser = $this->user();
@@ -214,7 +214,7 @@ class Comment extends BaseObject {
           // ensure that the thing to which this comment is going to belong exists.
           if ($targetParent === Null) {
             $this->app->delayedMessage("The thing you're commenting on no longer exists.", 'error');
-            $this->app->redirect($this->app->user->url());
+            $this->app->redirect();
           }
 
           // ensure that the user has perms to create a comment for this user under this object.
@@ -228,7 +228,7 @@ class Comment extends BaseObject {
             $this->app->redirect($targetParent->url());
           } else {
             $this->app->delayedMessage("An error occurred while commenting on this.", 'error');
-            $this->app->redirect($targetParent->url());
+            $this->app->redirect();
           }
         }
         $title = "Add a comment";
@@ -246,11 +246,11 @@ class Comment extends BaseObject {
             $targetParent = new $commentType($this->app, intval($commentParentID));
           } catch (Exception $e) {
             $this->app->delayedMessage("The thing you're trying to comment on doesn't exist anymore.", 'error');
-            $this->app->redirect($this->app->user->url());
+            $this->app->redirect();
           }
           if ($targetParent->id === 0) {
             $this->app->delayedMessage("Please provide something to comment on.", 'error');
-            $this->app->redirect($this->app->user->url());
+            $this->app->redirect();
           }
 
           // ensure that the user has perms to update a comment.
@@ -259,19 +259,19 @@ class Comment extends BaseObject {
           } catch (Exception $e) {
             // this non-zero commentID does not exist.
             $this->app->delayedMessage('This comment does not exist.', 'error');
-            $this->app->redirect($targetParent->url());
+            $this->app->redirect();
           }
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'edit')) {
             $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
-            $this->app->redirect($targetParent->url());
+            $this->app->redirect();
           }
           $updateComment = $targetComment->create_or_update($_POST['comments']);
           if ($updateComment) {
             $this->app->delayedMessage("Comment successfully updated.", 'success');
-            $this->app->redirect($targetParent->url());
+            $this->app->redirect();
           } else {
             $this->app->delayedMessage("An error occurred while creating or updating this comment.", 'error');
-            $this->app->redirect($targetParent->url());
+            $this->app->redirect();
           }
         }
         $title = "Editing comment";
@@ -291,10 +291,10 @@ class Comment extends BaseObject {
         $deleteComment = $targetComment->delete();
         if ($deleteComment) {
           $this->app->delayedMessage('Successfully deleted a comment.', 'success');
-          $this->app->redirect($targetParent->url());
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage("An error occurred while creating or updating this comment.", 'error');
-          $this->app->redirect($targetParent->url());
+          $this->app->redirect();
         }
         break;
       default:

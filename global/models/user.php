@@ -831,7 +831,7 @@ class User extends BaseObject {
         }
         if ($this->id === $this->app->user->id) {
           $this->app->delayedMessage("You can't befriend yourself, silly!");
-          $this->app->redirect($this->app->user->url("show"));
+          $this->app->redirect();
         }
         if (!isset($_POST['friend_request'])) {
           $_POST['friend_request'] = [];
@@ -839,10 +839,10 @@ class User extends BaseObject {
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
           $this->app->delayedMessage("Your friend request has been sent to ".rawurlencode($this->username()).".", "success");
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while requesting this friend. Please try again.', 'error');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         }
         break;
       case 'confirm_friend':
@@ -852,10 +852,10 @@ class User extends BaseObject {
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
           $this->app->delayedMessage("Hooray! You're now friends with ".rawurlencode($this->username()).".", 'success');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while confirming this friend. Please try again.', 'error');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         }
         break;
       case 'ignore_friend':
@@ -865,10 +865,10 @@ class User extends BaseObject {
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
           $this->app->delayedMessage("You ignored a friend request from ".rawurlencode($this->username()).".", 'success');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while ignoring this friend. Please try again.', 'error');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         }
         break;
       case 'switch_back':
@@ -900,7 +900,7 @@ class User extends BaseObject {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
           if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->usermask()) || $this->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask())) {
             $this->app->delayedMessage("You can't set permissions beyond your own userlevel: ".array_sum($_POST['users']['usermask']), 'error');
-            $this->app->redirect($this->url("edit"));
+            $this->app->redirect();
           }
           $updateErrors = False;
           try {
@@ -928,7 +928,7 @@ class User extends BaseObject {
       case 'activate':
         if (!$this->activationCode() || !isset($_REQUEST['code']) || $_REQUEST['code'] != $this->activationCode()) {
           $this->app->delayedMessage('The activation code you provided was incorrect. Please check your email and try again.', 'error');
-          $this->app->redirect("/");
+          $this->app->redirect();
         } else {
           $this->app->dbConn->stdQuery("UPDATE `users` SET `activation_code` = NULL WHERE `id` = ".intval($this->id));
           $this->setCurrentSession();
@@ -947,7 +947,7 @@ class User extends BaseObject {
         // import a MAL list for this user.
         if (!isset($_POST['users']) || !is_array($_POST['users']) || !isset($_POST['users']['mal_username'])) {
           $this->app->delayedMessage('Please enter a MAL username.');
-          $this->app->redirect($this->url("edit"));
+          $this->app->redirect();
         }
         $importMAL = $this->importMAL($_POST['users']['mal_username']);
         if (!in_array(False, $importMAL, True)) {
@@ -968,7 +968,7 @@ class User extends BaseObject {
             }
           }
           $this->app->delayedMessage('An error occurred while importing your MAL for the titles: '.implode(", ", $failedTitles).". Please check your MAL for any errors and if necessary, try again.", 'error');
-          $this->app->redirect($this->url("edit"));
+          $this->app->redirect();
         }
         break;
 
@@ -1043,10 +1043,10 @@ class User extends BaseObject {
         $deleteUser = $this->delete();
         if ($deleteUser) {
           $this->app->delayedMessage('Successfully deleted '.$username.'.', 'success');
-          $this->app->redirect('/users/');
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while deleting '.$username.'.', 'error');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         }
         break;
 

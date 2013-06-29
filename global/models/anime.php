@@ -400,18 +400,6 @@ class Anime extends BaseObject {
     }, $result));
   }
   public function render() {
-    if (isset($_POST['anime']) && is_array($_POST['anime'])) {
-      $updateAnime = $this->create_or_update($_POST['anime']);
-      if ($updateAnime) {
-        // fetch the new ID.
-        $newAnime = new Anime($this->app, $updateAnime);
-        $this->app->delayedMessage("Successfully created or updated ".$newAnime->title().".", "success");
-        $this->app->redirect($newAnime->url("show"));
-      } else {
-        $this->app->delayedMessage("An error occurred while creating or updating ".$this->title().".", "error");
-        $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")));
-      }
-    }
     switch($this->app->action) {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
@@ -444,6 +432,18 @@ class Anime extends BaseObject {
         $output = $this->view('new');
         break;
       case 'edit':
+        if (isset($_POST['anime']) && is_array($_POST['anime'])) {
+          $updateAnime = $this->create_or_update($_POST['anime']);
+          if ($updateAnime) {
+            // fetch the new ID.
+            $newAnime = new Anime($this->app, $updateAnime);
+            $this->app->delayedMessage("Successfully ".($this->id === 0 ? "created" : "updated")." ".$newAnime->title().".", "success");
+            $this->app->redirect($newAnime->url("show"));
+          } else {
+            $this->app->delayedMessage("An error occurred while ".($this->id === 0 ? "creating" : "updating")." ".$this->title().".", "error");
+            $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")));
+          }
+        }
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
@@ -468,10 +468,10 @@ class Anime extends BaseObject {
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
           $this->app->delayedMessage('Successfully deleted '.$animeTitle.'.', 'success');
-          $this->app->redirect("/anime/");
+          $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while deleting '.$animeTitle.'.', 'error');
-          $this->app->redirect($this->url("show"));
+          $this->app->redirect();
         }
         break;
       default:

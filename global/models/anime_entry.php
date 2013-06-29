@@ -89,7 +89,6 @@ class AnimeEntry extends BaseEntry {
     return ['title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText];
   }
   public function render() {
-    $location = $this->app->user->url();
     $status = "";
     $class = "";
     switch($this->app->action) {
@@ -114,7 +113,6 @@ class AnimeEntry extends BaseEntry {
           }
           $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser]);
           if (!$targetEntry->allow($this->app->user, $this->app->action)) {
-            $location = $targetUser->url();
             $status = "You can't update someone else's anime list.";
             $class = "error";
             break;
@@ -123,7 +121,6 @@ class AnimeEntry extends BaseEntry {
             $targetAnime = new Anime($this->app, intval($_POST['anime_entry']['anime_id']));
             $targetAnime->getInfo();
           } catch (DbException $e) {
-            $location = $targetUser->url();
             $status = "This anime ID doesn't exist.";
             $class = "error";
             break;
@@ -171,7 +168,7 @@ class AnimeEntry extends BaseEntry {
         break;
     }
     $this->app->delayedMessage($status, $class);
-    $this->app->redirect($location);
+    $this->app->redirect();
   }
 }
 
