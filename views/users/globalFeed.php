@@ -5,7 +5,10 @@
 <div class="row-fluid">
   <div class="span6">
     <h1>Welcome!</h1>
-    <p>I'm rewriting Animurecs in PHP since half the time I spend in Rails is trying to work around its architecture. Here's what I've got on my to-do list:</p>
+    <p>
+      06/29/13: The past two weeks have been really busy, but I'm still working on AR in the background. I've migrated bugs and my TODO to <a href='https://github.com/shaldengeki/animurecs/issues'>GitHub</a> so you can see my roadmap there.
+      I'll leave stuff here for a bit, but this column will eventually be replaced by another feed of relevant things.
+    </p>
     <ol>
       <li>Anime: Top/Index
         <ul>
@@ -16,12 +19,10 @@
           <li>3/15/13- fixed these up a little; search on /anime/ and you can now browse anime through "discover"</li>
         </ul>
       </li>
-      <li><s>Fee</s>d: Real-time updates
+      <li>Notifications
         <ul>
-          <li>4/6/13- email notification for user signup finished.</li>
-          <li>3/16/13- infinite scrollback should now work for every activity feed on the site</li>
-          <li>still need to implement fetching updates in real time</li>
-          <li>also, email notifications (should probably be in its own bullet) of events (signup, settings changed, big stuff happening)</li>
+          <li>Display relevant recent events in a feed (e.g. friend requests, comments, groupwatches)</li>
+          <li>Eventually allow users to opt-in to email notifications</li>
         </ul>
       </li>
       <li><s>Recommend</s>ations: Dismiss
@@ -32,12 +33,6 @@
           <li>1/1/13- currently the way recs are ported from the original data to new animurecs users is <em>really</em> rough; lots of improvement to be had here</li>
           <li>1/1/13- now regenerates new features for users every hour on the hour using your newest ratings</li>
           <li>recommendations server / engine is complete</li>
-        </ul>
-      </li>
-      <li>Landing page: Complete (?)
-        <ul>
-          <li>4/11/13- fixed up landing page, gonna run it by akj</li>
-          <li>need to come up with demos, make it look not-godawful</li>
         </ul>
       </li>
       <li><s>Friends</s>: Integration
@@ -78,6 +73,20 @@
       <li><s>Start pulling anime from third-party DBs</s></li>
       <li><s>List model, add/delete/update list entries</s></li>
       <li><s>Import list from MAL</s></li>
+      <li><s>Landing page: Complete (?)</s>
+        <ul>
+          <li>4/11/13- fixed up landing page, gonna run it by akj</li>
+          <li>need to come up with demos, make it look not-godawful</li>
+        </ul>
+      </li>
+      <li><s>Feed: Real-time updates</s>
+        <ul>
+          <li>4/6/13- email notification for user signup finished.</li>
+          <li>3/16/13- infinite scrollback should now work for every activity feed on the site</li>
+          <li>still need to implement fetching updates in real time</li>
+          <li>also, email notifications (should probably be in its own bullet) of events (signup, settings changed, big stuff happening)</li>
+        </ul>
+      </li>
     </ol>
   </div>
   <div class='span6'>
