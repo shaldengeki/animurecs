@@ -130,14 +130,12 @@ class Anime extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $this->beforeUpdate([]);
-    $tag->beforeUpdate([]);
     $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertDependency) {
       return False;
     }
-    $this->afterUpdate([]);
-    $tag->afterUpdate([]);
+    $this->fire('tag');
+    $tag->fire('tag');
     $this->tags[intval($tag->id)] = ['id' => intval($tag->id), 'name' => $tag->name];
     return True;
   }
@@ -164,8 +162,10 @@ class Anime extends BaseObject {
       }
     }
     foreach ($tagIDs as $tagID) {
+      $this->tags[intval($tagID)]->fire('untag');
       unset($this->tags[intval($tagID)]);
     }
+    $this->fire('untag');
     return True;
   }
   public function validate(array $anime) {

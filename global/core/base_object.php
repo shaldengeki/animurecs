@@ -165,9 +165,9 @@ abstract class BaseObject {
     $currentClass = new ReflectionClass($this);
     while ($currentClass = $currentClass->getParentClass()) {
       if ($params != Null) {
-        $this->app->fire($currentClass->getName().$eventName, $this, $params);
+        $this->app->fire($currentClass->getName().'.'.$eventName, $this, $params);
       } else {
-        $this->app->fire($currentClass->getName().$eventName, $this);
+        $this->app->fire($currentClass->getName().'.'.$eventName, $this);
       }
     }
   }
@@ -176,29 +176,28 @@ abstract class BaseObject {
   // event names are of the form modelName.eventName
   // e.g. User.afterCreate
   // events cascade up the object hierarchy
+  public function fire($event, $params=Null) {
+    $this->app->fire(static::modelName().'.'.$event, $this, $params);
+    $this->fireParentEvents('.'.$event, $params);
+  }
+  // shorthand methods.
   public function beforeCreate($createParams) {
-    $this->app->fire(static::modelName().'.beforeCreate', $this, $createParams);
-    $this->fireParentEvents('.beforeCreate', $createParams);
+    $this->fire('beforeCreate', $createParams);
   }
   public function afterCreate($createParams) {
-    $this->app->fire(static::modelName().'.afterCreate', $this, $createParams);
-    $this->fireParentEvents('.afterCreate', $createParams);
+    $this->fire('afterCreate', $createParams);
   }
   public function beforeUpdate($updateParams) {
-    $this->app->fire(static::modelName().'.beforeUpdate', $this, $updateParams);
-    $this->fireParentEvents('.beforeUpdate', $updateParams);
+    $this->fire('beforeUpdate', $updateParams);
   }
   public function afterUpdate($updateParams) {
-    $this->app->fire(static::modelName().'.afterUpdate', $this, $updateParams);
-    $this->fireParentEvents('.afterUpdate', $updateParams);
+    $this->fire('afterUpdate', $updateParams);
   }
   public function beforeDelete() {
-    $this->app->fire(static::modelName().'.beforeDelete', $this);
-    $this->fireParentEvents('.beforeDelete');
+    $this->fire('beforeDelete');
   }
   public function afterDelete() {
-    $this->app->fire(static::modelName().'.afterDelete', $this);
-    $this->fireParentEvents('.afterDelete');
+    $this->fire('afterDelete');
   }
 
   public function create_or_update(array $object, array $whereConditions=Null) {

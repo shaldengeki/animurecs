@@ -84,14 +84,12 @@ class Tag extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $this->beforeUpdate([]);
-    $anime->beforeUpdate([]);
     $insertTagging = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertTagging) {
       return False;
     }
-    $this->afterUpdate([]);
-    $anime->afterUpdate([]);
+    $this->fire('tag');
+    $anime->fire('tag');
     $this->anime[intval($anime->id)] = ['id' => intval($anime->id), 'title' => $anime->title];
     return True;
   }
@@ -128,8 +126,10 @@ class Tag extends BaseObject {
       }
     }
     foreach ($animeIDs as $animeID) {
+      $this->anime[intval($animeID)]->fire('untag');
       unset($this->anime[intval($animeID)]);
     }
+    $this->fire('untag');
     return True;
   }
   public function validate(array $tag) {
