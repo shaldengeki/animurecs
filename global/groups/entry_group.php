@@ -33,7 +33,7 @@ class EntryGroup extends BaseGroup {
     }
     if ($animeDict) {
       // TODO: pull from memcached here.
-      $getAnime = $this->dbConn->queryAssoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
+      $getAnime = $this->dbConn->assoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
       foreach ($getAnime as $anime) {
         $animes[$anime['id']] = new Anime($this->app, intval($anime['id']));
         $animes[$anime['id']]->set($anime);
@@ -62,7 +62,7 @@ class EntryGroup extends BaseGroup {
       $userDict[$entry->userId] = 1;
     }
     if ($userDict) {
-      $getUsers = $this->dbConn->queryAssoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
+      $getUsers = $this->dbConn->assoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
       foreach ($getUsers as $user) {
         $users[$user['id']] = new User($this->app, intval($user['id']));
         $users[$user['id']]->set($user);
@@ -93,7 +93,7 @@ class EntryGroup extends BaseGroup {
       $commentDict["(`type` = '".$entryClass::modelName()."' && `parent_id` = ".$entry->id.")"] = 1;
     }
     if ($commentDict) {
-      $getComments = $this->dbConn->queryAssoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
+      $getComments = $this->dbConn->assoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
       foreach ($getComments as $comment) {
         $newComment = new CommentEntry($this->app, intval($comment['id']));
         $newComment->comment()->set($comment);

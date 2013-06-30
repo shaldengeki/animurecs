@@ -41,7 +41,7 @@ class AnimeEntry extends BaseEntry {
     return $this->returnInfo('episode');
   }
   private function _getComments() {
-    $comments = $this->dbConn->queryAssoc("SELECT `id` FROM `comments` WHERE `type` = 'AnimeEntry` && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC", 'id', 'id');
+    $comments = $this->dbConn->assoc("SELECT `id` FROM `comments` WHERE `type` = 'AnimeEntry` && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC", 'id', 'id');
     return new CommentGroup($this->app, array_keys($comments));
   }
   public function comments() {

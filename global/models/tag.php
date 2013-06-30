@@ -17,7 +17,7 @@ class Tag extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $name=Null) {
     if ($name !== Null) {
-      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `name` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $name))." LIMIT 1"));
+      $id = intval($app->dbConn->firstValue("SELECT `id` FROM `tags` WHERE `name` = ".$app->dbConn->escape(str_replace("_", " ", $name))." LIMIT 1"));
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -84,7 +84,7 @@ class Tag extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $insertTagging = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
+    $insertTagging = $this->dbConn->query("INSERT INTO `anime_tags` (`anime_id`, `tag_id`, `created_user_id`, `created_at`) VALUES (".intval($anime->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertTagging) {
       return False;
     }
@@ -116,7 +116,7 @@ class Tag extends BaseObject {
         $animeObjects[$animeID]->beforeUpdate([]);
       }
       $this->beforeUpdate([]);
-      $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
+      $drop_taggings = $this->dbConn->query("DELETE FROM `anime_tags` WHERE `tag_id` = ".intval($this->id)." AND `anime_id` IN (".implode(",", $animeIDs).") LIMIT ".count($animeIDs));
       if (!$drop_taggings) {
         return False;
       }
@@ -199,7 +199,7 @@ class Tag extends BaseObject {
       foreach ($tag['anime_tags'] as $animeToAdd) {
         if (!array_filter_by_property($this->anime()->anime(), 'id', $animeToAdd)) {
           // find this tagID.
-          $animeID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `anime` WHERE `id` = ".intval($animeToAdd)." LIMIT 1"));
+          $animeID = intval($this->dbConn->firstValue("SELECT `id` FROM `anime` WHERE `id` = ".intval($animeToAdd)." LIMIT 1"));
           if ($animeID) {
             $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
           }
@@ -231,11 +231,11 @@ class Tag extends BaseObject {
   }
   public function getApprovedUser() {
     // retrieves an id,name array corresponding to the user who approved this anime.
-    // return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
+    // return $this->dbConn->firstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag.
-    return new User($this->app, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tags` WHERE `id` = ".intval($this->id))));
+    return new User($this->app, intval($this->dbConn->firstValue("SELECT `created_user_id` FROM `tags` WHERE `id` = ".intval($this->id))));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -245,7 +245,7 @@ class Tag extends BaseObject {
   }
   public function getType() {
     // retrieves the tag type that this tag belongs to.
-    return new TagType($this->app, intval($this->dbConn->queryFirstValue("SELECT `tag_type_id` FROM `tags` WHERE `id` = ".intval($this->id))));
+    return new TagType($this->app, intval($this->dbConn->firstValue("SELECT `tag_type_id` FROM `tags` WHERE `id` = ".intval($this->id))));
   }
   public function type() {
     if ($this->type === Null) {
@@ -256,7 +256,7 @@ class Tag extends BaseObject {
   public function getAnime() {
     // retrieves a list of anime objects corresponding to anime tagged with this tag.
     $animes = [];
-    $animeIDs = $this->dbConn->stdQuery("SELECT `anime_id` FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
+    $animeIDs = $this->dbConn->query("SELECT `anime_id` FROM `anime_tags` WHERE `tag_id` = ".intval($this->id));
     while ($animeID = $animeIDs->fetch_assoc()) {
       $animes[intval($animeID['anime_id'])] = new Anime($this->app, intval($animeID['anime_id']));
     }
@@ -271,7 +271,7 @@ class Tag extends BaseObject {
   public function getThreads() {
     // retrieves a list of thread objects corresponding to threads tagged with this tag.
     $threads = [];
-    $threadIDs = $this->dbConn->stdQuery("SELECT `thread_id` FROM `thread_tags` WHERE `tag_id` = ".intval($this->id));
+    $threadIDs = $this->dbConn->query("SELECT `thread_id` FROM `thread_tags` WHERE `tag_id` = ".intval($this->id));
     while ($threadID = $threadIDs->fetch_assoc()) {
       $threads[intval($threadID['thread_id'])] = new Thread($this->app, intval($threadID['thread_id']));
     }
@@ -308,7 +308,7 @@ class Tag extends BaseObject {
       case 'token_search':
         $tags = [];
         if (isset($_REQUEST['term'])) {
-          $tags = $this->dbConn->queryAssoc("SELECT `id`, `name` FROM `tags` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($_REQUEST['term'])." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+          $tags = $this->dbConn->assoc("SELECT `id`, `name` FROM `tags` WHERE MATCH(`name`) AGAINST(".$this->dbConn->escape($_REQUEST['term'])." IN BOOLEAN MODE) ORDER BY `name` ASC;");
         }
         echo json_encode($tags);
         exit;

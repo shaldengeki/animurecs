@@ -88,11 +88,11 @@ class TagType extends BaseObject {
   }
   public function getApprovedUser() {
     // retrieves an id,name array corresponding to the user who approved this anime.
-    // return $this->dbConn->queryFirstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
+    // return $this->dbConn->firstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag type.
-    return new User($this->app, intval($this->dbConn->queryFirstValue("SELECT `created_user_id` FROM `tag_types` WHERE `tag_types`.`id` = ".intval($this->id))));
+    return new User($this->app, intval($this->dbConn->firstValue("SELECT `created_user_id` FROM `tag_types` WHERE `tag_types`.`id` = ".intval($this->id))));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -103,7 +103,7 @@ class TagType extends BaseObject {
   public function getTags() {
     // retrieves a list of id arrays corresponding to tags belonging to this tag type
     $tags = [];
-    $tagIDs = $this->dbConn->stdQuery("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC");
+    $tagIDs = $this->dbConn->query("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
       $tags[] = new Tag($this->app, intval($tagID['id']));
     }

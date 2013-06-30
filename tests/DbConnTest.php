@@ -25,28 +25,28 @@ class DbConnTest extends PHPUnit_Framework_TestCase {
    * @expectedException DbException
    */
   public function testInvalidQueryThrowsDbException() {
-    $this->dbConn->stdQuery("FAKE-QUERY");    
+    $this->dbConn->query("FAKE-QUERY");    
   }
   public function testSimpleQuery() {
-    $this->assertInstanceOf('mysqli_result', $this->dbConn->stdQuery("SHOW TABLES"));
+    $this->assertInstanceOf('mysqli_result', $this->dbConn->query("SHOW TABLES"));
   }
   public function testQueryFirstRow() {
-    $queryResult = $this->dbConn->queryFirstRow("SHOW TABLES");
+    $queryResult = $this->dbConn->firstRow("SHOW TABLES");
     $this->assertInternalType('array', $queryResult);
     $this->assertCount(1, $queryResult);
   }
   public function testQueryFirstValue() {
-    $queryResult = $this->dbConn->queryFirstValue("SHOW TABLES");
+    $queryResult = $this->dbConn->firstValue("SHOW TABLES");
     $this->assertInternalType('string', $queryResult);
     $this->assertTrue(strlen($queryResult) > 0, 'is not an empty string');
   }
   public function testQueryAssocWithDefaultArguments() {
-    $queryResult = $this->dbConn->queryAssoc("SHOW TABLES");
+    $queryResult = $this->dbConn->assoc("SHOW TABLES");
     $this->assertInternalType('array', $queryResult);
     $this->assertNotCount(0, $queryResult);
   }
   public function testQueryAssocWithProvidedArguments() {
-    $queryResult = $this->dbConn->queryAssoc("SHOW TABLES", "Tables_in_".Config::MYSQL_DATABASE, "Tables_in_".Config::MYSQL_DATABASE);
+    $queryResult = $this->dbConn->assoc("SHOW TABLES", "Tables_in_".Config::MYSQL_DATABASE, "Tables_in_".Config::MYSQL_DATABASE);
     $this->assertInternalType('array', $queryResult);
     $this->assertNotCount(0, $queryResult);
     foreach ($queryResult as $key=>$value) {

@@ -25,7 +25,7 @@ class Anime extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $title=Null) {
     if ($title !== Null) {
-      $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `".static::$modelTable."` WHERE `title` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $title))." LIMIT 1"));
+      $id = intval($app->dbConn->firstValue("SELECT `id` FROM `".static::$modelTable."` WHERE `title` = ".$app->dbConn->escape(str_replace("_", " ", $title))." LIMIT 1"));
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -130,7 +130,7 @@ class Anime extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $insertDependency = $this->dbConn->stdQuery("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
+    $insertDependency = $this->dbConn->query("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertDependency) {
       return False;
     }
@@ -156,7 +156,7 @@ class Anime extends BaseObject {
       }
     }
     if ($tagIDs) {
-      $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `anime_tags` WHERE `anime_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
+      $drop_taggings = $this->dbConn->query("DELETE FROM `anime_tags` WHERE `anime_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
       if (!$drop_taggings) {
         return False;
       }
@@ -277,7 +277,7 @@ class Anime extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
+          $tagID = intval($this->dbConn->firstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -297,7 +297,7 @@ class Anime extends BaseObject {
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
+    $tagIDs = $this->dbConn->query("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
       $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
     }
@@ -312,7 +312,7 @@ class Anime extends BaseObject {
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     $returnList = [];
-    $animeEntries = $this->dbConn->stdQuery("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
+    $animeEntries = $this->dbConn->query("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
     while ($entry = $animeEntries->fetch_assoc()) {
       $newEntry = new AnimeEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;
@@ -322,7 +322,7 @@ class Anime extends BaseObject {
   public function getLatestEntries() {
     // retrieves the latest entries for each user for this anime.
     // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
-    $returnList = $this->dbConn->queryAssoc("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
+    $returnList = $this->dbConn->assoc("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
                                               SELECT MAX(`id`) AS `id` FROM `anime_lists`
                                               WHERE `anime_id` = ".intval($this->id)."
                                               GROUP BY `user_id`
@@ -480,10 +480,10 @@ class Anime extends BaseObject {
         $resultsPerPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $animeIDs = $this->dbConn->stdQuery("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $animeIDs = $this->dbConn->query("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
             $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `".static::$modelTable."`")/$resultsPerPage);
           } else {
-            $animeIDs = $this->dbConn->stdQuery("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` WHERE `approved_on` != '' ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $animeIDs = $this->dbConn->query("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` WHERE `approved_on` != '' ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
             $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `".static::$modelTable."` WHERE `approved_on` != ''")/$resultsPerPage);
           }
           $anime = [];

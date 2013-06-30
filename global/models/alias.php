@@ -86,7 +86,7 @@ class Alias extends BaseObject {
       $terms[$key] = "+".$term;
     }
     $text = implode(" ", $terms);
-    $search = $this->dbConn->stdQuery("SELECT `type`, `parent_id` FROM `".static::$modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->quoteSmart($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+    $search = $this->dbConn->query("SELECT `type`, `parent_id` FROM `".static::$modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->escape($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
     $objects = [];
     if ($this->id === 0) {
       $parentClass = get_class($this->parent());

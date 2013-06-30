@@ -36,7 +36,7 @@
   if ($groupBySeconds < 86400) {
     $groupBySeconds = 86400;
   }
-  $timeline = $this->dbConn->stdQuery("SELECT `".$params['uniqueIDField']."`, UNIX_TIMESTAMP(`time`) AS `time`, `score` FROM `anime_lists`
+  $timeline = $this->dbConn->query("SELECT `".$params['uniqueIDField']."`, UNIX_TIMESTAMP(`time`) AS `time`, `score` FROM `anime_lists`
                       WHERE (`".$params['idField']."` = ".intval($params['id'])." && `score` != 0 && `status` != 0)
                       ORDER BY `time` ASC");
   $currTime = $params['start'];

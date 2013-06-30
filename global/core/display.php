@@ -171,7 +171,7 @@ function display_history_json(DbConn $database, User $user, array $fields = arra
     foreach ($fields as $field) {
       foreach ($machines as $machine) {
         $line_array = [];
-        $values = $database->stdQuery("SELECT `form_field_id`, `form_entries`.`machine_id`, `form_entries`.`qa_month`, `form_entries`.`qa_year`, `value` FROM `form_values`
+        $values = $database->query("SELECT `form_field_id`, `form_entries`.`machine_id`, `form_entries`.`qa_month`, `form_entries`.`qa_year`, `value` FROM `form_values`
                                     LEFT OUTER JOIN `form_entries` ON `form_entry_id` = `form_entries`.`id`
                                     WHERE `form_field_id` = ".intval($field)." && `machine_id` = ".intval($machine)."
                                     ORDER BY `qa_year` ASC, `qa_month` ASC");
@@ -192,14 +192,14 @@ function display_history_json(DbConn $database, User $user, array $fields = arra
 
 function display_history_plot(DbConn $database, User $user, $form_id) {
   //displays plot for a particular form.
-  $formObject = $database->queryFirstRow("SELECT * FROM `forms` WHERE `id` = ".intval($form_id)." LIMIT 1");
+  $formObject = $database->firstRow("SELECT * FROM `forms` WHERE `id` = ".intval($form_id)." LIMIT 1");
   if (!$formObject) {
     echo "The form ID you provided was invalid. Please try again.\n";
   } else {
-    $formFields = $database->stdQuery("SELECT `id`, `name` FROM `form_fields`
+    $formFields = $database->query("SELECT `id`, `name` FROM `form_fields`
                                         WHERE `form_id` = ".intval($form_id)."
                                         ORDER BY `name` ASC");
-    $machines = $database->stdQuery("SELECT `id`, `name` FROM `machines`
+    $machines = $database->query("SELECT `id`, `name` FROM `machines`
                                         WHERE `machine_type_id` = ".intval($formObject['machine_type_id'])."
                                         ORDER BY `name` ASC");
     echo "<div id='vis'></div>

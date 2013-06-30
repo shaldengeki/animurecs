@@ -71,7 +71,7 @@ abstract class BaseList extends BaseObject {
         if (is_numeric($value)) {
             $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".intval($value);
         } else {
-          $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
+          $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->escape($value);
         }
       }
     }
@@ -81,7 +81,7 @@ abstract class BaseList extends BaseObject {
     if (!isset($entry['id'])) {
       // see if there are any entries matching these params for this user.
       try {
-        $checkExists = $this->dbConn->queryFirstValue("SELECT `id` FROM `".static::$modelTable."` WHERE ".implode(" && ", $params)." LIMIT 1");
+        $checkExists = $this->dbConn->firstValue("SELECT `id` FROM `".static::$modelTable."` WHERE ".implode(" && ", $params)." LIMIT 1");
         if ($checkExists) {
           // if entry exists, set its ID.
           $entry['id'] = intval($checkExists);
@@ -93,7 +93,7 @@ abstract class BaseList extends BaseObject {
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
       // this is an update.
       $this->beforeUpdate($entry);
-      $updateDependency = $this->dbConn->stdQuery("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
+      $updateDependency = $this->dbConn->query("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
       if (!$updateDependency) {
         return False;
       }
@@ -113,7 +113,7 @@ abstract class BaseList extends BaseObject {
         $params[] = "`time` = NOW()";
       }
       $this->beforeUpdate($entry);
-      $insertDependency = $this->dbConn->stdQuery("INSERT INTO `".static::$modelTable."` SET ".implode(",", $params));
+      $insertDependency = $this->dbConn->query("INSERT INTO `".static::$modelTable."` SET ".implode(",", $params));
       if (!$insertDependency) {
         return False;
       }
@@ -154,7 +154,7 @@ abstract class BaseList extends BaseObject {
     }
     if ($entryIDs) {
       $this->beforeDelete();
-      $drop_entries = $this->dbConn->stdQuery("DELETE FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
+      $drop_entries = $this->dbConn->query("DELETE FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id)." AND `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs));
       if (!$drop_entries) {
         return False;
       }
@@ -172,7 +172,7 @@ abstract class BaseList extends BaseObject {
     return $this->user;
   }
   public function getInfo() {
-    $userInfo = $this->dbConn->queryFirstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id));
+    $userInfo = $this->dbConn->firstRow("SELECT `user_id`, MIN(`time`) AS `start_time`, MAX(`time`) AS `end_time` FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id));
     if (!$userInfo) {
       return False;
     }
@@ -188,7 +188,7 @@ abstract class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = [];
-    $entries = $this->dbConn->stdQuery("SELECT * FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
+    $entries = $this->dbConn->query("SELECT * FROM `".static::$modelTable."` WHERE `user_id` = ".intval($this->user_id)." ORDER BY `time` DESC");
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryType = $this->listType."Entry";
     while ($entry = $entries->fetch_assoc()) {
@@ -209,7 +209,7 @@ abstract class BaseList extends BaseObject {
   }
   public function getUniqueList() {
     // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
-    $returnList = $this->dbConn->queryAssoc("SELECT `".static::$modelTable."`.`id`, `".$this->typeID."`, `time`, `score`, `status`, `".$this->partName."` FROM (
+    $returnList = $this->dbConn->assoc("SELECT `".static::$modelTable."`.`id`, `".$this->typeID."`, `time`, `score`, `status`, `".$this->partName."` FROM (
                                               SELECT MAX(`id`) AS `id` FROM `".static::$modelTable."`
                                               WHERE `user_id` = ".intval($this->user_id)."
                                               GROUP BY `".$this->typeID."`

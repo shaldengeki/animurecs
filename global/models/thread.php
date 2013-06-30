@@ -19,7 +19,7 @@ class Thread extends BaseObject {
       // split the ID off of the title.
       $splitTitle = explode("-", $title);
       $id = intval($splitTitle[0]);
-      // $id = intval($app->dbConn->queryFirstValue("SELECT `id` FROM `".$modelTable."` WHERE `title` = ".$app->dbConn->quoteSmart(str_replace("_", " ", $title))." LIMIT 1"));
+      // $id = intval($app->dbConn->firstValue("SELECT `id` FROM `".$modelTable."` WHERE `title` = ".$app->dbConn->escape(str_replace("_", " ", $title))." LIMIT 1"));
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -95,7 +95,7 @@ class Thread extends BaseObject {
     }
     $this->beforeUpdate([]);
     $tag->beforeUpdate([]);
-    $insertDependency = $this->dbConn->stdQuery("INSERT INTO `thread_tags` (`tag_id`, `thread_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
+    $insertDependency = $this->dbConn->query("INSERT INTO `thread_tags` (`tag_id`, `thread_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
     if (!$insertDependency) {
       return False;
     }
@@ -121,7 +121,7 @@ class Thread extends BaseObject {
       }
     }
     if ($tagIDs) {
-      $drop_taggings = $this->dbConn->stdQuery("DELETE FROM `thread_tags` WHERE `thread_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
+      $drop_taggings = $this->dbConn->query("DELETE FROM `thread_tags` WHERE `thread_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
       if (!$drop_taggings) {
         return False;
       }
@@ -171,7 +171,7 @@ class Thread extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->queryFirstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
+          $tagID = intval($this->dbConn->firstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -191,7 +191,7 @@ class Thread extends BaseObject {
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->stdQuery("SELECT `tag_id` FROM `thread_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `thread_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
+    $tagIDs = $this->dbConn->query("SELECT `tag_id` FROM `thread_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `thread_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
     while ($tagID = $tagIDs->fetch_assoc()) {
       $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
     }
@@ -205,7 +205,7 @@ class Thread extends BaseObject {
   }
   public function getUser() {
     // retrieves the user object that this thread belongs to.
-    $userID = intval($this->dbConn->queryFirstValue("SELECT `user_id` FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1"));
+    $userID = intval($this->dbConn->firstValue("SELECT `user_id` FROM `".$this->modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1"));
     return new User($this->app, $userID);
   }
   public function user() {
@@ -313,10 +313,10 @@ class Thread extends BaseObject {
         $resultsPerPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $animeIDs = $this->dbConn->stdQuery("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $animeIDs = $this->dbConn->query("SELECT `anime`.`id` FROM `anime` ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
             $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `anime`")/$resultsPerPage);
           } else {
-            $animeIDs = $this->dbConn->stdQuery("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+            $animeIDs = $this->dbConn->query("SELECT `anime`.`id` FROM `anime` WHERE `approved_on` != '' ORDER BY `anime`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
             $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `anime` WHERE `approved_on` != ''")/$resultsPerPage);
           }
           $anime = [];

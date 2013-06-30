@@ -176,7 +176,7 @@ class BaseGroup implements Iterator, ArrayAccess {
         if ($inclusion) {
           // we have objects that are not yet cached. pull them from the db.
           $infoToCache = [];
-          $objectInfo = $this->dbConn->queryAssoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
+          $objectInfo = $this->dbConn->assoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
           foreach ($objectInfo as $info) {
             $objectList[$idToListIndex[intval($info['id'])]]->set($info);
             $infoToCache[$modelName."-".$info['id']] = $info;
@@ -204,7 +204,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    $tagCountList = $inclusion ? $this->dbConn->queryAssoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON `tags`.`id` =  `tag_id` WHERE `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    $tagCountList = $inclusion ? $this->dbConn->assoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON `tags`.`id` =  `tag_id` WHERE `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
     foreach ($tagCountList as $id=>$count) {
       $tagCountList[$id] = ['tag' => new Tag($this->app, intval($id)), 'count' => intval($count)];
     }

@@ -60,7 +60,7 @@ abstract class BaseObject {
   }
   public static function first($app) {
     $className = static::modelName();
-    return new $className($app, intval($app->dbConn->queryFirstValue("SELECT `id` FROM ".static::$modelTable." ORDER BY `id` ASC LIMIT 1")));
+    return new $className($app, intval($app->dbConn->firstValue("SELECT `id` FROM ".static::$modelTable." ORDER BY `id` ASC LIMIT 1")));
   }
   public static function count($app) {
     return intval($app->dbConn->queryCount("SELECT COUNT(*) FROM ".static::$modelTable));
@@ -70,7 +70,7 @@ abstract class BaseObject {
       return static::first($app);
     }
     $className = static::modelName();
-    return new $className($app, intval($app->dbConn->queryFirstValue("SELECT `id` FROM ".static::$modelTable." WHERE `id` = ".intval($id)." LIMIT 1")));
+    return new $className($app, intval($app->dbConn->firstValue("SELECT `id` FROM ".static::$modelTable." WHERE `id` = ".intval($id)." LIMIT 1")));
   }
   public function humanizeParameter($parameter) {
     // takes a parameter name like created_at
@@ -107,7 +107,7 @@ abstract class BaseObject {
     if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
       // key is not yet set in cache. fetch from DB and set it in cache.
       try {
-        $info = $this->dbConn->queryFirstRow("SELECT * FROM `".static::$modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
+        $info = $this->dbConn->firstRow("SELECT * FROM `".static::$modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
       } catch (DbException $e) {
         throw new DbException(static::modelName().' ID not found: '.$this->id);
       }
@@ -209,7 +209,7 @@ abstract class BaseObject {
     $params = [];
     foreach ($object as $parameter => $value) {
       if (!is_array($value)) {
-        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
+        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->escape($value);
       }
     }
     $params[] = '`updated_at` = NOW()';
@@ -220,7 +220,7 @@ abstract class BaseObject {
       if ($whereConditions !== Null && is_array($whereConditions)) {
         foreach ($whereConditions as $parameter => $value) {
           if (!is_array($value)) {
-            $whereParams[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->quoteSmart($value);
+            $whereParams[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->escape($value);
           }
         }
       }
@@ -229,7 +229,7 @@ abstract class BaseObject {
       //update this object.
       $this->beforeUpdate($object);
       $updateQuery = "UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1";
-      $updateObject = $this->dbConn->stdQuery($updateQuery);
+      $updateObject = $this->dbConn->query($updateQuery);
       if (!$updateObject) {
         throw new DbException("Could not update ".static::$modelTable.": ".$updateQuery);
       }
@@ -243,7 +243,7 @@ abstract class BaseObject {
 
       $this->beforeCreate([$object]);
       $insertQuery = "INSERT INTO `".static::$modelTable."` SET ".implode(",", $params);
-      $insertUser = $this->dbConn->stdQuery($insertQuery);
+      $insertUser = $this->dbConn->query($insertQuery);
       if (!$insertUser) {
         throw new DbException("Could not insert into ".static::$modelTable.": ".$insertQuery);
       } else {
@@ -279,7 +279,7 @@ abstract class BaseObject {
     $this->beforeDelete();
     if ($entryIDs) {
       $deleteQuery = "DELETE FROM `".static::$modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs);
-      $dropEntries = $this->dbConn->stdQuery($deleteQuery);
+      $dropEntries = $this->dbConn->query($deleteQuery);
       if (!$dropEntries) {
         throw new DbException("Could not delete from ".static::$modelTable.": ".$deleteQuery);
       }

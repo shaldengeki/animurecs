@@ -71,7 +71,7 @@ class Comment extends BaseObject {
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the comments belonging to this comment.
     $returnList = [];
-    $commentEntries = $this->dbConn->stdQuery("SELECT * FROM `comments` WHERE `type` = 'Comment' && `parent_id` = ".intval($this->id)." ORDER BY `time` ASC");
+    $commentEntries = $this->dbConn->query("SELECT * FROM `comments` WHERE `type` = 'Comment' && `parent_id` = ".intval($this->id)." ORDER BY `time` ASC");
     while ($entry = $commentEntries->fetch_assoc()) {
       $newEntry = new CommentEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;

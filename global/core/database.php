@@ -26,10 +26,10 @@ class DbConn extends mysqli {
     $this->set_charset("utf8");
   }
 
-  public function quoteSmart($value) {
+  public function escape($value) {
     //escapes input values for insertion into a query.
     if(is_array($value)) {
-      return array_map([$this, $this->quoteSmart], $value);
+      return array_map([$this, $this->escape], $value);
     } else {
       if(get_magic_quotes_gpc()) {
         $value = stripslashes($value);
@@ -42,13 +42,13 @@ class DbConn extends mysqli {
       return $value;
     }
   }
-  public function stdQuery($query) {
+  public function query($query) {
     // executes a query with standardized error message.
     if (Config::DEBUG_ON) {
       $this->queryLog[] = $query;
     }
     try {
-      $result = $this->query($query);
+      $result = parent::query($query);
     } catch (Exception $e) {
       $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query;
       throw new DbException($exceptionText, 0, $e);
@@ -59,9 +59,9 @@ class DbConn extends mysqli {
     }
     return $result;
   }
-  public function queryFirstRow($query) {
+  public function firstRow($query) {
     // pulls the first row returned from the query.
-    $result = $this->stdQuery($query);
+    $result = $this->query($query);
     if (!$result || $result->num_rows < 1) {
       throw new DbException("No rows were found matching query: ".$query);
     }
@@ -69,18 +69,18 @@ class DbConn extends mysqli {
     $result->free();
     return $returnValue;
   }
-  public function queryFirstValue($query) {
+  public function firstValue($query) {
     // pulls the first key from the first row returned by the query.
-    $result = $this->queryFirstRow($query);
+    $result = $this->firstRow($query);
     if (!$result || count($result) != 1) {
       throw new DbException("No rows were found matching query: ".$query);
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
   }
-  public function queryAssoc($query, $idKey=Null, $valKey=Null) {
+  public function assoc($query, $idKey=Null, $valKey=Null) {
     // pulls an associative array of columns for the first row returned by the query.
-    $result = $this->stdQuery($query);
+    $result = $this->query($query);
     if (!$result) {
       throw new DbException("No rows were found matching query: ".$query);
     }
@@ -106,7 +106,7 @@ class DbConn extends mysqli {
     return $returnValue;
   }
   public function queryCount($query, $column="*") {
-    $result = $this->queryFirstRow($query);
+    $result = $this->firstRow($query);
     if (!$result) {
       throw new DbException("No rows were found matching query: ".$query);
     }

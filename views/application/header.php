@@ -3,6 +3,7 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
+  $assetsVersion = 0.66;
   $firstAnime = Anime::first($this);
   $params['container'] = isset($params['container']) ? $params['container'] : True;
   $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
@@ -21,10 +22,10 @@
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=0.65' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=<?php echo $assetsVersion; ?>' rel='stylesheet' />
 
-    <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js' type='text/javascript'></script>
-    <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js' type='text/javascript'></script>
+    <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js' type='text/javascript'></script>
+    <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js' type='text/javascript'></script>
 
     <!--<script type='text/javascript' src='<?php echo Config::ROOT_URL; ?>/jquery-ui-timepicker-addon.min.js'></script>-->
     <script src='<?php echo Config::ROOT_URL; ?>/js/jquery.dropdownPlain.min.js' type='text/javascript'></script>
@@ -41,12 +42,12 @@
     <script src='<?php echo Config::ROOT_URL; ?>/js/jqplot/jqplot.trendline.min.js' type='text/javascript'></script>
 
     <script src='//www.google.com/jsapi' type='text/javascript'></script>
-    <script src='//cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js' type='text/javascript'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/d3-helpers.js' type='text/javascript'></script>
 
-    <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js' type='text/javascript'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/js/bootstrap.min.js' type='text/javascript'></script>
     <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
-    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=0.65' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=<?php echo $assetsVersion; ?>' type='text/javascript'></script>
   </head>
   <body>
     <div class='navbar navbar-inverse navbar-fixed-top'>

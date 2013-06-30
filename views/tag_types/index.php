@@ -6,10 +6,10 @@
   $resultsPerPage = 25;
   $firstTagType = TagType::first($this->app);
   if ($this->app->user->isAdmin()) {
-    $tagType = $this->dbConn->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $tagType = $this->dbConn->query("SELECT `tag_types`.`id` FROM `tag_types` ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagTypePages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types`")/$resultsPerPage);
   } else {
-    $tagType = $this->dbConn->stdQuery("SELECT `tag_types`.`id` FROM `tag_types` WHERE `approved_on` != '' ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
+    $tagType = $this->dbConn->query("SELECT `tag_types`.`id` FROM `tag_types` WHERE `approved_on` != '' ORDER BY `tag_types`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
     $tagTypePages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tag_types` WHERE `approved_on` != ''")/$resultsPerPage);
   }
 ?>
