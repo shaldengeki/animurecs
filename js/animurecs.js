@@ -646,9 +646,7 @@ function initInterface(elt) {
       var feedDates = $(feedNode).children().map(function() {
         return $(this).find('div.feedDate').attr('data-time');
       }).get();
-      console.log(feedDates);
       var lastTime = Array.max(feedDates);
-      console.log(lastTime);
       $.ajax({
         url: $(feedNode).attr('data-url') + joinChar + 'minTime=' + encodeURIComponent(lastTime)
       }).done(function(data) {
@@ -656,7 +654,7 @@ function initInterface(elt) {
           if ($('body').attr('blurred') == "true") {
             updateTitleItems(data.match(/\<li/gi).length);
           }
-          $(feedNode).prepend($(data).find('li'));
+          $(feedNode).prepend($(data).children('li'));
         }
       });
       updateFeedTimes();
