@@ -677,8 +677,8 @@ class User extends BaseObject {
     }
     return $this->create_or_update(['points' => $this->points() + intval($points)]);
   }
-  public function logFailedLogin($username, $password) {
-    $insert_log = $this->dbConn->query("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`, `password`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->escape($username).", ".$this->dbConn->escape($password).")");
+  public function logFailedLogin($username) {
+    $insert_log = $this->dbConn->query("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->escape($username).")");
   }
   private function setCurrentSession() {
     // sets the current session to this user.
@@ -705,11 +705,11 @@ class User extends BaseObject {
     try {
       $findUsername = $this->dbConn->firstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->escape($username)." && `activation_code` IS NULL LIMIT 1");
     } catch (DbException $e) {
-      $this->logFailedLogin($username, $password);
+      $this->logFailedLogin($username);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
     }
     if (!$findUsername || !$bcrypt->verify($password, $findUsername['password_hash'])) {
-      $this->logFailedLogin($username, $password);
+      $this->logFailedLogin($username);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
     }
 
