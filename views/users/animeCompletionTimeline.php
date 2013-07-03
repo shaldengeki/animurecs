@@ -7,7 +7,7 @@
   $params['title'] = isset($params['title']) ? $params['title'] : "Anime completion over time";
 
   // first, get time range of this user's anime completions.
-  $times = $this->app->dbConn->firstRow("SELECT UNIX_TIMESTAMP(MIN(`time`)) AS `min`, UNIX_TIMESTAMP(MAX(`time`)) AS `max` FROM `anime_lists` WHERE (`user_id` = ".intval($this->id)." && `status` = 2)");
+  $times = $this->app->dbConn->table('anime_lists')->fields('UNIX_TIMESTAMP(MIN(time)) AS min', 'UNIX_TIMESTAMP(MAX(time)) AS max')->where(['user_id' => $this->id, 'status' => 2])->firstRow();
   $groupBySeconds = ceil(($times['max'] - $times['min'])/$params['intervals']);
   if ($groupBySeconds < 86400) {
     $groupBySeconds = 86400;
@@ -19,10 +19,8 @@
   }
 
   // now bin this user's completions into intervals and output markup for these counts.
-  $userAnimeTimeline = $this->app->dbConn->assoc("SELECT ROUND(UNIX_TIMESTAMP(`time`)/".$groupBySeconds.")*".$groupBySeconds." AS `groupedTime`, COUNT(*) AS `count` FROM `anime_lists` 
-                                              WHERE (`user_id` = ".intval($this->id)." && `status` = 2) 
-                                              GROUP BY `groupedTime` 
-                                              ORDER BY `groupedTime` ASC");
+  $userAnimeTimeline = $this->app->dbConn->table('anime_lists')->fields("ROUND(UNIX_TIMESTAMP(time)/".$groupBySeconds.")*".$groupBySeconds." AS groupedTime", "COUNT(*) AS count")
+    ->where(['user_id' => $this->id, 'status' => 2])->group('groupedTime')->order('groupedTime ASC')->assoc();
   $lastTime = $userAnimeTimeline[0]['groupedTime'];
   $maxAnime = 0;
   $maxAnimeTime = 0;

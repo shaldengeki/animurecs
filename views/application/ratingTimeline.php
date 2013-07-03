@@ -36,9 +36,8 @@
   if ($groupBySeconds < 86400) {
     $groupBySeconds = 86400;
   }
-  $timeline = $this->dbConn->query("SELECT `".$params['uniqueIDField']."`, UNIX_TIMESTAMP(`time`) AS `time`, `score` FROM `anime_lists`
-                      WHERE (`".$params['idField']."` = ".intval($params['id'])." && `score` != 0 && `status` != 0)
-                      ORDER BY `time` ASC");
+  $timeline = $this->dbConn->table('anime_lists')->fields($params['uniqueIDField'], 'UNIX_TIMESTAMP(time) AS time', 'score')
+    ->where([$params['idField'] => $params['id'], 'score != 0', 'status != 0'])->order('time ASC')->query();
   $currTime = $params['start'];
   $ratings = [];
   $ratingSum = 0;
@@ -46,7 +45,7 @@
   $maxRating = 0;
   $maxRatingTime = 0;
   $finishedTimeline = [];
-  while ($timelinePoint = $timeline->fetch_assoc()) {
+  while ($timelinePoint = $timeline->fetch()) {
     if ($timelinePoint['time'] > $currTime + $groupBySeconds) {
       //done with this chunk. output its stats and continue.
       $currentAvg = round($params['metric']($ratings), 2);

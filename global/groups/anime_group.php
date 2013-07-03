@@ -2,7 +2,7 @@
 
 class AnimeGroup extends BaseGroup {
   // class to provide mass-querying functions for groups of animeIDs or anime objects.
-  public static $modelUrl = "anime_groups";
+  public static $MODEL_URL = "anime_groups";
 
   protected $_groupTable = "anime";
   protected $_groupTableSingular = "anime";
@@ -43,8 +43,8 @@ class AnimeGroup extends BaseGroup {
       if ($animeIDs) {
         // now fetch the non-cached results from the db, building a record so we can cache it after.
         $animeTags = [];
-        $fetchTaggings = $this->dbConn->query("SELECT `anime_id`, `tag_id` FROM `anime_tags` WHERE `anime_id` IN (".implode(",", $animeIDs).")");
-        while ($tagging = $fetchTaggings->fetch_assoc()) {
+        $fetchTaggings = $this->dbConn->table('anime_tags')->fields('anime_id', 'tag_id')->where(['anime_id' => $animeIDs])->query();
+        while ($tagging = $fetchTaggings->fetch()) {
           $animeID = intval($tagging['anime_id']);
           $tagID = intval($tagging['tag_id']);
           $tags[$tagID] = $tagID;

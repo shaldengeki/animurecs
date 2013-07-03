@@ -1,9 +1,9 @@
 <?php
 
 class CommentEntry extends BaseEntry {
-  public static $modelTable = "comments";
-  public static $modelPlural = "comments";
-  public static $modelUrl = "comment_entries";
+  public static $MODEL_TABLE = "comments";
+  public static $MODEL_PLURAL = "comments";
+  public static $MODEL_URL = "comment_entries";
 
   protected $comment, $commentId;
   protected $parent;
@@ -80,7 +80,7 @@ class CommentEntry extends BaseEntry {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$MODEL_TABLE)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 

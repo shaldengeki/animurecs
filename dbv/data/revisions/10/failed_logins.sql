@@ -1,0 +1,1 @@
+ALTER TABLE `failed_logins` DROP COLUMN `password`;

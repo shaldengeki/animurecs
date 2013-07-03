@@ -198,8 +198,8 @@ class Application {
 
     // _classes is a modelUrl:modelName mapping for classes that are to be linked.
     foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $className) {
-      if (!isset($this->_classes[$className::modelUrl()])) {
-        $this->_classes[$className::modelUrl()] = $className;
+      if (!isset($this->_classes[$className::MODEL_URL()])) {
+        $this->_classes[$className::MODEL_URL()] = $className;
       }
     }
 
@@ -227,7 +227,7 @@ class Application {
     // clear cache for a database object every time it's updated or deleted.
     $this->bind(['BaseObject.afterUpdate', 'BaseObject.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parentClass = get_class($parent);
-      $parent->app->cache->delete($parentClass::modelName()."-".intval($parent->id));
+      $parent->app->cache->delete($parentClass::MODEL_NAME()."-".intval($parent->id));
     }));
     $this->bind(['Anime.afterUpdate', 'Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete("Anime-".intval($parent->id)."-similar");
@@ -268,7 +268,7 @@ class Application {
 
     // user stats metrics.
     $this->bind(['User.afterCreate', 'User.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->gauge("user.count", $parent->app->dbConn->queryCount("SELECT COUNT(*) FROM `users`"));
+      $parent->app->statsd->gauge("user.count", $parent->app->dbConn->count("SELECT COUNT(*) FROM `users`"));
     }));
     $this->bind(['User.logIn'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.login");
@@ -378,7 +378,6 @@ class Application {
     if (!isset($this->_observers[$event])) {
       return;
     }
-    $this->logger->debug("Firing event: ".$event." | observers: ".count($this->_observers[$event]));
     foreach ($this->_observers[$event] as $observer) {
       if (!method_exists($observer, 'update')) {
         continue;
@@ -583,7 +582,7 @@ class Application {
       }
       if (!$this->target->allow($this->user, $this->action)) {
         $targetClass = get_class($this->target);
-        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::modelName()." ID#".$this->target->id);
+        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
         $this->logger->warning($error->__toString());
         $this->display_error(403);
       } else {

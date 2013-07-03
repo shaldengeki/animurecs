@@ -7,9 +7,9 @@ trait Aliasable {
 
   public function getAliases() {
     // returns a list of comment objects sent by this user.
-    $aliasQuery = $this->dbConn->query("SELECT `id` FROM `aliases` WHERE `type` = '".static::modelName()."' && `parent_id` = ".intval($this->id)." ORDER BY `name` ASC");
+    $aliasQuery = $this->dbConn->table('aliases')->fields('id')->where(['type' => static::MODEL_NAME(), 'parent_id' => $this->id])->order('name ASC')->query();
     $aliases = [];
-    while ($alias = $aliasQuery->fetch_assoc()) {
+    while ($alias = $aliasQuery->fetch()) {
       $aliases[intval($alias['id'])] = new Alias($this->app, intval($alias['id']));
     }
     return $aliases;

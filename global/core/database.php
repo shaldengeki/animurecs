@@ -5,90 +5,250 @@ class DbException extends Exception {
   }
 }
 
-class DbConn extends mysqli {
+class DbConn extends PDO {
   //basic database connection class that provides input-escaping and standardized query error output.
   
   public $queryLog;
   private $host, $port, $username, $password, $database, $memcached;
 
-  public function __construct($host=Config::MYSQL_HOST, $port=Config::MYSQL_PORT, $username=Config::MYSQL_USERNAME, $password=Config::MYSQL_PASSWORD, $database=Config::MYSQL_DATABASE) {
+  public function __construct($host=Config::MYSQL_HOST, $port=Config::MYSQL_PORT, $username=Config::MYSQL_USERNAME, $password=Config::MYSQL_PASSWORD, $database=Config::MYSQL_DATABASE, $fetchMode=PDO::FETCH_ASSOC) {
     $this->host = $host;
     $this->port = intval($port);
     $this->username = $username;
     $this->password = $password;
     $this->database = $database;
-    $this->queryLog = [];
     try {
-      parent::__construct($this->host, $this->username, $this->password, $this->database, $this->port);
+      parent::__construct('mysql:host='.$this->host.';port='.$this->port.';dbname='.$this->database.';charset=utf8', $this->username, $this->password);
     } catch (Exception $e) {
-      throw new DbException('could not connect to the database', 0, $e);
+      throw new DbException('Could not connect to the database', 0, $e);
     }
-    $this->set_charset("utf8");
+    parent::setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, $fetchMode);
+
+    if (Config::DEBUG_ON) {
+      parent::setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);      
+    }
+
+    $this->queryLog = [];
+    $this->reset();
   }
 
-  public function escape($value) {
-    //escapes input values for insertion into a query.
-    if(is_array($value)) {
-      return array_map([$this, $this->escape], $value);
-    } else {
-      if(get_magic_quotes_gpc()) {
-        $value = stripslashes($value);
-      }
-      if ($value === Null) {
-        $value = 'NULL';
-      } elseif (!is_numeric($value) || $value[0] == '0' ) {
-        $value = "\"".$this->real_escape_string($value)."\"";
-      }
-      return $value;
-    }
+  public function reset() {
+    // clears query parameters.
+    $this->type = "SELECT";
+    $this->table = $this->offset = $this->limit = Null;
+    $this->fields = $this->joins = $this->sets = $this->wheres = $this->values = $this->groups = $this->orders = $this->params = [];
+    return $this;
   }
-  public function query($query) {
+
+  public function table($table) {
+    $this->table = $table;
+    return $this;
+  }
+
+  public function fields() {
+    $this->fields = array_merge($this->fields, func_get_args());
+    return $this;
+  }
+
+  public function join($join, $type="INNER") {
+    $this->joins[] = implode(" ", [$type, "JOIN", $join]);
+    return $this;
+  }
+
+  public function set($sets) {
+    foreach ($sets as $key=>$value) {
+      if (is_numeric($key)) {
+        // non-named field. pass it in raw.
+        $this->sets[] = $value;
+      } else {
+        $this->sets[] = $key."="."?";
+        $this->params[] = $value;
+      }
+    }
+    return $this;
+  }
+
+  public function where($wheres) {
+    foreach ($wheres as $key=>$value) {
+      if (is_numeric($key)) {
+        if (is_array($value)) {
+          // user has provided an entry of the form
+          // ["UPPER(`name`) = ?", name]
+          $this->wheres[] = $value[0];
+          if (is_array($value[1])) {
+            $this->params = array_merge($this->params, $value[1]);
+          } else {
+            $this->params[] = $value[1];
+          }
+        } else {
+          // non-named field. pass it in raw.
+          $this->wheres[] = $value;
+        }
+      } else {
+        if (is_array($value)) {
+          // this is an IN field.
+          $this->wheres[] = $key." IN (".implode(",", array_fill(0, count($value), "?")).")";
+          $this->params = array_merge($this->params, $value);
+        } else {
+          $this->wheres[] = $key."="."?";
+          $this->params[] = $value;
+        }
+      }
+    }
+    return $this;
+  }
+
+  public function values() {
+    foreach (func_get_args() as $value) {
+      $this->values[] = "(".implode(",", array_fill(0, count($value), "?")).")";
+      $this->params = array_merge($this->params, $value);
+    }
+    return $this;
+  }
+
+  public function match($fields, $query) {
+    if (is_array($fields)) {
+      $fields = implode(",", $fields);
+    }
+    $this->wheres[] = "MATCH(".$fields.") AGAINST(? IN BOOLEAN MODE)";
+    $this->params[] = $query;
+    return $this;
+  }
+
+  public function group() {
+    $this->groups = array_merge($this->groups, func_get_args());
+    return $this;
+  }
+
+  public function order() {
+    $this->orders = array_merge($this->orders, func_get_args());
+    return $this;
+  }
+
+  public function offset($offset) {
+    $this->offset = intval($offset);
+    return $this;
+  }
+
+  public function limit($limit) {
+    $this->limit = intval($limit);
+    return $this;
+  }
+
+  public function queryString() {
+    $fields = $this->fields ? $this->fields : ["*"];
+    $queryList = [$this->type];
+
+    if ($this->type === "SELECT" || $this->type === "DELETE") {
+      if ($this->type === "SELECT") {
+        $queryList[] = implode(",", $fields);
+      }
+      $queryList[] = "FROM";
+    } elseif ($this->type === "INSERT") {
+      $queryList[] = "INTO";
+    }
+    $queryList[] = $this->table;
+    $queryList[] = implode(" ", $this->joins);
+
+    if ($this->type === "INSERT" && $this->values) {
+      $queryList[] = "(".implode(",", $fields).") VALUES ".implode(",", $this->values);
+    } elseif ($this->sets) {
+      $queryList[] = "SET ".implode(",", $this->sets);
+    }
+    if ($this->wheres) {
+      $queryList[] = implode(" ", ["WHERE", implode("&&", $this->wheres)]);
+    }
+    if ($this->groups) {
+      $queryList[] = implode(" ", ["GROUP BY", implode(",", $this->groups)]);
+    }
+    if ($this->orders) {
+      $queryList[] = implode(" ", ["ORDER BY", implode(",", $this->orders)]);
+    }
+    if ($this->offset || $this->limit) {
+      $queryList[] = "LIMIT";
+      if ($this->offset) {
+        $queryList[] = $this->offset;
+        if ($this->limit) {
+          $queryList[] = ",";
+        }
+      }
+      if ($this->limit) {
+        $queryList[] = $this->limit;
+      }
+    }
+    return implode(" ", $queryList);
+  }
+
+  public function query($query=Null) {
     // executes a query with standardized error message.
+    $query = $query === Null ? $this->queryString() : $query;
     if (Config::DEBUG_ON) {
       $this->queryLog[] = $query;
     }
     try {
-      $result = parent::query($query);
+      $prepQuery = parent::prepare($query);
+      $result = $prepQuery->execute($this->params);
     } catch (Exception $e) {
-      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query;
+      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
       throw new DbException($exceptionText, 0, $e);
     }
     if (!$result) {
-      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nQuery: ".$query;
+      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
       throw new DbException($exceptionText, 0, $e);
     }
-    return $result;
+    $this->reset();
+    return $prepQuery;
   }
-  public function firstRow($query) {
+  public function raw($query) {
+    return $this->query($query);
+  }
+
+  public function update() {
+    $this->type = "UPDATE";
+    return $this->query();
+  }
+  public function delete() {
+    $this->type = "DELETE";
+    return $this->query();
+  }
+  public function insert() {
+    $this->type = "INSERT";
+    parent::beginTransaction();
+    $this->query();
+    $insertId = parent::lastInsertId();
+    parent::commit();
+    return $insertId;
+  }
+  public function firstRow() {
     // pulls the first row returned from the query.
-    $result = $this->query($query);
-    if (!$result || $result->num_rows < 1) {
-      throw new DbException("No rows were found matching query: ".$query);
+    $result = $this->query();
+    if (!$result || $result->rowCount() < 1) {
+      throw new DbException("No rows were found matching query: ".$this->queryString());
     }
-    $returnValue = $result->fetch_assoc();
-    $result->free();
+    $returnValue = $result->fetch();
+    $result->closeCursor();
     return $returnValue;
   }
-  public function firstValue($query) {
+  public function firstValue() {
     // pulls the first key from the first row returned by the query.
-    $result = $this->firstRow($query);
+    $result = $this->firstRow();
     if (!$result || count($result) != 1) {
-      throw new DbException("No rows were found matching query: ".$query);
+      throw new DbException("No rows were found matching query: ".$this->queryString());
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
   }
-  public function assoc($query, $idKey=Null, $valKey=Null) {
+  public function assoc($idKey=Null, $valKey=Null) {
     // pulls an associative array of columns for the first row returned by the query.
-    $result = $this->query($query);
+    $result = $this->query();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$query);
+      throw new DbException("No rows were found matching query: ".$this->queryString());
     }
-    if ($result->num_rows < 1) {
+    if ($result->rowCount() < 1) {
       return [];
     }
     $returnValue = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $result->fetch()) {
       if ($idKey === Null && $valKey === Null) {
         $returnValue[] = $row;
       } elseif ($idKey !== Null && $valKey === Null) {
@@ -102,13 +262,13 @@ class DbConn extends mysqli {
         $returnValue[$row[$idKey]] = $row[$valKey];
       }
     }
-    $result->free();
+    $result->closeCursor();
     return $returnValue;
   }
-  public function queryCount($query, $column="*") {
-    $result = $this->firstRow($query);
+  public function count($column="*") {
+    $result = $this->firstRow();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$query);
+      throw new DbException("No rows were found matching query: ".$this->queryString());
     }
     return intval($result['COUNT('.$column.')']);
   }

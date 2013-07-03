@@ -28,38 +28,38 @@ class DbConnTest extends PHPUnit_Framework_TestCase {
     $this->dbConn->query("FAKE-QUERY");    
   }
   public function testSimpleQuery() {
-    $this->assertInstanceOf('mysqli_result', $this->dbConn->query("SHOW TABLES"));
+    $this->assertInstanceOf('PDOStatement', $this->dbConn->query("SHOW TABLES"));
   }
   public function testQueryFirstRow() {
-    $queryResult = $this->dbConn->firstRow("SHOW TABLES");
+    $queryResult = $this->dbConn->table("anime")->firstRow();
     $this->assertInternalType('array', $queryResult);
     $this->assertCount(1, $queryResult);
   }
   public function testQueryFirstValue() {
-    $queryResult = $this->dbConn->firstValue("SHOW TABLES");
+    $queryResult = $this->dbConn->table("anime")->firstValue();
     $this->assertInternalType('string', $queryResult);
     $this->assertTrue(strlen($queryResult) > 0, 'is not an empty string');
   }
   public function testQueryAssocWithDefaultArguments() {
-    $queryResult = $this->dbConn->assoc("SHOW TABLES");
+    $queryResult = $this->dbConn->table("anime")->assoc();
     $this->assertInternalType('array', $queryResult);
     $this->assertNotCount(0, $queryResult);
   }
   public function testQueryAssocWithProvidedArguments() {
-    $queryResult = $this->dbConn->assoc("SHOW TABLES", "Tables_in_".Config::MYSQL_DATABASE, "Tables_in_".Config::MYSQL_DATABASE);
+    $queryResult = $this->dbConn->table("anime")->limit(10)->assoc("id", "id");
     $this->assertInternalType('array', $queryResult);
     $this->assertNotCount(0, $queryResult);
     foreach ($queryResult as $key=>$value) {
       $this->assertEquals($key, $value, 'key and value are equal for identical selectors');
     }
   }
-  public function testQueryCountWithDefaultArguments() {
-    $queryResult = $this->dbConn->queryCount("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '".Config::MYSQL_DATABASE."'");
+  public function testcountWithDefaultArguments() {
+    $queryResult = $this->dbConn->table('anime')->fields("COUNT(*)")->count();
     $this->assertInternalType('int', $queryResult);
     $this->assertGreaterThan(0, $queryResult, 'is greater than 0');
   }
-  public function testQueryCountWithProvidedArguments() {
-    $queryResult = $this->dbConn->queryCount("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '".Config::MYSQL_DATABASE."'", "*");
+  public function testcountWithProvidedArguments() {
+    $queryResult = $this->dbConn->table('anime')->fields("COUNT(*)")->count("*");
     $this->assertInternalType('int', $queryResult);
     $this->assertGreaterThan(0, $queryResult, 'is greater than 0');
   }

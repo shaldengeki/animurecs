@@ -33,7 +33,7 @@ class EntryGroup extends BaseGroup {
     }
     if ($animeDict) {
       // TODO: pull from memcached here.
-      $getAnime = $this->dbConn->assoc("SELECT * FROM `anime` WHERE `id` IN (".implode(",", array_keys($animeDict)).")");
+      $getAnime = $this->dbConn->table('anime')->where(['id' => array_keys($animeDict)])->assoc();
       foreach ($getAnime as $anime) {
         $animes[$anime['id']] = new Anime($this->app, intval($anime['id']));
         $animes[$anime['id']]->set($anime);
@@ -62,7 +62,7 @@ class EntryGroup extends BaseGroup {
       $userDict[$entry->userId] = 1;
     }
     if ($userDict) {
-      $getUsers = $this->dbConn->assoc("SELECT * FROM `users` WHERE `id` IN (".implode(",", array_keys($userDict)).")");
+      $getUsers = $this->dbConn->table('users')->where(['id' => array_keys($userDict)])->assoc();
       foreach ($getUsers as $user) {
         $users[$user['id']] = new User($this->app, intval($user['id']));
         $users[$user['id']]->set($user);
@@ -90,10 +90,10 @@ class EntryGroup extends BaseGroup {
       if (method_exists($entry, 'comment')) {
         $commentDict["(`id` = ".$entry->commentId.")"] = 1;
       }
-      $commentDict["(`type` = '".$entryClass::modelName()."' && `parent_id` = ".$entry->id.")"] = 1;
+      $commentDict["(`type` = '".$entryClass::MODEL_NAME()."' && `parent_id` = ".$entry->id.")"] = 1;
     }
     if ($commentDict) {
-      $getComments = $this->dbConn->assoc("SELECT * FROM `comments` WHERE ".implode(" || ", array_keys($commentDict)));
+      $getComments = $this->dbConn->table('comments')->where([implode(" || ", array_keys($commentDict))])->assoc();
       foreach ($getComments as $comment) {
         $newComment = new CommentEntry($this->app, intval($comment['id']));
         $newComment->comment()->set($comment);
@@ -113,8 +113,8 @@ class EntryGroup extends BaseGroup {
         if (method_exists($entry, 'comment')) {
           $entry->set(['comment' => $comments[$entry->commentId]->comment()]);
         }
-        if (isset($comments[$entryClass::modelName()][$entry->id])) {
-          $entry->set(['comments' => $comments[$entryClass::modelName()][$entry->id]]);
+        if (isset($comments[$entryClass::MODEL_NAME()][$entry->id])) {
+          $entry->set(['comments' => $comments[$entryClass::MODEL_NAME()][$entry->id]]);
         } else {
           $entry->set(['comments' => []]);
         }

@@ -1,7 +1,7 @@
 <?php
 class TagType extends BaseObject {
-  public static $modelTable = "tag_types";
-  public static $modelPlural = "tagTypes";
+  public static $MODEL_TABLE = "tag_types";
+  public static $MODEL_PLURAL = "tagTypes";
 
   protected $name;
   protected $description;
@@ -92,7 +92,7 @@ class TagType extends BaseObject {
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag type.
-    return new User($this->app, intval($this->dbConn->firstValue("SELECT `created_user_id` FROM `tag_types` WHERE `tag_types`.`id` = ".intval($this->id))));
+    return new User($this->app, intval($this->dbConn->table('tag_types')->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -103,8 +103,8 @@ class TagType extends BaseObject {
   public function getTags() {
     // retrieves a list of id arrays corresponding to tags belonging to this tag type
     $tags = [];
-    $tagIDs = $this->dbConn->query("SELECT `id` FROM `tags` WHERE `tag_type_id` = ".intval($this->id)." ORDER BY `name` ASC");
-    while ($tagID = $tagIDs->fetch_assoc()) {
+    $tagIDs = $this->dbConn->table('tags')->fields('id')->where(['tag_type_id' => $this->id])->order('name ASC')->query();
+    while ($tagID = $tagIDs->fetch()) {
       $tags[] = new Tag($this->app, intval($tagID['id']));
     }
     return $tags;

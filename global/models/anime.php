@@ -2,8 +2,8 @@
 class Anime extends BaseObject {
   use Aliasable, Feedable, Commentable;
 
-  public static $modelTable = "anime";
-  public static $modelPlural = "anime";
+  public static $MODEL_TABLE = "anime";
+  public static $MODEL_PLURAL = "anime";
 
   protected $title;
   protected $description;
@@ -25,7 +25,7 @@ class Anime extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $title=Null) {
     if ($title !== Null) {
-      $id = intval($app->dbConn->firstValue("SELECT `id` FROM `".static::$modelTable."` WHERE `title` = ".$app->dbConn->escape(str_replace("_", " ", $title))." LIMIT 1"));
+      $id = intval($app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['title' => str_replace("_", " ", $title)])->limit(1)->firstValue());
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -130,8 +130,8 @@ class Anime extends BaseObject {
     } catch (Exception $e) {
       return False;
     }
-    $insertDependency = $this->dbConn->query("INSERT INTO `anime_tags` (`tag_id`, `anime_id`, `created_user_id`, `created_at`) VALUES (".intval($tag->id).", ".intval($this->id).", ".intval($currentUser->id).", NOW())");
-    if (!$insertDependency) {
+    $datetime = new DateTime('now', $this->app->serverTimeZone);
+    if (!$this->dbConn->table('anime_tags')->fields('tag_id', 'anime_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $datetime->format("Y-m-d H:i:s")])->insert()) {
       return False;
     }
     $this->fire('tag');
@@ -156,8 +156,7 @@ class Anime extends BaseObject {
       }
     }
     if ($tagIDs) {
-      $drop_taggings = $this->dbConn->query("DELETE FROM `anime_tags` WHERE `anime_id` = ".intval($this->id)." AND `tag_id` IN (".implode(",", $tagIDs).") LIMIT ".count($tagIDs));
-      if (!$drop_taggings) {
+      if (!$this->dbConn->table('anime_tags')->where(['anime_id' => $this->id, 'tag_id' => $tagIDs])->limit(count($tagIDs))->delete()) {
         return False;
       }
     }
@@ -277,7 +276,7 @@ class Anime extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->firstValue("SELECT `id` FROM `tags` WHERE `id` = ".intval($tagToAdd)." LIMIT 1"));
+          $tagID = intval($this->dbConn->table('tags')->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -297,8 +296,8 @@ class Anime extends BaseObject {
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->query("SELECT `tag_id` FROM `anime_tags` INNER JOIN `tags` ON `tags`.`id` = `tag_id` WHERE `anime_id` = ".intval($this->id)." ORDER BY `tags`.`tag_type_id` ASC, `tags`.`name` ASC");
-    while ($tagID = $tagIDs->fetch_assoc()) {
+    $tagIDs = $this->dbConn->table('anime_tags')->fields('tag_id')->join('tags ON tags.id=tag_id')->where(['anime_id' => $this->id])->order('tags.tag_type_id ASC', 'tags.name ASC')->query();
+    while ($tagID = $tagIDs->fetch()) {
       $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
     }
     return $tags;
@@ -312,8 +311,8 @@ class Anime extends BaseObject {
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     $returnList = [];
-    $animeEntries = $this->dbConn->query("SELECT `id`, `user_id`, `anime_id`, `time`, `status`, `score`, `episode` FROM `anime_lists` WHERE `anime_id` = ".intval($this->id)." ORDER BY `time` DESC");
-    while ($entry = $animeEntries->fetch_assoc()) {
+    $animeEntries = $this->dbConn->table('anime_lists')->fields('id', 'user_id', 'anime_id', 'time', 'status', 'score', 'episode')->where(['anime_id' => $this->id])->order('time DESC')->query();
+    while ($entry = $animeEntries->fetch()) {
       $newEntry = new AnimeEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;
     }
@@ -322,13 +321,17 @@ class Anime extends BaseObject {
   public function getLatestEntries() {
     // retrieves the latest entries for each user for this anime.
     // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
-    $returnList = $this->dbConn->assoc("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
-                                              SELECT MAX(`id`) AS `id` FROM `anime_lists`
-                                              WHERE `anime_id` = ".intval($this->id)."
-                                              GROUP BY `user_id`
-                                            ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
-                                            WHERE `status` != 0
-                                            ORDER BY `status` ASC, `score` DESC", 'user_id');
+    $entryQuery = $this->dbConn->raw("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
+                                        SELECT MAX(`id`) AS `id` FROM `anime_lists`
+                                        WHERE `anime_id` = ".intval($this->id)."
+                                        GROUP BY `user_id`
+                                      ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
+                                      WHERE `status` != 0
+                                      ORDER BY `status` ASC, `score` DESC");
+    $returnList = [];
+    while ($row = $entryQuery->fetch()) {
+      $returnList[$row['user_id']] = $row;
+    }
     return $returnList;
   }
   public function latestEntries() {
@@ -480,14 +483,14 @@ class Anime extends BaseObject {
         $resultsPerPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $animeIDs = $this->dbConn->query("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
-            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `".static::$modelTable."`")/$resultsPerPage);
+            $numPages = ceil($this->dbConn->table(static::$MODEL_TABLE)->fields("COUNT(*)")->count()/$resultsPerPage);
+            $animeIDs = $this->dbConn->table(static::$MODEL_TABLE)->fields(static::$MODEL_TABLE.".id")->order(static::$MODEL_TABLE.".title ASC")->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
           } else {
-            $animeIDs = $this->dbConn->query("SELECT `".static::$modelTable."`.`id` FROM `".static::$modelTable."` WHERE `approved_on` != '' ORDER BY `".static::$modelTable."`.`title` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
-            $numPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `".static::$modelTable."` WHERE `approved_on` != ''")/$resultsPerPage);
+            $numPages = ceil($this->dbConn->table(static::$MODEL_TABLE)->fields("COUNT(*)")->where(["approved_on != ''"])->count()/$resultsPerPage);
+            $animeIDs = $this->dbConn->table(static::$MODEL_TABLE)->fields(static::$MODEL_TABLE.".id")->where(["approved_on != ''"])->order(static::$MODEL_TABLE.".title ASC")->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
           }
           $anime = [];
-          while ($animeID = $animeIDs->fetch_assoc()) {
+          while ($animeID = $animeIDs->fetch()) {
             $anime[] = new Anime($this->app, intval($animeID['id']));
           }
         } else {
@@ -529,7 +532,7 @@ class Anime extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output(self::modelUrl())."/".($action !== "index" ? rawurlencode(rawurlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(self::MODEL_URL())."/".($action !== "index" ? rawurlencode(rawurlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

@@ -5,8 +5,8 @@ class Alias extends BaseObject {
   protected $type;
   protected $parentId;
   protected $parent;
-  public static $modelTable = "aliases";
-  public static $modelPlural = "aliases";
+  public static $MODEL_TABLE = "aliases";
+  public static $MODEL_PLURAL = "aliases";
 
   public function __construct(Application $app, $id=Null, BaseObject $parent=Null) {
     parent::__construct($app, $id);
@@ -86,15 +86,15 @@ class Alias extends BaseObject {
       $terms[$key] = "+".$term;
     }
     $text = implode(" ", $terms);
-    $search = $this->dbConn->query("SELECT `type`, `parent_id` FROM `".static::$modelTable."` WHERE MATCH(`name`) AGAINST(".$this->dbConn->escape($text)." IN BOOLEAN MODE) ORDER BY `name` ASC;");
+    $search = $this->dbConn->table(static::$MODEL_TABLE)->fields('type', 'parent_id')->match('name', $text)->order('name ASC')->query();
     $objects = [];
     if ($this->id === 0) {
       $parentClass = get_class($this->parent());
-      $objType = $parentClass::modelName();
+      $objType = $parentClass::MODEL_NAME();
     } else {
       $objType = $this->type();
     }
-    while ($result = $search->fetch_assoc()) {
+    while ($result = $search->fetch()) {
       try {
         $tempObject = new $objType($this->app, intval($result['parent_id']));
         $tempObject->getInfo();
@@ -118,7 +118,7 @@ class Alias extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$MODEL_TABLE)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 

@@ -41,8 +41,8 @@ class ThreadGroup extends BaseGroup {
       if ($threadIDs) {
         // now fetch the non-cached results from the db, building a record so we can cache it after.
         $threadTags = [];
-        $fetchTaggings = $this->dbConn->query("SELECT `thread_id`, `tag_id` FROM `anime_tags` WHERE `thread_id` IN (".implode(",", $threadIDs).")");
-        while ($tagging = $fetchTaggings->fetch_assoc()) {
+        $fetchTaggings = $this->dbConn->table('anime_tags')->fields('thread_id', 'tag_id')->where(['thread_id' => $threadIDs])->query();
+        while ($tagging = $fetchTaggings->fetch()) {
           $threadID = intval($tagging['thread_id']);
           $tagID = intval($tagging['tag_id']);
           $tags[$tagID] = $tagID;

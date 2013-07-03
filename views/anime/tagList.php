@@ -8,9 +8,9 @@
   $params['numTags'] = isset($params['numTags']) ? intval($params['numTags']) : 20;
 
   // order the tags in this animeGroup's tags by tagType id
-  $tagTypesQuery = $this->app->dbConn->query("SELECT `name`, `id` FROM `tag_types` ORDER BY `id` ASC");
+  $tagTypesQuery = $this->app->dbConn->table('tag_types')->fields('id', 'name')->order('id ASC')->query();
   $tagTypes = [];
-  while ($tagType = $tagTypesQuery->fetch_assoc()) {
+  while ($tagType = $tagTypesQuery->fetch()) {
     $tagTypeObj = new TagType($this->app, intval($tagType['id']));
     $tagTypes[] = $tagTypeObj->set(['name' => $tagType['name']]);
   }

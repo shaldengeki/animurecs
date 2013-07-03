@@ -2,8 +2,8 @@
 class Comment extends BaseObject {
   use Feedable;
 
-  public static $modelTable = "comments";
-  public static $modelPlural = "comments";
+  public static $MODEL_TABLE = "comments";
+  public static $MODEL_PLURAL = "comments";
 
   protected $userId;
   protected $user;
@@ -42,7 +42,7 @@ class Comment extends BaseObject {
   public function depth() {
     if ($this->depth === Null) {
       $parentClass = get_class($this->parent());
-      $this->depth = method_exists($this->parent(), 'depth') ? $this->parent()->depth() + 1 : ($parentClass::modelName() == "User" ? 0 : 1);
+      $this->depth = method_exists($this->parent(), 'depth') ? $this->parent()->depth() + 1 : ($parentClass::MODEL_NAME() == "User" ? 0 : 1);
     }
     return $this->depth;
   }
@@ -71,8 +71,8 @@ class Comment extends BaseObject {
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the comments belonging to this comment.
     $returnList = [];
-    $commentEntries = $this->dbConn->query("SELECT * FROM `comments` WHERE `type` = 'Comment' && `parent_id` = ".intval($this->id)." ORDER BY `time` ASC");
-    while ($entry = $commentEntries->fetch_assoc()) {
+    $commentEntries = $this->dbConn->table('comments')->where(["type='Comment'", 'parent_id' => $this->id])->order('time ASC')->query();
+    while ($entry = $commentEntries->fetch()) {
       $newEntry = new CommentEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;
     }
@@ -161,7 +161,7 @@ class Comment extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output(static::$modelTable)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(static::$MODEL_TABLE)."/".($action !== "index" ? intval($id)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function render() {
     if ($this->app->id != 0) {
@@ -222,7 +222,11 @@ class Comment extends BaseObject {
             $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
             $this->app->redirect($targetParent->url());
           }
+          $this->app->logger->err("Comment: ".print_r($_POST['comments'], True));
           $createComment = $targetComment->create_or_update($_POST['comments']);
+          ob_start();
+          var_dump($createComment);
+          $this->app->logger->err("Result: ".ob_get_clean());
           if ($createComment) {
             $this->app->delayedMessage("Succesfully commented.", 'success');
             $this->app->redirect($targetParent->url());

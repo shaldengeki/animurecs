@@ -1,9 +1,9 @@
 <?php
 
 class AnimeEntry extends BaseEntry {
-  public static $modelTable = "anime_lists";
-  public static $modelUrl = "anime_entries";
-  public static $modelPlural = "animeLists";
+  public static $MODEL_TABLE = "anime_lists";
+  public static $MODEL_URL = "anime_entries";
+  public static $MODEL_PLURAL = "animeLists";
 
   protected $anime, $animeId;
   protected $episode;
@@ -41,7 +41,7 @@ class AnimeEntry extends BaseEntry {
     return $this->returnInfo('episode');
   }
   private function _getComments() {
-    $comments = $this->dbConn->assoc("SELECT `id` FROM `comments` WHERE `type` = 'AnimeEntry` && `parent_id` = ".intval($this->id)." ORDER BY `created_at` ASC", 'id', 'id');
+    $comments = $this->dbConn->table('comments')->fields('id')->where(['type' => 'AnimeEntry', 'parent_id' => $this->id])->order('created_at ASC')->assoc('id', 'id');
     return new CommentGroup($this->app, array_keys($comments));
   }
   public function comments() {

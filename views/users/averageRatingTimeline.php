@@ -6,7 +6,7 @@
   $params['intervals'] = (intval($params['intervals']) > 0) ? intval($params['intervals']) : 12;
 
   // first, get time range of this user's anime completions.
-  $startAndEndTimes = $this->app->dbConn->firstRow("SELECT UNIX_TIMESTAMP(MIN(`time`)) AS `startTime`, UNIX_TIMESTAMP(MAX(`time`)) AS `endTime` FROM `anime_lists` WHERE (`user_id` = ".intval($this->id)." && `score` != 0)");
+  $startAndEndTimes = $this->app->dbConn->table('anime_lists')->fields("UNIX_TIMESTAMP(MIN(time)) AS startTime", "UNIX_TIMESTAMP(MAX(time)) AS endTime")->where(['user_id' => $this->id, 'score != 0'])->firstRow();
   if (!$startAndEndTimes) {
     exit;
   }

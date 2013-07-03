@@ -12,11 +12,11 @@
       $params['selected'] = 0;
     }
   }
-  $allTypes = $this->app->dbConn->query("SELECT `id`, `name` FROM `tag_types` ORDER BY `name` ASC");
+  $allTypes = $this->app->dbConn->table('tag_types')->fields('id', 'name')->order('name ASC')->query();
 ?>
 <select id='<?php echo escape_output($params['select_id']); ?>' name='<?php echo escape_output($params['select_id']); ?>'>
 <?php
-  while ($type = $allTypes->fetch_assoc()) {
+  while ($type = $allTypes->fetch()) {
 ?>
   <option value='<?php echo intval($type['id']); ?>'<?php echo (($params['selected'] == intval($type['id'])) ? " selected='selected'" : ""); ?>><?php echo escape_output($type['name']); ?></option>
 <?php

@@ -6,11 +6,11 @@
   $resultsPerPage = 25;
   $firstTag = Tag::first($this->app);
   if ($this->app->user->isAdmin()) {
-    $tag = $this->dbConn->query("SELECT `tags`.`id` FROM `tags` ORDER BY `tags`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
-    $tagPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tags`")/$resultsPerPage);
+    $tagPages = ceil(Tag::count($this->app)/$resultsPerPage);
+    $tag = $this->dbConn->table('tags')->fields('id')->order('name ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage);
   } else {
-    $tag = $this->dbConn->query("SELECT `tags`.`id` FROM `tags` WHERE `approved_on` != '' ORDER BY `tags`.`name` ASC LIMIT ".((intval($this->app->page)-1)*$resultsPerPage).",".intval($resultsPerPage));
-    $tagPages = ceil($this->dbConn->queryCount("SELECT COUNT(*) FROM `tags` WHERE `approved_on` != ''")/$resultsPerPage);
+    $tagTypePages = ceil(Tag::count($this->app, ['approved_on != ""'])/$resultsPerPage);
+    $tag = $this->dbConn->table('tags')->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage);
   }
 ?>
 <h1>All Tags</h1>

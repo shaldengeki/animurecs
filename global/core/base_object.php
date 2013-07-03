@@ -19,7 +19,7 @@ abstract class BaseObject {
 
   public $app, $dbConn, $id=Null;
 
-  public static $modelTable, $modelUrl, $modelPlural, $modelName;
+  public static $MODEL_TABLE, $MODEL_URL, $MODEL_PLURAL, $MODEL_NAME;
 
   protected $createdAt, $updatedAt;
   protected $observers = [];
@@ -41,36 +41,34 @@ abstract class BaseObject {
     } elseif (property_exists($this, $property)) {
       return $this->$property;
     } else {
-      throw new AppException($this->app, "Requested attribute does not exist: ".$property." on: ".static::modelName());
+      throw new AppException($this->app, "Requested attribute does not exist: ".$property." on: ".static::MODEL_NAME());
     }
   }
-  public static function modelName() {
-    if (static::$modelName === Null) {
-      return get_called_class();
-    } else {
-      return static::$modelName;
-    }
+  public static function MODEL_NAME() {
+    return static::$MODEL_NAME === Null ? get_called_class() : static::$MODEL_NAME;
   }
-  public static function modelUrl() {
-    if (static::$modelUrl !== Null) {
-      return static::$modelUrl;
+  public static function MODEL_URL() {
+    if (static::$MODEL_URL !== Null) {
+      return static::$MODEL_URL;
     } else {
-      return static::$modelTable;
+      return static::$MODEL_TABLE;
     }
   }
   public static function first($app) {
-    $className = static::modelName();
-    return new $className($app, intval($app->dbConn->firstValue("SELECT `id` FROM ".static::$modelTable." ORDER BY `id` ASC LIMIT 1")));
+    $className = static::MODEL_NAME();
+    return new $className($app, intval($app->dbConn->table(static::$MODEL_TABLE)->fields('id')->order('id ASC')->limit(1)->firstValue()));
   }
-  public static function count($app) {
-    return intval($app->dbConn->queryCount("SELECT COUNT(*) FROM ".static::$modelTable));
+  public static function count($app, $params=Null) {
+    $params = $params ? $params : [];
+    return intval($app->dbConn->table(static::$MODEL_TABLE)->fields("COUNT(*)")->where($params)->count());
   }
-  public static function find($app, $id=Null) {
-    if ($id === Null) {
+  public static function find($app, $params=Null) {
+    if ($params === Null) {
       return static::first($app);
     }
-    $className = static::modelName();
-    return new $className($app, intval($app->dbConn->firstValue("SELECT `id` FROM ".static::$modelTable." WHERE `id` = ".intval($id)." LIMIT 1")));
+    $className = static::MODEL_NAME();
+    $findID = $app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where($params)->limit(1)->firstValue();
+    return new $className($app, intval($findID));
   }
   public function humanizeParameter($parameter) {
     // takes a parameter name like created_at
@@ -99,17 +97,17 @@ abstract class BaseObject {
     // retrieves (from the cache or database) all direct properties of this object (not lists of other objects).
     if ($this->id === Null) {
       // should never reach here!
-      throw new DbException(static::modelName().' with null ID not found in database');
+      throw new DbException(static::MODEL_NAME().' with null ID not found in database');
     }
-    $cacheKey = static::modelName()."-".intval($this->id);
+    $cacheKey = static::MODEL_NAME()."-".intval($this->id);
     $cas = "";
     $info = $this->app->cache->get($cacheKey, $foo, $cas);
     if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
       // key is not yet set in cache. fetch from DB and set it in cache.
       try {
-        $info = $this->dbConn->firstRow("SELECT * FROM `".static::$modelTable."` WHERE `id` = ".intval($this->id)." LIMIT 1");
+        $info = $this->dbConn->table(static::$MODEL_TABLE)->where(['id' => $this->id])->limit(1)->firstRow();
       } catch (DbException $e) {
-        throw new DbException(static::modelName().' ID not found: '.$this->id);
+        throw new DbException(static::MODEL_NAME().' ID not found: '.$this->id);
       }
       // set cache for this object.
       $this->app->cache->set($cacheKey, $info);
@@ -177,7 +175,7 @@ abstract class BaseObject {
   // e.g. User.afterCreate
   // events cascade up the object hierarchy
   public function fire($event, $params=Null) {
-    $this->app->fire(static::modelName().'.'.$event, $this, $params);
+    $this->app->fire(static::MODEL_NAME().'.'.$event, $this, $params);
     $this->fireParentEvents('.'.$event, $params);
   }
   // shorthand methods.
@@ -206,50 +204,35 @@ abstract class BaseObject {
     // returns False if failure, or the ID of the object if success.
     $this->validate($object);
 
-    $params = [];
-    foreach ($object as $parameter => $value) {
-      if (!is_array($value)) {
-        $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->escape($value);
-      }
-    }
-    $params[] = '`updated_at` = NOW()';
-
     //go ahead and create or update this object.
-    if ($this->id != 0) {
-      $whereParams = [];
-      if ($whereConditions !== Null && is_array($whereConditions)) {
-        foreach ($whereConditions as $parameter => $value) {
-          if (!is_array($value)) {
-            $whereParams[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->escape($value);
-          }
-        }
-      }
-      $whereParams[] = "`id` = ".intval($this->id);
+    $this->dbConn->table(static::$MODEL_TABLE);
+    if (!isset($object['updated_at'])) {
+      $this->dbConn->set(['updated_at=NOW()']);
+    }
 
+    if ($this->id != 0) {
+      $whereConditions['id'] = $this->id;
       //update this object.
       $this->beforeUpdate($object);
-      $updateQuery = "UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE ".implode(", ", $whereParams)." LIMIT 1";
-      $updateObject = $this->dbConn->query($updateQuery);
-      if (!$updateObject) {
-        throw new DbException("Could not update ".static::$modelTable.": ".$updateQuery);
+      $this->dbConn->set($object)->where($whereConditions === Null ? [] : $whereConditions)->limit(1);
+      if (!$this->dbConn->update()) {
+        throw new DbException("Could not update ".static::$MODEL_TABLE.": ".$this->dbConn->queryString());
       }
       $this->set($object);
-      $modelName = static::modelName();
+      $modelName = static::MODEL_NAME();
       $newObject = new $modelName($this->app, $this->id);
       $newObject->afterUpdate($object);
     } else {
       // add this object.
-      $params[] = '`created_at` = NOW()';
-
+      $this->dbConn->set(['created_at=NOW()']);
       $this->beforeCreate([$object]);
-      $insertQuery = "INSERT INTO `".static::$modelTable."` SET ".implode(",", $params);
-      $insertUser = $this->dbConn->query($insertQuery);
-      if (!$insertUser) {
-        throw new DbException("Could not insert into ".static::$modelTable.": ".$insertQuery);
+      $insertID = $this->dbConn->set($object)->insert();
+      if (!$insertID) {
+        throw new DbException("Could not insert into ".static::$MODEL_TABLE.": ".$this->dbConn->queryString());
       } else {
-        $this->id = intval($this->dbConn->insert_id);
+        $this->id = intval($insertID);
       }
-      $modelName = $this->modelName();
+      $modelName = $this->MODEL_NAME();
       $newObject = new $modelName($this->app, $this->id);
       $newObject->afterCreate($object);
     }
@@ -278,17 +261,15 @@ abstract class BaseObject {
     }
     $this->beforeDelete();
     if ($entryIDs) {
-      $deleteQuery = "DELETE FROM `".static::$modelTable."` WHERE `id` IN (".implode(",", $entryIDs).") LIMIT ".count($entryIDs);
-      $dropEntries = $this->dbConn->query($deleteQuery);
-      if (!$dropEntries) {
-        throw new DbException("Could not delete from ".static::$modelTable.": ".$deleteQuery);
+      if (!$this->dbConn->table(static::$MODEL_TABLE)->where(['id' => $entryIDs])->limit(count($entryIDs))->delete()) {
+        throw new DbException("Could not delete from ".static::$MODEL_TABLE.": ".$deleteQuery);
       }
     }
     $this->afterDelete();
     return True;
   }
   public function view($view="index", array $params=Null) {
-    $file = joinPaths(Config::APP_ROOT, 'views', static::modelUrl(), "$view.php");
+    $file = joinPaths(Config::APP_ROOT, 'views', static::MODEL_URL(), "$view.php");
     if (file_exists($file)) {
       ob_start();
       include($file);
@@ -309,7 +290,7 @@ abstract class BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".rawurlencode(self::modelUrl())."/".($action !== "index" ? rawurlencode($id)."/".rawurlencode($action) : "").($format !== Null ? ".".rawurlencode($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".rawurlencode(self::MODEL_URL())."/".($action !== "index" ? rawurlencode($id)."/".rawurlencode($action) : "").($format !== Null ? ".".rawurlencode($format) : "").($params !== Null ? "?".$urlParams : "");
   }
   public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.
@@ -340,7 +321,7 @@ abstract class BaseObject {
     if ($params === Null) {
       $params = [];
     }
-    $defaultVals = ['name' => escape_output(self::modelUrl())."[".escape_output($attr)."]"];
+    $defaultVals = ['name' => escape_output(self::MODEL_URL())."[".escape_output($attr)."]"];
     $defaultVals['id'] = $defaultVals['name'];
     $humanizedAttr = $this->humanizeParameter($attr);
     if (method_exists($this, $humanizedAttr) && $this->$humanizedAttr()) {
@@ -355,7 +336,7 @@ abstract class BaseObject {
     if ($params === Null) {
       $params = [];
     }
-    $defaultVals = ['name' => escape_output(self::modelUrl())."[".escape_output($attr)."]"];
+    $defaultVals = ['name' => escape_output(self::MODEL_URL())."[".escape_output($attr)."]"];
     $defaultVals['id'] = $defaultVals['name'];
     $humanizedAttr = $this->humanizeParameter($attr);
     if (method_exists($this, $humanizedAttr) && $this->$humanizedAttr()) {

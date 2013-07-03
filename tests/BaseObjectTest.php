@@ -35,8 +35,8 @@ class BaseObjectTest extends PHPUnit_Framework_TestCase {
                       ->will($this->returnValue(True));
     $this->baseObjectClass = get_class($this->baseObject);
   }
-  public function testmodelName() {
-    $this->assertStringStartsWith('Mock_BaseObject', {$this->baseObjectClass}::modelName());
+  public function testMODEL_NAME() {
+    $this->assertStringStartsWith('Mock_BaseObject', {$this->baseObjectClass}::MODEL_NAME());
   }
   public function testhumanizeParameter() {
     $this->assertEquals('helloThereYoungPadawan', $this->baseObject->humanizeParameter('hello_there_young_padawan'), 'underscores removed and first letters capitalized');
@@ -88,37 +88,37 @@ class BaseObjectTest extends PHPUnit_Framework_TestCase {
   }
   public function testbeforeCreate() {
     $observer = new BaseObjectTestObserver();
-    $this->app->bind({$this->baseObjectClass}::modelName().'.beforeCreate', $observer);
+    $this->app->bind({$this->baseObjectClass}::MODEL_NAME().'.beforeCreate', $observer);
     $this->baseObject->beforeCreate(['beforeCreateTestParam' => 40.2]);
     $this->assertEquals(40.2, $this->baseObject->beforeCreateTestParam);
   }
   public function testafterCreate() {
     $observer = new BaseObjectTestObserver();
-    $this->app->bind({$this->baseObjectClass}::modelName().'.afterCreate', $observer);
+    $this->app->bind({$this->baseObjectClass}::MODEL_NAME().'.afterCreate', $observer);
     $this->baseObject->afterCreate(['beforeCreateTestParam' => 40.2]);
     $this->assertEquals(41.2, $this->baseObject->afterCreateTestParam);
   }
   public function testbeforeUpdate() {
     $observer = new BaseObjectTestObserver();
-    $this->app->bind({$this->baseObjectClass}::modelName().'.beforeUpdate', $observer);
+    $this->app->bind({$this->baseObjectClass}::MODEL_NAME().'.beforeUpdate', $observer);
     $this->baseObject->beforeUpdate(['beforeUpdateTestParam' => 42.2]);
     $this->assertEquals(42.2, $this->baseObject->beforeUpdateTestParam);
   }
   public function testafterUpdate() {
     $observer = new BaseObjectTestObserver();
-    $this->app->bind({$this->baseObjectClass}::modelName().'.afterUpdate', $observer);
+    $this->app->bind({$this->baseObjectClass}::MODEL_NAME().'.afterUpdate', $observer);
     $this->baseObject->afterUpdate(['afterUpdateTestParam' => 43.2]);
     $this->assertEquals(43.2, $this->baseObject->afterUpdateTestParam);
   }
   public function testbeforeDelete() {
     $observer = new BaseObjectTestObserver();
-    $this->app->bind({$this->baseObjectClass}::modelName().'.beforeDelete', $observer);
+    $this->app->bind({$this->baseObjectClass}::MODEL_NAME().'.beforeDelete', $observer);
     $this->baseObject->beforeDelete();
     $this->assertEquals(44.2, $this->baseObject->beforeDeleteTestParam);
   }
   public function testafterDelete() {
     $observer = new BaseObjectTestObserver();
-    $this->app->bind({$this->baseObjectClass}::modelName().'.afterDelete', $observer);
+    $this->app->bind({$this->baseObjectClass}::MODEL_NAME().'.afterDelete', $observer);
     $this->baseObject->afterDelete();
     $this->assertEquals(45.2, $this->baseObject->afterDeleteTestParam);
   }

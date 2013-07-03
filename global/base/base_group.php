@@ -5,7 +5,7 @@ class BaseGroup implements Iterator, ArrayAccess {
   // you can treat this as if it were an array of objects
   // e.g. foreach($group->load('info') as $object) or $group->load('info')[1]
 
-  public static $modelUrl;
+  public static $MODEL_URL;
 
   protected $_objects,$_objectGroups,$_objectKeys = [];
   private $position = 0;
@@ -76,10 +76,10 @@ class BaseGroup implements Iterator, ArrayAccess {
     $this->_objectGroups = [];
     foreach ($this->_objects as $key=>$object) {
       $objectClass = get_class($object);
-      if (!isset($this->_objectGroups[$objectClass::$modelTable])) {
-        $this->_objectGroups[$objectClass::$modelTable] = [$key=>$object];
+      if (!isset($this->_objectGroups[$objectClass::$MODEL_TABLE])) {
+        $this->_objectGroups[$objectClass::$MODEL_TABLE] = [$key=>$object];
       } else {
-        $this->_objectGroups[$objectClass::$modelTable][$key] = $object;
+        $this->_objectGroups[$objectClass::$MODEL_TABLE][$key] = $object;
       }
     }
   }
@@ -89,7 +89,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     if ($this->_groupTable === Null) {
       if ($this->_objects) {
         $objectClass = get_class(current($this->_objects));
-        $this->_groupTable = $objectClass::$modelTable;
+        $this->_groupTable = $objectClass::$MODEL_TABLE;
       }
     }
     return $this->_groupTable;
@@ -100,7 +100,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     if ($this->_groupObject === Null) {
       if ($this->_objects) {
         $objectClass = get_class(current($this->_objects));
-        $this->_groupObject = $objectClass::modelName();
+        $this->_groupObject = $objectClass::MODEL_NAME();
       }
     }
     return $this->_groupObject;
@@ -153,7 +153,7 @@ class BaseGroup implements Iterator, ArrayAccess {
       }
       if ($inclusion) {
         $objectName = get_class(current($objectList));
-        $modelName = $objectName::modelName();
+        $modelName = $objectName::MODEL_NAME();
         $cacheKeys = array_map(function($id) use ($modelName) {
           return $modelName."-".$id;
         }, $inclusion);
@@ -176,7 +176,7 @@ class BaseGroup implements Iterator, ArrayAccess {
         if ($inclusion) {
           // we have objects that are not yet cached. pull them from the db.
           $infoToCache = [];
-          $objectInfo = $this->dbConn->assoc("SELECT * FROM `".$groupTable."` WHERE `id` IN (".implode(", ", $inclusion).")");
+          $objectInfo = $this->dbConn->table($groupTable)->where(['id' => $inclusion])->assoc();
           foreach ($objectInfo as $info) {
             $objectList[$idToListIndex[intval($info['id'])]]->set($info);
             $infoToCache[$modelName."-".$info['id']] = $info;
@@ -204,7 +204,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    $tagCountList = $inclusion ? $this->dbConn->assoc("SELECT `tag_id`, COUNT(*) FROM `".$this->_groupTable."_tags` INNER JOIN `tags` ON `tags`.`id` =  `tag_id` WHERE `".$this->_groupTableSingular."_id` IN (".implode(", ", $inclusion).") GROUP BY `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    $tagCountList = $inclusion ? $this->dbConn->table($this->_groupTable."_tags")->fields('tag_id', 'COUNT(*)')->join('tags ON tags.id=tag_id')->where([$this->_groupTableSingular."_id" => $inclusion])->group('tag_id')->order('COUNT(*) DESC')->assoc('tag_id', 'COUNT(*)') : [];
     foreach ($tagCountList as $id=>$count) {
       $tagCountList[$id] = ['tag' => new Tag($this->app, intval($id)), 'count' => intval($count)];
     }
@@ -252,7 +252,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     return new $className($this->app, $limitedObjects ? $limitedObjects : []);
   }
   public function view($view="index", array $params=Null) {
-    $file = joinPaths(Config::APP_ROOT, 'views', static::$modelUrl, "$view.php");
+    $file = joinPaths(Config::APP_ROOT, 'views', static::$MODEL_URL, "$view.php");
     if (file_exists($file)) {
       ob_start();
       include($file);

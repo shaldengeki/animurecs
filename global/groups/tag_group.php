@@ -37,7 +37,7 @@ class TagGroup extends BaseGroup {
       if ($tagTypeDict) {
         // now fetch the non-cached results from the db, building a record so we can cache it after.
         $tagTypesToCache = [];
-        $getTagTypes = $this->dbConn->assoc("SELECT * FROM `tag_types` WHERE `id` IN (".implode(",", array_keys($tagTypeDict)).")");
+        $getTagTypes = $this->dbConn->table('tag_types')->where(['id' => array_keys($tagTypeDict)])->assoc();
         foreach ($getTagTypes as $tagType) {
           $tagTypesToCache["TagType-".$tagType['id']] = $tagType;
           $tagTypes[$tagType['id']] = new TagType($this->app, intval($tagType['id']));
@@ -63,7 +63,7 @@ class TagGroup extends BaseGroup {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    $tagCountList = $inclusion ? $this->dbConn->assoc("SELECT `tag_id`, COUNT(*) FROM `anime_tags` WHERE `tag_id` IN (".implode(", ", $inclusion).") GROUP BY `tag_id` ORDER BY COUNT(*) DESC", 'tag_id', 'COUNT(*)') : [];
+    $tagCountList = $inclusion ? $this->dbConn->table('anime_tags')->fields('tag_id', 'COUNT(*)')->where(['tag_id' => $inclusion])->group('tag_id')->order('COUNT(*) DESC')->assoc('tag_id', 'COUNT(*)') : [];
     foreach ($tagCountList as $id=>$count) {
       $tagCountList[$id] = ['tag' => $this->tags()[$id], 'count' => intval($count)];
     }

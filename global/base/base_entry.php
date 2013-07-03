@@ -96,37 +96,34 @@ abstract class BaseEntry extends BaseObject {
       return False;
     }
 
-    $params = [];
     foreach ($entry as $parameter => $value) {
       if (!is_array($value)) {
         if (is_numeric($value)) {
-            $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".intval($value);
-        } else {
-          $params[] = "`".$this->dbConn->real_escape_string($parameter)."` = ".$this->dbConn->escape($value);
+          $entry[$parameters] = intval($value);
         }
       }
     }
 
     // check to see if this is an update.
     $entryGroup = $this->entries();
+    $this->dbConn->table(static::$MODEL_TABLE);
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
       $this->beforeUpdate($entry);
-      $updateDependency = $this->dbConn->query("UPDATE `".static::$modelTable."` SET ".implode(", ", $params)." WHERE `id` = ".intval($entry['id'])." LIMIT 1");
-      if (!$updateDependency) {
+      if (!$this->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update()) {
         return False;
       }
       $returnValue = intval($entry['id']);
       $this->afterUpdate();
     } else {
-      if (!isset($entry['time'])) {
-        $params[] = "`time` = NOW()";
-      }
       $this->beforeCreate($entry);
-      $insertDependency = $this->dbConn->query("INSERT INTO `".static::$modelTable."` SET ".implode(",", $params));
-      if (!$insertDependency) {
+      $this->dbConn->set($entry);
+      if (!isset($entry['time'])) {
+        $this->dbConn->set(['`time` = NOW()']);
+      }
+      if (!$this->dbConn->insert()) {
         return False;
       }
-      $returnValue = intval($this->dbConn->insert_id);
+      $returnValue = intval($this->dbConn->lastInsertId);
       $this->afterCreate($entry);
     }
     return $returnValue;

@@ -2,8 +2,9 @@
 class User extends BaseObject {
   use Commentable;
 
-  public static $modelTable = "users";
-  public static $modelPlural = "users";
+  public static $MODEL_TABLE = "users";
+  public static $MODEL_PLURAL = "users";
+  public static $maxFailedLogins = 10;
 
   protected $username;
   protected $name;
@@ -27,7 +28,7 @@ class User extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $username=Null) {
     if ($username !== Null) {
-      $id = intval($app->dbConn->firstValue("SELECT `id` FROM `users` WHERE `username` = ".$app->dbConn->escape($username)." LIMIT 1"));
+      $id = intval($app->dbConn->table('users')->fields('id')->where(['username' => $username])->limit(1)->firstValue());
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -57,7 +58,7 @@ class User extends BaseObject {
     // 20 character-long string unique to this user at this moment in time.
     do {
       $code = bin2hex(openssl_random_pseudo_bytes(10));
-      $numResults = $this->app->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE `activation_code` = ".$this->app->dbConn->escape($code));
+      $numResults = User::count($this->app, ['activation_code' => $code]);
     } while ($numResults > 0);
     return $code;
   }
@@ -123,12 +124,12 @@ class User extends BaseObject {
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
     // keyed by not-this-userID.
-    $friendReqs = $this->dbConn->query("SELECT `user_id_1`, `user_id_2`, `u1`.`username` AS `username_1`, `u2`.`username` AS `username_2`, `time`, `message` FROM `users_friends`
-                                            INNER JOIN `users` AS `u1` ON `u1`.`id` = `user_id_1`
-                                            INNER JOIN `users` AS `u2` ON `u2`.`id` = `user_id_2`
-                                            WHERE ( (`user_id_1` = ".intval($this->id)." || `user_id_2` = ".intval($this->id).") && `status` = ".intval($status).")");
+    $friendReqs = $this->dbConn->table('users_friends')->fields('user_id_1', 'user_id_2', 'u1.username AS username_1', 'u2.username AS username_2', 'time', 'message')
+      ->join('users AS u1 ON u1.id=user_id_1')
+      ->join('users AS u2 ON u2.id=user_id_2')
+      ->where(["user_id_1=".intval($this->id)." || user_id_2=".intval($this->id), 'status' => $status])->query();
     $friends = [];
-    while ($req = $friendReqs->fetch_assoc()) {
+    while ($req = $friendReqs->fetch()) {
       $reqArray = ['time' => $req['time'], 'message' => $req['message']];
       if (intval($req['user_id_1']) === $this->id) {
         $userID = intval($req['user_id_2']);
@@ -154,11 +155,10 @@ class User extends BaseObject {
     // returns a list of user,time,message arrays corresponding to all outstanding friend requests directed at this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
-    $friendReqsQuery = $this->dbConn->query("SELECT `user_id_1`, `time`, `message`, `status` FROM `users_friends`
-                                                WHERE (`user_id_2` = ".intval($this->id)." && `status` <= 0)
-                                                ORDER BY `time` DESC");
+    $friendReqsQuery = $this->dbConn->table('users_friends')->fields('user_id_1', 'time', 'message', 'status')
+      ->where(['user_id_2' => $this->id, "status <= 0"])->order('time DESC')->query();
     $friendReqs = [];
-    while ($req = $friendReqsQuery->fetch_assoc()) {
+    while ($req = $friendReqsQuery->fetch()) {
       $friendReqs[intval($req['user_id_1'])] = [
           'user' => new User($this->app, intval($req['user_id_1'])),
           'time' => $req['time'],
@@ -181,11 +181,10 @@ class User extends BaseObject {
     // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests originating from this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
-    $friendReqsQuery = $this->dbConn->query("SELECT `user_id_2`, `time`, `message`, `status` FROM `users_friends`
-                                                WHERE (`user_id_1` = ".intval($this->id)." && `status` <= 0)
-                                                ORDER BY `time` DESC");
+    $friendReqsQuery = $this->dbConn->table('users_friends')->fields('user_id_2', 'time', 'message', 'status')
+      ->where(['user_id_1' => $this->id, "status <= 0"])->order('time DESC')->query();
     $friendReqs = [];
-    while ($req = $friendReqsQuery->fetch_assoc()) {
+    while ($req = $friendReqsQuery->fetch()) {
       $friendReqs[intval($req['user_id_2'])] = [
           'user' => new User($this->app, intval($req['user_id_2'])),
           'time' => $req['time'],
@@ -218,12 +217,6 @@ class User extends BaseObject {
   public function requestFriend(User $requestedUser, array $request) {
     // generates a friend request from the current user to requestedUser.
     // returns a boolean.
-    $params = [];
-    $params[] = "`message` = ".(isset($request['message']) ? $this->dbConn->escape($request['message']) : '""');
-    $params[] = "`user_id_1` = ".intval($this->id);
-    $params[] = "`user_id_2` = ".intval($requestedUser->id);
-    $params[] = "`status` = 0";
-    $params[] = "`time` = NOW()";
 
     // check to see if this already exists in friends or requests.
     if ($this->isFriend($requestedUser)) {
@@ -235,13 +228,16 @@ class User extends BaseObject {
       return True;
     }
     // otherwise, go ahead and create a request.
-    $this->beforeUpdate([]);
-    $requestedUser->beforeUpdate([]);
-    $createRequest = $this->dbConn->query("INSERT INTO `users_friends` SET ".implode(", ",$params));
-    if ($createRequest) {
-      $this->afterUpdate([]);
-      $requestedUser->afterUpdate([]);
-      $this->app->fire('User.requestFriend', $this, ['id' => $requestedUser->id]);
+
+    $params = [];
+    $params['message'] = isset($request['message']) ? $request['message'] : "";
+    $params['user_id_1'] = $this->id;
+    $params['user_id_2'] = $requestedUser->id;
+    $params['status'] = 0;
+
+    if ($this->dbConn->table('users_friends')->set($params)->set(['time=NOW()'])->insert()) {
+      $this->fire('requestFriend', ['id' => $requestedUser->id]);
+      $requestedUser->fire('friendRequested', ['id' => $this->id]);
       return True;
     } else {
       return False;
@@ -251,13 +247,9 @@ class User extends BaseObject {
     // updates a friend request status from requestedUser directed at current user.
     // returns a boolean.
 
-    $updateArray = ['status' => intval($status)];
-    $this->beforeUpdate($updateArray);
-    $requestedUser->beforeUpdate($updateArray);
-    $updateRequest = $this->dbConn->query("UPDATE `users_friends` SET `status` = ".intval($status)." WHERE `user_id_1` = ".intval($requestedUser->id)." && `user_id_2` = ".intval($this->id)." LIMIT 1");
-    if ($updateRequest) {
-      $this->afterUpdate($updateArray);
-      $requestedUser->afterUpdate($updateArray);
+    if ($this->dbConn->table('users_friends')->set(['status' => $status])->where(['user_id_1' => $requestedUser->id, 'user_id_2' => $this->id])->limit(1)->update()) {
+      $this->fire('updateFriend', ['id' => $requestedUser->id, 'status' => $status]);
+      $requestedUser->fire('friendUpdated', ['id' => $this->id, 'status' => $status]);
       return True;
     } else {
       return False;
@@ -278,9 +270,8 @@ class User extends BaseObject {
     }
     // otherwise, go ahead and confirm this request.
     if ($this->updateFriend($requestedUser, 1)) {
-      $this->afterUpdate([]);
-      $this->app->fire('User.confirmFriend', $this, ['id' => $requestedUser->id]);
-      $this->app->fire('User.confirmFriend', $requestedUser, ['id' => $this->id]);
+      $this->fire('confirmFriend', ['id' => $requestedUser->id]);
+      $requestedUser->fire('friendConfirmed', ['id' => $this->id]);
       return True;
     }
     return False;
@@ -309,9 +300,9 @@ class User extends BaseObject {
   }
   public function getOwnComments() {
     // returns a list of comment objects sent by this user.
-    $ownComments = $this->dbConn->query("SELECT `id` FROM `comments` WHERE `user_id` = ".intval($this->id)." ORDER BY `created_at` DESC");
+    $ownComments = $this->dbConn->table('comments')->fields('id')->where(['user_id' => $this->id])->order('created_at DESC')->query();
     $comments = [];
-    while ($comment = $ownComments->fetch_assoc()) {
+    while ($comment = $ownComments->fetch()) {
       $comments[] = new CommentEntry($this->app, intval($comment['id']));
     }
     return new EntryGroup($this->app, $comments);
@@ -422,7 +413,7 @@ class User extends BaseObject {
     } else {
       $checkID = $this->id;
     }
-    $thisUserInfo = $this->dbConn->firstRow("SELECT `last_ip` FROM `users` WHERE `id` = ".intval($checkID)." LIMIT 1");
+    $thisUserInfo = $this->dbConn->table('users')->fields('last_ip')->where(['id' => $checkID])->limit(1)->firstRow();
     if (!$thisUserInfo || $thisUserInfo['last_ip'] != $_SERVER['REMOTE_ADDR']) {
       return False;
     }
@@ -458,7 +449,7 @@ class User extends BaseObject {
       if (!isset($user['username']) || !isset($user['email'])) {
         $validationErrors[] = "ID set without username or email";
       }
-      if ($this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`username`) = ".$this->dbConn->escape(strtolower($user['username']))) > 0) {
+      if (User::count($this->app, [['LOWER(username)=?', strtolower($user['username'])]]) > 0) {
         $validationErrors[] = "This username already exists";
       }
     } else {
@@ -467,7 +458,7 @@ class User extends BaseObject {
           $validationErrors[] = "Username must be between 1 and 40 characters";
         }
         // username must be unique if we're changing.
-        if ($user['username'] != $this->username() && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`username`) = ".$this->dbConn->escape(strtolower($user['username']))) > 0) {
+        if ($user['username'] != $this->username() && User::count($this->app, [['LOWER(username)=?', strtolower($user['username'])]]) > 0) {
           $validationErrors[] = "New username is already taken";
         }
       }
@@ -486,7 +477,7 @@ class User extends BaseObject {
         $validationErrors[] = "Malformed email address";
       }
       // email must be unique if we're changing.
-      if (($this->id === 0 || $user['email'] != $this->email()) && $this->dbConn->queryCount("SELECT COUNT(*) FROM `users` WHERE LOWER(`email`) = ".$this->dbConn->escape(strtolower($user['email']))) > 0) {
+      if (($this->id === 0 || $user['email'] != $this->email()) && User::count($this->app, [['LOWER(email)=?', strtolower($user['email'])]]) > 0) {
         $validationErrors[] = "This email has already been taken. Try resetting your password!";
       }
     }
@@ -678,7 +669,8 @@ class User extends BaseObject {
     return $this->create_or_update(['points' => $this->points() + intval($points)]);
   }
   public function logFailedLogin($username) {
-    $insert_log = $this->dbConn->query("INSERT IGNORE INTO `failed_logins` (`ip`, `time`, `username`) VALUES ('".$_SERVER['REMOTE_ADDR']."', NOW(), ".$this->dbConn->escape($username).")");
+    $dateTime = new DateTime('now', $this->app->serverTimeZone);
+    $insert_log = $this->dbConn->table('failed_logins')->fields('ip', 'time', 'username')->values($_SERVER['REMOTE_ADDR'], $dateTime->format("Y-m-d H:i:s"), $username)->insert();
   }
   private function setCurrentSession() {
     // sets the current session to this user.
@@ -695,15 +687,15 @@ class User extends BaseObject {
   }
   public function logIn($username, $password) {
     // rate-limit requests.
-    $numFailedRequests = $this->dbConn->queryCount("SELECT COUNT(*) FROM `failed_logins` WHERE `ip` = ".$this->dbConn->escape($_SERVER['REMOTE_ADDR'])." AND `time` > NOW() - INTERVAL 1 HOUR");
-    if ($numFailedRequests > 5) {
+    $numFailedRequests = $this->dbConn->table('failed_logins')->fields('COUNT(*)')->where(['ip' => $_SERVER['REMOTE_ADDR'], "time > NOW() - INTERVAL 1 HOUR"])->count();
+    if ($numFailedRequests > self::$maxFailedLogins) {
       return ["location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error'];
     }
   
     // check for existence of username and matching password.
     $bcrypt = new Bcrypt();
     try {
-      $findUsername = $this->dbConn->firstRow("SELECT `id`, `username`, `name`, `email`, `usermask`, `password_hash`, `avatar_path` FROM `users` WHERE `username` = ".$this->dbConn->escape($username)." && `activation_code` IS NULL LIMIT 1");
+      $findUsername = $this->dbConn->table('users')->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
     } catch (DbException $e) {
       $this->logFailedLogin($username);
       return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
@@ -720,12 +712,12 @@ class User extends BaseObject {
     //update last IP address.
     $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR']];
     $newUser->create_or_update($updateUser);
-    $newUser->app->fire('User.logIn', $newUser);
+    $newUser->fire('logIn');
     return ["location" => $newUser->url("globalFeed"), "status" => "Successfully logged in.", 'class' => 'success'];
   }
   public function logOut() {
     $_SESSION = [];
-    $this->app->fire('User.logOut', $this);
+    $this->fire('logOut');
     return session_destroy();
   }
   public function register($username, $email, $password, $password_confirmation) {
@@ -782,17 +774,17 @@ class User extends BaseObject {
     }
 
     // fire an event for this.
-    $this->app->fire('User.importMAL', $this, $listIDs);
+    $this->fire('importMAL', $listIDs);
 
     return $listIDs;
   }
   public function addAchievement(BaseAchievement $achievement) {
-    $this->app->fire('User.addAchievement', $this, ['id' => $achievement->id, 'points' => $achievement->points]);
+    $this->fire('addAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
     $updateArray = ['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)];
     return $this->create_or_update($updateArray);
   }
   public function removeAchievement(BaseAchievement $achievement) {
-    $this->app->fire('User.removeAchievement', $this, ['id' => $achievement->id, 'points' => $achievement->points]);
+    $this->fire('removeAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
     return $this->create_or_update(['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() - pow(2, $achievement->id - 1)]);
   }
   public function switchUser($username, $switch_back=True) {
@@ -804,7 +796,7 @@ class User extends BaseObject {
     */
     if ($switch_back) {
       // get user entry in database.
-      $findUserID = intval($this->dbConn->firstValue("SELECT `id` FROM `users` WHERE `username` = ".$this->dbConn->escape($username)." && `id` != ".$this->id." LIMIT 1"));
+      $findUserID = intval($this->dbConn->table('users')->fields('id')->where(['username' => $username, ['id != ?', $this->id]])->limit(1)->firstValue());
       if (!$findUserID) {
         return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error'];
       }
@@ -930,7 +922,7 @@ class User extends BaseObject {
           $this->app->delayedMessage('The activation code you provided was incorrect. Please check your email and try again.', 'error');
           $this->app->redirect();
         } else {
-          $this->app->dbConn->query("UPDATE `users` SET `activation_code` = NULL WHERE `id` = ".intval($this->id));
+          $this->app->dbConn->table('users')->set(['activation_code' => Null])->where(['id' => $this->id])->update();
           $this->setCurrentSession();
 
           //update last IP address and last active.
@@ -999,7 +991,7 @@ class User extends BaseObject {
           }
         }
         $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
-        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['maxTime']) , $this->app->serverTimeZone) : Null;
+        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime']) , $this->app->serverTimeZone) : Null;
         $output .= $this->view('feed', ['entries' => $this->profileFeed($minTime, $maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         echo $output;
         exit;
@@ -1113,8 +1105,8 @@ class User extends BaseObject {
       $maxTime = new DateTime("now", $this->app->serverTimeZone);
     }
     $feedEntries = $this->animeList()->entries($minTime, $maxTime, $numEntries);
-    $feedEntries->append($this->comments()->filter(function($a) use ($maxTime) {
-      return $a->time < $maxTime;
+    $feedEntries->append($this->comments()->filter(function($a) use ($maxTime, $minTime) {
+      return $a->time < $maxTime && $a->time > $minTime;
     })->sort(buildPropertySorter("time", -1))->limit($numEntries));
     return $feedEntries;
     //return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");

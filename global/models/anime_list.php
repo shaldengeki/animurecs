@@ -1,8 +1,8 @@
 <?php
 class AnimeList extends BaseList {
   // anime list.
-  public static $modelTable = "anime_lists";
-  public static $modelPlural = "animeLists";
+  public static $MODEL_TABLE = "anime_lists";
+  public static $MODEL_PLURAL = "animeLists";
 
 
   public function __construct(Application $app, $user_id=Null) {
