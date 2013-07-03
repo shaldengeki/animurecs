@@ -222,11 +222,7 @@ class Comment extends BaseObject {
             $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
             $this->app->redirect($targetParent->url());
           }
-          $this->app->logger->err("Comment: ".print_r($_POST['comments'], True));
           $createComment = $targetComment->create_or_update($_POST['comments']);
-          ob_start();
-          var_dump($createComment);
-          $this->app->logger->err("Result: ".ob_get_clean());
           if ($createComment) {
             $this->app->delayedMessage("Succesfully commented.", 'success');
             $this->app->redirect($targetParent->url());
