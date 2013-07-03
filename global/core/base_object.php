@@ -176,7 +176,7 @@ abstract class BaseObject {
   // events cascade up the object hierarchy
   public function fire($event, $params=Null) {
     $this->app->fire(static::MODEL_NAME().'.'.$event, $this, $params);
-    $this->fireParentEvents('.'.$event, $params);
+    $this->fireParentEvents($event, $params);
   }
   // shorthand methods.
   public function beforeCreate($createParams) {
