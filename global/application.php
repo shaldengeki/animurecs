@@ -190,6 +190,7 @@ class Application {
       $this->display_error(500);
     }
 
+    session_set_cookie_params(0, '/', '.animurecs.com', True, True);
     session_start();
 
     date_default_timezone_set(Config::SERVER_TIMEZONE);
