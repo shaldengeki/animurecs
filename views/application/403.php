@@ -3,7 +3,6 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $params['redirect_to'] = $this->currentUrl();
 ?>
 <div class='center-horizontal'>
 <?php

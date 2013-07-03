@@ -12,6 +12,12 @@
           <h2>Find great shows without the hassle.</h2>
         </div>
       </div>
+      <div class='row-fluid landing-container'>
+        &nbsp;
+      </div>
+      <div class='row-fluid landing-container'>
+        <p class='lead'>Sign up for Animurecs for free: <a class='btn btn-large btn-success' href='/register.php'>Sign up</a></p>
+      </div>
       <div class="row-fluid landing-container">
         <div class="landing-box">
           <p class='lead'>Track your anime progress. Never have to worry about forgetting what episode you're on.</p>

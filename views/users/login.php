@@ -1,12 +1,11 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $params['redirect_to'] = isset($params['redirect_to']) ? $params['redirect_to'] : (isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : $this->app->previousUrl());
 ?>
   <p>
     Don't have an account? <a href='/register.php'>Sign up for one today!</a>
   </p>
-  <?php echo $this->app->form(['action' => '/login.php?redirect_to='.rawurlencode(rawurldecode($params['redirect_to'])), 'class' => 'form-horizontal']); ?>
+  <?php echo $this->app->form(['action' => '/login.php', 'class' => 'form-horizontal']); ?>
     <div class='control-group'>
       <label class='control-label' for='username'>Username</label>
       <div class='controls'>
