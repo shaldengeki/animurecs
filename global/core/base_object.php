@@ -226,11 +226,10 @@ abstract class BaseObject {
       // add this object.
       $this->dbConn->set(['created_at=NOW()']);
       $this->beforeCreate([$object]);
-      $insertID = $this->dbConn->set($object)->insert();
-      if (!$insertID) {
+      if ($this->dbConn->set($object)->insert()) {
         throw new DbException("Could not insert into ".static::$MODEL_TABLE.": ".$this->dbConn->queryString());
       } else {
-        $this->id = intval($insertID);
+        $this->id = intval($this->dbConn->lastInsertId);
       }
       $modelName = $this->MODEL_NAME();
       $newObject = new $modelName($this->app, $this->id);

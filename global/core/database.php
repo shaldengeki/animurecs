@@ -35,7 +35,7 @@ class DbConn extends PDO {
   public function reset() {
     // clears query parameters.
     $this->type = "SELECT";
-    $this->table = $this->offset = $this->limit = Null;
+    $this->table = $this->offset = $this->limit = $this->lastInsertId = Null;
     $this->fields = $this->joins = $this->sets = $this->wheres = $this->values = $this->groups = $this->orders = $this->params = [];
     return $this;
   }
@@ -215,9 +215,8 @@ class DbConn extends PDO {
     $this->type = "INSERT";
     parent::beginTransaction();
     $this->query();
-    $insertId = parent::lastInsertId();
-    parent::commit();
-    return $insertId;
+    $this->lastInsertId = parent::lastInsertId();
+    return parent::commit();
   }
   public function firstRow() {
     // pulls the first row returned from the query.
