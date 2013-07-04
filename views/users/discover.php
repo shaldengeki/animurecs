@@ -8,7 +8,7 @@
     <li class='active ajaxTab' data-url="<?php echo $this->url('recommendations'); ?>"><a href='#yourRecs' data-toggle='tab'>Your Recs</a></li>
     <li class='ajaxTab' data-url="<?php echo $this->url('friendRecs'); ?>"><a href='#friendRecs' data-toggle='tab'>Friends</a></li>
     <li class='ajaxTab' data-url="<?php echo $this->url('groupwatches'); ?>"><a href='#groupwatches' data-toggle='tab'>Groupwatches</a></li>
-    <li><?php echo $firstAnime->link("index", "Browse"); ?></li>
+    <li><?php echo $firstAnime->link("index", "Top Anime"); ?></li>
   </ul>
   <div class='tab-content'>
     <div class='tab-pane active' id='yourRecs'>

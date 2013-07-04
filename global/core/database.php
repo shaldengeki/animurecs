@@ -36,7 +36,7 @@ class DbConn extends PDO {
     // clears query parameters.
     $this->type = "SELECT";
     $this->table = $this->offset = $this->limit = $this->lastInsertId = Null;
-    $this->fields = $this->joins = $this->sets = $this->wheres = $this->values = $this->groups = $this->orders = $this->params = [];
+    $this->fields = $this->joins = $this->sets = $this->wheres = $this->values = $this->groups = $this->havings = $this->orders = $this->params = [];
     return $this;
   }
 
@@ -120,6 +120,11 @@ class DbConn extends PDO {
     return $this;
   }
 
+  public function having() {
+    $this->havings = array_merge($this->havings, func_get_args());
+    return $this;
+  }
+
   public function order() {
     $this->orders = array_merge($this->orders, func_get_args());
     return $this;
@@ -160,6 +165,9 @@ class DbConn extends PDO {
     }
     if ($this->groups) {
       $queryList[] = implode(" ", ["GROUP BY", implode(",", $this->groups)]);
+    }
+    if ($this->havings) {
+      $queryList[] = implode(" ", ["HAVING", implode("&&", $this->havings)]);
     }
     if ($this->orders) {
       $queryList[] = implode(" ", ["ORDER BY", implode(",", $this->orders)]);

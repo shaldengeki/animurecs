@@ -479,27 +479,42 @@ class Anime extends BaseObject {
         break;
       default:
       case 'index':
-        $title = "Browse Anime";
-        $resultsPerPage = 25;
+        $resultsPerPage = 24;
         if (!isset($_REQUEST['search'])) {
-          if ($this->app->user->isAdmin()) {
-            $numPages = ceil($this->dbConn->table(static::$MODEL_TABLE)->fields("COUNT(*)")->count()/$resultsPerPage);
-            $animeIDs = $this->dbConn->table(static::$MODEL_TABLE)->fields(static::$MODEL_TABLE.".id")->order(static::$MODEL_TABLE.".title ASC")->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
-          } else {
-            $numPages = ceil($this->dbConn->table(static::$MODEL_TABLE)->fields("COUNT(*)")->where(["approved_on != ''"])->count()/$resultsPerPage);
-            $animeIDs = $this->dbConn->table(static::$MODEL_TABLE)->fields(static::$MODEL_TABLE.".id")->where(["approved_on != ''"])->order(static::$MODEL_TABLE.".title ASC")->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+          // top anime listing.
+          $title = "Top Anime";
+          $numPages = ceil(Anime::count($this->app)/$resultsPerPage);
+          $this->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) `p`')
+            ->fields('anime_lists.anime_id', 'AVG(score) AS avg', 'STDDEV(score) AS stddev', 'COUNT(*) AS count', '((((AVG(score)-1)/9) + ( POW(STDDEV(score), 2) / (2.0 * COUNT(*)) ) - STDDEV(score) * SQRT( ((AVG(score)-1)/9) * (1.0 - ((AVG(score)-1)/9)) / COUNT(*) + ( POW(STDDEV(score), 2) / ( 4.0 * POW(COUNT(*), 2) ) ) )) / (1.0 + (POW(STDDEV(score), 2) / COUNT(*))) * 9) + 1 AS wilson')
+            ->join('anime_lists ON anime_lists.user_id=p.user_id && anime_lists.anime_id=p.anime_id && anime_lists.time=p.time');
+          if (!$this->app->user->isAdmin()) {
+            $this->dbConn->join('anime ON anime.id=anime_lists.anime_id')
+              ->where(['anime.approved_on IS NOT NULL']);
           }
+          $animeQuery = $this->dbConn->where(['anime_lists.score != 0'])
+              ->group('p.anime_id')
+              ->having('COUNT(*) > 9')
+              ->order('wilson DESC')
+              ->offset(($this->app->page-1)*$resultsPerPage)
+              ->limit($resultsPerPage)
+              ->query();
           $anime = [];
-          while ($animeID = $animeIDs->fetch()) {
-            $anime[] = new Anime($this->app, intval($animeID['id']));
+          $wilsons = [];
+          while ($animeRow = $animeQuery->fetch()) {
+            $anime[] = new Anime($this->app, intval($animeRow['anime_id']));
+            if (isset($animeRow['wilson'])) {
+              $wilsons[$animeRow['anime_id']] = $animeRow['wilson'];
+            }
           }
         } else {
+          // user is searching for an anime.
+          $title = "Search for Anime";
           $blankAlias = new Alias($this->app, 0, $this);
           $searchResults = $blankAlias->search($_REQUEST['search']);
           $anime = array_slice($searchResults, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage));
           $numPages = ceil(count($searchResults)/$resultsPerPage);
         }
-        $output = $this->view("index", ['anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
+        $output = $this->view("index", ['title' => $title, 'anime' => $anime, 'wilsons' => $wilsons, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);
