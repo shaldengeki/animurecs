@@ -15,6 +15,7 @@ class User extends BaseObject {
   protected $achievementMask;
   protected $points;
   protected $lastActive;
+  protected $lastLogin;
   protected $lastIP;
   protected $avatarPath;
 
@@ -105,6 +106,9 @@ class User extends BaseObject {
   }
   public function lastActive() {
     return new DateTime($this->returnInfo('lastActive'), $this->app->serverTimeZone);
+  }
+  public function lastLogin() {
+    return new DateTime($this->returnInfo('lastLogin'), $this->app->serverTimeZone);
   }
   public function lastIP() {
     return $this->returnInfo('lastIP');
@@ -687,9 +691,10 @@ class User extends BaseObject {
   }
   public function logIn($username, $password) {
     // rate-limit requests.
-    $numFailedRequests = $this->dbConn->table('failed_logins')->fields('COUNT(*)')->where(['ip' => $_SERVER['REMOTE_ADDR'], "time > NOW() - INTERVAL 1 HOUR"])->count();
-    if ($numFailedRequests > self::$maxFailedLogins) {
-      return ["location" => "/", "status" => "You have had too many unsuccessful login attempts. Please wait awhile and try again.", 'class' => 'error'];
+    $failedLoginCount = $this->dbConn->table('failed_logins')->fields('COUNT(*)')->where(['ip' => $_SERVER['REMOTE_ADDR'], "time > NOW() - INTERVAL 1 HOUR"])->count();
+    if ($failedLoginCount > self::$maxFailedLogins) {
+      $this->app->delayedMessage("You have had too many unsuccessful login attempts. Please wait awhile and try again.", "error");
+      return False;
     }
   
     // check for existence of username and matching password.
@@ -698,22 +703,38 @@ class User extends BaseObject {
       $findUsername = $this->dbConn->table('users')->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
     } catch (DbException $e) {
       $this->logFailedLogin($username);
-      return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
+      $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
+      return False;
     }
     if (!$findUsername || !$bcrypt->verify($password, $findUsername['password_hash'])) {
       $this->logFailedLogin($username);
-      return ["location" => "/", "status" => "Could not log in with the supplied credentials.", 'class' => 'error'];
+      $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
+      return False;
     }
 
     // sign user in.
     $newUser = new User($this->app, Null, $findUsername['username']);
     $newUser->setCurrentSession();
 
-    //update last IP address.
-    $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR']];
+    // check for failed logins.
+    $this->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $this->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC');
+    $this->app->logger->err($this->dbConn->queryString());
+    $this->app->logger->err(print_r($this->dbConn->params, True));
+    $failedLoginQuery = $this->dbConn->assoc();
+    if ($failedLoginQuery) {
+      foreach ($failedLoginQuery as $failedLogin) {
+        $this->app->delayedMessage('There was a failed login attempt from '.$failedLogin['ip'].' at '.$failedLogin['time'].'.', 'error');
+      }
+    }
+
+    //update last login info.
+    $currTime = new DateTime('now', $this->app->serverTimeZone);
+    $updateUser = ['last_login' => $currTime->format('Y-m-d H:i:s') 'last_ip' => $_SERVER['REMOTE_ADDR']];
     $newUser->create_or_update($updateUser);
     $newUser->fire('logIn');
-    return ["location" => $newUser->url("globalFeed"), "status" => "Successfully logged in.", 'class' => 'success'];
+    $this->app->delayedMessage("Successfully logged in.", "success");
+
+    return True;
   }
   public function logOut() {
     $_SESSION = [];
