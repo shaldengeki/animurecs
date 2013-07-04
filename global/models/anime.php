@@ -398,7 +398,7 @@ class Anime extends BaseObject {
       $result = $this->app->recsEngine->similarAnime($this, $start, $n);
       $this->app->cache->set($cacheKey, $result);
     }
-    return new AnimeGroup($this->app, array_map(function($a) {
+    return new AnimeGroup($this->app, $result === Null ? [] : array_map(function($a) {
       return $a['id'];
     }, $result));
   }
