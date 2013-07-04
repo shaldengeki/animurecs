@@ -717,7 +717,7 @@ class User extends BaseObject {
     $newUser->setCurrentSession();
 
     // check for failed logins.
-    $this->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $this->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC');
+    $this->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC');
     $this->app->logger->err($this->dbConn->queryString());
     $this->app->logger->err(print_r($this->dbConn->params, True));
     $failedLoginQuery = $this->dbConn->assoc();
@@ -729,7 +729,7 @@ class User extends BaseObject {
 
     //update last login info.
     $currTime = new DateTime('now', $this->app->serverTimeZone);
-    $updateUser = ['last_login' => $currTime->format('Y-m-d H:i:s') 'last_ip' => $_SERVER['REMOTE_ADDR']];
+    $updateUser = ['last_login' => $currTime->format('Y-m-d H:i:s'), 'last_ip' => $_SERVER['REMOTE_ADDR']];
     $newUser->create_or_update($updateUser);
     $newUser->fire('logIn');
     $this->app->delayedMessage("Successfully logged in.", "success");
