@@ -670,7 +670,7 @@ class User extends BaseObject {
   }
   public function logFailedLogin($username) {
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
-    $insert_log = $this->dbConn->table('failed_logins')->fields('ip', 'time', 'username')->values($_SERVER['REMOTE_ADDR'], $dateTime->format("Y-m-d H:i:s"), $username)->insert();
+    $insert_log = $this->dbConn->table('failed_logins')->fields('ip', 'time', 'username')->values([$_SERVER['REMOTE_ADDR'], $dateTime->format("Y-m-d H:i:s"), $username])->insert();
   }
   private function setCurrentSession() {
     // sets the current session to this user.

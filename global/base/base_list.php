@@ -235,7 +235,7 @@ abstract class BaseList extends BaseObject {
       ];
     }
     $this->uniqueListAvg = ($uniqueListCount === 0) ? 0 : $uniqueListSum / $uniqueListCount;
-    $this->uniqueListStdDev = ($uniqueListCount === 0) ? 0 : pow($uniqueListStdDev / ($uniqueListCount - 1), 0.5);
+    $this->uniqueListStdDev = ($uniqueListCount <= 1) ? 0 : pow($uniqueListStdDev / ($uniqueListCount - 1), 0.5);
     return $returnList;
   }
   public function uniqueList() {
