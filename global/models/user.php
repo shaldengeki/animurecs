@@ -890,7 +890,7 @@ class User extends BaseObject {
       case 'edit':
         if (isset($_POST['users']) && is_array($_POST['users'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
-          if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->usermask()) || $this->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask())) {
+          if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->app->user->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->app->user->usermask()) || $this->app->user->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask())) {
             $this->app->delayedMessage("You can't set permissions beyond your own userlevel: ".array_sum($_POST['users']['usermask']), 'error');
             $this->app->redirect();
           }
