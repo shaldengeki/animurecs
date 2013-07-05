@@ -120,7 +120,7 @@ function convert_usermask_to_text($usermask) {
 
 function array_collect_properties($a, $property) {
   // collects the values of $property for each element of $a and returns a resultant array
-  // where they keys are preserved.
+  // where the keys are preserved.
   $result = [];
   foreach ($a as $key => $value) {
     if (property_exists($value, $property)) {

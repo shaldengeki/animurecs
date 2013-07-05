@@ -4,7 +4,7 @@
     exit;
   }
   $assetsVersion = 0.67;
-  $firstAnime = Anime::first($this);
+  $firstAnime = class_exists("Anime") ? Anime::first($this) : Null;
   $params['container'] = isset($params['container']) ? $params['container'] : True;
   $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
   $params['subtitle'] = isset($params['subtitle']) && $params['subtitle'] ? $params['subtitle'] : "Social Anime Recommendations";
@@ -55,7 +55,7 @@
         <div class='container-fluid'>
           <a href='/' class='brand'>Animurecs</a>
 <?php
-  if ($this->user->loggedIn()) {
+  if ($this->user && $this->user->loggedIn()) {
 ?>
           <ul class='nav'>
             <li class='divider-vertical'></li>
@@ -73,7 +73,7 @@
 ?>
           <ul class='nav pull-right'>
 <?php
-  if ($this->user->loggedIn()) {
+  if ($this->user && $this->user->loggedIn()) {
 ?>
             <li><?php echo $firstAnime->view('searchForm', [
               'form' => [
@@ -87,7 +87,7 @@
             ]); ?></li>
             <li id='navbar-alerts'>
 <?php
-    if ($this->user->outstandingFriendRequests) {
+    if ($this->user && $this->user->outstandingFriendRequests) {
 ?>
               <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-white'></i> <span class='msg-count'><span class='msg-count-inner'><?php echo count($this->user->outstandingFriendRequests); ?></span></span></a>
 <?php
@@ -106,12 +106,12 @@
                 <li><?php echo $this->user->link("show", "Profile"); ?></li>
                 <li><?php echo $this->user->link("edit", "Settings"); ?></li>
 <?php
-    if ($this->user->isAdmin() && !isset($this->user->switchedUser)) {
+    if ($this->user && $this->user->isAdmin() && !isset($this->user->switchedUser)) {
 ?>
                 <li><?php echo $this->user->link("switch_user", "Switch User"); ?></li>
 <?php
     }
-    if (isset($this->user->switchedUser) && is_numeric($this->user->switchedUser)) {
+    if ($this->user && isset($this->user->switchedUser) && is_numeric($this->user->switchedUser)) {
 ?>
                 <li><?php echo $this->user->link("switch_back", "Switch Back"); ?></li>
 <?php
@@ -123,7 +123,7 @@
   } else {
 ?>
                 <li>
-                  <?php echo $this->user->view('loginInline', $params); ?>
+                  <?php echo $this->user ? $this->user->view('loginInline', $params) : ""; ?>
                 </li>
 <?php
   }

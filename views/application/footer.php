@@ -4,7 +4,7 @@
     exit;
   }
   $params['container'] = isset($params['container']) ? $params['container'] : True;
-  $adminUser = new User($this, Null, 'shaldengeki');
+  $adminUser = class_exists("User") ? new User($this, Null, 'shaldengeki') : Null;
 ?>
       <footer>
         <hr />
@@ -14,7 +14,7 @@
           <li><a href='https://twitter.com/guocharles'>Twitter</a></li>
           <li><a href='https://github.com/shaldengeki/animurecs'>Github</a></li>
         </ul>
-        <p>Created and maintained by <?php echo $adminUser->link('show', $adminUser->username); ?>.</p>
+        <?php echo $adminUser ? "<p>Created and maintained by ".$adminUser->link('show', $adminUser->username).".</p>" : ""; ?>
 <?php
   if (Config::DEBUG_ON) {
 ?>

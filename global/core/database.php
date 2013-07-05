@@ -3,6 +3,10 @@ class DbException extends Exception {
   public function __construct($message = null, $code = 0, Exception $previous = null) {
     parent::__construct($message, $code, $previous);
   }
+  public function display() {
+    // displays end user-friendly output explaining the exception that occurred.
+    echo "A database error occurred: ".$this->message.". The staff has been notified; sorry for the inconvenience!";
+  }
 }
 
 class DbConn extends PDO {
@@ -18,14 +22,12 @@ class DbConn extends PDO {
     $this->password = $password;
     $this->database = $database;
     try {
-      parent::__construct('mysql:host='.$this->host.';port='.$this->port.';dbname='.$this->database.';charset=utf8', $this->username, $this->password);
-    } catch (Exception $e) {
+      parent::__construct('mysql:host='.$this->host.';port='.$this->port.';dbname='.$this->database.';charset=utf8', $this->username, $this->password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => $fetchMode
+      ]);
+    } catch (PDOException $e) {
       throw new DbException('Could not connect to the database', 0, $e);
-    }
-    parent::setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, $fetchMode);
-
-    if (Config::DEBUG_ON) {
-      parent::setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);      
     }
 
     $this->queryLog = [];

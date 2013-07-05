@@ -165,7 +165,7 @@ class Application {
       $this->display_exception($e);
     }
     try {
-      $this->dbConn = $this->_connectDB();
+      $this->_connectDB();
     } catch (DbException $e) {
       $this->statsd->increment("DbException");
       $this->logger->alert($e->__toString());
@@ -394,7 +394,7 @@ class Application {
   }
   public function display_exception($e) {
     // formats a (subclassed) instance of AppException for display to the end user.
-    echo $this->view('header').$e->display().$this->view('footer');
+    echo $this->view('header').$this->view('exception', ['exception' => $e]).$this->view('footer');
     exit;
   }
   public function check_partial_include($filename) {
@@ -465,7 +465,7 @@ class Application {
     return $_SESSION['prev_url'];
   }
   public function setPreviousUrl($url=Null) {
-    $_SESSION['prev_url'] = $url === Null ? $_SERVER['REQUEST_URI'] : $url;
+    $_SESSION['prev_url'] = $url === Null ? $this->currentUrl() : $url;
   }
   public function redirect($location=Null) {
     if ($location === Null) {
@@ -618,12 +618,8 @@ class Application {
   }
 
   public function form(array $params=Null) {
-    if (!isset($params['method'])) {
-      $params['method'] = "post";
-    }
-    if (!isset($params['accept-charset'])) {
-      $params['accept-charset'] = "UTF-8";
-    }
+    $params['method'] = isset($params['method']) ? $params['method'] : "post";
+    $params['accept-charset'] = isset($params['accept-charset']) ? $params['accept-charset'] : "UTF-8";
     $formAttrs = [];
     foreach ($params as $key=>$value) {
       $formAttrs[] = escape_output($key)."='".escape_output($value)."'";
@@ -689,7 +685,6 @@ class Application {
   public function totalPoints() {
     // total number of points earnable by users.
     if ($this->totalPoints == Null) {
-      $this->totalPoints = 0;
       foreach ($this->achievements as $achievement) {
         $this->totalPoints += $achievement->points;
       }
