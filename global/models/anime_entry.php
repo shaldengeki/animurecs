@@ -115,7 +115,7 @@ class AnimeEntry extends BaseEntry {
             $class = "error";
             break;
           }
-          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser]);
+          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser, 'user_id' => $targetUser->id]);
           if (!$targetEntry->allow($this->app->user, $this->app->action)) {
             $status = "You can't update someone else's anime list.";
             $class = "error";

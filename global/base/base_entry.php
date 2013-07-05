@@ -52,6 +52,11 @@ abstract class BaseEntry extends BaseObject {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'new':
+        if ($authingUser->loggedIn()) {
+          return True;
+        }
+        return False;
+        break;
       case 'edit':
       case 'delete':
         if ($authingUser->id == $this->userId() || $authingUser->isStaff()) {
