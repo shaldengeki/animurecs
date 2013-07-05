@@ -23,7 +23,7 @@
 ?>
 <div id='recommendation-content'>
   <div class='page-header'>
-    <h1>Recommended for you <small>Some series we think you'll like</small></h1>
+    <h1><?php echo $this->currentUser() ? "Recommended for you <small>Some series we think you'll like</small>" : escape_output($this->username)."'s recs <small>Some series we think they'll like</small>"; ?></h1>
   </div>
 <?php
   if ($animeGroup->length() < 1) {

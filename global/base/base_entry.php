@@ -52,6 +52,7 @@ abstract class BaseEntry extends BaseObject {
     // takes a user object and an action and returns a bool.
     switch($action) {
       case 'new':
+      case 'comment':
         if ($authingUser->loggedIn()) {
           return True;
         }
@@ -66,12 +67,6 @@ abstract class BaseEntry extends BaseObject {
         break;
       case 'index':
         if ($authingUser->isAdmin()) {
-          return True;
-        }
-        return False;
-        break;
-      case 'comment':
-        if ($authingUser->loggedIn()) {
           return True;
         }
         return False;

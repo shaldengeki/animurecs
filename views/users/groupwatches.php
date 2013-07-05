@@ -32,7 +32,7 @@
   }
 ?>
 <div class='page-header'>
-  <h1>Groupwatches <small>Shows you have in common with friends</small></h1>
+  <h1>Groupwatches <small>Shows <?php echo $this->currentUser() ? "you have" : escape_output($this->username)." has"; ?> in common with friends</small></h1>
 </div>
 
 <?php
