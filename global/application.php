@@ -595,10 +595,12 @@ class Application {
       } else {
         header('X-Frame-Options: SAMEORIGIN');
         try {
+          ob_start();
           echo $this->target->render();
           $this->statsd->timing("pageload", microtime(True) - $this->startRender);
           $this->statsd->memory('memory.peakusage');
           $this->setPreviousUrl();
+          echo ob_get_clean();
           exit;
         } catch (AppException $e) {
           $this->logger->err($e->__toString());
