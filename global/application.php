@@ -477,6 +477,12 @@ class Application {
   public function jsRedirect($location) {
     echo "window.location.replace(\"".Config::ROOT_URL."/".$location."\");";
   }
+  public function clearOutput() {
+    // clears all content in the output buffer(s).
+    while (ob_get_level()) {
+      ob_end_clean();
+    }
+  }
 
   public function init() {
     // start of application logic.
@@ -595,13 +601,13 @@ class Application {
           $this->setPreviousUrl();
           exit;
         } catch (AppException $e) {
-          ob_end_clean();
           $this->logger->err($e->__toString());
+          $this->clearOutput();
           $this->display_exception($e);
         } catch (Exception $e) {
-          ob_end_clean();
           $this->statsd->increment("Exception");
           $this->logger->err($e->__toString());
+          $this->clearOutput();
           $this->display_error(500);
         }
       }
