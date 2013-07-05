@@ -3,7 +3,7 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $assetsVersion = 0.66;
+  $assetsVersion = 0.67;
   $firstAnime = Anime::first($this);
   $params['container'] = isset($params['container']) ? $params['container'] : True;
   $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
