@@ -174,10 +174,10 @@ class Anime extends BaseObject {
     } catch (ValidationException $e) {
       $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($anime['title']) || strlen($anime['title']) < 1) {
+    if (!isset($anime['title']) || mb_strlen($anime['title']) < 1) {
       $validationErrors[] = "Anime must have a non-blank title";
     }
-    if (isset($anime['description']) && (strlen($anime['description']) < 1 || strlen($anime['description']) > 1000)) {
+    if (isset($anime['description']) && (mb_strlen($anime['description']) < 1 || mb_strlen($anime['description']) > 1000)) {
       $validationErrors[] = "Anime description must be between 1 and 1000 characters in length";
     }
     if (isset($anime['episode_count']) && ( !is_integral($anime['episode_count']) || intval($anime['episode_count']) < 0) ) {

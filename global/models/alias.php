@@ -64,7 +64,7 @@ class Alias extends BaseObject {
     } catch (ValidationException $e) {
       $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($alias['type']) || !$alias['type'] || strlen($alias['type']) < 1) {
+    if (!isset($alias['type']) || !$alias['type'] || mb_strlen($alias['type']) < 1) {
       $validationErrors[] = "Type must be set to something not-blank";
     }
     if (!isset($alias['parent_id']) || !is_integral($alias['parent_id']) || intval($alias['parent_id']) <= 0) {
@@ -77,7 +77,7 @@ class Alias extends BaseObject {
         $validationErrors[] = "Parent must exist";
       }
     }
-    if (!isset($alias['name']) || !$alias['name'] || strlen($alias['name']) < 1) {
+    if (!isset($alias['name']) || !$alias['name'] || mb_strlen($alias['name']) < 1) {
       $validationErrors[] = "Alias name must be set to something not-blank";
     }
     if ($validationErrors) {

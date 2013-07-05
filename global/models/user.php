@@ -458,7 +458,7 @@ class User extends BaseObject {
       }
     } else {
       if (isset($user['username'])) {
-        if (strlen($user['username']) < 1 || strlen($user['username']) > 40) {
+        if (mb_strlen($user['username']) < 1 || mb_strlen($user['username']) > 40) {
           $validationErrors[] = "Username must be between 1 and 40 characters";
         }
         // username must be unique if we're changing.
@@ -469,7 +469,7 @@ class User extends BaseObject {
     }
 
     if (isset($user['password']) && ($this->id === 0 || $user['password'] != '')) {
-     if (strlen($user['password']) < 6) {
+     if (mb_strlen($user['password']) < 6) {
         $validationErrors[] = "Password must be longer than 6 characters";
       }
       if (!isset($user['password_confirmation']) || $user['password_confirmation'] != $user['password']) {
@@ -477,7 +477,7 @@ class User extends BaseObject {
       }
     }
     if (isset($user['email'])) {
-      if (strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email'])) {
+      if (mb_strlen($user['email']) < 1 || !preg_match("/[0-9A-Za-z\\+\\-\\%\\.]+@[0-9A-Za-z\\.\\-]+\\.[A-Za-z]{2,4}/", $user['email'])) {
         $validationErrors[] = "Malformed email address";
       }
       // email must be unique if we're changing.
@@ -485,10 +485,10 @@ class User extends BaseObject {
         $validationErrors[] = "This email has already been taken. Try resetting your password!";
       }
     }
-    if (isset($user['activation_code']) && (strlen($user['activation_code']) < 0 || strlen($user['activation_code']) > 20)) {
+    if (isset($user['activation_code']) && (mb_strlen($user['activation_code']) < 0 || mb_strlen($user['activation_code']) > 20)) {
       $validationErrors[] = "Your activation code must be at most 20 characters";
     }
-    if (isset($user['about']) && (strlen($user['about']) < 0 || strlen($user['about']) > 600)) {
+    if (isset($user['about']) && (mb_strlen($user['about']) < 0 || mb_strlen($user['about']) > 600)) {
       $validationErrors[] = "Your bio must be at most 600 characters";
     }
     if (isset($user['usermask']) && ( !is_integral($user['usermask']) || intval($user['usermask']) < 0) ) {

@@ -12,10 +12,10 @@ function humanize($str) {
 }
 
 function shortenText($text, $maxLen=100) {
-  if (strlen($text) <= $maxLen) {
+  if (mb_strlen($text) <= $maxLen) {
     return $text;
   } else {
-    return substr($text, 0, $maxLen-3)."...";
+    return mb_substr($text, 0, $maxLen-3)."...";
   }
 }
 
@@ -67,7 +67,7 @@ function js_redirect_to($redirect_array) {
   
   $redirect = Config::ROOT_URL."/".$location;
   if ($status != "") {
-    if (strpos($location, "?") === FALSE) {
+    if (mb_strpos($location, "?") === FALSE) {
       $redirect .= "?status=".rawurlencode($status)."&class=".rawurlencode($class);
     } else {
       $redirect .= "&status=".rawurlencode($status)."&class=".rawurlencode($class);

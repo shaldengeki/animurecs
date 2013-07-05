@@ -10,7 +10,7 @@ class TestAchievement extends BaseAchievement {
   protected $dependencies=[];
 
   public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
-    if ($this->alreadyAwarded($this->user($parent)) || (isset($updateParams['about']) && $updateParams['about'] != $parent->about && strlen($updateParams['about']) > 0)) {
+    if ($this->alreadyAwarded($this->user($parent)) || (isset($updateParams['about']) && $updateParams['about'] != $parent->about && mb_strlen($updateParams['about']) > 0)) {
       return True;
     }
     return False;
