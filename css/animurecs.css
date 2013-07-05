@@ -1098,8 +1098,10 @@ ul.tagCloud li.type{background-color:#aa00aa;}ul.tagCloud li.type p a,ul.tagClou
 ul.tagCloud li{float:left;height:18px;margin:3px;padding:2px 3px;font-size:11px;border:1px solid black;border-radius:5px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}ul.tagCloud li p,ul.tagCloud li a{display:inline;margin:0;padding:0;}
 ul.tagCloud li a,ul.tagCloud li a:hover,ul.tagCloud li a:active,ul.tagCloud li a:visited{text-decoration:none;color:inherit;}
 ul.tagCloud li span a,ul.tagCloud li span a:hover,ul.tagCloud li span a:active,ul.tagCloud li span a:visited{color:#A6B3CF;font-weight:bold;margin-left:5px;}
-.groupwatch-category ul.media-list .groupwatch-entry{padding-bottom:20px;}.groupwatch-category ul.media-list .groupwatch-entry a.pull-left{text-align:center;}.groupwatch-category ul.media-list .groupwatch-entry a.pull-left img{max-width:50%;margin:0 auto;float:none;}
+.groupwatch-category ul.media-list .groupwatch-entry{padding-bottom:20px;}.groupwatch-category ul.media-list .groupwatch-entry .pull-left{text-align:center;width:20%;}.groupwatch-category ul.media-list .groupwatch-entry .pull-left a img{margin:0 auto;float:none;}
+.groupwatch-category ul.media-list .groupwatch-entry .pull-left a h1,.groupwatch-category ul.media-list .groupwatch-entry .pull-left a h2,.groupwatch-category ul.media-list .groupwatch-entry .pull-left a h3,.groupwatch-category ul.media-list .groupwatch-entry .pull-left a h4{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;}
 .groupwatch-category ul.media-list .groupwatch-entry div.media-body{padding-top:30px;}
+.groupwatch-category ul.media-list .groupwatch-entry ul.item-grid li{width:19%;}
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}

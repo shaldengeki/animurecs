@@ -25,10 +25,32 @@
       }
     }
     $nonZeroGroupwatches = $nonZeroGroupwatches || $catGroupwatches;
+    foreach ($catGroupwatches as $animeID => $groupwatch) {
+      usort($groupwatch['users'], function($a, $b) use ($animeID) {
+        return ($a->animeList()->uniqueList()[$animeID]['episode'] < $b->animeList()->uniqueList()[$animeID]['episode']) ? 1 : -1;
+      });
+      $catGroupwatches[$animeID] = $groupwatch; 
+    }
     $groupwatches[$category] = $catGroupwatches;
   }
   if ($nonZeroGroupwatches) {
     $predictedRatings = $this->app->recsEngine->predict($this, $anime, 0, count($anime));
+  }
+  foreach ($groupwatches as $category=>$groupwatchList) {
+    usort($groupwatchList, function($a, $b) use ($predictedRatings) {
+      if (!isset($predictedRatings[$a['anime']->id])) {
+        if (!isset($predictedRatings[$b['anime']->id])) {
+          return 0;
+        } else {
+          return 1;
+        }
+      } elseif (!isset($predictedRatings[$b['anime']->id])) {
+        return -1;
+      } else {
+        return ($predictedRatings[$a['anime']->id] < $predictedRatings[$b['anime']->id]) ? 1 : -1;
+      }
+    });
+    $groupwatches[$category] = $groupwatchList;
   }
 ?>
 <div class='page-header'>
@@ -48,7 +70,11 @@
 ?>
   <ul class='media-list'>
     <li class='media groupwatch-entry'>
-      <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title())."</h4>".$groupwatch['anime']->imageTag(['class' => 'media-object span3'])."<p><em>Predicted rating: ".round($predictedRatings[$groupwatch['anime']->id], 2)."</em></p>", Null, True, ['class' => 'pull-left', 'title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
+      <div class='pull-left'>
+        <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title())."</h4>", Null, True, ['title' => $groupwatch['anime']->title, 'data-toggle' => 'tooltip', 'data-placement' => 'top']); ?>
+        <?php echo $groupwatch['anime']->link("show", $groupwatch['anime']->imageTag(['class' => 'media-object span3']), Null, True, ['title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
+        <p><em>Predicted rating: <?php echo round($predictedRatings[$groupwatch['anime']->id], 2); ?></em></p>
+      </div>
       <div class="media-body">
         <ul class='item-grid'>
 <?php
