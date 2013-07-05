@@ -320,7 +320,7 @@ class Anime extends BaseObject {
   }
   public function getLatestEntries() {
     // retrieves the latest entries for each user for this anime.
-    // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
+    // retrieves a list of typeID, time, status, score, part_name arrays corresponding to the latest list entry for each thing the user has consumed.
     $entryQuery = $this->dbConn->raw("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
                                         SELECT MAX(`id`) AS `id` FROM `anime_lists`
                                         WHERE `anime_id` = ".intval($this->id)."

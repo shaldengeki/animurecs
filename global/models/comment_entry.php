@@ -4,6 +4,9 @@ class CommentEntry extends BaseEntry {
   public static $MODEL_TABLE = "comments";
   public static $MODEL_PLURAL = "comments";
   public static $MODEL_URL = "comment_entries";
+  public static $ENTRY_TYPE = "Comment";
+  public static $TYPE_VERB = "watching";
+  public static $TYPE_ID = "comment_id";
 
   protected $comment, $commentId;
   protected $parent;
@@ -16,11 +19,6 @@ class CommentEntry extends BaseEntry {
     } else {
       $this->comment = $this->commentId = Null;
     }
-    $this->entryType = "Comment";
-    $this->typeVerb = "watching";
-    $this->feedType = "Comment";
-    $this->entryTypeLower = strtolower($this->entryType);
-    $this->typeID = $this->entryTypeLower.'_id';
   }
   public function commentId() {
     return $this->returnInfo('id');

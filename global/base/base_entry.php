@@ -4,6 +4,8 @@ abstract class BaseEntry extends BaseObject {
   // feed entry class object.
   use Commentable;
 
+  public static $ENTRY_TYPE = "";
+
   protected $user, $userId;
   protected $time;
   protected $status, $score;
@@ -87,7 +89,7 @@ abstract class BaseEntry extends BaseObject {
     try {
       $user = new User($this->app, intval($entry['user_id']));
       $user->getInfo();
-      $type = new $this->entryType($this->app, intval($entry[$this->typeID]));
+      $type = new static::$ENTRY_TYPE($this->app, intval($entry[static::$TYPE_ID]));
       $type->getInfo();
     } catch (Exception $e) {
       return False;
@@ -99,15 +101,14 @@ abstract class BaseEntry extends BaseObject {
     foreach ($entry as $parameter => $value) {
       if (!is_array($value)) {
         if (is_numeric($value)) {
-          $entry[$parameters] = intval($value);
+          $entry[$parameter] = intval($value);
         }
       }
     }
 
     // check to see if this is an update.
-    $entryGroup = $this->entries();
     $this->dbConn->table(static::$MODEL_TABLE);
-    if (isset($entryGroup->entries()[intval($entry['id'])])) {
+    if ($this->id != 0) {
       $this->beforeUpdate($entry);
       if (!$this->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update()) {
         return False;
@@ -118,12 +119,13 @@ abstract class BaseEntry extends BaseObject {
       $this->beforeCreate($entry);
       $this->dbConn->set($entry);
       if (!isset($entry['time'])) {
-        $this->dbConn->set(['`time` = NOW()']);
+        $this->dbConn->set(['time=NOW()']);
       }
       if (!$this->dbConn->insert()) {
         return False;
       }
       $returnValue = intval($this->dbConn->lastInsertId);
+      $entry['id'] = $returnValue;
       $this->afterCreate($entry);
     }
     return $returnValue;

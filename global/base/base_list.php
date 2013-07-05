@@ -3,6 +3,8 @@ abstract class BaseList extends BaseObject {
   // base list from which anime and manga lists inherit methods and properties.
   use Feedable;
 
+  public static $PART_NAME, $LIST_TYPE, $TYPE_VERB, $FEED_TYPE, $TYPE_ID = "";
+
   public $user_id;
   protected $user;
 
@@ -12,16 +14,8 @@ abstract class BaseList extends BaseObject {
 
   protected $entries, $uniqueList;
 
-  protected $partName, $listType, $listTypeLower, $typeVerb, $typeID, $feedType;
-
   public function __construct(Application $app, $user_id=Null) {
     parent::__construct($app, $user_id);
-    $this->partName = "";
-    $this->listType = "";
-    $this->typeVerb = "";
-    $this->listTypeLower = strtolower($this->listType);
-    $this->feedType = "";
-    $this->typeID = $this->listTypeLower.'_id';
     // strings with which to build feed messages.
     // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
     $this->statusStrings = [0 => [0 => "did something mysterious with [TITLE]",
@@ -60,7 +54,7 @@ abstract class BaseList extends BaseObject {
     try {
       $user = new User($this->app, intval($entry['user_id']));
       $user->getInfo();
-      $type = new $this->listType($this->app, intval($entry[$this->typeID]));
+      $type = new static::$LIST_TYPE($this->app, intval($entry[static::$TYPE_ID]));
       $type->getInfo();
     } catch (Exception $e) {
       return False;
@@ -69,8 +63,6 @@ abstract class BaseList extends BaseObject {
       if (!is_array($value)) {
         if (is_numeric($value)) {
           $entry[$parameter] = intval($value);
-        } else {
-          $entry[$parameter] = $this->dbConn->escape($value);
         }
       }
     }
@@ -98,11 +90,11 @@ abstract class BaseList extends BaseObject {
         return False;
       }
       // update list locally.
-      if ($this->uniqueList()[intval($entry[$this->typeID])]['score'] != intval($entry['score']) || $this->uniqueList()[intval($entry[$this->typeID])]['status'] != intval($entry['status']) || $this->uniqueList()[intval($entry[$this->typeID])][$this->partName] != intval($entry[$this->partName])) {
+      if ($this->uniqueList()[intval($entry[static::$TYPE_ID])]['score'] != intval($entry['score']) || $this->uniqueList()[intval($entry[static::$TYPE_ID])]['status'] != intval($entry['status']) || $this->uniqueList()[intval($entry[static::$TYPE_ID])][static::$PART_NAME] != intval($entry[static::$PART_NAME])) {
         if (intval($entry['status']) == 0) {
-          unset($this->uniqueList[intval($entry[$this->typeID])]);
+          unset($this->uniqueList[intval($entry[static::$TYPE_ID])]);
         } else {
-          $this->uniqueList[intval($entry[$this->typeID])] = [$this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName])];
+          $this->uniqueList[intval($entry[static::$TYPE_ID])] = [static::$TYPE_ID => intval($entry[static::$TYPE_ID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), static::$PART_NAME => intval($entry[static::$PART_NAME])];
         }
       }
       $returnValue = intval($entry['id']);
@@ -113,7 +105,7 @@ abstract class BaseList extends BaseObject {
         $dateTime = new DateTime('now', $this->app->serverTimeZone);
         $entry['time'] = $dateTime->format("Y-m-d H:i:s");
       }
-      $this->beforeUpdate($entry);
+      $this->beforeCreate($entry);
       $insertEntry = $this->dbConn->set($entry)->insert();
       if (!$insertEntry) {
         return False;
@@ -123,11 +115,11 @@ abstract class BaseList extends BaseObject {
       // insert list locally.
       $this->uniqueList();
       if (intval($entry['status']) == 0) {
-        unset($this->uniqueList[intval($entry[$this->typeID])]);
+        unset($this->uniqueList[intval($entry[static::$TYPE_ID])]);
       } else {
-        $this->uniqueList[intval($entry[$this->typeID])] = [$this->typeID => intval($entry[$this->typeID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), $this->partName => intval($entry[$this->partName])];
+        $this->uniqueList[intval($entry[static::$TYPE_ID])] = [static::$TYPE_ID => intval($entry[static::$TYPE_ID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), static::$PART_NAME => intval($entry[static::$PART_NAME])];
       }
-      $this->afterUpdate($entry);
+      $this->afterCreate($entry);
     }
     //$this->entries[intval($returnValue)] = $entry;
     return $returnValue;
@@ -191,7 +183,7 @@ abstract class BaseList extends BaseObject {
     $returnList = [];
     $entries = $this->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->order('time DESC')->query();
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
-    $entryType = $this->listType."Entry";
+    $entryType = static::$LIST_TYPE."Entry";
     while ($entry = $entries->fetch()) {
       $entry['list'] = $this;
       $returnList[intval($entry['id'])] = new $entryType($this->app, intval($entry['id']), $entry);
@@ -209,11 +201,11 @@ abstract class BaseList extends BaseObject {
     return $returnList;
   }
   public function getUniqueList() {
-    // retrieves a list of $this->typeID, time, status, score, $this->partName arrays corresponding to the latest list entry for each thing the user has consumed.
-    $listQuery = $this->dbConn->raw("SELECT `".static::$MODEL_TABLE."`.`id`, `".$this->typeID."`, `time`, `score`, `status`, `".$this->partName."` FROM (
+    // retrieves a list of static::$TYPE_ID, time, status, score, static::$PART_NAME arrays corresponding to the latest list entry for each thing the user has consumed.
+    $listQuery = $this->dbConn->raw("SELECT `".static::$MODEL_TABLE."`.`id`, `".static::$TYPE_ID."`, `time`, `score`, `status`, `".static::$PART_NAME."` FROM (
                                         SELECT MAX(`id`) AS `id` FROM `".static::$MODEL_TABLE."`
                                         WHERE `user_id` = ".intval($this->user_id)."
-                                        GROUP BY `".$this->typeID."`
+                                        GROUP BY `".static::$TYPE_ID."`
                                       ) `p` INNER JOIN `".static::$MODEL_TABLE."` ON `".static::$MODEL_TABLE."`.`id` = `p`.`id`
                                       WHERE `status` != 0
                                       ORDER BY `status` ASC, `score` DESC");
@@ -225,13 +217,13 @@ abstract class BaseList extends BaseObject {
         $uniqueListSum += intval($row['score']);
         $uniqueListStdDev += pow(intval($row['score']) - $this->uniqueListAvg, 2);
       }
-      $returnList[$row[$this->typeID]] = [
-        $this->listTypeLower => new $this->listType($this->app, intval($row[$this->typeID])),
+      $returnList[$row[static::$TYPE_ID]] = [
+        strtolower(static::$LIST_TYPE) => new static::$LIST_TYPE($this->app, intval($row[static::$TYPE_ID])),
         'id' => $row['id'],
         'time' => $row['time'],
         'score' => $row['score'],
         'status' => $row['status'],
-        $this->partName => $row[$this->partName]
+        static::$PART_NAME => $row[static::$PART_NAME]
       ];
     }
     $this->uniqueListAvg = ($uniqueListCount === 0) ? 0 : $uniqueListSum / $uniqueListCount;
@@ -269,15 +261,15 @@ abstract class BaseList extends BaseObject {
     });
   }
   public function prevEntry($id, DateTime $beforeTime) {
-    // Returns the previous entry in this user's entry list for $this->typeID and before $beforeTime.
-    $entryType = $this->listType."Entry";
+    // Returns the previous entry in this user's entry list for static::$TYPE_ID and before $beforeTime.
+    $entryType = static::$LIST_TYPE."Entry";
     $prevEntry = new $entryType($this->app, 0);
 
     foreach ($this->entries()->entries() as $entry) {
       if ($entry->time >= $beforeTime) {
         continue;
       }
-      if ($entry->{$this->listTypeLower}->id == $id) {
+      if ($entry->{strtolower(static::$LIST_TYPE)}->id == $id) {
         return $entry;
       }
     }

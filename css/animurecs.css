@@ -1078,9 +1078,7 @@ div.jqplot-highlighter-tooltip{background:rgba(0, 100, 255, 0.6);border:1px soli
 .jqplot-point-label{font-size:0.75em;z-index:2;}
 ul.achievements li{width:20%;height:150px;margin-bottom:7px;}ul.achievements li img{height:100px;max-width:100px;}
 ul.achievements li em{font-size:10px;}
-.addListEntryForm{text-align:center;margin-bottom:10px;}.addListEntryForm .addListEntryFormCol1,.addListEntryForm .addListEntryFormCol2{margin-left:0;}
-.addListEntryForm .addListEntryFormCol2{display:none;}
-.addListEntryForm div{overflow:hidden;-webkit-transition:width 0.3s ease, margin 0.3s ease;-moz-transition:width 0.3s ease, margin 0.3s ease;-o-transition:width 0.3s ease, margin 0.3s ease;transition:width 0.3s ease, margin 0.3s ease;}
+.addListEntryForm{text-align:center;margin-bottom:10px;white-space:nowrap;overflow:hidden;}.addListEntryForm span{overflow:hidden;-webkit-transition:width 0.3s ease, margin 0.3s ease;-moz-transition:width 0.3s ease, margin 0.3s ease;-o-transition:width 0.3s ease, margin 0.3s ease;transition:width 0.3s ease, margin 0.3s ease;}.addListEntryForm span:nth-child(3),.addListEntryForm span:nth-child(4){margin-left:0;}
 ul.media-list .media{border-bottom:1px solid #dddddd;padding:0 10px;}ul.media-list .media .feedDate{margin-right:10px;font-size:8pt;color:gray;}
 ul.media-list .media .feedAvatar{width:40px;height:40px;margin:0 0 0 5px;text-align:center;}ul.media-list .media .feedAvatar img{max-width:40px;max-height:40px;}
 ul.media-list .media .feedText{padding-left:10px;font-size:10pt;}ul.media-list .media .feedText .feedUser{font-size:11pt;}ul.media-list .media .feedText .feedUser a:link,ul.media-list .media .feedText .feedUser a:visited{color:#333333;text-decoration:none;}

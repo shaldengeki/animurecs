@@ -323,10 +323,14 @@ abstract class BaseObject {
     $defaultVals = ['name' => escape_output(self::MODEL_URL())."[".escape_output($attr)."]"];
     $defaultVals['id'] = $defaultVals['name'];
     $humanizedAttr = $this->humanizeParameter($attr);
-    if (method_exists($this, $humanizedAttr) && $this->$humanizedAttr()) {
-      $defaultVals['value'] = $this->$humanizedAttr();
-    } elseif (property_exists($this, $humanizedAttr) && $this->$humanizedAttr) {
-      $defaultVals['value'] = $this->$humanizedAttr;
+    try {
+      if (method_exists($this, $humanizedAttr) && $this->$humanizedAttr()) {
+        $defaultVals['value'] = $this->$humanizedAttr();
+      } elseif (property_exists($this, $humanizedAttr) && $this->$humanizedAttr) {
+        $defaultVals['value'] = $this->$humanizedAttr;
+      }
+    } catch (DbException $e) {
+      $defaultVals['value'] = '';
     }
     $params = array_merge($defaultVals, $params);
     return $this->app->input($params);

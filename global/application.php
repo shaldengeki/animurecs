@@ -241,7 +241,7 @@ class Application {
       $parent->app->cache->delete("AnimeEntry-".intval($updateParams['id']));
     }));
     $this->bind(['AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete("AnimeEntry-".intval($parent->id));
+      $parent->app->cache->delete("AnimeEntry-".intval($updateParams['id']));
     }));
 
 

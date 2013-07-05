@@ -1,6 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+  $newEntry = new AnimeEntry($this->app, Null, ['user' => $this->app->user]);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -99,38 +100,8 @@
               </div>
             </div>
             <div id='userFeed'>
-<?php
-  if ($this->app->user->loggedIn()) {
-    if (isset($this->app->user->animeList()->uniqueList()[$this->id])) {
-      $thisEntry = $this->app->user->animeList()->uniqueList()[$this->id];
-      $addText = "Update this anime in your list: ";
-    } else {
-      $thisEntry = [];
-      $addText = "Add this anime to your list: ";
-    }
-?>
-              <div class='addListEntryForm'>
-                <?php echo $this->app->form(['action' => $this->app->user->animeList()->url("new", Null, ['user_id' => intval($this->app->user->id)]), 'class' => 'form-inline']); ?>
-                  <?php echo $this->app->user->animeList()->input('user_id', ['type' => 'hidden', 'value' => $this->app->user->id]); ?>
-                  <?php echo $addText; ?>
-                  <?php echo $this->app->user->animeList()->input('anime_id', ['type' => 'hidden', 'value' => $this->id]); ?>
-                  <?php echo display_status_dropdown("anime_lists[status]", "span3", $thisEntry['status'] ? $thisEntry['status'] : 1); ?>
-                  <div class='input-append'>
-                    <?php echo $this->app->user->animeList()->input('score', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => 10, 'step' => 1, 'value' => ($thisEntry['score'] ? intval($thisEntry['score']) : "")]); ?>
-                    <span class='add-on'>/10</span>
-                  </div>
-                  <div class='input-prepend<?php echo $this->episodeCount() ? " input-append" : ""; ?>'>
-                    <span class='add-on'>Ep</span>
-                    <?php echo $this->app->user->animeList()->input('episode', ['class' => 'input-mini', 'type' => 'number', 'min' => 0, 'max' => $this->episodeCount() > 0 ? $this->episodeCount() : 1000, 'step' => 1, 'value' => ($thisEntry['episode'] ? intval($thisEntry['episode']) : "")]); ?>
-                    <?php echo $this->episodeCount() ? "<span class='add-on'>/".($this->episodeCount() ? intval($this->episodeCount()) : "?")."</span>" : ""; ?>
-                  </div>
-                  <input type='submit' class='btn btn-primary updateEntryButton' value='Update' />
-                </form>
-              </div>
-<?php
-  }
-?>
-           <?php echo $this->app->user->view('feed', $params); ?>
+              <?php echo $this->app->user->view('addEntryInlineForm', ['anime' => $this]); ?>
+              <?php echo $this->app->user->view('feed', $params); ?>
           </div>
         </div>
       </div>

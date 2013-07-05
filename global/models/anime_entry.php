@@ -4,6 +4,8 @@ class AnimeEntry extends BaseEntry {
   public static $MODEL_TABLE = "anime_lists";
   public static $MODEL_URL = "anime_entries";
   public static $MODEL_PLURAL = "animeLists";
+  public static $ENTRY_TYPE = "Anime";
+  public static $TYPE_ID = "anime_id";
 
   protected $anime, $animeId;
   protected $episode;
@@ -12,7 +14,6 @@ class AnimeEntry extends BaseEntry {
 
   public function __construct(Application $app, $id=Null, $params=Null) {
     parent::__construct($app, $id, $params);
-    $this->entryType = "Anime";
     if ($id === 0) {
       $this->anime = new Anime($this->app, 0);
       $this->animeId = $this->userId = 0;
@@ -60,7 +61,7 @@ class AnimeEntry extends BaseEntry {
 
     $statusChanged = (bool) ($this->status() != $prevEntry->status());
     $scoreChanged = (bool) ($this->score() != $prevEntry->score());
-    $partChanged = (bool) ($this->{$this->list->partName}() != $prevEntry->{$this->list->partName}());
+    $partChanged = (bool) ($this->{AnimeList::$PART_NAME}() != $prevEntry->{AnimeList::$PART_NAME}());
     
     // concatenate appropriate parts of this status text.
     $statusTexts = [];
@@ -70,7 +71,7 @@ class AnimeEntry extends BaseEntry {
     if ($scoreChanged) {
       $statusTexts[] = $this->list->scoreStrings[intval($this->score() == 0)][intval($statusChanged)];
     }
-    if ($partChanged && ($this->{$this->list->partName} != $this->anime()->{$this->list->partName."Count"} || $this->status() != 2)) {
+    if ($partChanged && ($this->{AnimeList::$PART_NAME} != $this->anime()->{AnimeList::$PART_NAME."Count"} || $this->status() != 2)) {
       $statusTexts[] = $this->list->partStrings[intval($statusChanged || $scoreChanged)];
     }
     $statusText = "";
@@ -78,12 +79,12 @@ class AnimeEntry extends BaseEntry {
       $statusText = implode(" ", $statusTexts);
 
       // replace placeholders.
-      $statusText = str_replace("[TYPE_VERB]", $this->list->typeVerb, $statusText);
-      $statusText = str_replace("[PART_NAME]", $this->list->partName, $statusText);
+      $statusText = str_replace("[TYPE_VERB]", AnimeList::$TYPE_VERB, $statusText);
+      $statusText = str_replace("[PART_NAME]", AnimeList::$PART_NAME, $statusText);
       $statusText = str_replace("[TITLE]", $this->anime()->link("show", $this->anime()->title), $statusText);
       $statusText = str_replace("[SCORE]", $this->score(), $statusText);
-      $statusText = str_replace("[PART]", $this->{$this->list->partName}, $statusText);
-      $statusText = str_replace("/[TOTAL_PARTS]", $this->anime()->{$this->list->partName."Count"} ? "/".$this->anime()->{$this->list->partName."Count"} : "", $statusText);
+      $statusText = str_replace("[PART]", $this->{AnimeList::$PART_NAME}, $statusText);
+      $statusText = str_replace("/[TOTAL_PARTS]", $this->anime()->{AnimeList::$PART_NAME."Count"} ? "/".$this->anime()->{AnimeList::$PART_NAME."Count"} : "", $statusText);
       $statusText = ucfirst($statusText).".";
     }
     return ['title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText];
@@ -94,16 +95,19 @@ class AnimeEntry extends BaseEntry {
     switch($this->app->action) {
       case 'new':
       case 'edit':
-        if (isset($_POST['anime_entry']) && is_array($_POST['anime_entry'])) {
+        if (isset($_REQUEST['anime_entries']) && is_array($_REQUEST['anime_entries'])) {
+          $_POST['anime_entries'] = $_REQUEST['anime_entries'];
+        }
+        if (isset($_POST['anime_entries']) && is_array($_POST['anime_entries'])) {
           // filter out any blank values to fill them with the previous entry's values.
-          foreach ($_POST['anime_entry'] as $key=>$value) {
-            if ($_POST['anime_entry'][$key] === '') {
-              unset($_POST['anime_entry'][$key]);
+          foreach ($_POST['anime_entries'] as $key=>$value) {
+            if ($_POST['anime_entries'][$key] === '') {
+              unset($_POST['anime_entries'][$key]);
             }
           }
           // check to ensure that the user has perms to create or update an entry.
           try {
-            $targetUser = new User($this->app, intval($_POST['anime_entry']['user_id']));
+            $targetUser = new User($this->app, intval($_POST['anime_entries']['user_id']));
             $targetUser->getInfo();
           } catch (DbException $e) {
             // this non-zero userID does not exist.
@@ -118,24 +122,24 @@ class AnimeEntry extends BaseEntry {
             break;
           }
           try {
-            $targetAnime = new Anime($this->app, intval($_POST['anime_entry']['anime_id']));
+            $targetAnime = new Anime($this->app, intval($_POST['anime_entries']['anime_id']));
             $targetAnime->getInfo();
           } catch (DbException $e) {
             $status = "This anime ID doesn't exist.";
             $class = "error";
             break;
           }
-          if (!isset($_POST['anime_entry']['id'])) {
+          if (!isset($_POST['anime_entries']['id'])) {
             // fill default values from the last entry for this anime.
-            $lastEntry = $targetUser->animeList->uniqueList[intval($_POST['anime_entry']['anime_id'])];
+            $lastEntry = $targetUser->animeList->uniqueList[intval($_POST['anime_entries']['anime_id'])];
             if (!$lastEntry) {
               $lastEntry = [];
             } else {
               unset($lastEntry['id'], $lastEntry['time'], $lastEntry['anime']);
             }
-            $_POST['anime_entry'] = array_merge($lastEntry, $_POST['anime_entry']);
+            $_POST['anime_entries'] = array_merge($lastEntry, $_POST['anime_entries']);
           }
-          $updateList = $targetEntry->create_or_update($_POST['anime_entry']);
+          $updateList = $targetEntry->create_or_update($_POST['anime_entries']);
           if ($updateList) {
             $status = "Successfully updated your anime list.";
             $class = "success";

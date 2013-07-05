@@ -609,28 +609,28 @@ function initInterface(elt) {
       var statusContainer = $(this).parent().next();
       $.getJSON(statusUrl, function(data) {
         if (typeof data["status"] != "undefined" && data["status"] != "0") {
-          $(statusContainer).find('#anime_lists\\[status\\]').val(data["status"]);
+          $(statusContainer).find('#anime_entries\\[status\\]').val(data["status"]);
         } else {
-          $(statusContainer).find('#anime_lists\\[status\\]').val(1);
+          $(statusContainer).find('#anime_entries\\[status\\]').val(1);
         }
         if (typeof data["score"] != "undefined" && data["score"] != "0") {
-          $(statusContainer).find('#anime_lists\\[score\\]').val(data["score"]);
+          $(statusContainer).find('#anime_entries\\[score\\]').val(data["score"]);
         } else {
-          $(statusContainer).find('#anime_lists\\[score\\]').val("");
+          $(statusContainer).find('#anime_entries\\[score\\]').val("");
         }
         if (typeof data["episode"] != "undefined" && data["episode"] != "0") {
-          $(statusContainer).find('#anime_lists\\[episode\\]').val(data["episode"]);
+          $(statusContainer).find('#anime_entries\\[episode\\]').val(data["episode"]);
         } else {
-          $(statusContainer).find('#anime_lists\\[episode\\]').val("");
+          $(statusContainer).find('#anime_entries\\[episode\\]').val("");
         }
         if (typeof data["episode_count"] != "undefined" && data["episode_count"] != "0") {
-          $(statusContainer).find('#anime_lists\\[episode\\]').next().text("/" + data["episode_count"].toString());
+          $(statusContainer).find('#anime_entries\\[episode\\]').next().text("/" + data["episode_count"].toString());
         } else {
-          $(statusContainer).find('#anime_lists\\[episode\\]').next().text("/?");
+          $(statusContainer).find('#anime_entries\\[episode\\]').next().text("/?");
         }
       });
       $(this).parent().removeClass('span12').addClass('span3');
-      $(statusContainer).fadeIn().addClass('span9');
+      $(statusContainer).fadeIn()..addClass('span9');
     });
   });
 

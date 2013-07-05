@@ -4,15 +4,14 @@ class AnimeList extends BaseList {
   public static $MODEL_TABLE = "anime_lists";
   public static $MODEL_PLURAL = "animeLists";
 
+  public static $PART_NAME = "episode";
+  public static $LIST_TYPE = "Anime";
+  public static $TYPE_VERB = "watching";
+  public static $FEED_TYPE = "Anime";
+  public static $TYPE_ID = "anime_id";
 
   public function __construct(Application $app, $user_id=Null) {
     parent::__construct($app, $user_id);
-    $this->partName = "episode";
-    $this->listType = "Anime";
-    $this->typeVerb = "watching";
-    $this->feedType = "Anime";
-    $this->listTypeLower = strtolower($this->listType);
-    $this->typeID = $this->listTypeLower.'_id';
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
