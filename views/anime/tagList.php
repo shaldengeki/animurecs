@@ -8,7 +8,7 @@
   $params['numTags'] = isset($params['numTags']) ? intval($params['numTags']) : 20;
 
   // order the tags in this animeGroup's tags by tagType id
-  $tagTypesQuery = $this->app->dbConn->table('tag_types')->fields('id', 'name')->order('id ASC')->query();
+  $tagTypesQuery = $this->app->dbConn->table(TagType::$MODEL_TABLE)->fields('id', 'name')->order('id ASC')->query();
   $tagTypes = [];
   while ($tagType = $tagTypesQuery->fetch()) {
     $tagTypeObj = new TagType($this->app, intval($tagType['id']));

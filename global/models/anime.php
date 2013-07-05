@@ -276,7 +276,7 @@ class Anime extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->table('tags')->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
+          $tagID = intval($this->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -311,7 +311,7 @@ class Anime extends BaseObject {
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     $returnList = [];
-    $animeEntries = $this->dbConn->table('anime_lists')->fields('id', 'user_id', 'anime_id', 'time', 'status', 'score', 'episode')->where(['anime_id' => $this->id])->order('time DESC')->query();
+    $animeEntries = $this->dbConn->table(AnimeList::$MODEL_TABLE)->fields('id', 'user_id', 'anime_id', 'time', 'status', 'score', 'episode')->where(['anime_id' => $this->id])->order('time DESC')->query();
     while ($entry = $animeEntries->fetch()) {
       $newEntry = new AnimeEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;

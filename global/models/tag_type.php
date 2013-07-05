@@ -92,7 +92,7 @@ class TagType extends BaseObject {
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag type.
-    return new User($this->app, intval($this->dbConn->table('tag_types')->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
+    return new User($this->app, intval($this->dbConn->table(static::$MODEL_TABLE)->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -103,7 +103,7 @@ class TagType extends BaseObject {
   public function getTags() {
     // retrieves a list of id arrays corresponding to tags belonging to this tag type
     $tags = [];
-    $tagIDs = $this->dbConn->table('tags')->fields('id')->where(['tag_type_id' => $this->id])->order('name ASC')->query();
+    $tagIDs = $this->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['tag_type_id' => $this->id])->order('name ASC')->query();
     while ($tagID = $tagIDs->fetch()) {
       $tags[] = new Tag($this->app, intval($tagID['id']));
     }

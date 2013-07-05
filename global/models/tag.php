@@ -17,7 +17,7 @@ class Tag extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $name=Null) {
     if ($name !== Null) {
-      $id = intval($app->dbConn->table('tags')->fields('id')->where(['name' => str_replace("_", " ", $name)])->limit(1)->firstValue());
+      $id = intval($app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['name' => str_replace("_", " ", $name)])->limit(1)->firstValue());
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -198,7 +198,7 @@ class Tag extends BaseObject {
       foreach ($tag['anime_tags'] as $animeToAdd) {
         if (!array_filter_by_property($this->anime()->anime(), 'id', $animeToAdd)) {
           // find this tagID.
-          $animeID = intval($this->dbConn->table('anime')->fields('id')->where(['id' => $animeToAdd])->limit(1)->firstValue());
+          $animeID = intval($this->dbConn->table(Anime::$MODEL_TABLE)->fields('id')->where(['id' => $animeToAdd])->limit(1)->firstValue());
           if ($animeID) {
             $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
           }
@@ -234,7 +234,7 @@ class Tag extends BaseObject {
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag.
-    return new User($this->app, intval($this->dbConn->table('tags')->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
+    return new User($this->app, intval($this->dbConn->table(static::$MODEL_TABLE)->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -244,7 +244,7 @@ class Tag extends BaseObject {
   }
   public function getType() {
     // retrieves the tag type that this tag belongs to.
-    return new TagType($this->app, intval($this->dbConn->table('tags')->fields('tag_type_id')->where(['id' => $this->id])->firstValue()));
+    return new TagType($this->app, intval($this->dbConn->table(static::$MODEL_TABLE)->fields('tag_type_id')->where(['id' => $this->id])->firstValue()));
   }
   public function type() {
     if ($this->type === Null) {
@@ -307,7 +307,7 @@ class Tag extends BaseObject {
       case 'token_search':
         $tags = [];
         if (isset($_REQUEST['term'])) {
-          $tags = $this->dbConn->table('tags')->fields('id', 'name')->match('name', $_REQUEST['term'])->order('name ASC')->assoc();
+          $tags = $this->dbConn->table(static::$MODEL_TABLE)->fields('id', 'name')->match('name', $_REQUEST['term'])->order('name ASC')->assoc();
         }
         echo json_encode($tags);
         exit;

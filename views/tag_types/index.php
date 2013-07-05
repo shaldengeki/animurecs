@@ -7,10 +7,10 @@
   $firstTagType = TagType::first($this->app);
   if ($this->app->user->isAdmin()) {
     $tagTypePages = ceil(TagType::count($this->app)/$resultsPerPage);
-    $tagType = $this->dbConn->table('tag_types')->fields('id')->order('name')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+    $tagType = $this->dbConn->table(TagType::$MODEL_TABLE)->fields('id')->order('name')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
   } else {
     $tagTypePages = ceil(TagType::count($this->app, ['approved_on != ""'])/$resultsPerPage);
-    $tagType = $this->dbConn->table('tag_types')->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+    $tagType = $this->dbConn->table(TagType::$MODEL_TABLE)->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
   }
 ?>
 <h1>All Tag Types</h1>

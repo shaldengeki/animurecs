@@ -630,7 +630,7 @@ function initInterface(elt) {
         }
       });
       $(this).parent().removeClass('span12').addClass('span3');
-      $(statusContainer).fadeIn()..addClass('span9');
+      $(statusContainer).fadeIn().addClass('span9');
     });
   });
 

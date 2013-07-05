@@ -8,7 +8,7 @@ trait Commentable {
 
   public function getComments() {
     // returns a list of commentEntry objects sent by this user.
-    $profileComments = $this->dbConn->table('comments')->fields('id')->where(['type' => static::MODEL_NAME(), 'parent_id' => $this->id])->order('created_at ASC')->query();
+    $profileComments = $this->dbConn->table(Comment::$MODEL_TABLE)->fields('id')->where(['type' => static::MODEL_NAME(), 'parent_id' => $this->id])->order('created_at ASC')->query();
     $comments = [];
     while ($comment = $profileComments->fetch()) {
       $comments[intval($comment['id'])] = new CommentEntry($this->app, intval($comment['id']));

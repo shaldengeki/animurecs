@@ -170,7 +170,7 @@ class Thread extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->table('tags')->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
+          $tagID = intval($this->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -312,11 +312,11 @@ class Thread extends BaseObject {
         $resultsPerPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $numPages = ceil($this->dbConn->table('anime')->fields('COUNT(*)')->count()/$resultsPerPage);
-            $animeIDs = $this->dbConn->table('anime')->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+            $numPages = ceil($this->dbConn->table(Anime::$MODEL_TABLE)->fields('COUNT(*)')->count()/$resultsPerPage);
+            $animeIDs = $this->dbConn->table(Anime::$MODEL_TABLE)->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
           } else {
-            $numPages = ceil($this->dbConn->table('anime')->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$resultsPerPage);
-            $animeIDs = $this->dbConn->table('anime')->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+            $numPages = ceil($this->dbConn->table(Anime::$MODEL_TABLE)->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$resultsPerPage);
+            $animeIDs = $this->dbConn->table(Anime::$MODEL_TABLE)->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
           }
           $anime = [];
           while ($animeID = $animeIDs->fetch()) {

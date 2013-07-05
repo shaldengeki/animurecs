@@ -156,21 +156,19 @@ function parseMALList($username, $type="anime") {
 		$status = intval($animeNode->getElementsByTagName('my_status')->item(0)->nodeValue);
 		$score = intval($animeNode->getElementsByTagName('my_score')->item(0)->nodeValue);
 
-		if ($startDate === '0000-00-00') {
+		if ($lastUpdated === '0000-00-00') {
 			if ($endDate === '0000-00-00') {
-				if (!$lastUpdated) {
+				if (!$startDate) {
 					$time = $nowTime;
 				} else {
-					$time = new DateTime('@'.$lastUpdated, $outputTimezone);
+					$time = new DateTime($startDate, $serverTimezone);
 				}
 			} else {
-				$time = new DateTime($endDate, $outputTimezone);
+				$time = new DateTime($endDate, $serverTimezone);
 			}
 		} else {
-			$time = new DateTime($startDate, $outputTimezone);
+			$time = new DateTime('@'.$lastUpdated, $serverTimezone);
 		}
-		$time->setTimezone($serverTimezone);
-
 		$animeList[intval($animeID)] = [
 			'anime_id' => $animeID,
 			'episode' => $episode,

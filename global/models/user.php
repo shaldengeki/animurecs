@@ -29,7 +29,7 @@ class User extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $username=Null) {
     if ($username !== Null) {
-      $id = intval($app->dbConn->table('users')->fields('id')->where(['username' => $username])->limit(1)->firstValue());
+      $id = intval($app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['username' => $username])->limit(1)->firstValue());
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -304,7 +304,7 @@ class User extends BaseObject {
   }
   public function getOwnComments() {
     // returns a list of comment objects sent by this user.
-    $ownComments = $this->dbConn->table('comments')->fields('id')->where(['user_id' => $this->id])->order('created_at DESC')->query();
+    $ownComments = $this->dbConn->table(Comment::$MODEL_TABLE)->fields('id')->where(['user_id' => $this->id])->order('created_at DESC')->query();
     $comments = [];
     while ($comment = $ownComments->fetch()) {
       $comments[] = new CommentEntry($this->app, intval($comment['id']));
@@ -417,7 +417,7 @@ class User extends BaseObject {
     } else {
       $checkID = $this->id;
     }
-    $thisUserInfo = $this->dbConn->table('users')->fields('last_ip')->where(['id' => $checkID])->limit(1)->firstRow();
+    $thisUserInfo = $this->dbConn->table(static::$MODEL_TABLE)->fields('last_ip')->where(['id' => $checkID])->limit(1)->firstRow();
     if (!$thisUserInfo || $thisUserInfo['last_ip'] != $_SERVER['REMOTE_ADDR']) {
       return False;
     }
@@ -700,7 +700,7 @@ class User extends BaseObject {
     // check for existence of username and matching password.
     $bcrypt = new Bcrypt();
     try {
-      $findUsername = $this->dbConn->table('users')->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
+      $findUsername = $this->dbConn->table(static::$MODEL_TABLE)->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
     } catch (DbException $e) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
@@ -785,12 +785,23 @@ class User extends BaseObject {
 
     foreach($malList as $entry) {
       // ensure that the user doesn't already have this entry in their list.
+      if ($entry['anime_id'] == 208) {
+        $this->app->logger->err($entry);
+      }
       $entry['user_id'] = $this->id;
       try {
-        $listIDs[$entry['anime_id']] = $this->animeList()->create_or_update($entry);
+        $foundEntry = AnimeEntry::find($this->app, $entry);
       } catch (DbException $e) {
-        $this->app->logger->err($e->__toString());
-        $listIDs[$entry['anime_id']] = False;
+        // entry doesn't already exist.
+        $this->app->logger->err("Inserting entry.");
+        try {
+          $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
+          $listIDs[$entry['anime_id']] = $newEntry->create_or_update($entry);
+        } catch (DbException $e) {
+          $this->app->logger->err($e->__toString());
+          $listIDs[$entry['anime_id']] = False;
+        }
+
       }
     }
 
@@ -817,7 +828,7 @@ class User extends BaseObject {
     */
     if ($switch_back) {
       // get user entry in database.
-      $findUserID = intval($this->dbConn->table('users')->fields('id')->where(['username' => $username, ['id != ?', $this->id]])->limit(1)->firstValue());
+      $findUserID = intval($this->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['username' => $username, ['id != ?', $this->id]])->limit(1)->firstValue());
       if (!$findUserID) {
         return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error'];
       }
@@ -943,7 +954,7 @@ class User extends BaseObject {
           $this->app->delayedMessage('The activation code you provided was incorrect. Please check your email and try again.', 'error');
           $this->app->redirect();
         } else {
-          $this->app->dbConn->table('users')->set(['activation_code' => Null])->where(['id' => $this->id])->update();
+          $this->app->dbConn->table(static::$MODEL_TABLE)->set(['activation_code' => Null])->where(['id' => $this->id])->update();
           $this->setCurrentSession();
 
           //update last IP address and last active.
