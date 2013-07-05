@@ -154,7 +154,7 @@ function displayListEditForm(elt) {
   } else {
     score = parseInt(score.split("/")[0]);
   }
-  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_lists[score]' type='number' min=0 max=10 step=1 value='"+score+"' /><span class='add-on'>/10</span></div>");
+  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_entries[score]' type='number' min=0 max=10 step=1 value='"+score+"' /><span class='add-on'>/10</span></div>");
 
   episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
   episodeText = $(episodeNode).html();
@@ -165,7 +165,7 @@ function displayListEditForm(elt) {
     episodes = parseInt(episodeText.split("/")[0]);
     episodeTotal = parseInt(episodeText.split("/")[1]);
   }
-  $(episodeNode).html("<div class='input-append'><input class='input-mini' name='anime_lists[episode]' type='number' min=0 step=1 value='"+episodes+"' /><span class='add-on'>/" + episodeTotal + "</span></div>");
+  $(episodeNode).html("<div class='input-append'><input class='input-mini' name='anime_entries[episode]' type='number' min=0 step=1 value='"+episodes+"' /><span class='add-on'>/" + episodeTotal + "</span></div>");
 
   editNode = $(elt).parent();
   url = $(elt).attr('data-url');
@@ -218,7 +218,7 @@ function submitListUpdate(elt) {
   episode = parseInt($(rowNode).find('.listEntryEpisode').find('input').val());
 
   url = $(elt).attr('data-url');
-  $.post(url, { "anime_lists[user_id]": user_id, "anime_lists[anime_id]": anime_id, "anime_lists[status]": status, "anime_lists[score]": score, "anime_lists[episode]": episode}).complete(function() {
+  $.post(url, { "anime_entries[user_id]": user_id, "anime_entries[anime_id]": anime_id, "anime_entries[status]": status, "anime_entries[score]": score, "anime_entries[episode]": episode}).complete(function() {
     revertListEditForm(elt);
   });
 }

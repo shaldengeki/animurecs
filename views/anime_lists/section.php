@@ -9,6 +9,8 @@
                         4 => ['id' => 'dropped', 'title' => 'Dropped'],
                         6 => ['id' => 'planToWatch', 'title' => 'Plan to Watch']];
   $relevantEntries = $this->listSection($params['status']);
+
+  $newEntry = new AnimeEntry($this->app, Null, ['user' => $this->user()]);
 ?>
       <div id='<?php echo escape_output($statusStrings[$params['status']]['id']); ?>'>
         <h2><?php echo escape_output($statusStrings[$params['status']]['title']); ?></h2>
@@ -32,14 +34,14 @@
               <td class='listEntryTitle'>
                 <?php echo $entry['anime']->link("show", $entry['anime']->title()); ?>
                 <span class='pull-right hidden listEntryStatus'>
-                  <?php echo display_status_dropdown("anime_lists[status]", "span12", intval($entry['status'])); ?>
+                  <?php echo display_status_dropdown("anime_entries[status]", "span12", intval($entry['status'])); ?>
                 </span>
               </td>
               <td class='listEntryScore'><?php echo intval($entry['score']) > 0 ? intval($entry['score'])."/10" : ""; ?></td>
               <td class='listEntryEpisode'><?php echo intval($entry['episode'])."/".(intval($entry['anime']->episodeCount()) == 0 ? "?" : intval($entry['anime']->episodeCount())); ?></td>
 <?php
       if ($this->app->user->id == $this->user()->id) {
-?>              <td><a href='#' class='listEdit' data-url='<?php echo $this->url("new"); ?>'><i class='icon-pencil'></i></td>
+?>              <td><a href='#' class='listEdit' data-url='<?php echo $newEntry->url("new"); ?>'><i class='icon-pencil'></i></td>
 <?php
       }
 ?>            </tr>
