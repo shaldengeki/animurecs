@@ -90,13 +90,13 @@ class Thread extends BaseObject {
     try {
       $tag = new Tag($this->app, intval($tag_id));
       $tag->getInfo();
-    } catch (Exception $e) {
+    } catch (DbException $e) {
       return False;
     }
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
-    if (!$this->app->dbConn->table('thread_tags')->fields('tag_id', 'thread_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])->insert()) {
-      return False;
-    }
+    $this->app->dbConn->table('thread_tags')->fields('tag_id', 'thread_id', 'created_user_id', 'created_at')
+      ->values([$tag->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])
+      ->insert();
     $this->tags[intval($tag->id)] = ['id' => intval($tag->id), 'name' => $tag->name];
     $this->fire('tag');
     $tag->fire('tag');
@@ -131,16 +131,23 @@ class Thread extends BaseObject {
     return True;
   }
   public function validate(array $thread) {
-    if (!parent::validate($thread)) {
-      return False;
+    $validationErrors = [];
+    try {
+      parent::validate($thread);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($thread['title']) || strlen(trim($thread['title'])) < 1) {
-      return False;
+    if (!isset($thread['title']) || mb_strlen(trim($thread['title'])) < 1 || mb_strlen($thread['title']) > 100) {
+      $validationErrors[] = "Thread must have a title between 1 and 100 characters";
     }
-    if (!isset($thread['description']) || strlen(trim($thread['description'])) < 1) {
-      return False;
+    if (!isset($thread['description']) || mb_strlen(trim($thread['description'])) < 1 || mb_strlen($thread['description']) > 600) {
+      $validationErrors[] = "Thread must have a description between 1 and 600 characters";
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $thread, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function create_or_update(array $thread, array $whereConditions=Null) {
     // creates or updates a thread based on the parameters passed in $thread and this object's attributes.

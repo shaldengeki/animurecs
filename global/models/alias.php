@@ -58,26 +58,33 @@ class Alias extends BaseObject {
     }
   }
   public function validate(array $alias) {
-    if (!parent::validate($alias)) {
-      return False;
+    $validationErrors = [];
+    try {
+      parent::validate($alias);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($alias['type']) || !isset($alias['parent_id'])) {
-      return False;
+    if (!isset($alias['type']) || !$alias['type'] || strlen($alias['type']) < 1) {
+      $validationErrors[] = "Type must be set to something not-blank";
     }
-    if (!is_numeric($alias['parent_id']) || intval($alias['parent_id']) != $alias['parent_id'] || intval($alias['parent_id']) <= 0) {
-      return False;
+    if (!isset($alias['parent_id']) || !is_integral($alias['parent_id']) || intval($alias['parent_id']) <= 0) {
+      $validationErrors[] = "Parent ID must be a valid integer greater than zero";
     } else {
       try {
         $parent = new $alias['type']($this->app, intval($alias['parent_id']));
         $parent->getInfo();
-      } catch (Exception $e) {
-        return False;
+      } catch (DbException $e) {
+        $validationErrors[] = "Parent must exist";
       }
     }
-    if (isset($alias['name']) && strlen($alias['name']) < 1) {
-      return False;
+    if (!isset($alias['name']) || !$alias['name'] || strlen($alias['name']) < 1) {
+      $validationErrors[] = "Alias name must be set to something not-blank";
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $alias, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function search($text) {
     // searches for aliases that match the given string.

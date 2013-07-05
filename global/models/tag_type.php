@@ -46,28 +46,33 @@ class TagType extends BaseObject {
     }
   }
   public function validate(array $tag_type) {
-    if (!parent::validate($tag_type)) {
-      return False;
+    $validationErrors = [];
+    try {
+      parent::validate($tag_type);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($tag_type['name']) || strlen($tag_type['name']) < 1) {
-      return False;
+    if (!isset($tag_type['name']) || mb_strlen($tag_type['name']) < 1) {
+      $validationErrors[] = "Tag type must have a non-blank title";
     }
-    if (isset($tag_type['description']) && (strlen($tag_type['description']) < 1 || strlen($tag_type['description']) > 600)) {
-      return False;
+    if (isset($tag_type['description']) && (mb_strlen($tag_type['description']) < 1 || mb_strlen($tag_type['description']) > 600)) {
+      $validationErrors[] = "Tag type must have a description between 1 and 600 characters";
     }
-    if (isset($tag_type['created_user_id'])) {
-      if (!is_numeric($tag_type['created_user_id']) || intval($tag_type['created_user_id']) != $tag_type['created_user_id'] || intval($tag_type['created_user_id']) <= 0) {
-        return False;
-      } else {
-        try {
-          $approvedUser = new User($this->app, intval($tag_type['created_user_id']));
-          $approvedUser->getInfo();
-        } catch (Exception $e) {
-          return False;
-        }
+    if (!isset($tag_type['created_user_id']) || !is_integral($tag_type['created_user_id']) || intval($tag_type['created_user_id']) <= 0) {
+      $validationErrors[] = "Created user ID must be valid";
+    } else {
+      try {
+        $approvedUser = new User($this->app, intval($tag_type['created_user_id']));
+        $approvedUser->getInfo();
+      } catch (Exception $e) {
+        $validationErrors[] = "Created user ID must exist";
       }
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $tag_type, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function create_or_update(array $tag_type, array $whereConditions=Null) {
     // creates or updates a tag type based on the parameters passed in $tag_type and this object's attributes.
@@ -117,14 +122,16 @@ class TagType extends BaseObject {
   }
 
   public function render() {
-    if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
-      $updateTagType = $this->create_or_update($_POST['tag_type']);
-      if ($updateTagType) {
-        $this->app->delayedMessage("Successfully updated.", "success");
-        $this->app->redirect($this->url("show"));
-      } else {
-         $this->app->delayedMessage("An error occurred while creating or updating this tag type.", "error");
-        $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+    if ($this->app->action == 'new' || $this->app->action == 'edit') {
+      if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
+        $updateTagType = $this->create_or_update($_POST['tag_type']);
+        if ($updateTagType) {
+          $this->app->delayedMessage("Successfully updated.", "success");
+          $this->app->redirect($this->url("show"));
+        } else {
+           $this->app->delayedMessage("An error occurred while creating or updating this tag type.", "error");
+          $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+        }
       }
     }
     switch($this->app->action) {

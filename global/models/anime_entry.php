@@ -6,6 +6,7 @@ class AnimeEntry extends BaseEntry {
   public static $MODEL_PLURAL = "animeLists";
   public static $ENTRY_TYPE = "Anime";
   public static $TYPE_ID = "anime_id";
+  public static $PART_NAME = "episode";
 
   protected $anime, $animeId;
   protected $episode;
@@ -95,6 +96,8 @@ class AnimeEntry extends BaseEntry {
     switch($this->app->action) {
       case 'new':
       case 'edit':
+        $verbProgressive = $this->id === 0 ? "creating" : "updating";
+        $verbPast = $this->id === 0 ? "created" : "updated";
         if (isset($_REQUEST['anime_entries']) && is_array($_REQUEST['anime_entries'])) {
           $_POST['anime_entries'] = $_REQUEST['anime_entries'];
         }
@@ -115,7 +118,7 @@ class AnimeEntry extends BaseEntry {
             $class = "error";
             break;
           }
-          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser, 'user_id' => $targetUser->id]);
+          $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser]);
           if (!$targetEntry->allow($this->app->user, $this->app->action)) {
             $status = "You can't update someone else's anime list.";
             $class = "error";
@@ -139,7 +142,12 @@ class AnimeEntry extends BaseEntry {
             }
             $_POST['anime_entries'] = array_merge($lastEntry, $_POST['anime_entries']);
           }
-          $updateList = $targetEntry->create_or_update($_POST['anime_entries']);
+          try {
+            $updateList = $targetEntry->create_or_update($_POST['anime_entries']);
+          } catch (ValidationException $e) {
+            $this->app->delayedMessage("Some problems were found with your input while ".$verbProgressive." an anime list entry:\n".$e->listMessages());
+            $this->app->redirect();
+          }
           if ($updateList) {
             $status = "Successfully updated your anime list.";
             $class = "success";

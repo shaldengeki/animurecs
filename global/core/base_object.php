@@ -1,16 +1,28 @@
 <?php
 
+class InvalidParameterException extends AppException {
+  private $args, $expected;
+  public function __construct($app, array $args, $expected, $messages=Null, $code=0, AppException $previous=Null) {
+    parent::__construct($app, $messages, $code, $previous);
+    $this->args = $args;
+    $this->expected = $expected;
+  }
+  public function __toString() {
+    return "InvalidParameterException:\n".$this->getFile().":".$this->getLine()."\nParams: ".print_r($this->args, True)."Expected: ".print_r($this->expected, True)."Messages: ".$this->formatMessages()."\nStack trace:\n".$this->getTraceAsString()."\n";
+  }
+}
+
 class ValidationException extends AppException {
   private $params;
-  public function __construct($params, $app, $messages=Null, $code=0, AppException $previous=Null) {
+  public function __construct($app, array $params, $messages=Null, $code=0, AppException $previous=Null) {
     parent::__construct($app, $messages, $code, $previous);
     $this->params = $params;
   }
   public function __toString() {
-    return "ValidationException:\n".$this->getFile().":".$this->getLine()."\nParams: ".print_r($this->params, TRUE)."Messages: ".$this->formatMessages()."\nStack trace:\n".$this->getTraceAsString()."\n";
+    return "ValidationException:\n".$this->getFile().":".$this->getLine()."\nParams: ".print_r($this->params, True)."Messages: ".$this->formatMessages()."\nStack trace:\n".$this->getTraceAsString()."\n";
   }
   public function display() {
-    return "<p class='error'>One or more fields you entered in this form was incorrect:".$this->listMessages()."Please correct this and try again!</p>";
+    return "One or more fields you entered in this form was incorrect:".$this->listMessages()."Please correct this and try again!";
   }
 }
 
@@ -142,7 +154,7 @@ abstract class BaseObject {
     if (!$object) {
       $validationErrors[] = "Object must have some attributes set";
     }
-    if (isset($object['id']) && ( !is_numeric($object['id']) || intval($object['id']) != $object['id'] || intval($object['id']) < 0) ) {
+    if (isset($object['id']) && ( !is_integral($object['id']) || intval($object['id']) < 0) ) {
       $validationErrors[] = "Object ID must be an integer greater than 0";
     }
     if (isset($object['created_at']) && !strtotime($object['created_at'])) {
@@ -152,7 +164,7 @@ abstract class BaseObject {
       $validationErrors[] = "Malformed updated-at time";
     }
     if ($validationErrors) {
-      throw new ValidationException($object, $this->app, $validationErrors);
+      throw new ValidationException($this->app, $object, $validationErrors);
     } else {
       return True;
     }
@@ -245,15 +257,15 @@ abstract class BaseObject {
     if ($entries === Null) {
       $entries = [intval($this->id)];
     }
-    if (!is_array($entries) && !is_numeric($entries)) {
-      throw new ValidationException($this, $this->app, "Invalid ID to delete");
+    if (!is_array($entries) && !is_integral($entries)) {
+      throw new ValidationException($this->app, $entries, "Invalid ".static::MODEL_NAME()." ID to delete");
     }
-    if (is_numeric($entries)) {
+    if (is_integral($entries)) {
       $entries = [$entries];
     }
     $entryIDs = [];
     foreach ($entries as $entry) {
-      if (is_numeric($entry)) {
+      if (is_integral($entry)) {
         $entryIDs[] = intval($entry);
       }
     }

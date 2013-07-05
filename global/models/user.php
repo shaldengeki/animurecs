@@ -491,7 +491,7 @@ class User extends BaseObject {
     if (isset($user['about']) && (strlen($user['about']) < 0 || strlen($user['about']) > 600)) {
       $validationErrors[] = "Your bio must be at most 600 characters";
     }
-    if (isset($user['usermask']) && ( !is_numeric($user['usermask']) || intval($user['usermask']) != $user['usermask'] || intval($user['usermask']) < 0) ) {
+    if (isset($user['usermask']) && ( !is_integral($user['usermask']) || intval($user['usermask']) < 0) ) {
       $validationErrors[] = "Your user permissions are invalid";
     }
     if (isset($user['last_active']) && !strtotime($user['last_active'])) {
@@ -504,7 +504,7 @@ class User extends BaseObject {
       $validationErrors[] = "Your points must be numeric";
     }
     if ($validationErrors) {
-      throw new ValidationException($user, $this->app, $validationErrors);
+      throw new ValidationException($this->app, $user, $validationErrors);
     } else {
       return True;
     }
@@ -536,7 +536,7 @@ class User extends BaseObject {
     $imagePath = "";
     if (isset($file_array['tmp_name']['avatar_image']) && $file_array['tmp_name']['avatar_image'] && is_uploaded_file($file_array['tmp_name']['avatar_image'])) {
       if ($file_array['error']['avatar_image'] != UPLOAD_ERR_OK) {
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while uploading your avatar');
       }
 
       $acceptableFormats = ["GIF", "GIF87", "BMP", "BMP2", "BMP3", "GIF", "GIF87", "ICO", "JPEG", "JPG", "PNG", "PNG24", "PNG32", "PNG8", "TGA", "TIFF", "TIFF64", "WBMP"];
@@ -546,7 +546,7 @@ class User extends BaseObject {
         $avatarFormat = $avatarImage->getImageFormat();
         $avatarIterations = $avatarImage->getImageIterations();
         if (!in_array($avatarFormat, $acceptableFormats)) {
-          return False;
+          throw new ValidationException($this->app, $file_array, 'Avatar is not one of formats: '.implode(', ', $acceptableFormats));
         }
         $imageProperties = $avatarImage->getImageGeometry();
         if ($avatarIterations) {
@@ -589,7 +589,7 @@ class User extends BaseObject {
       } catch (ImagickException $e) {
         $this->app->statsd->increment("ImagickException");
         $this->app->logger->err($e->__toString());
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while resizing your avatar');
       }
 
       // move file to destination and save path in db.
@@ -615,7 +615,7 @@ class User extends BaseObject {
         $writeImages = $avatarImage->writeImage($imagePath) && ($thumbnailImage === Null || $thumbnailImage->writeImage($thumbnailPath));
       }
       if (!$writeImages) {
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while saving your avatar');
       }
     } else {
       $imagePath = $this->avatarPath();
@@ -623,10 +623,7 @@ class User extends BaseObject {
     $user['avatar_path'] = $imagePath;
     $user['thumb_path'] = $thumbnailImage ? $thumbnailPath : "";
 
-    $result = parent::create_or_update($user, $whereConditions);
-    if (!$result) {
-      return False;
-    }
+    $this->id = parent::create_or_update($user, $whereConditions);
 
     // now process anime entries.
     // now process comments.
@@ -638,21 +635,15 @@ class User extends BaseObject {
     // delete this user from the database.
     // returns a boolean.
 
-    $this->beforeUpdate([]);
+    $this->beforeDelete([]);
     // delete objects that belong to this user.
     foreach ($this->comments() as $comment) {
-      if (!$comment->delete()) {
-        return False;
-      }
+      $comment->delete();
     }
-    $deleteList = $this->animeList()->delete();
-    if (!$deleteList) {
-      return False;
-    }
-    $this->afterUpdate([]);
-
+    $this->animeList()->delete();
     // now delete this user.
     return parent::delete();
+    $this->afterDelete([]);
   }
   public function updateLastActive($time=Null) {
     $now = new DateTime("now", $this->app->serverTimeZone);
@@ -667,8 +658,8 @@ class User extends BaseObject {
     return True;
   }
   public function addPoints($points) {
-    if (!is_integer($points)) {
-      return False;
+    if (!is_integral($points)) {
+      throw new InvalidParameterException($this->app, [$points], 'integral');
     }
     return $this->create_or_update(['points' => $this->points() + intval($points)]);
   }
@@ -1004,7 +995,8 @@ class User extends BaseObject {
         } else {
           // if this isn't a non-current slice of the user's feed, append the usual forms at the top.
           $maxTime = "now";
-          if ($this->animeList()->allow($this->app->user, 'edit')) {
+          $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
+          if ($newEntry->allow($this->app->user, 'edit')) {
             $output .= $this->view('addEntryInlineForm');
           }
           if ($this->allow($this->app->user, 'comment')) {

@@ -44,86 +44,6 @@ abstract class BaseList extends BaseObject {
       $this->entries = $this->uniqueList = Null;
     }
   }
-  public function create_or_update(array $entry, array $whereConditions=Null) {
-    /*
-      Creates or updates an existing list entry for the current user.
-      Takes an array of entry parameters.
-      Returns the resultant list entry ID.
-    */
-    // ensure that this user and list type exist.
-    try {
-      $user = new User($this->app, intval($entry['user_id']));
-      $user->getInfo();
-      $type = new static::$LIST_TYPE($this->app, intval($entry[static::$TYPE_ID]));
-      $type->getInfo();
-    } catch (Exception $e) {
-      return False;
-    }
-    foreach ($entry as $parameter => $value) {
-      if (!is_array($value)) {
-        if (is_numeric($value)) {
-          $entry[$parameter] = intval($value);
-        }
-      }
-    }
-
-    // check to see if this is an update.
-    $entryGroup = $this->entries();
-    if (!isset($entry['id'])) {
-      // see if there are any entries matching these params for this user.
-      try {
-        $checkExists = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where($entry)->limit(1)->firstValue();
-        if ($checkExists) {
-          // if entry exists, set its ID.
-          $entry['id'] = intval($checkExists);
-        }
-      } catch (DbException $e) {
-        // entry does not exist, no need to do anything.
-      }
-    }
-    $this->app->dbConn->table(static::$MODEL_TABLE);
-    if (isset($entryGroup->entries()[intval($entry['id'])])) {
-      // this is an update.
-      $this->beforeUpdate($entry);
-      $updateDependency = $this->app->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update();
-      if (!$updateDependency) {
-        return False;
-      }
-      // update list locally.
-      if ($this->uniqueList()[intval($entry[static::$TYPE_ID])]['score'] != intval($entry['score']) || $this->uniqueList()[intval($entry[static::$TYPE_ID])]['status'] != intval($entry['status']) || $this->uniqueList()[intval($entry[static::$TYPE_ID])][static::$PART_NAME] != intval($entry[static::$PART_NAME])) {
-        if (intval($entry['status']) == 0) {
-          unset($this->uniqueList[intval($entry[static::$TYPE_ID])]);
-        } else {
-          $this->uniqueList[intval($entry[static::$TYPE_ID])] = [static::$TYPE_ID => intval($entry[static::$TYPE_ID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), static::$PART_NAME => intval($entry[static::$PART_NAME])];
-        }
-      }
-      $returnValue = intval($entry['id']);
-      $this->afterUpdate($entry);
-    } else {
-      // this is a new entry.
-      if (!isset($entry['time'])) {
-        $dateTime = new DateTime('now', $this->app->serverTimeZone);
-        $entry['time'] = $dateTime->format("Y-m-d H:i:s");
-      }
-      $this->beforeCreate($entry);
-      $insertEntry = $this->app->dbConn->set($entry)->insert();
-      if (!$insertEntry) {
-        return False;
-      }
-      $returnValue = intval($insertEntry);
-      $entry['id'] = $returnValue;
-      // insert list locally.
-      $this->uniqueList();
-      if (intval($entry['status']) == 0) {
-        unset($this->uniqueList[intval($entry[static::$TYPE_ID])]);
-      } else {
-        $this->uniqueList[intval($entry[static::$TYPE_ID])] = [static::$TYPE_ID => intval($entry[static::$TYPE_ID]), 'time' => $entry['time'], 'score' => intval($entry['score']), 'status' => intval($entry['status']), static::$PART_NAME => intval($entry[static::$PART_NAME])];
-      }
-      $this->afterCreate($entry);
-    }
-    //$this->entries[intval($returnValue)] = $entry;
-    return $returnValue;
-  }
   public function delete($entries=Null) {
     /*
       Deletes list entries.
@@ -134,7 +54,7 @@ abstract class BaseList extends BaseObject {
       $entries = array_keys($this->entries()->entries());
     }
     if (!is_array($entries) && !is_numeric($entries)) {
-      return False;
+      throw new InvalidParameterException($this->app, $entries, "array or numeric");
     }
     if (is_numeric($entries)) {
       $entries = [$entries];
@@ -147,10 +67,7 @@ abstract class BaseList extends BaseObject {
     }
     if ($entryIDs) {
       $this->beforeDelete();
-      $drop_entries = $this->app->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->where(['id' => $entryIDs])->limit(count($entryIDs))->delete();
-      if (!$drop_entries) {
-        return False;
-      }
+      $this->app->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->where(['id' => $entryIDs])->limit(count($entryIDs))->delete();
       $this->afterDelete();
     }
     foreach ($entryIDs as $entryID) {
@@ -166,9 +83,6 @@ abstract class BaseList extends BaseObject {
   }
   public function getInfo() {
     $userInfo = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('user_id', 'MIN(time) AS start_time', 'MAX(time) AS end_time')->where(['user_id' => $this->user_id])->firstRow();
-    if (!$userInfo) {
-      return False;
-    }
     $this->startTime = intval($userInfo['start_time']);
     $this->endTime = intval($userInfo['end_time']);
   }
@@ -293,6 +207,7 @@ abstract class BaseList extends BaseObject {
   }
   public function similarity(BaseList $currentList, $minAnime=10) {
     // calculates pearson's r between this list and the current user's list.
+    // returns False if there is no similarity computed.
     if ($this->uniqueListStdDev() == 0 || $currentList->uniqueListStdDev() == 0) {
       return False;
     }

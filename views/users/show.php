@@ -1,6 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+  $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
 ?>
      <div class='row-fluid'>
         <div class='span3 userProfileColumn leftColumn'>
@@ -102,7 +103,7 @@ if ($this->avatarPath() != '') {
             <div class='tab-content'>
               <div class='tab-pane active' id='userFeed'>
 <?php
-  if ($this->animeList()->allow($this->app->user, 'edit')) {
+  if ($newEntry->allow($this->app->user, 'edit')) {
     echo $this->view('addEntryInlineForm');
   }
   if ($this->allow($this->app->user, 'comment')) {

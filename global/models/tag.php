@@ -85,9 +85,9 @@ class Tag extends BaseObject {
       return False;
     }
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
-    if (!$this->app->dbConn->table('anime_tags')->fields('anime_id', 'tag_id', 'created_user_id', 'created_at')->values([$anime->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])->insert()) {
-      return False;
-    }
+    $this->app->dbConn->table('anime_tags')->fields('anime_id', 'tag_id', 'created_user_id', 'created_at')
+      ->values([$anime->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])
+      ->insert();
     $this->fire('tag');
     $anime->fire('tag');
     $this->anime[intval($anime->id)] = ['id' => intval($anime->id), 'title' => $anime->title];
@@ -116,9 +116,10 @@ class Tag extends BaseObject {
         $animeObjects[$animeID]->beforeUpdate([]);
       }
       $this->beforeUpdate([]);
-      if (!$this->app->dbConn->table('anime_tags')->where(['tag_id' => $this->id, 'anime_id' => $animeIDs])->limit(count($animeIDs))->delete()) {
-        return False;
-      }
+      $this->app->dbConn->table('anime_tags')
+        ->where(['tag_id' => $this->id, 'anime_id' => $animeIDs])
+        ->limit(count($animeIDs))
+        ->delete();
       $this->afterUpdate([]);
       foreach ($animeObjects as $anime) {
         $anime->afterUpdate([]);
@@ -132,42 +133,43 @@ class Tag extends BaseObject {
     return True;
   }
   public function validate(array $tag) {
-    if (!parent::validate($tag)) {
-      return False;
+    $validationErrors = [];
+    try {
+      parent::validate($tag);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($tag['name']) || strlen($tag['name']) < 1 || strlen($tag['name']) > 50) {
-      return False;
+    if (!isset($tag['name']) || mb_strlen($tag['name']) < 1 || mb_strlen($tag['name']) > 50) {
+      $validationErrors[] = "Tag must have name between 1 and 50 characters";
     }
-    if (isset($tag['description']) && (strlen($tag['description']) < 0 || strlen($tag['description']) > 600)) {
-      return False;
+    if (isset($tag['description']) && (mb_strlen($tag['description']) < 0 || mb_strlen($tag['description']) > 600)) {
+      $validationErrors[] = "Tag must have description between 1 and 600 characters";
     }
-    if (!isset($tag['created_user_id'])) {
-      return False;
-    }
-    if (!is_numeric($tag['created_user_id']) || intval($tag['created_user_id']) != $tag['created_user_id'] || intval($tag['created_user_id']) <= 0) {
-      return False;
+    if (!isset($tag['created_user_id']) || !is_integral($tag['created_user_id']) || intval($tag['created_user_id']) <= 0) {
+      $validationErrors[] = "Created user ID must be valid";
     } else {
       try {
         $createdUser = new User($this->app, intval($tag['created_user_id']));
         $createdUser->getInfo();
-      } catch (Exception $e) {
-        return False;
+      } catch (DbException $e) {
+        $validationErrors[] = "Created user must exist";
       }
     }
-    if (!isset($tag['tag_type_id'])) {
-      return False;
-    }
-    if (!is_numeric($tag['tag_type_id']) || intval($tag['tag_type_id']) != $tag['tag_type_id'] || intval($tag['tag_type_id']) <= 0) {
-      return False;
+    if (!isset($tag['tag_type_id']) || !is_integral($tag['tag_type_id']) || intval($tag['tag_type_id']) <= 0) {
+      $validationErrors[] = "Tag type ID must be valid";
     } else {
       try {
         $parent = new TagType($this->app, intval($tag['tag_type_id']));
         $parent->getInfo();
-      } catch (Exception $e) {
-        return False;
+      } catch (DbException $e) {
+        $validationErrors[] = "Tag type must exist";
       }
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $tag, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function create_or_update(array $tag, array $whereConditions=Null) {
     // creates or updates a tag based on the parameters passed in $tag and this object's attributes.
@@ -176,31 +178,31 @@ class Tag extends BaseObject {
     $tag['name'] = str_replace("_", " ", strtolower($tag['name']));
 
     // filter some parameters out first and replace them with their corresponding db fields.
+    $tagAnime = [];
     if (isset($tag['anime_tags']) && !is_array($tag['anime_tags'])) {
-      $tag['anime_tags'] = explode(",", $tag['anime_tags']);
+      $tagAnime = explode(",", $tag['anime_tags']);
+      unset($tag['anime_tags']);
     }
 
     //go ahead and create or update this tag.
-    if (!parent::create_or_update($tag)) {
-      return False;
-    }
+    parent::create_or_update($tag);
 
     // now process any taggings.
-    if (isset($tag['anime_tags'])) {
+    if (isset($tagAnime)) {
       // drop any unneeded access rules.
       $animeToDrop = [];
       foreach ($this->anime() as $anime) {
-        if (!in_array($anime->id, $tag['anime_tags'])) {
+        if (!in_array($anime->id, $tagAnime)) {
           $animeToDrop[] = intval($anime->id);
         }
       }
       $drop_anime = $this->drop_taggings($animeToDrop);
-      foreach ($tag['anime_tags'] as $animeToAdd) {
+      foreach ($tagAnime as $animeToAdd) {
         if (!array_filter_by_property($this->anime()->anime(), 'id', $animeToAdd)) {
           // find this tagID.
           $animeID = intval($this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('id')->where(['id' => $animeToAdd])->limit(1)->firstValue());
           if ($animeID) {
-            $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
+            $this->create_or_update_tagging($animeID, $currentUser);
           }
         }
       }
@@ -212,10 +214,7 @@ class Tag extends BaseObject {
     // returns a boolean.
 
     // drop all taggings for this tag first.
-    $dropTaggings = $this->drop_taggings();
-    if (!$dropTaggings) {
-      return False;
-    }
+    $this->drop_taggings();
     return parent::delete();
   }
   public function isApproved() {
@@ -293,17 +292,19 @@ class Tag extends BaseObject {
     return $this->numAnime;
   }
   public function render() {
-    if (isset($_POST['tag']) && is_array($_POST['tag'])) {
-      $updateTag = $this->create_or_update($_POST['tag']);
-      if ($updateTag) {
-        $this->app->delayedMessage("Successfully updated.", "success");
-        $this->app->redirect($this->url("show"));
-      } else {
-        $this->app->delayedMessage("An error occurred while creating or updating this tag.", "error");
-        $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+    if ($this->app->action === 'new' || $this->app->action === 'edit') {
+      if (isset($_POST['tag']) && is_array($_POST['tag'])) {
+        $updateTag = $this->create_or_update($_POST['tag']);
+        if ($updateTag) {
+          $this->app->delayedMessage("Successfully updated.", "success");
+          $this->app->redirect($this->url("show"));
+        } else {
+          $this->app->delayedMessage("An error occurred while creating or updating this tag.", "error");
+          $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+        }
       }
     }
-    switch($this->app->action) {
+      switch($this->app->action) {
       case 'token_search':
         $tags = [];
         if (isset($_REQUEST['term'])) {

@@ -15,10 +15,10 @@ class AppException extends Exception {
   public function messages() {
     return $this->messages;
   }
-  public function formatMessages() {
+  public function formatMessages($separator="<br />\n") {
     // displays a list of this exception's messages.
     if (count($this->messages) > 0) {
-      return implode("\n", $this->messages);
+      return implode($separator, $this->messages);
     } else {
       return "";
     }
@@ -490,6 +490,7 @@ class Application {
 
     $this->startRender = microtime(true);
     set_error_handler('ErrorHandler', E_ALL & ~E_NOTICE);
+    mb_internal_encoding('UTF-8');
     $this->_loadDependencies();
     $this->_bindEvents();
 
@@ -597,10 +598,10 @@ class Application {
         try {
           ob_start();
           echo $this->target->render();
+          echo ob_get_clean();
           $this->statsd->timing("pageload", microtime(True) - $this->startRender);
           $this->statsd->memory('memory.peakusage');
           $this->setPreviousUrl();
-          echo ob_get_clean();
           exit;
         } catch (AppException $e) {
           $this->logger->err($e->__toString());
@@ -671,7 +672,7 @@ class Application {
       include($file);
       return ob_get_clean();
     }
-    return False;
+    throw new AppException($this, "Could not find application view: ".$file);
   }
   public function render($text, $params=Null) {
     // renders the given HTML text surrounded by the standard application header and footer.

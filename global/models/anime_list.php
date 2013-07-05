@@ -16,8 +16,6 @@ class AnimeList extends BaseList {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
-      case 'new':
-      case 'edit':
       case 'delete':
         if ($authingUser->id == $this->user_id || $authingUser->isStaff()) {
           return True;
@@ -67,40 +65,6 @@ class AnimeList extends BaseList {
         $entries = $this->entries($minTime, $maxTime, 50);
         echo $this->feed($entries, 50, "");
         exit;
-        break;
-      case 'new':
-      case 'edit':
-        if (isset($_REQUEST['anime_lists']) && is_array($_REQUEST['anime_lists'])) {
-          $_POST['anime_lists'] = $_REQUEST['anime_lists'];
-        }
-        if (isset($_POST['anime_lists']) && is_array($_POST['anime_lists'])) {
-          // filter out any blank values to fill them with the previous entry's values.
-          foreach ($_POST['anime_lists'] as $key=>$value) {
-            if ($_POST['anime_lists'][$key] === '') {
-              unset($_POST['anime_lists'][$key]);
-            }
-          }
-          if (!isset($_POST['anime_lists']['id'])) {
-            // fill default values from the last entry for this anime.
-            $lastEntry = $this->uniqueList()[intval($_POST['anime_lists']['anime_id'])];
-            if (!$lastEntry) {
-              $lastEntry = [];
-            } else {
-              unset($lastEntry['id'], $lastEntry['time'], $lastEntry['anime']);
-            }
-            $_POST['anime_lists'] = array_merge($lastEntry, $_POST['anime_lists']);
-          }
-          $updateList = $this->create_or_update($_POST['anime_lists']);
-          if ($updateList) {
-            $status = "Successfully updated your anime list.";
-            $class = "success";
-            break;
-          } else {
-            $status = "An error occurred while changing your anime list.";
-            $class = "error";
-            break;
-          }
-        }
         break;
       case 'show':
         break;

@@ -116,37 +116,39 @@ class Comment extends BaseObject {
     }
   }
   public function validate(array $comment) {
-    if (!parent::validate($comment)) {
-      return False;
+    $validationErrors = [];
+    try {
+      parent::validate($comment);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
     }
-    if (!isset($comment['user_id'])) {
-      return False;
-    }
-    if (!is_numeric($comment['user_id']) || intval($comment['user_id']) != $comment['user_id'] || intval($comment['user_id']) <= 0) {
-      return False;
-    } else {
+    if (!isset($comment['user_id']) || !is_integral($comment['user_id']) || intval($comment['user_id']) <= 0) {
+      $validationErrors[] = "User ID must be valid";
+    }else {
       try {
         $createdUser = new User($this->app, intval($comment['user_id']));
-      } catch (Exception $e) {
-        return False;
+      } catch (DbException $e) {
+        $validationErrors[] = "User must exist";
       }
     }
-    if (!isset($comment['type']) || !isset($comment['parent_id'])) {
-      return False;
-    }
-    if (!is_numeric($comment['parent_id']) || intval($comment['parent_id']) != $comment['parent_id'] || intval($comment['parent_id']) <= 0) {
-      return False;
+    if (!isset($comment['parent_id']) || !is_integral($comment['parent_id']) || intval($comment['parent_id']) <= 0) {
+      $validationErrors[] = "Parent ID must be valid";
     } else {
       try {
         $parent = new $comment['type']($this->app, intval($comment['parent_id']));
-      } catch (Exception $e) {
-        return False;
+        $parent->getInfo();
+      } catch (DbException $e) {
+        $validationErrors[] = "Parent must be valid";
       }
     }
-    if (isset($comment['message']) && strlen($comment['message']) < 1 || strlen($comment['message']) > 300) {
-      return False;
+    if (!isset($comment['message']) || mb_strlen($comment['message']) < 1 || mb_strlen($comment['message']) > 300) {
+      $validationErrors[] = "Message must be between 1 and 300 characters long";
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $comment, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.
@@ -174,7 +176,7 @@ class Comment extends BaseObject {
       }
       $targetParent = $this->parent();
       $targetUser = $this->user();
-    } else {
+    } elseif ($this->app->action === 'new') {
       $type = isset($_POST['comments']['type']) ? $_POST['comments']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
       try {
         $targetParent = $type !== Null && (isset($_POST['comments']['parent_id']) || isset($_REQUEST['parent_id'])) ? new $type($this->app, intval(isset($_POST['comments']['parent_id']) ? $_POST['comments']['parent_id'] : $_REQUEST['parent_id'])) : Null;
@@ -222,7 +224,12 @@ class Comment extends BaseObject {
             $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
             $this->app->redirect($targetParent->url());
           }
-          $createComment = $targetComment->create_or_update($_POST['comments']);
+          try {
+            $createComment = $targetComment->create_or_update($_POST['comments']);
+          } catch (ValidationException $e) {
+            $this->app->delayedMessage("Some problems were found with your comment:\n".$e->listMessages());
+            $this->app->redirect();
+          }
           if ($createComment) {
             $this->app->delayedMessage("Succesfully commented.", 'success');
             $this->app->redirect($targetParent->url());
@@ -265,12 +272,17 @@ class Comment extends BaseObject {
             $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
             $this->app->redirect();
           }
-          $updateComment = $targetComment->create_or_update($_POST['comments']);
+          try {
+            $updateComment = $targetComment->create_or_update($_POST['comments']);
+          } catch (ValidationException $e) {
+            $this->app->delayedMessage("Some problems were found with your comment:\n".$e->listMessages());
+            $this->app->redirect();
+          }
           if ($updateComment) {
             $this->app->delayedMessage("Comment successfully updated.", 'success');
             $this->app->redirect();
           } else {
-            $this->app->delayedMessage("An error occurred while creating or updating this comment.", 'error');
+            $this->app->delayedMessage("An error occurred while updating this comment.", 'error');
             $this->app->redirect();
           }
         }

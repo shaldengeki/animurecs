@@ -1,4 +1,9 @@
 <?php
+function is_integral($value) {
+  // returns bool reflecting whether the current value is integral.
+  return is_numeric($value) && intval($value) == $value;
+}
+
 function dot(array $a, array $b) {
   $sum = 0;
   foreach ($a as $key=>$val) {

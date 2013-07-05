@@ -2,7 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
   $firstAnime = Anime::first($this->app);
-  $newEntry = new AnimeEntry($this->app, Null, ['user' => $this, 'user_id' => $this->id]);
+  $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
   $params['anime'] = isset($params['anime']) ? $params['anime'] : Null;
   $animeEntry = ['score' => 0, 'status' => 0, 'episode' => 0];
 

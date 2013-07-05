@@ -142,7 +142,7 @@
 ?>
       <div class='alert<?php echo isset($message['class']) ? " alert-".escape_output($message['class']) : ""; ?>'>
     <button class='close' data-dismiss='alert' href='#'>×</button>
-  <?php echo escape_output($message['text']); ?></div>
+  <?php echo $message['text']; ?></div>
 <?php
   }
   $this->clearAllMessages();

@@ -72,10 +72,7 @@ class Anime extends BaseObject {
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
-    if (!$this->approvedOn()) {
-      return False;
-    }
-    return True;
+    return (bool) $this->approvedOn();
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -127,13 +124,15 @@ class Anime extends BaseObject {
     try {
       $tag = new Tag($this->app, intval($tag_id));
       $tag->getInfo();
-    } catch (Exception $e) {
+    } catch (DbException $e) {
       return False;
     }
     $datetime = new DateTime('now', $this->app->serverTimeZone);
-    if (!$this->app->dbConn->table('anime_tags')->fields('tag_id', 'anime_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $datetime->format("Y-m-d H:i:s")])->insert()) {
-      return False;
-    }
+
+    $this->app->dbConn->table('anime_tags')->fields('tag_id', 'anime_id', 'created_user_id', 'created_at')
+      ->values([$tag->id, $this->id, $currentUser->id, $datetime->format("Y-m-d H:i:s")])
+      ->insert();
+
     $this->fire('tag');
     $tag->fire('tag');
     $this->tags[intval($tag->id)] = ['id' => intval($tag->id), 'name' => $tag->name];
@@ -156,9 +155,10 @@ class Anime extends BaseObject {
       }
     }
     if ($tagIDs) {
-      if (!$this->app->dbConn->table('anime_tags')->where(['anime_id' => $this->id, 'tag_id' => $tagIDs])->limit(count($tagIDs))->delete()) {
-        return False;
-      }
+      $this->app->dbConn->table('anime_tags')
+        ->where(['anime_id' => $this->id, 'tag_id' => $tagIDs])
+        ->limit(count($tagIDs))
+        ->delete();
     }
     foreach ($tagIDs as $tagID) {
       $this->tags[intval($tagID)]->fire('untag');
@@ -168,37 +168,44 @@ class Anime extends BaseObject {
     return True;
   }
   public function validate(array $anime) {
-    if (!parent::validate($anime)) {
-      return False;
+    $validationErrors = [];
+    try {
+      parent::validate($anime);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
     }
     if (!isset($anime['title']) || strlen($anime['title']) < 1) {
-      return False;
+      $validationErrors[] = "Anime must have a non-blank title";
     }
     if (isset($anime['description']) && (strlen($anime['description']) < 1 || strlen($anime['description']) > 1000)) {
-      return False;
+      $validationErrors[] = "Anime description must be between 1 and 1000 characters in length";
     }
-    if (isset($anime['episode_count']) && ( !is_numeric($anime['episode_count']) || intval($anime['episode_count']) != $anime['episode_count'] || intval($anime['episode_count']) < 0) ) {
-      return False;
+    if (isset($anime['episode_count']) && ( !is_integral($anime['episode_count']) || intval($anime['episode_count']) < 0) ) {
+      $validationErrors[] = "Anime episode count must be an integer greater than 0";
     }
-    if (isset($anime['episode_length']) && ( !is_numeric($anime['episode_length']) || intval($anime['episode_length']) != $anime['episode_length'] || intval($anime['episode_length']) < 0) ) {
-      return False;
+    if (isset($anime['episode_length']) && ( !is_integral($anime['episode_length']) || intval($anime['episode_length']) < 0) ) {
+      $validationErrors[] = "Anime episode length must be an integer greater than 0";
     }
     if (isset($anime['approved_on']) && $anime['approved_on'] && !strtotime($anime['approved_on'])) {
-      return False;
+      $validationErrors[] = "Anime approved time must be a parseable date-time stamp";
     }
     if (isset($anime['approved_user_id']) && intval($anime['approved_user_id'])) {
-      if (!is_numeric($anime['approved_user_id']) || intval($anime['approved_user_id']) != $anime['approved_user_id'] || intval($anime['approved_user_id']) <= 0) {
-        return False;
+      if (!is_integral($anime['approved_user_id']) || intval($anime['approved_user_id']) <= 0) {
+        $validationErrors[] = "User who approved this anime must have a valid userID";
       } else {
         try {
           $approvedUser = new User($this->app, intval($anime['approved_user_id']));
           $approvedUser->getInfo();
         } catch (Exception $e) {
-          return False;
+          $validationErrors[] = "User who approved this anime must exist";
         }
       }
     }
-    return True;
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $anime, $validationErrors);
+    } else {
+      return True;
+    }
   }
   public function create_or_update(array $anime, array $whereConditions=Null) {
     // creates or updates a anime based on the parameters passed in $anime and this object's attributes.
@@ -206,7 +213,8 @@ class Anime extends BaseObject {
     
     // filter some parameters out first and replace them with their corresponding db fields.
     if (isset($anime['anime_tags']) && !is_array($anime['anime_tags'])) {
-      $anime['anime_tags'] = explode(",", $anime['anime_tags']);
+      $animeTags = explode(",", $anime['anime_tags']);
+      unset($anime['anime_tags']);
     }
     if ((isset($anime['approved']) && intval($anime['approved']) == 1 && !$this->isApproved())) {
       $anime['approved_on'] = unixToMySQLDateTime();
@@ -226,19 +234,19 @@ class Anime extends BaseObject {
     $imagePath = "";
     if ($file_array['tmp_name'] && is_uploaded_file($file_array['tmp_name'])) {
       if ($file_array['error'] != UPLOAD_ERR_OK) {
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while uploading anime cover image');
       }
       $file_contents = file_get_contents($file_array['tmp_name']);
       if (!$file_contents) {
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while reading anime cover image');
       }
       $newIm = @imagecreatefromstring($file_contents);
       if (!$newIm) {
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while creating anime cover image');
       }
       $imageSize = getimagesize($file_array['tmp_name']);
       if ($imageSize[0] > 300 || $imageSize[1] > 300) {
-        return False;
+        throw new ValidationException($this->app, $imageSize, 'Anime cover image dimensions must be <= 300px');
       }
       // move file to destination and save path in db.
       if (!is_dir(joinPaths(Config::APP_ROOT, "img", "anime", intval($this->id)))) {
@@ -247,7 +255,7 @@ class Anime extends BaseObject {
       $imagePathInfo = pathinfo($file_array['tmp_name']);
       $imagePath = joinPaths("img", "anime", intval($this->id), $this->id.image_type_to_extension($imageSize[2]));
       if (!move_uploaded_file($file_array['tmp_name'], $imagePath)) {
-        return False;
+        throw new ValidationException($this->app, $file_array, 'An error occurred while moving anime cover image');
       }
     } else {
       if ($this->id != 0) {
@@ -257,28 +265,25 @@ class Anime extends BaseObject {
       }
     }
     $anime['image_path'] = $imagePath;
-    $result = parent::create_or_update($anime, $whereConditions);
-    if (!$result) {
-      return False;
-    }
+    $this->id = parent::create_or_update($anime, $whereConditions);
 
     // now process any taggings.
-    if (isset($anime['anime_tags'])) {
+    if (isset($animeTags)) {
       // drop any unneeded  tags.
       $tagsToDrop = [];
       foreach ($this->tags() as $tag) {
-        if (!in_array($tag->id, $anime['anime_tags'])) {
+        if (!in_array($tag->id, $animeTags)) {
           $tagsToDrop[] = intval($tag->id);
         }
       }
-      $drop_tags = $this->drop_taggings($tagsToDrop);
-      foreach ($anime['anime_tags'] as $tagToAdd) {
+      $this->drop_taggings($tagsToDrop);
+      foreach ($animeTags as $tagToAdd) {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
           $tagID = intval($this->app->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
-            $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
+            $this->create_or_update_tagging($tagID, $this->app->user);
           }
         }
       }
@@ -288,9 +293,7 @@ class Anime extends BaseObject {
   }
   public function delete($entries=Null) {
     // first, drop all taggings.
-    if (!$this->drop_taggings()) {
-      return False;
-    }
+    $this->drop_taggings();
     return parent::delete($entries);
   }
   public function getTags() {
@@ -403,6 +406,27 @@ class Anime extends BaseObject {
     }, $result));
   }
   public function render() {
+    if ($this->app->action == 'new' || $this->app->action == 'edit') {
+      if (isset($_POST['anime']) && is_array($_POST['anime'])) {
+        $verbProgressive = $this->id === 0 ? "creating" : "updating";
+        $verbPast = $this->id === 0 ? "created" : "updated";
+        try {
+          $updateAnime = $this->create_or_update($_POST['anime']);
+        } catch (ValidationException $e) {
+          $this->app->delayedMessage("Some problems were found with your input while ".$verbProgressive." ".$this->title().":\n".$e->listMessages());
+          $this->app->redirect();
+        }
+        if ($updateAnime) {
+          // fetch the new ID.
+          $newAnime = new Anime($this->app, $updateAnime);
+          $this->app->delayedMessage("Successfully ".$verbPast." ".$newAnime->title().".", "success");
+          $this->app->redirect($newAnime->url("show"));
+        } else {
+          $this->app->delayedMessage("An error occurred while ".$verbProgressive." ".$this->title().".", "error");
+          $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")));
+        }
+      }
+    }
     switch($this->app->action) {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
@@ -435,18 +459,6 @@ class Anime extends BaseObject {
         $output = $this->view('new');
         break;
       case 'edit':
-        if (isset($_POST['anime']) && is_array($_POST['anime'])) {
-          $updateAnime = $this->create_or_update($_POST['anime']);
-          if ($updateAnime) {
-            // fetch the new ID.
-            $newAnime = new Anime($this->app, $updateAnime);
-            $this->app->delayedMessage("Successfully ".($this->id === 0 ? "created" : "updated")." ".$newAnime->title().".", "success");
-            $this->app->redirect($newAnime->url("show"));
-          } else {
-            $this->app->delayedMessage("An error occurred while ".($this->id === 0 ? "creating" : "updating")." ".$this->title().".", "error");
-            $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")));
-          }
-        }
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
