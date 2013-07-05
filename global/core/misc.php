@@ -4,6 +4,15 @@ function is_integral($value) {
   return is_numeric($value) && intval($value) == $value;
 }
 
+function camelCase($value) {
+  $paramParts = preg_split("/(_|\ )/", $value);
+  $newName = strtolower($paramParts[0]);
+  foreach (array_slice($paramParts, 1) as $part) {
+    $newName .= ucfirst($part);
+  }
+  return $newName;
+}
+
 function dot(array $a, array $b) {
   $sum = 0;
   foreach ($a as $key=>$val) {
@@ -196,6 +205,10 @@ function buildKeyFilter($key, $value) {
       return False;
     }
   };
+}
+
+function array_select_keys($a, $keys) {
+  return array_intersect_key($a, array_flip($keys));
 }
 
 function array_filter_by_key($a, $key, $value) {

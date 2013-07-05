@@ -57,13 +57,15 @@
   <h1>Groupwatches <small>Shows <?php echo $this->currentUser() ? "you have" : escape_output($this->username)." has"; ?> in common with friends</small></h1>
 </div>
 
+<div class='center-horizontal'><?php echo $this->animeList()->view('sectionMenu', ['sections' => $groupwatchCategories]); ?></div>
+
 <?php
   if ($nonZeroGroupwatches) {
     foreach ($groupwatchCategories as $category) {
       if ($groupwatches[$category]) {
 ?>
 <div class='groupwatch-category'>
-  <h2><?php echo escape_output(statusArray()[$category]); ?></h2>
+  <h2 id='<?php echo escape_output(camelCase(statusArray()[$category])); ?>'><?php echo escape_output(statusArray()[$category]); ?></h2>
 <?php
 
         foreach ($groupwatches[$category] as $groupwatch) {

@@ -1,11 +1,22 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
+
+  $flippedStatuses = array_flip(statusArray());
+  $sections = array_flip(isset($params['sections']) ? $params['sections'] : array_filter($flippedStatuses, function ($a) {
+    return $a != 0;
+  }));
+
+  $statuses = array_filter($flippedStatuses, function ($a) use ($sections) {
+    return isset($sections[$a]);
+  });
 ?>
-<ul id="userListNav" class="nav nav-pills">
-  <li><a href='#currentlyWatching'>Currently Watching</a></li>
-  <li><a href='#completed'>Completed</a></li>
-  <li><a href='#onHold'>On Hold</a></li>
-  <li><a href='#dropped'>Dropped</a></li>
-  <li><a href='#planToWatch'>Plan to Watch</a></li>
+<ul id="sectionMenu" class="nav nav-pills">
+<?php
+  foreach ($statuses as $text => $status) {
+?>
+  <li><a href='#<?php echo escape_output(camelCase($text)); ?>'><?php echo escape_output($text); ?></a></li>
+<?php
+  }
+?>
 </ul>

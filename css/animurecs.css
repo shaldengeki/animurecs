@@ -1084,8 +1084,8 @@ ul.media-list .media .feedAvatar{width:40px;height:40px;margin:0 0 0 5px;text-al
 ul.media-list .media .feedText{padding-left:10px;font-size:10pt;}ul.media-list .media .feedText .feedUser{font-size:11pt;}ul.media-list .media .feedText .feedUser a:link,ul.media-list .media .feedText .feedUser a:visited{color:#333333;text-decoration:none;}
 ul.media-list .media .feedText .feedUser a:hover{color:#0000ff;text-decoration:underline;}
 ul.media-list .media .feedText .feedEntryMenu{display:inline;margin:0;list-style-type:none;}ul.media-list .media .feedText .feedEntryMenu li{display:inline;white-space:nowrap;}
-div#userList ul#userListNav{margin:0 auto;width:100%;text-align:center;}div#userList ul#userListNav li{float:none;display:inline-block;}
-div#userList h2{margin-top:-40px;padding-top:40px;}
+ul#sectionMenu{margin:0 auto;width:100%;text-align:center;}ul#sectionMenu li{float:none;display:inline-block;}
+#remove,#currentlyWatching,#completed,#onHold,#dropped,#planToWatch{margin-top:-40px;padding-top:40px;}
 ul.tagList{width:100%;list-style:none;}ul.tagList li{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;}
 .tag-general{color:#006ffa;}
 .tag-studio{color:#aa0000;}
@@ -1105,7 +1105,7 @@ ul.tagCloud li span a,ul.tagCloud li span a:hover,ul.tagCloud li span a:active,u
 .rule line{stroke:#eee;}
 path{fill:none;}
 #vis{text-align:center;}
-.center-horizontal{text-align:center;}
+.center-horizontal{margin:0 auto;text-align:center;}
 .add-tag-list{position:absolute;list-style:none;}.add-tag-list .tag-list{background:none repeat scroll 0% 0% #eff2f7;}
 .add-tag-list .tag-list:hover{background:none repeat scroll 0% 0% #b6c7e3;}
 ul.token-input-list-facebook{display:inline-block;}

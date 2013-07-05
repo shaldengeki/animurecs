@@ -3,7 +3,7 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $assetsVersion = 0.68;
+  $assetsVersion = 0.69;
   $firstAnime = class_exists("Anime") ? Anime::first($this) : Null;
   $params['container'] = isset($params['container']) ? $params['container'] : True;
   $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
