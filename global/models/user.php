@@ -717,10 +717,7 @@ class User extends BaseObject {
     $newUser->setCurrentSession();
 
     // check for failed logins.
-    $this->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC');
-    $this->app->logger->err($this->dbConn->queryString());
-    $this->app->logger->err(print_r($this->dbConn->params, True));
-    $failedLoginQuery = $this->dbConn->assoc();
+    $failedLoginQuery = $this->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC')->assoc();
     if ($failedLoginQuery) {
       foreach ($failedLoginQuery as $failedLogin) {
         $this->app->delayedMessage('There was a failed login attempt from '.$failedLogin['ip'].' at '.$failedLogin['time'].'.', 'error');
@@ -785,15 +782,11 @@ class User extends BaseObject {
 
     foreach($malList as $entry) {
       // ensure that the user doesn't already have this entry in their list.
-      if ($entry['anime_id'] == 208) {
-        $this->app->logger->err($entry);
-      }
       $entry['user_id'] = $this->id;
       try {
         $foundEntry = AnimeEntry::find($this->app, $entry);
       } catch (DbException $e) {
         // entry doesn't already exist.
-        $this->app->logger->err("Inserting entry.");
         try {
           $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
           $listIDs[$entry['anime_id']] = $newEntry->create_or_update($entry);
