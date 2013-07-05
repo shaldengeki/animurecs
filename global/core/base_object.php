@@ -26,7 +26,6 @@ abstract class BaseObject {
 
   public function __construct(Application $app, $id=Null) {
     $this->app = $app;
-    $this->dbConn = $app->dbConn;
     $this->id = intval($id);
     if ($id === 0) {
       $this->createdAt = $this->updatedAt = "";
@@ -105,7 +104,7 @@ abstract class BaseObject {
     if ($this->app->cache->resultCode() === Memcached::RES_NOTFOUND) {
       // key is not yet set in cache. fetch from DB and set it in cache.
       try {
-        $info = $this->dbConn->table(static::$MODEL_TABLE)->where(['id' => $this->id])->limit(1)->firstRow();
+        $info = $this->app->dbConn->table(static::$MODEL_TABLE)->where(['id' => $this->id])->limit(1)->firstRow();
       } catch (DbException $e) {
         throw new DbException(static::MODEL_NAME().' ID not found: '.$this->id);
       }
@@ -205,18 +204,18 @@ abstract class BaseObject {
     $this->validate($object);
 
     //go ahead and create or update this object.
-    $this->dbConn->table(static::$MODEL_TABLE);
+    $this->app->dbConn->table(static::$MODEL_TABLE);
     if (!isset($object['updated_at'])) {
-      $this->dbConn->set(['updated_at=NOW()']);
+      $this->app->dbConn->set(['updated_at=NOW()']);
     }
 
     if ($this->id != 0) {
       $whereConditions['id'] = $this->id;
       //update this object.
       $this->beforeUpdate($object);
-      $this->dbConn->set($object)->where($whereConditions === Null ? [] : $whereConditions)->limit(1);
-      if (!$this->dbConn->update()) {
-        throw new DbException("Could not update ".static::$MODEL_TABLE.": ".$this->dbConn->queryString());
+      $this->app->dbConn->set($object)->where($whereConditions === Null ? [] : $whereConditions)->limit(1);
+      if (!$this->app->dbConn->update()) {
+        throw new DbException("Could not update ".static::$MODEL_TABLE.": ".$this->app->dbConn->queryString());
       }
       $this->set($object);
       $modelName = static::MODEL_NAME();
@@ -224,12 +223,12 @@ abstract class BaseObject {
       $newObject->afterUpdate($object);
     } else {
       // add this object.
-      $this->dbConn->set(['created_at=NOW()']);
+      $this->app->dbConn->set(['created_at=NOW()']);
       $this->beforeCreate([$object]);
-      if (!$this->dbConn->set($object)->insert()) {
-        throw new DbException("Could not insert into ".static::$MODEL_TABLE.": ".$this->dbConn->queryString());
+      if (!$this->app->dbConn->set($object)->insert()) {
+        throw new DbException("Could not insert into ".static::$MODEL_TABLE.": ".$this->app->dbConn->queryString());
       } else {
-        $this->id = intval($this->dbConn->lastInsertId);
+        $this->id = intval($this->app->dbConn->lastInsertId);
       }
       $modelName = $this->MODEL_NAME();
       $newObject = new $modelName($this->app, $this->id);
@@ -260,7 +259,7 @@ abstract class BaseObject {
     }
     $this->beforeDelete();
     if ($entryIDs) {
-      if (!$this->dbConn->table(static::$MODEL_TABLE)->where(['id' => $entryIDs])->limit(count($entryIDs))->delete()) {
+      if (!$this->app->dbConn->table(static::$MODEL_TABLE)->where(['id' => $entryIDs])->limit(count($entryIDs))->delete()) {
         throw new DbException("Could not delete from ".static::$MODEL_TABLE.": ".$deleteQuery);
       }
     }

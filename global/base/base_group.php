@@ -19,7 +19,6 @@ class BaseGroup implements Iterator, ArrayAccess {
     // preserves keys of input array.
     $this->position = 0;
     $this->app = $app;
-    $this->dbConn = $app->dbConn;
     $this->_objects = [];
     if (count($objects) > 0) {
       foreach ($objects as $key=>$object) {
@@ -176,7 +175,7 @@ class BaseGroup implements Iterator, ArrayAccess {
         if ($inclusion) {
           // we have objects that are not yet cached. pull them from the db.
           $infoToCache = [];
-          $objectInfo = $this->dbConn->table($groupTable)->where(['id' => $inclusion])->assoc();
+          $objectInfo = $this->app->dbConn->table($groupTable)->where(['id' => $inclusion])->assoc();
           foreach ($objectInfo as $info) {
             $objectList[$idToListIndex[intval($info['id'])]]->set($info);
             $infoToCache[$modelName."-".$info['id']] = $info;
@@ -204,7 +203,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     foreach ($this->_objects as $object) {
       $inclusion[] = $object->id;
     }
-    $tagCountList = $inclusion ? $this->dbConn->table($this->_groupTable."_tags")->fields('tag_id', 'COUNT(*)')->join('tags ON tags.id=tag_id')->where([$this->_groupTableSingular."_id" => $inclusion])->group('tag_id')->order('COUNT(*) DESC')->assoc('tag_id', 'COUNT(*)') : [];
+    $tagCountList = $inclusion ? $this->app->dbConn->table($this->_groupTable."_tags")->fields('tag_id', 'COUNT(*)')->join('tags ON tags.id=tag_id')->where([$this->_groupTableSingular."_id" => $inclusion])->group('tag_id')->order('COUNT(*) DESC')->assoc('tag_id', 'COUNT(*)') : [];
     foreach ($tagCountList as $id=>$count) {
       $tagCountList[$id] = ['tag' => new Tag($this->app, intval($id)), 'count' => intval($count)];
     }

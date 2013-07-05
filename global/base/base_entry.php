@@ -107,24 +107,24 @@ abstract class BaseEntry extends BaseObject {
     }
 
     // check to see if this is an update.
-    $this->dbConn->table(static::$MODEL_TABLE);
+    $this->app->dbConn->table(static::$MODEL_TABLE);
     if ($this->id != 0) {
       $this->beforeUpdate($entry);
-      if (!$this->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update()) {
+      if (!$this->app->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update()) {
         return False;
       }
       $returnValue = intval($entry['id']);
       $this->afterUpdate();
     } else {
       $this->beforeCreate($entry);
-      $this->dbConn->set($entry);
+      $this->app->dbConn->set($entry);
       if (!isset($entry['time'])) {
-        $this->dbConn->set(['time=NOW()']);
+        $this->app->dbConn->set(['time=NOW()']);
       }
-      if (!$this->dbConn->insert()) {
+      if (!$this->app->dbConn->insert()) {
         return False;
       }
-      $returnValue = intval($this->dbConn->lastInsertId);
+      $returnValue = intval($this->app->dbConn->lastInsertId);
       $entry['id'] = $returnValue;
       $this->afterCreate($entry);
     }

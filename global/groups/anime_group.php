@@ -43,7 +43,7 @@ class AnimeGroup extends BaseGroup {
       if ($animeIDs) {
         // now fetch the non-cached results from the db, building a record so we can cache it after.
         $animeTags = [];
-        $fetchTaggings = $this->dbConn->table('anime_tags')->fields('anime_id', 'tag_id')->where(['anime_id' => $animeIDs])->query();
+        $fetchTaggings = $this->app->dbConn->table('anime_tags')->fields('anime_id', 'tag_id')->where(['anime_id' => $animeIDs])->query();
         while ($tagging = $fetchTaggings->fetch()) {
           $animeID = intval($tagging['anime_id']);
           $tagID = intval($tagging['tag_id']);

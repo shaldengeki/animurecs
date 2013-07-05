@@ -85,7 +85,7 @@ class Tag extends BaseObject {
       return False;
     }
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
-    if (!$this->dbConn->table('anime_tags')->fields('anime_id', 'tag_id', 'created_user_id', 'created_at')->values([$anime->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])->insert()) {
+    if (!$this->app->dbConn->table('anime_tags')->fields('anime_id', 'tag_id', 'created_user_id', 'created_at')->values([$anime->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])->insert()) {
       return False;
     }
     $this->fire('tag');
@@ -116,7 +116,7 @@ class Tag extends BaseObject {
         $animeObjects[$animeID]->beforeUpdate([]);
       }
       $this->beforeUpdate([]);
-      if (!$this->dbConn->table('anime_tags')->where(['tag_id' => $this->id, 'anime_id' => $animeIDs])->limit(count($animeIDs))->delete()) {
+      if (!$this->app->dbConn->table('anime_tags')->where(['tag_id' => $this->id, 'anime_id' => $animeIDs])->limit(count($animeIDs))->delete()) {
         return False;
       }
       $this->afterUpdate([]);
@@ -198,7 +198,7 @@ class Tag extends BaseObject {
       foreach ($tag['anime_tags'] as $animeToAdd) {
         if (!array_filter_by_property($this->anime()->anime(), 'id', $animeToAdd)) {
           // find this tagID.
-          $animeID = intval($this->dbConn->table(Anime::$MODEL_TABLE)->fields('id')->where(['id' => $animeToAdd])->limit(1)->firstValue());
+          $animeID = intval($this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('id')->where(['id' => $animeToAdd])->limit(1)->firstValue());
           if ($animeID) {
             $create_tagging = $this->create_or_update_tagging($animeID, $currentUser);
           }
@@ -230,11 +230,11 @@ class Tag extends BaseObject {
   }
   public function getApprovedUser() {
     // retrieves an id,name array corresponding to the user who approved this anime.
-    // return $this->dbConn->firstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
+    // return $this->app->dbConn->firstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
   }
   public function getCreatedUser() {
     // retrieves a user object corresponding to the user who created this tag.
-    return new User($this->app, intval($this->dbConn->table(static::$MODEL_TABLE)->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
+    return new User($this->app, intval($this->app->dbConn->table(static::$MODEL_TABLE)->fields('created_user_id')->where(['id' => $this->id])->firstValue()));
   }
   public function createdUser() {
     if ($this->createdUser === Null) {
@@ -244,7 +244,7 @@ class Tag extends BaseObject {
   }
   public function getType() {
     // retrieves the tag type that this tag belongs to.
-    return new TagType($this->app, intval($this->dbConn->table(static::$MODEL_TABLE)->fields('tag_type_id')->where(['id' => $this->id])->firstValue()));
+    return new TagType($this->app, intval($this->app->dbConn->table(static::$MODEL_TABLE)->fields('tag_type_id')->where(['id' => $this->id])->firstValue()));
   }
   public function type() {
     if ($this->type === Null) {
@@ -255,7 +255,7 @@ class Tag extends BaseObject {
   public function getAnime() {
     // retrieves a list of anime objects corresponding to anime tagged with this tag.
     $animes = [];
-    $animeIDs = $this->dbConn->table('anime_tags')->fields('anime_id')->where(['tag_id' => $this->id])->query();
+    $animeIDs = $this->app->dbConn->table('anime_tags')->fields('anime_id')->where(['tag_id' => $this->id])->query();
     while ($animeID = $animeIDs->fetch()) {
       $animes[intval($animeID['anime_id'])] = new Anime($this->app, intval($animeID['anime_id']));
     }
@@ -270,7 +270,7 @@ class Tag extends BaseObject {
   public function getThreads() {
     // retrieves a list of thread objects corresponding to threads tagged with this tag.
     $threads = [];
-    $threadIDs = $this->dbConn->table('thread_tags')->fields('thread_id')->where(['tag_id' => $this->id])->query();
+    $threadIDs = $this->app->dbConn->table('thread_tags')->fields('thread_id')->where(['tag_id' => $this->id])->query();
     while ($threadID = $threadIDs->fetch()) {
       $threads[intval($threadID['thread_id'])] = new Thread($this->app, intval($threadID['thread_id']));
     }
@@ -284,7 +284,7 @@ class Tag extends BaseObject {
   }
   public function getNumAnime() {
     // retrieves the number of anime tagged with this tag.
-    return $this->dbConn->table('anime_tags')->fields('COUNT(*)')->where(['tag_id' => $this->id])->count();
+    return $this->app->dbConn->table('anime_tags')->fields('COUNT(*)')->where(['tag_id' => $this->id])->count();
   }
   public function numAnime() {
     if ($this->numAnime === Null) {
@@ -307,7 +307,7 @@ class Tag extends BaseObject {
       case 'token_search':
         $tags = [];
         if (isset($_REQUEST['term'])) {
-          $tags = $this->dbConn->table(static::$MODEL_TABLE)->fields('id', 'name')->match('name', $_REQUEST['term'])->order('name ASC')->assoc();
+          $tags = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('id', 'name')->match('name', $_REQUEST['term'])->order('name ASC')->assoc();
         }
         echo json_encode($tags);
         exit;

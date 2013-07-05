@@ -94,7 +94,7 @@ class Thread extends BaseObject {
       return False;
     }
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
-    if (!$this->dbConn->table('thread_tags')->fields('tag_id', 'thread_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])->insert()) {
+    if (!$this->app->dbConn->table('thread_tags')->fields('tag_id', 'thread_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $dateTime->format("Y-m-d H:i:s")])->insert()) {
       return False;
     }
     $this->tags[intval($tag->id)] = ['id' => intval($tag->id), 'name' => $tag->name];
@@ -119,7 +119,7 @@ class Thread extends BaseObject {
       }
     }
     if ($tagIDs) {
-      if (!$this->dbConn->table('thread_tags')->where(['thread_id' => $this->id, 'tag_id' => $tagIDs])->limit(count($tagIDs))->delete()) {
+      if (!$this->app->dbConn->table('thread_tags')->where(['thread_id' => $this->id, 'tag_id' => $tagIDs])->limit(count($tagIDs))->delete()) {
         return False;
       }
     }
@@ -170,7 +170,7 @@ class Thread extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
+          $tagID = intval($this->app->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -190,7 +190,7 @@ class Thread extends BaseObject {
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->table('thread_tags')->fields('tag_id')->join('tags ON tags.id=tag_id')->where(['thread_id' => $this->id])->order('tags.tag_type_id ASC', 'tags.name ASC')->query();
+    $tagIDs = $this->app->dbConn->table('thread_tags')->fields('tag_id')->join('tags ON tags.id=tag_id')->where(['thread_id' => $this->id])->order('tags.tag_type_id ASC', 'tags.name ASC')->query();
     while ($tagID = $tagIDs->fetch()) {
       $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
     }
@@ -204,7 +204,7 @@ class Thread extends BaseObject {
   }
   public function getUser() {
     // retrieves the user object that this thread belongs to.
-    $userID = intval($this->dbConn->table($this->modelTable)->fields('user_id')->where(['id' => $this->id])->limit(1)->firstValue());
+    $userID = intval($this->app->dbConn->table($this->modelTable)->fields('user_id')->where(['id' => $this->id])->limit(1)->firstValue());
     return new User($this->app, $userID);
   }
   public function user() {
@@ -312,11 +312,11 @@ class Thread extends BaseObject {
         $resultsPerPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $numPages = ceil($this->dbConn->table(Anime::$MODEL_TABLE)->fields('COUNT(*)')->count()/$resultsPerPage);
-            $animeIDs = $this->dbConn->table(Anime::$MODEL_TABLE)->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+            $numPages = ceil($this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('COUNT(*)')->count()/$resultsPerPage);
+            $animeIDs = $this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
           } else {
-            $numPages = ceil($this->dbConn->table(Anime::$MODEL_TABLE)->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$resultsPerPage);
-            $animeIDs = $this->dbConn->table(Anime::$MODEL_TABLE)->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+            $numPages = ceil($this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$resultsPerPage);
+            $animeIDs = $this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
           }
           $anime = [];
           while ($animeID = $animeIDs->fetch()) {

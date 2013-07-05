@@ -128,7 +128,7 @@ class User extends BaseObject {
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
     // keyed by not-this-userID.
-    $friendReqs = $this->dbConn->table('users_friends')->fields('user_id_1', 'user_id_2', 'u1.username AS username_1', 'u2.username AS username_2', 'time', 'message')
+    $friendReqs = $this->app->dbConn->table('users_friends')->fields('user_id_1', 'user_id_2', 'u1.username AS username_1', 'u2.username AS username_2', 'time', 'message')
       ->join('users AS u1 ON u1.id=user_id_1')
       ->join('users AS u2 ON u2.id=user_id_2')
       ->where(["user_id_1=".intval($this->id)." || user_id_2=".intval($this->id), 'status' => $status])->query();
@@ -159,7 +159,7 @@ class User extends BaseObject {
     // returns a list of user,time,message arrays corresponding to all outstanding friend requests directed at this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
-    $friendReqsQuery = $this->dbConn->table('users_friends')->fields('user_id_1', 'time', 'message', 'status')
+    $friendReqsQuery = $this->app->dbConn->table('users_friends')->fields('user_id_1', 'time', 'message', 'status')
       ->where(['user_id_2' => $this->id, "status <= 0"])->order('time DESC')->query();
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch()) {
@@ -185,7 +185,7 @@ class User extends BaseObject {
     // returns a list of user_id,username,time,message arrays corresponding to all outstanding friend requests originating from this user.
     // user_id_1 is the user who requested, user_id_2 is the user who confirmed.
     // ordered by time desc.
-    $friendReqsQuery = $this->dbConn->table('users_friends')->fields('user_id_2', 'time', 'message', 'status')
+    $friendReqsQuery = $this->app->dbConn->table('users_friends')->fields('user_id_2', 'time', 'message', 'status')
       ->where(['user_id_1' => $this->id, "status <= 0"])->order('time DESC')->query();
     $friendReqs = [];
     while ($req = $friendReqsQuery->fetch()) {
@@ -239,7 +239,7 @@ class User extends BaseObject {
     $params['user_id_2'] = $requestedUser->id;
     $params['status'] = 0;
 
-    if ($this->dbConn->table('users_friends')->set($params)->set(['time=NOW()'])->insert()) {
+    if ($this->app->dbConn->table('users_friends')->set($params)->set(['time=NOW()'])->insert()) {
       $this->fire('requestFriend', ['id' => $requestedUser->id]);
       $requestedUser->fire('friendRequested', ['id' => $this->id]);
       return True;
@@ -251,7 +251,7 @@ class User extends BaseObject {
     // updates a friend request status from requestedUser directed at current user.
     // returns a boolean.
 
-    if ($this->dbConn->table('users_friends')->set(['status' => $status])->where(['user_id_1' => $requestedUser->id, 'user_id_2' => $this->id])->limit(1)->update()) {
+    if ($this->app->dbConn->table('users_friends')->set(['status' => $status])->where(['user_id_1' => $requestedUser->id, 'user_id_2' => $this->id])->limit(1)->update()) {
       $this->fire('updateFriend', ['id' => $requestedUser->id, 'status' => $status]);
       $requestedUser->fire('friendUpdated', ['id' => $this->id, 'status' => $status]);
       return True;
@@ -304,7 +304,7 @@ class User extends BaseObject {
   }
   public function getOwnComments() {
     // returns a list of comment objects sent by this user.
-    $ownComments = $this->dbConn->table(Comment::$MODEL_TABLE)->fields('id')->where(['user_id' => $this->id])->order('created_at DESC')->query();
+    $ownComments = $this->app->dbConn->table(Comment::$MODEL_TABLE)->fields('id')->where(['user_id' => $this->id])->order('created_at DESC')->query();
     $comments = [];
     while ($comment = $ownComments->fetch()) {
       $comments[] = new CommentEntry($this->app, intval($comment['id']));
@@ -417,7 +417,7 @@ class User extends BaseObject {
     } else {
       $checkID = $this->id;
     }
-    $thisUserInfo = $this->dbConn->table(static::$MODEL_TABLE)->fields('last_ip')->where(['id' => $checkID])->limit(1)->firstRow();
+    $thisUserInfo = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('last_ip')->where(['id' => $checkID])->limit(1)->firstRow();
     if (!$thisUserInfo || $thisUserInfo['last_ip'] != $_SERVER['REMOTE_ADDR']) {
       return False;
     }
@@ -674,7 +674,7 @@ class User extends BaseObject {
   }
   public function logFailedLogin($username) {
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
-    $insert_log = $this->dbConn->table('failed_logins')->fields('ip', 'time', 'username')->values([$_SERVER['REMOTE_ADDR'], $dateTime->format("Y-m-d H:i:s"), $username])->insert();
+    $insert_log = $this->app->dbConn->table('failed_logins')->fields('ip', 'time', 'username')->values([$_SERVER['REMOTE_ADDR'], $dateTime->format("Y-m-d H:i:s"), $username])->insert();
   }
   private function setCurrentSession() {
     // sets the current session to this user.
@@ -691,7 +691,7 @@ class User extends BaseObject {
   }
   public function logIn($username, $password) {
     // rate-limit requests.
-    $failedLoginCount = $this->dbConn->table('failed_logins')->fields('COUNT(*)')->where(['ip' => $_SERVER['REMOTE_ADDR'], "time > NOW() - INTERVAL 1 HOUR"])->count();
+    $failedLoginCount = $this->app->dbConn->table('failed_logins')->fields('COUNT(*)')->where(['ip' => $_SERVER['REMOTE_ADDR'], "time > NOW() - INTERVAL 1 HOUR"])->count();
     if ($failedLoginCount > self::$maxFailedLogins) {
       $this->app->delayedMessage("You have had too many unsuccessful login attempts. Please wait awhile and try again.", "error");
       return False;
@@ -700,7 +700,7 @@ class User extends BaseObject {
     // check for existence of username and matching password.
     $bcrypt = new Bcrypt();
     try {
-      $findUsername = $this->dbConn->table(static::$MODEL_TABLE)->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
+      $findUsername = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
     } catch (DbException $e) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
@@ -717,7 +717,7 @@ class User extends BaseObject {
     $newUser->setCurrentSession();
 
     // check for failed logins.
-    $failedLoginQuery = $this->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC')->assoc();
+    $failedLoginQuery = $this->app->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC')->assoc();
     if ($failedLoginQuery) {
       foreach ($failedLoginQuery as $failedLogin) {
         $this->app->delayedMessage('There was a failed login attempt from '.$failedLogin['ip'].' at '.$failedLogin['time'].'.', 'error');
@@ -821,7 +821,7 @@ class User extends BaseObject {
     */
     if ($switch_back) {
       // get user entry in database.
-      $findUserID = intval($this->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['username' => $username, ['id != ?', $this->id]])->limit(1)->firstValue());
+      $findUserID = intval($this->app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['username' => $username, ['id != ?', $this->id]])->limit(1)->firstValue());
       if (!$findUserID) {
         return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error'];
       }

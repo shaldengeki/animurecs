@@ -131,7 +131,7 @@ class Anime extends BaseObject {
       return False;
     }
     $datetime = new DateTime('now', $this->app->serverTimeZone);
-    if (!$this->dbConn->table('anime_tags')->fields('tag_id', 'anime_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $datetime->format("Y-m-d H:i:s")])->insert()) {
+    if (!$this->app->dbConn->table('anime_tags')->fields('tag_id', 'anime_id', 'created_user_id', 'created_at')->values([$tag->id, $this->id, $currentUser->id, $datetime->format("Y-m-d H:i:s")])->insert()) {
       return False;
     }
     $this->fire('tag');
@@ -156,7 +156,7 @@ class Anime extends BaseObject {
       }
     }
     if ($tagIDs) {
-      if (!$this->dbConn->table('anime_tags')->where(['anime_id' => $this->id, 'tag_id' => $tagIDs])->limit(count($tagIDs))->delete()) {
+      if (!$this->app->dbConn->table('anime_tags')->where(['anime_id' => $this->id, 'tag_id' => $tagIDs])->limit(count($tagIDs))->delete()) {
         return False;
       }
     }
@@ -276,7 +276,7 @@ class Anime extends BaseObject {
         // add any needed tags.
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
-          $tagID = intval($this->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
+          $tagID = intval($this->app->dbConn->table(Tag::$MODEL_TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
             $create_tagging = $this->create_or_update_tagging($tagID, $this->app->user);
           }
@@ -296,7 +296,7 @@ class Anime extends BaseObject {
   public function getTags() {
     // retrieves a list of tag objects corresponding to tags belonging to this anime.
     $tags = [];
-    $tagIDs = $this->dbConn->table('anime_tags')->fields('tag_id')->join('tags ON tags.id=tag_id')->where(['anime_id' => $this->id])->order('tags.tag_type_id ASC', 'tags.name ASC')->query();
+    $tagIDs = $this->app->dbConn->table('anime_tags')->fields('tag_id')->join('tags ON tags.id=tag_id')->where(['anime_id' => $this->id])->order('tags.tag_type_id ASC', 'tags.name ASC')->query();
     while ($tagID = $tagIDs->fetch()) {
       $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
     }
@@ -311,7 +311,7 @@ class Anime extends BaseObject {
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
     $returnList = [];
-    $animeEntries = $this->dbConn->table(AnimeList::$MODEL_TABLE)->fields('id', 'user_id', 'anime_id', 'time', 'status', 'score', 'episode')->where(['anime_id' => $this->id])->order('time DESC')->query();
+    $animeEntries = $this->app->dbConn->table(AnimeList::$MODEL_TABLE)->fields('id', 'user_id', 'anime_id', 'time', 'status', 'score', 'episode')->where(['anime_id' => $this->id])->order('time DESC')->query();
     while ($entry = $animeEntries->fetch()) {
       $newEntry = new AnimeEntry($this->app, intval($entry['id']), $entry);
       $returnList[intval($entry['id'])] = $newEntry;
@@ -321,7 +321,7 @@ class Anime extends BaseObject {
   public function getLatestEntries() {
     // retrieves the latest entries for each user for this anime.
     // retrieves a list of typeID, time, status, score, part_name arrays corresponding to the latest list entry for each thing the user has consumed.
-    $entryQuery = $this->dbConn->raw("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
+    $entryQuery = $this->app->dbConn->raw("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
                                         SELECT MAX(`id`) AS `id` FROM `anime_lists`
                                         WHERE `anime_id` = ".intval($this->id)."
                                         GROUP BY `user_id`
@@ -484,14 +484,14 @@ class Anime extends BaseObject {
           // top anime listing.
           $title = "Top Anime";
           $numPages = ceil(Anime::count($this->app)/$resultsPerPage);
-          $this->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) `p`')
+          $this->app->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) `p`')
             ->fields('anime_lists.anime_id', 'AVG(score) AS avg', 'STDDEV(score) AS stddev', 'COUNT(*) AS count', '((((AVG(score)-1)/9) + ( POW(STDDEV(score), 2) / (2.0 * COUNT(*)) ) - STDDEV(score) * SQRT( ((AVG(score)-1)/9) * (1.0 - ((AVG(score)-1)/9)) / COUNT(*) + ( POW(STDDEV(score), 2) / ( 4.0 * POW(COUNT(*), 2) ) ) )) / (1.0 + (POW(STDDEV(score), 2) / COUNT(*))) * 9) + 1 AS wilson')
             ->join('anime_lists ON anime_lists.user_id=p.user_id && anime_lists.anime_id=p.anime_id && anime_lists.time=p.time');
           if (!$this->app->user->isAdmin()) {
-            $this->dbConn->join('anime ON anime.id=anime_lists.anime_id')
+            $this->app->dbConn->join('anime ON anime.id=anime_lists.anime_id')
               ->where(['anime.approved_on IS NOT NULL']);
           }
-          $animeQuery = $this->dbConn->where(['anime_lists.score != 0'])
+          $animeQuery = $this->app->dbConn->where(['anime_lists.score != 0'])
               ->group('p.anime_id')
               ->having('COUNT(*) > 9')
               ->order('wilson DESC')

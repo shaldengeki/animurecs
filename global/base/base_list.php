@@ -72,7 +72,7 @@ abstract class BaseList extends BaseObject {
     if (!isset($entry['id'])) {
       // see if there are any entries matching these params for this user.
       try {
-        $checkExists = $this->dbConn->table(static::$MODEL_TABLE)->fields('id')->where($entry)->limit(1)->firstValue();
+        $checkExists = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where($entry)->limit(1)->firstValue();
         if ($checkExists) {
           // if entry exists, set its ID.
           $entry['id'] = intval($checkExists);
@@ -81,11 +81,11 @@ abstract class BaseList extends BaseObject {
         // entry does not exist, no need to do anything.
       }
     }
-    $this->dbConn->table(static::$MODEL_TABLE);
+    $this->app->dbConn->table(static::$MODEL_TABLE);
     if (isset($entryGroup->entries()[intval($entry['id'])])) {
       // this is an update.
       $this->beforeUpdate($entry);
-      $updateDependency = $this->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update();
+      $updateDependency = $this->app->dbConn->set($entry)->where(['id' => $entry['id']])->limit(1)->update();
       if (!$updateDependency) {
         return False;
       }
@@ -106,7 +106,7 @@ abstract class BaseList extends BaseObject {
         $entry['time'] = $dateTime->format("Y-m-d H:i:s");
       }
       $this->beforeCreate($entry);
-      $insertEntry = $this->dbConn->set($entry)->insert();
+      $insertEntry = $this->app->dbConn->set($entry)->insert();
       if (!$insertEntry) {
         return False;
       }
@@ -147,7 +147,7 @@ abstract class BaseList extends BaseObject {
     }
     if ($entryIDs) {
       $this->beforeDelete();
-      $drop_entries = $this->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->where(['id' => $entryIDs])->limit(count($entryIDs))->delete();
+      $drop_entries = $this->app->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->where(['id' => $entryIDs])->limit(count($entryIDs))->delete();
       if (!$drop_entries) {
         return False;
       }
@@ -165,7 +165,7 @@ abstract class BaseList extends BaseObject {
     return $this->user;
   }
   public function getInfo() {
-    $userInfo = $this->dbConn->table(static::$MODEL_TABLE)->fields('user_id', 'MIN(time) AS start_time', 'MAX(time) AS end_time')->where(['user_id' => $this->user_id])->firstRow();
+    $userInfo = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('user_id', 'MIN(time) AS start_time', 'MAX(time) AS end_time')->where(['user_id' => $this->user_id])->firstRow();
     if (!$userInfo) {
       return False;
     }
@@ -181,7 +181,7 @@ abstract class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = [];
-    $entries = $this->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->order('time DESC')->query();
+    $entries = $this->app->dbConn->table(static::$MODEL_TABLE)->where(['user_id' => $this->user_id])->order('time DESC')->query();
     $entryCount = $this->entryAvg = $this->entryStdDev = $entrySum = 0;
     $entryType = static::$LIST_TYPE."Entry";
     while ($entry = $entries->fetch()) {
@@ -202,7 +202,7 @@ abstract class BaseList extends BaseObject {
   }
   public function getUniqueList() {
     // retrieves a list of static::$TYPE_ID, time, status, score, static::$PART_NAME arrays corresponding to the latest list entry for each thing the user has consumed.
-    $listQuery = $this->dbConn->raw("SELECT `".static::$MODEL_TABLE."`.`id`, `".static::$TYPE_ID."`, `time`, `score`, `status`, `".static::$PART_NAME."` FROM (
+    $listQuery = $this->app->dbConn->raw("SELECT `".static::$MODEL_TABLE."`.`id`, `".static::$TYPE_ID."`, `time`, `score`, `status`, `".static::$PART_NAME."` FROM (
                                         SELECT MAX(`id`) AS `id` FROM `".static::$MODEL_TABLE."`
                                         WHERE `user_id` = ".intval($this->user_id)."
                                         GROUP BY `".static::$TYPE_ID."`

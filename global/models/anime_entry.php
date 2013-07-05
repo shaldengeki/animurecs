@@ -42,7 +42,7 @@ class AnimeEntry extends BaseEntry {
     return $this->returnInfo('episode');
   }
   private function _getComments() {
-    $comments = $this->dbConn->table(Comment::$MODEL_TABLE)->fields('id')->where(['type' => 'AnimeEntry', 'parent_id' => $this->id])->order('created_at ASC')->assoc('id', 'id');
+    $comments = $this->app->dbConn->table(Comment::$MODEL_TABLE)->fields('id')->where(['type' => 'AnimeEntry', 'parent_id' => $this->id])->order('created_at ASC')->assoc('id', 'id');
     return new CommentGroup($this->app, array_keys($comments));
   }
   public function comments() {
