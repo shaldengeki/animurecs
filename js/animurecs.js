@@ -154,7 +154,7 @@ function displayListEditForm(elt) {
   } else {
     score = parseFloat(score.split("/")[0]).toFixed(2);
   }
-  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_entries[score]' type='number' min=0 max=10 step=0.01 value='"+score+"' /><span class='add-on'>/10</span></div>");
+  $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_entries[score]' type='number' min=0 max=10 step='any' value='"+score+"' /><span class='add-on'>/10</span></div>");
 
   episodeNode = $(elt).parent().parent().find('.listEntryEpisode');
   episodeText = $(episodeNode).html();
