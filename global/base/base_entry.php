@@ -120,7 +120,7 @@ abstract class BaseEntry extends BaseObject {
       $validationErrors[] = "Entry status be one of 0,1,2,3,4,6";
     }
 
-    if (isset($entry['score']) && (!is_numeric($entry['score']) || floatval($entry['score']) < 0 || floatval($entry['score']) > 10)) {
+    if (isset($entry['score']) && (!is_numeric($entry['score']) || round(floatval($entry['score']), 2) < 0 || round(floatval($entry['score']), 2) > 10)) {
       $validationErrors[] = "Entry score must be numeric and between 0 and 10";
     }
 
@@ -144,8 +144,10 @@ abstract class BaseEntry extends BaseObject {
 
     foreach ($entry as $parameter => $value) {
       if (!is_array($value)) {
-        if (is_numeric($value)) {
+        if (is_integral($value)) {
           $entry[$parameter] = intval($value);
+        } elseif (is_numeric($value)) {
+          $entry[$parameter] = round(floatval($value), 2);
         }
       }
     }

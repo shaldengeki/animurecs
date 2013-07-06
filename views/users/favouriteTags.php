@@ -6,12 +6,12 @@
   $tagRatings = [];
   $tags = [];
   foreach ($this->animeList()->uniqueList() as $entry) {
-    if (intval($entry['score']) != 0) {
+    if (round(floatval($entry['score']), 2) != 0) {
       foreach ($entry['anime']->tags() as $tag) {
         if (isset($tagRatings[$tag->id])) {
-          $tagRatings[$tag->id][] = intval($entry['score']);
+          $tagRatings[$tag->id][] = round(floatval($entry['score']), 2);
         } else {
-          $tagRatings[$tag->id] = [intval($entry['score'])];
+          $tagRatings[$tag->id] = [round(floatval($entry['score']), 2)];
           $tags[$tag->id] = $tag;
         }
       }

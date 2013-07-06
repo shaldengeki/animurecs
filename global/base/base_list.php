@@ -101,14 +101,14 @@ abstract class BaseList extends BaseObject {
     while ($entry = $entries->fetch()) {
       $entry['list'] = $this;
       $returnList[intval($entry['id'])] = new $entryType($this->app, intval($entry['id']), $entry);
-      $entrySum += intval($entry['score']);
+      $entrySum += round(floatval($entry['score']), 2);
       $entryCount++;
     }
     $this->entryAvg = ($entryCount === 0) ? 0 : $entrySum / $entryCount;
     $entrySum = 0;
     if ($entryCount > 1) {
       foreach ($returnList as $entry) {
-        $entrySum += pow(intval($entry->score) - $this->entryAvg, 2);
+        $entrySum += pow(round(floatval($entry->score), 2) - $this->entryAvg, 2);
       }
       $this->entryStdDev = pow($entrySum / ($entryCount - 1), 0.5);
     }
@@ -128,8 +128,8 @@ abstract class BaseList extends BaseObject {
     while ($row = $listQuery->fetch()) {
       if ($row['score'] != 0) {
         $uniqueListCount++;
-        $uniqueListSum += intval($row['score']);
-        $uniqueListStdDev += pow(intval($row['score']) - $this->uniqueListAvg, 2);
+        $uniqueListSum += round(floatval($row['score']), 2);
+        $uniqueListStdDev += pow(round(floatval($row['score']), 2) - $this->uniqueListAvg, 2);
       }
       $returnList[$row[static::$TYPE_ID]] = [
         strtolower(static::$LIST_TYPE) => new static::$LIST_TYPE($this->app, intval($row[static::$TYPE_ID])),
@@ -171,7 +171,7 @@ abstract class BaseList extends BaseObject {
   public function listSection($status=Null, $score=Null) {
     // returns a section of this user's unique list.
     return array_filter($this->uniqueList(), function($value) use ($status, $score) {
-      return (($status !== Null && intval($value['status']) === $status) || ($score !== Null && intval($value['score']) === $score));
+      return (($status !== Null && intval($value['status']) === $status) || ($score !== Null && round(floatval($value['score']), 2) === $score));
     });
   }
   public function prevEntry($id, DateTime $beforeTime) {
