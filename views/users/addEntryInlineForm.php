@@ -40,7 +40,7 @@
                     <span<?php echo $displaySecondColumn ? "" : " display='none' "; ?>>
                       <?php echo display_status_dropdown("anime_entries[status]", "span5", $animeEntry['status'] ? $animeEntry['status'] : 1); ?>
                       <div class='input-append'>
-                        <?php echo $newEntry->input('score', ['type' => 'number', 'class' => 'input-mini', 'min' => 0, 'max' => 10, 'value' => $animeEntry['score'] ? $animeEntry['score'] : ""]); ?>
+                        <?php echo $newEntry->input('score', ['type' => 'number', 'class' => 'input-mini', 'min' => 0, 'max' => 10,  'step' => 0.01, 'value' => $animeEntry['score'] ? $animeEntry['score'] : ""]); ?>
                         <span class='add-on'>/10</span>
                       </div>
                       <div class='input-prepend input-append'>
