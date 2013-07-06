@@ -1,0 +1,1 @@
+ALTER TABLE  `users` CHANGE  `usermask`  `usermask` INT( 2 ) NOT NULL;

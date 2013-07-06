@@ -120,11 +120,11 @@ abstract class BaseEntry extends BaseObject {
       $validationErrors[] = "Entry status be one of 0,1,2,3,4,6";
     }
 
-    if (!isset($entry['score']) || !is_numeric($entry['score']) || floatval($entry['score']) < 0 || floatval($entry['score']) > 10) {
+    if (isset($entry['score']) && (!is_numeric($entry['score']) || floatval($entry['score']) < 0 || floatval($entry['score']) > 10)) {
       $validationErrors[] = "Entry score must be numeric and between 0 and 10";
     }
 
-    if (!isset($entry[static::$PART_NAME]) || !is_integral($entry[static::$PART_NAME]) || intval($entry[static::$PART_NAME]) < 0 || ($parentMedia->{static::$PART_NAME."Count"}() > 0 && intval($entry[static::$PART_NAME]) > $parentMedia->{static::$PART_NAME."Count"}())) {
+    if (isset($entry[static::$PART_NAME]) && (!is_integral($entry[static::$PART_NAME]) || intval($entry[static::$PART_NAME]) < 0 || ($parentMedia->{static::$PART_NAME."Count"}() > 0 && intval($entry[static::$PART_NAME]) > $parentMedia->{static::$PART_NAME."Count"}()))) {
       $validationErrors[] = static::$PART_NAME." number must be integral and at least 0, less than the ".static::$PART_NAME." count of its parent.";
     }
 

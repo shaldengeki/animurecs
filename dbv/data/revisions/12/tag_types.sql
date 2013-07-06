@@ -1,0 +1,1 @@
+ALTER TABLE  `tag_types` CHANGE  `created_user_id`  `created_user_id` BIGINT( 20 ) UNSIGNED NOT NULL;

@@ -1,0 +1,2 @@
+ALTER TABLE  `aliases` CHANGE  `id`  `id` BIGINT( 20 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
+CHANGE  `parent_id`  `parent_id` BIGINT( 20 ) UNSIGNED NOT NULL
