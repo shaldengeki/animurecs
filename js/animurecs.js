@@ -152,7 +152,7 @@ function displayListEditForm(elt) {
   if (score == "") {
     score = 0;
   } else {
-    score = parseInt(score.split("/")[0]);
+    score = parseFloat(score.split("/")[0]).toFixed(2);
   }
   $(scoreNode).html("<div class='input-append'><input class='input-mini' name='anime_entries[score]' type='number' min=0 max=10 step=0.01 value='"+score+"' /><span class='add-on'>/10</span></div>");
 

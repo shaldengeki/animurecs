@@ -37,7 +37,7 @@
                   <?php echo display_status_dropdown("anime_entries[status]", "span12", intval($entry['status'])); ?>
                 </span>
               </td>
-              <td class='listEntryScore'><?php echo round(floatval($entry['score']), 2) > 0 ? round(floatval($entry['score']), 2)."/10" : ""; ?></td>
+              <td class='listEntryScore'><?php echo round(floatval($entry['score']), 2) > 0 ? round(floatval($entry['score']), 2) : ""; ?></td>
               <td class='listEntryEpisode'><?php echo intval($entry['episode'])."/".(intval($entry['anime']->episodeCount()) == 0 ? "?" : intval($entry['anime']->episodeCount())); ?></td>
 <?php
       if ($this->app->user->id == $this->user()->id) {
