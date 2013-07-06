@@ -214,7 +214,7 @@ function submitListUpdate(elt) {
   user_id = parseInt($(tableNode).attr('data-id'));
   anime_id = parseInt($(rowNode).attr('data-id'));
   status = parseInt($(rowNode).find('.listEntryStatus').find('option:selected').val());
-  score = parseInt($(rowNode).find('.listEntryScore').find('input').val());
+  score = parseFloat($(rowNode).find('.listEntryScore').find('input').val()).toFixed(2);
   episode = parseInt($(rowNode).find('.listEntryEpisode').find('input').val());
 
   url = $(elt).attr('data-url');
