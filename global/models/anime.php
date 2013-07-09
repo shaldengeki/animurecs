@@ -180,10 +180,10 @@ class Anime extends BaseObject {
     if (isset($anime['description']) && (mb_strlen($anime['description']) < 1 || mb_strlen($anime['description']) > 1000)) {
       $validationErrors[] = "Anime description must be between 1 and 1000 characters in length";
     }
-    if (isset($anime['episode_count']) && ( !is_integral($anime['episode_count']) || intval($anime['episode_count']) < 0) ) {
-      $validationErrors[] = "Anime episode count must be an integer greater than 0";
+    if ($anime['episode_count'] && ( !is_integral($anime['episode_count']) || intval($anime['episode_count']) < 0) ) {
+      $validationErrors[] = "Anime episode count must be an integer greater than or equal to 0";
     }
-    if (isset($anime['episode_length']) && ( !is_integral($anime['episode_length']) || intval($anime['episode_length']) < 0) ) {
+    if ($anime['episode_length'] && ( !is_integral($anime['episode_length']) || intval($anime['episode_length']) < 0) ) {
       $validationErrors[] = "Anime episode length must be an integer greater than 0";
     }
     if (isset($anime['approved_on']) && $anime['approved_on'] && !strtotime($anime['approved_on'])) {

@@ -3,6 +3,7 @@
   $this->app->check_partial_include(__FILE__);
 
   // get list of user's favourite tags, ordered by regularized average
+  // regularize by mean tag mean, weighted by mean number of ratings per tag.
   $tagRatings = [];
   $tags = [];
   foreach ($this->animeList()->uniqueList() as $entry) {
@@ -18,17 +19,24 @@
     }
   }
   $tagAverages = [];
+  $ratingCounts = [];
   foreach ($tagRatings as $tagID=>$ratings) {
     $tagAverages[$tagID] = array_mean($ratings);
+    $ratingCounts[] = count($ratings);
   }
+  $globalAverageWeight = array_mean($ratingCounts);
   $tagGlobalAverage = array_mean($tagAverages);
   $tagRegularizedAverages = [];
   foreach ($tagRatings as $tagID=>$ratings) {
-    $tagRegularizedAverages[$tagID] = (array_sum($ratings) + (5 * $tagGlobalAverage)) / (5 + count($ratings));
+    $numRatings = count($ratings);
+    if ($numRatings >= $globalAverageWeight) {
+      $tagRegularizedAverages[$tagID] = [(array_sum($ratings) + ($globalAverageWeight * $tagGlobalAverage)) / ($globalAverageWeight + count($ratings)), count($ratings)];
+    }
   }
   arsort($tagRegularizedAverages);
-  $likedTags = array_slice($tagRegularizedAverages, 0, 10, True);
-  $hatedTags = array_slice($tagRegularizedAverages, -10, Null, True);
+  $numTags = count($tagRegularizedAverages);
+  $likedTags = array_slice($tagRegularizedAverages, 0, $numTags >= 10 ? 10 : floor($numTags/2), True);
+  $hatedTags = array_slice($tagRegularizedAverages, $numTags >= 10 ? -10 : -1 * floor($numTags/2), Null, True);
   asort($hatedTags);
 ?>
 <div class='row-fluid'>
@@ -41,7 +49,7 @@
 <?php
   foreach ($likedTags as $tagID=>$rating) {
 ?>
-    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name(), Null, False, ['title' => round($rating, 2)]); ?></li>
+    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name(), Null, False, ['title' => 'Score: '.round($rating[0], 2).', '.$rating[1].' anime']); ?></li>
 <?php
   }
 ?>
@@ -56,7 +64,7 @@
 <?php
   foreach ($hatedTags as $tagID=>$rating) {
 ?>
-    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name(), Null, False, ['title' => round($rating, 2)]); ?></li>
+    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name(), Null, False, ['title' => 'Score: '.round($rating[0], 2).', '.$rating[1].' anime']); ?></li>
 <?php
   }
 ?>

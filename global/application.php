@@ -1,5 +1,29 @@
 <?php
 
+class EmptyDependency {
+  /*
+    Empty dependency class that returns False on any accessor.
+  */
+  public function __isset($name) {
+    return False;
+  }
+  public function __set($name, $value) {
+    return;
+  }
+  public function __unset($name) {
+    return False;
+  }
+  public function __get($name) {
+    return False;
+  }
+  public function __call($name, $args) {
+    return False;
+  }
+  public static function __callStatic($name, $args) {
+    return False;
+  }
+}
+
 class AppException extends Exception {
   private $app, $messages;
   public function __construct($app, $messages=Null, $code=0, Exception $previous=Null) {
@@ -132,7 +156,13 @@ class Application {
     $this->_loadDependency("./global/config.php");
     require_once(Config::APP_ROOT.'/vendor/autoload.php');
 
-    $this->statsd = $this->_connectStatsD();
+    try {
+      $this->statsd = $this->_connectStatsD();
+    } catch (Exception $e) {
+      // we don't ~technically~ need memcached to run the site. Log an exception.
+      $this->statsd = new EmptyDependency();
+      $this->logger->alert($e->__toString());
+    }
 
     require_once('Log.php');
     $this->logger = $this->_connectLogger();
@@ -160,9 +190,10 @@ class Application {
     try {
       $this->cache = $this->_connectCache();
     } catch (CacheException $e) {
+      // we don't ~technically~ need memcached to run the site. Log an exception.
+      $this->cache = new EmptyDependency();
       $this->statsd->increment("CacheException");
       $this->logger->alert($e->__toString());
-      $this->display_exception($e);
     }
     try {
       $this->_connectDB();
@@ -172,11 +203,20 @@ class Application {
       $this->display_exception($e);
     }
     try {
-      $this->recsEngine = $this->_connectRecsEngine();
       $this->mailer = $this->_connectMailer();
     } catch (AppException $e) {
-      $this->logger->warning($e->__toString());
+      $this->statsd->increment("MailerException");
+      $this->logger->alert($e->__toString());
       $this->display_exception($e);
+    }
+
+    try {
+      $this->recsEngine = $this->_connectRecsEngine();
+    } catch (AppException $e) {
+      // we don't ~technically~ need the recommendations engine to run the site. Log an exception.
+      $this->recsEngine = new EmptyDependency();
+      $this->statsd->increment("RecsException");
+      $this->logger->alert($e->__toString());
     }
 
       $nonLinkedClasses = count(get_declared_classes());
@@ -212,7 +252,7 @@ class Application {
         $this->_loadDependency($filename);
       }
     } catch (AppException $e) {
-      $this->logger->log($e, PEAR_LOG_ALERT);
+      $this->logger->alert($e);
       $this->display_error(500);
     }
     $achievementSlice = array_slice(get_declared_classes(), $nonAchievementClasses);
