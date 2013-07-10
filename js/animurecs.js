@@ -534,8 +534,8 @@ function ScrollHandler(e) {
         //get last-loaded list change and load more past this.
         $(feedNode).attr('loading', 'true');
         // find the lowest feedDate on the page.
-        var feedDates = $('.feedDate').map(function() {
-          return $(feedNode).attr('data-time');
+        var feedDates = $(feedNode).find('.feedDate').map(function() {
+          return $(this).attr('data-time');
         }).get();
         var lastTime = Array.min(feedDates);
         var anime_id = $(feedNode).hasAttr('anime_id') ? $(feedNode).attr('anime_id') : "";
