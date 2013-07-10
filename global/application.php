@@ -309,7 +309,7 @@ class Application {
 
     // user stats metrics.
     $this->bind(['User.afterCreate', 'User.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->gauge("user.count", $parent->app->dbConn->count("SELECT COUNT(*) FROM `users`"));
+      $parent->app->statsd->gauge("user.count", User::count($parent->app));
     }));
     $this->bind(['User.logIn'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.login");

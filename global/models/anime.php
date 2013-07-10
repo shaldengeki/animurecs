@@ -86,7 +86,6 @@ class Anime extends BaseObject {
         }
         return False;
         break;
-      case 'token_search':
       case 'new':
         if ($authingUser->loggedIn()) {
           return True;
@@ -102,6 +101,7 @@ class Anime extends BaseObject {
         }
         return False;
         break;
+      case 'token_search':
       case 'index':
         return True;
         break;

@@ -1,5 +1,9 @@
 var windowIntervals = [];
 
+// window scroll event throttling.
+var scrollThrottleDelay = 100;
+var scrollThrottleTimer = null;
+
 /* Default class modification */
 $.extend( $.fn.dataTableExt.oStdClasses, {
   "sWrapper": "dataTables_wrapper form-inline"
@@ -518,6 +522,43 @@ function updateFeedTimes() {
   });
 }
 
+function ScrollHandler(e) {
+  //throttle scroll event.
+  var elt = e.data.elt;
+  clearTimeout(scrollThrottleTimer);
+  scrollThrottleTimer = setTimeout(function () {
+    // check that we haven't scrolled to the bottom of an ajax feed.
+    $(elt).find('ul.ajaxFeed:visible').each(function() {
+      if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && !$(this).hasAttr('loading')) {
+        var feedNode = this;
+        //get last-loaded list change and load more past this.
+        $(feedNode).attr('loading', 'true');
+        // find the lowest feedDate on the page.
+        var feedDates = $('.feedDate').map(function() {
+          return $(feedNode).attr('data-time');
+        }).get();
+        var lastTime = Array.min(feedDates);
+        var anime_id = $(feedNode).hasAttr('anime_id') ? $(feedNode).attr('anime_id') : "";
+        var user_id = $(feedNode).hasAttr('user_id') ? $(feedNode).attr('user_id') : "";
+        if ($(feedNode).attr('data-url').indexOf('?') < 0) {
+          joinChar = '?';
+        } else {
+          joinChar = '&';
+        }
+        $.ajax({
+          url: $(feedNode).attr('data-url') + joinChar + "maxTime=" + encodeURIComponent(lastTime) + ((anime_id != "" && !isNaN(parseInt(anime_id))) ? '&anime_id=' + parseInt(anime_id) : "") + ((user_id != "" && !isNaN(parseInt(user_id))) ? '&user_id=' + parseInt(user_id) : ""),
+          data: {},
+          success: function(data) {
+            $(feedNode).append($(data).html());
+            initInterface($(feedNode).parent());
+            $(feedNode).removeAttr('loading');
+          }
+        });
+      }
+    });
+  }, scrollThrottleDelay);  
+}
+
 function initInterface(elt) {
   // initializes all interface elements and events within a given element.
 
@@ -535,6 +576,9 @@ function initInterface(elt) {
          urlParams[decode(match[1])] = decode(match[2]);
   })();
 
+  // window scroll events.
+  $(window).off('scroll', ScrollHandler)
+    .on('scroll', {elt: elt}, ScrollHandler);
 
   $(elt).find('.dropdown-toggle').dropdown();
   $(elt).tooltip({
@@ -548,15 +592,17 @@ function initInterface(elt) {
   renderGraphs(elt);
 
   /* Disable buttons on click */
-  $(elt).find('.btn').each(function() {
-    $(this).click( function() {
-      $(this).off('click');
-      $(this).addClass("disabled");
-      if (!$(this).hasAttr('data-loading-text')) {
-        $(this).text("Loading...");
-      } else {
-        $(this).text($(this).attr('data-loading-text'));
-      }
+  $(elt).find('form').each(function() {
+    $(this).submit( function() {
+      $(this).children('input[type=submit], button').each(function() {
+        $(this).attr('disabled', 'disabled');
+        $(this).addClass("disabled");
+        if (!$(this).hasAttr('data-loading-text')) {
+          $(this).text("Loading...");
+        } else {
+          $(this).text($(this).attr('data-loading-text'));
+        }
+      });
     });
   });
 
@@ -655,40 +701,11 @@ function initInterface(elt) {
             updateTitleItems(data.match(/\<li/gi).length);
           }
           $(feedNode).prepend($(data).children('li'));
+          initInterface($(feedNode).parent());
         }
       });
       updateFeedTimes();
     }, 10000));
-  });
-  $(window).unbind("scroll");
-  $(window).scroll(function() {
-    $(elt).find('ul.ajaxFeed:visible').each(function() {
-      if ($(this).children('li').length > 0 && $(this).height() <= ($(window).height() + $(window).scrollTop()) && !$(this).hasAttr('loading')) {
-        //get last-loaded list change and load more past this.
-        $(this).attr('loading', 'true');
-        // find the lowest feedDate on the page.
-        var feedDates = $('.feedDate').map(function() {
-          return $(this).attr('data-time');
-        }).get();
-        var lastTime = Array.min(feedDates);
-        var anime_id = $(this).hasAttr('anime_id') ? $(this).attr('anime_id') : "";
-        var user_id = $(this).hasAttr('user_id') ? $(this).attr('user_id') : "";
-        if ($(this).attr('data-url').indexOf('?') < 0) {
-          joinChar = '?';
-        } else {
-          joinChar = '&';
-        }
-        var originalElt = this;
-        $.ajax({
-          url: $(this).attr('data-url') + joinChar + "maxTime=" + encodeURIComponent(lastTime) + ((anime_id != "" && !isNaN(parseInt(anime_id))) ? '&anime_id=' + parseInt(anime_id) : "") + ((user_id != "" && !isNaN(parseInt(user_id))) ? '&user_id=' + parseInt(user_id) : ""),
-          data: {},
-          success: function(data) {
-            $(originalElt).append($(data).html());
-            $(originalElt).removeAttr('loading');
-          }
-        });
-      }
-    });
   });
 
   /* ajax tab autoloading. */
