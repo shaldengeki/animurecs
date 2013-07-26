@@ -7,6 +7,7 @@ class User extends BaseObject {
   public static $maxFailedLogins = 10;
 
   protected $username;
+  protected $passwordHash;
   protected $name;
   protected $email;
   protected $activationCode;
@@ -36,18 +37,21 @@ class User extends BaseObject {
       $this->username = "guest";
       $this->name = "Guest";
       $this->usermask = $this->points = 0;
-      $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
+      $this->passwordHash = $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
       $this->animeList = new AnimeList($this->app, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->username = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
+      $this->username = $this->passwordHash = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
     }
   }
   public function username() {
     return $this->returnInfo('username');
+  }
+  public function passwordHash() {
+    return $this->returnInfo('passwordHash');
   }
   public function name() {
     return $this->returnInfo('name');
@@ -697,8 +701,8 @@ class User extends BaseObject {
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
-    $findUser = $findUser[0];
-    if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash)) {
+    $findUser = current($findUser);
+    if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash())) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
