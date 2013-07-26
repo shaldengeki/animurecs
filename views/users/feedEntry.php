@@ -1,58 +1,61 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  // outputs feed markup for the feed entry provided at params['entry'].
+  
+  // outputs feed markup for the feed entry provided at params['entry'] or list of feed entries provided at params['entries'].
   // also takes an optional parameter at params['nested'] to indicate if entry is nested.
 
   $params['nested'] = isset($params['nested']) ? $params['nested'] : False;
-  if (!isset($params['entry'])) {
+  $params['entries'] = isset($params['entries']) ? $params['entries'] : isset($params['entry']) ? [$params['entry']] : [];
+
+  if (!$params['entries']) {
     $this->app->logger->err("No entry passed to users/feedEntry.");
     return;
   }
 
   $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
-  $diffInterval = $nowTime->diff($params['entry']->time());
+  foreach ($params['entries'] as $entry) {
+    $diffInterval = $nowTime->diff($params['entry']->time());
+    $feedMessage = $entry->formatFeedEntry();
 
-  $feedMessage = $params['entry']->formatFeedEntry();
+    if ($feedMessage['text']) {
 
-  if ($feedMessage['text']) {
+      $blankEntryComment = new Comment($this->app, 0, $this->app->user, $entry);
 
-    $blankEntryComment = new Comment($this->app, 0, $this->app->user, $params['entry']);
-
-    $entryType = $params['nested'] ? "div" : "li";
-
+      $entryType = $params['nested'] ? "div" : "li";
   ?>
         <<?php echo $entryType; ?> class='media'>
-      <div class='pull-right feedDate' data-time='<?php echo $params['entry']->time()->format('U'); ?>'><?php echo ago($diffInterval); ?></div>
-      <?php echo $params['entry']->user->link("show", $params['entry']->user->thumbImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left']); ?>
+      <div class='pull-right feedDate' data-time='<?php echo $entry->time()->format('U'); ?>'><?php echo ago($diffInterval); ?></div>
+      <?php echo $entry->user->link("show", $entry->user->thumbImage(['class' => 'feedAvatarImg']), Null, True, ['class' => 'feedAvatar pull-left']); ?>
       <div class='media-body feedText'>
         <div class='feedEntry'>
           <h4 class='media-heading feedUser'><?php echo $feedMessage['title']; ?></h4>
           <?php echo $feedMessage['text']; ?>
 <?php
-    if ($params['entry']->allow($this->app->user, 'delete')) {
+      if ($entry->allow($this->app->user, 'delete')) {
 ?>
-          <ul class='feedEntryMenu hidden'><li><?php echo $params['entry']->link("delete", "<i class='icon-trash'></i> Delete", Null, True); ?></li></ul>
+          <ul class='feedEntryMenu hidden'><li><?php echo $entry->link("delete", "<i class='icon-trash'></i> Delete", Null, True); ?></li></ul>
 <?php
-    }
+      }
 ?>
         </div>
 <?php
-    if ($params['entry']->comments) {
-      $commentGroup = new EntryGroup($this->app, $params['entry']->comments);
-      foreach ($commentGroup->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
-        echo $this->view('feedEntry', ['entry' => $commentEntry, 'nested' => True]);
+      if ($entry->comments) {
+        $commentGroup = new EntryGroup($this->app, $entry->comments);
+        foreach ($commentGroup->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
+          echo $this->view('feedEntry', ['entry' => $commentEntry, 'nested' => True]);
+        }
       }
-    }
-    if ($params['entry']->allow($this->app->user, 'comment') && $blankEntryComment->depth() < 2) {
+      if ($entry->allow($this->app->user, 'comment') && $blankEntryComment->depth() < 2) {
 ?>
-        <div class='entryComment'><?php echo $blankEntryComment->view('inlineForm', ['currentObject' => $params['entry']]); ?></div>
+        <div class='entryComment'><?php echo $blankEntryComment->view('inlineForm', ['currentObject' => $entry]); ?></div>
 <?php
-    }
+      }
 ?>
       </div>
     </<?php echo $entryType; ?>>
 <?php
+    }
   }
 ?>

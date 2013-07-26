@@ -3,7 +3,7 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $assetsVersion = 0.74;
+  $assetsVersion = 0.76;
   $firstAnime = class_exists("Anime") ? Anime::first($this) : Null;
   $params['container'] = isset($params['container']) ? $params['container'] : True;
   $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
@@ -53,82 +53,89 @@
     <div class='navbar navbar-inverse navbar-fixed-top'>
       <div class='navbar-inner'>
         <div class='container-fluid'>
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
           <a href='/' class='brand'>Animurecs</a>
+          <div class='nav-collapse collapse'>
 <?php
   if ($this->user && $this->user->loggedIn()) {
 ?>
-          <ul class='nav'>
-            <li class='divider-vertical'></li>
-            <li><?php echo $this->user->link("globalFeed", "<i class='icon-th-list icon-white'></i> Feed", Null, True); ?></li>
-            <li class='divider-vertical'></li>
-            <li><?php echo $this->user->link("show", "<i class='icon-home icon-white'></i> You", Null, True); ?></li>
-            <li class='divider-vertical'></li>
-            <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
-            <li class='divider-vertical'></li>
-            <li><?php echo $this->user->link("discover", "<i class='icon-star icon-white'></i> Discover", Null, True); ?></li>
-            <li class='divider-vertical'></li>
-          </ul>
+            <ul class='nav'>
+              <li class='divider-vertical'></li>
+              <li><?php echo $this->user->link("globalFeed", "<i class='icon-th-list icon-white'></i> Feed", Null, True); ?></li>
+              <li class='divider-vertical'></li>
+              <li><?php echo $this->user->link("show", "<i class='icon-home icon-white'></i> You", Null, True); ?></li>
+              <li class='divider-vertical'></li>
+              <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
+              <li class='divider-vertical'></li>
+              <li><?php echo $this->user->link("discover", "<i class='icon-star icon-white'></i> Discover", Null, True); ?></li>
+              <li class='divider-vertical'></li>
+            </ul>
 <?php
   }
 ?>
-          <ul class='nav pull-right'>
+            <ul class='nav pull-right'>
 <?php
   if ($this->user && $this->user->loggedIn()) {
 ?>
-            <li><?php echo $firstAnime->view('searchForm', [
-              'form' => [
-                  'class' => 'navbar-search'
-                ],
-              'searchInput' => [
-                  'id' => 'navbar-anime-search',
-                  'class' => 'autocomplete search-query'
-                ],
-              'submitButton' => False
-            ]); ?></li>
-            <li id='navbar-alerts'>
+              <li><?php echo $firstAnime->view('searchForm', [
+                'form' => [
+                    'class' => 'navbar-search'
+                  ],
+                'searchInput' => [
+                    'id' => 'navbar-anime-search',
+                    'class' => 'autocomplete search-query'
+                  ],
+                'submitButton' => False
+              ]); ?></li>
+              <li id='navbar-alerts'>
 <?php
     if ($this->user && $this->user->outstandingFriendRequests) {
 ?>
-              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-white'></i> <span class='msg-count'><span class='msg-count-inner'><?php echo count($this->user->outstandingFriendRequests); ?></span></span></a>
+                <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-white'></i> <span class='msg-count'><span class='msg-count-inner'><?php echo count($this->user->outstandingFriendRequests); ?></span></span></a>
 <?php
     } else {
 ?>
-              <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-inactive'></i></a>
+                <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-inactive'></i></a>
 <?php
     }
 ?>
-              <?php echo $this->user->view('friendRequestList', $params); ?>
-              </span>
-            </li>
-            <li id='navbar-user' class='dropdown'>
-              <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i><?php echo escape_output($this->user->username); ?><b class='caret'></b></a>
-              <ul class='dropdown-menu'>
-                <li><?php echo $this->user->link("show", "Profile"); ?></li>
-                <li><?php echo $this->user->link("edit", "Settings"); ?></li>
+                  <?php echo $this->user->view('friendRequestList', $params); ?>
+                </span>
+              </li>
+              <li id='navbar-user' class='dropdown'>
+                <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i><?php echo escape_output($this->user->username); ?><b class='caret'></b></a>
+                <ul class='dropdown-menu'>
+                  <li><?php echo $this->user->link("show", "Profile"); ?></li>
+                  <li><?php echo $this->user->link("edit", "Settings"); ?></li>
 <?php
     if ($this->user && $this->user->isAdmin() && !isset($this->user->switchedUser)) {
 ?>
-                <li><?php echo $this->user->link("switch_user", "Switch User"); ?></li>
+                  <li><?php echo $this->user->link("switch_user", "Switch User"); ?></li>
 <?php
     }
     if ($this->user && isset($this->user->switchedUser) && is_numeric($this->user->switchedUser)) {
 ?>
-                <li><?php echo $this->user->link("switch_back", "Switch Back"); ?></li>
+                  <li><?php echo $this->user->link("switch_back", "Switch Back"); ?></li>
 <?php
     }
 ?>
-                <li><a href='/logout.php'>Sign out</a></li>
-              </ul>
+                  <li><a href='/logout.php'>Sign out</a></li>
+                </ul>
 <?php
   } else {
 ?>
-                <li>
-                  <?php echo $this->user ? $this->user->view('loginInline', $params) : ""; ?>
-                </li>
+                  <li>
+                    <?php echo $this->user ? $this->user->view('loginInline', $params) : ""; ?>
+                  </li>
 <?php
   }
 ?>
-          </ul>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

@@ -65,21 +65,84 @@ abstract class BaseObject {
       return static::$MODEL_TABLE;
     }
   }
-  public static function first($app) {
+  public static function first($app, array $params=Null) {
     $className = static::MODEL_NAME();
-    return new $className($app, intval($app->dbConn->table(static::$MODEL_TABLE)->fields('id')->order('id ASC')->limit(1)->firstValue()));
+    $returnObj = Null;
+    if (isset($params['id'])) {
+      $cacheKey = $className.'-'.$params['id'];
+      $cacheValue = $app->cache->get($cacheKey, $casToken);
+      if ($cacheValue) {
+        $returnObj = new $className($app, intval($params['id']));
+        $returnObj->set($cacheValue);
+      }
+    }
+    if ($returnObj === Null) {
+      $objInfo = $app->dbConn->table(static::$MODEL_TABLE)->where($params)->order('id ASC')->limit(1)->firstRow();
+      $returnObj = new $className($app, intval($objInfo['id']));
+      $returnObj->set($objInfo);
+      if (isset($params['id'])) {
+        // cache this entry.
+        $app->cache->set($cacheKey, $objInfo);
+      }
+    }
+    return $returnObj;
   }
-  public static function count($app, $params=Null) {
+  public static function count($app, array $params=Null) {
     $params = $params ? $params : [];
     return intval($app->dbConn->table(static::$MODEL_TABLE)->fields("COUNT(*)")->where($params)->count());
   }
-  public static function find($app, $params=Null) {
+  public static function find($app, array $params=Null) {
+    // given an optional array of search parameters,
+    // returns a list of found objects.
+
     if ($params === Null) {
-      return static::first($app);
+      return [static::first($app)];
     }
     $className = static::MODEL_NAME();
-    $findID = $app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where($params)->limit(1)->firstValue();
-    return new $className($app, intval($findID));
+    $findIDs = $app->dbConn->table(static::$MODEL_TABLE)->where($params)->order('id ASC')->assoc();
+    $returnObjs = [];
+    foreach ($findIDs as $row) {
+      $newObj = new $className($app, $row['id']);
+      $returnObjs[$row['id']] = $newObj->set($row);
+    }
+    return $returnObjs;
+  }
+  public static function findById($app, $id) {
+    // pull from cache if possible.
+    $className = static::MODEL_NAME();
+    $cacheKey = $className.'-'.$id;
+    $casToken = Null;
+    $cacheValue = $this->app->cache->get($cacheKey, $casToken);
+    if ($cacheValue) {
+      $returnObj = new $className($app, $id);
+      return $returnObj->set($cacheValue);
+    } else {
+      return static::first($app, ['id' => $id]);
+    }
+  }
+  public static function findByIds($app, array $ids) {
+    $className = static::MODEL_NAME();
+    $cacheKeys = array_map(function ($id) use ($className) {
+      return $className.'-'.$id;
+    }, $ids);
+    $casTokens = [];
+    $cacheValues = $app->cache->get($cacheKeys, $casTokens);
+    $returnObjects = [];
+    if ($cacheValues) {
+      foreach ($cacheValues as $cacheKey=>$cacheValue) {
+        if ($cacheValue) {
+          $objectID = intval(explode("-", $cacheKey)[1]);
+          $returnObj = new $className($app, $objectID);
+          $returnObjects[$objectID] = $returnObj->set($cacheValue);
+        }
+      }
+    }
+    foreach ($ids as $id) {
+      if (!isset($returnObjects[$id])) {
+        $returnObjects[$id] = static::first($app, ['id' => $id]);
+      }
+    }
+    return $returnObjects;
   }
   public function humanizeParameter($parameter) {
     // takes a parameter name like created_at

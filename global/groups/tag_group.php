@@ -37,16 +37,7 @@ class TagGroup extends BaseGroup {
       if ($tagTypeDict) {
         // now fetch the non-cached results from the db, building a record so we can cache it after.
         $tagTypesToCache = [];
-        $getTagTypes = $this->app->dbConn->table(TagType::$MODEL_TABLE)->where(['id' => array_keys($tagTypeDict)])->assoc();
-        foreach ($getTagTypes as $tagType) {
-          $tagTypesToCache["TagType-".$tagType['id']] = $tagType;
-          $tagTypes[$tagType['id']] = new TagType($this->app, intval($tagType['id']));
-          $tagTypes[$tagType['id']]->set($tagType);
-        }
-        // finally, store these new records in the cache.
-        foreach ($tagTypesToCache as $cacheKey => $cacheValue) {
-          $this->app->cache->set($cacheKey, $cacheValue);
-        }
+        $tagTypes = TagType::findByIds($this->app, array_keys($tagTypeDict));
       }
       foreach ($this->tags() as $tag) {
         $tag->set(['type' => $tagTypes[$tag->type->id]]);

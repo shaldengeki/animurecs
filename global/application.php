@@ -79,7 +79,7 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_classes,$_observers,$messages=[], $_statsdConn;
+  private $_classes,$_observers,$messages=[],$timings=[], $_statsdConn;
   protected $totalPoints=Null;
   public $achievements=[];
   public $statsd, $logger, $cache, $dbConn, $recsEngine, $mailer, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
@@ -277,9 +277,6 @@ class Application {
       $parent->app->cache->delete('Anime-'.intval($updateParams['anime_id']).'-tagIDs');
       $parent->app->cache->delete('Tag-'.intval($updateParams['tag_id']).'-animeIDs');
     }));
-    $this->bind(['AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeList.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete("AnimeEntry-".intval($updateParams['id']));
-    }));
     $this->bind(['AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete("AnimeEntry-".intval($updateParams['id']));
     }));
@@ -292,7 +289,6 @@ class Application {
     $this->bind(['Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("anime.count");
     }));
-
     $this->bind(['Tag.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("tag.count");
     }));
@@ -323,10 +319,10 @@ class Application {
     $this->bind(['User.confirmFriend'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.friendships");
     }));
-    $this->bind(['Comment.afterCreate', 'CommentEntry.afterCreate'], new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Comment.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("user.comments");
     }));
-    $this->bind(['Comment.afterDelete', 'CommentEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Comment.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->decrement("user.comments");
     }));
     $this->bind(['User.addAchievement'], new Observer(function($event, $parent, $updateParams) {
@@ -443,6 +439,7 @@ class Application {
       $this->display_error(404);
     }
   }
+
   public function delayedMessage($message, $class=Null) {
     // appends message to delayed message queue.
     if (!isset($_SESSION['delayedMessages'])) {
@@ -495,6 +492,7 @@ class Application {
     // clears delayed and immediate message queues.
     return $this->clearMessages() && $this->clearDelayedMessages();
   }
+
   public function currentUrl() {
     return $_SERVER['REQUEST_URI'];
   }
@@ -507,6 +505,7 @@ class Application {
   public function setPreviousUrl($url=Null) {
     $_SESSION['prev_url'] = $url === Null ? $this->currentUrl() : $url;
   }
+
   public function redirect($location=Null) {
     if ($location === Null) {
       $location = $this->previousUrl();
@@ -517,6 +516,7 @@ class Application {
   public function jsRedirect($location) {
     echo "window.location.replace(\"".Config::ROOT_URL."/".$location."\");";
   }
+
   public function clearOutput() {
     // clears all content in the output buffer(s).
     while (ob_get_level()) {
@@ -730,6 +730,22 @@ class Application {
       }
     }
     return $this->totalPoints;
+  }
+  public function addTiming($name) {
+    $this->timings[] = ['name' => $name, 'time' => microtime(true)];
+  }
+  public function timingInfo($separator='\\n') {
+    $outputLines = [];
+    if (!$this->timings) {
+      return "";
+    }
+    $startTime = $prevTime = $this->timings[0]['time'];
+    foreach ($this->timings as $timing) {
+      $outputLines[] = ($timing['time'] - $prevTime)." | ".$timing['name'];
+      $prevTime = $timing['time'];
+    }
+    $outputLines[] = "Total time: ".($prevTime - $startTime);
+    return $outputLines;
   }
 }
 

@@ -691,20 +691,21 @@ class User extends BaseObject {
     // check for existence of username and matching password.
     $bcrypt = new Bcrypt();
     try {
-      $findUsername = $this->app->dbConn->table(static::$MODEL_TABLE)->fields('id', 'username', 'name', 'email', 'usermask', 'password_hash', 'avatar_path')->where(['username' => $username, 'activation_code IS NULL'])->limit(1)->firstRow();
+      $findUser = User::find($this->app, ['username' => $username, 'activation_code IS NULL']);
     } catch (DbException $e) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
-    if (!$findUsername || !$bcrypt->verify($password, $findUsername['password_hash'])) {
+    $findUser = $findUser[0];
+    if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash)) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
 
     // sign user in.
-    $newUser = new User($this->app, Null, $findUsername['username']);
+    $newUser = new User($this->app, Null, $findUser->username);
     $newUser->setCurrentSession();
 
     // check for failed logins.
@@ -812,11 +813,12 @@ class User extends BaseObject {
     */
     if ($switch_back) {
       // get user entry in database.
-      $findUserID = intval($this->app->dbConn->table(static::$MODEL_TABLE)->fields('id')->where(['username' => $username, ['id != ?', $this->id]])->limit(1)->firstValue());
-      if (!$findUserID) {
+      try {
+        $findUser = User::find($this->app, ['username' => $username, ['id != ?', $this->id]]);
+      } catch (DbException $e) {
         return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error'];
       }
-      $newUser = new User($this->app, $findUserID);
+      $newUser = new User($this->app, $findUser->id);
       $newUser->switchedUser = $_SESSION['id'];
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
@@ -1062,8 +1064,17 @@ class User extends BaseObject {
       /* feed views */
       case 'globalFeed':
         $title = escape_output("Global Feed");
-        $feedEntries = $this->globalFeed();
-        $output = $this->view("globalFeed", ['entries' => $feedEntries, 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => '']);
+        $globalFeedView = [ 'numEntries' => 50,
+          'entries' => $this->globalFeed(),
+          'feedURL' => $this->url('globalFeedEntries'),
+          'emptyFeedText' => ''
+        ];
+        // $convoFeedView = [ 'numEntries' => 50,
+        //   'entries' => $this->conversationFeed(),
+        //   'feedURL' => $this->url('conversationFeedEntries'),
+        //   'emptyFeedText' => ''
+        // ];
+        $output = $this->view("globalFeed", ['global' => $globalFeedView/*, 'conversations' => $convoFeedView*/]);
         break;
       case 'globalFeedEntries':
         if (isset($_REQUEST['maxTime']) && is_numeric($_REQUEST['maxTime'])) {
@@ -1128,18 +1139,30 @@ class User extends BaseObject {
     return $feedEntries;
     //return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
+  public function conversationFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
+    // returns an EntryGroup corresponding to the last-active conversations that this user was a part of.
+    $feedEntries = $this->comments();
+    $feedEntries->append($this->ownComments());
+    return $feedEntries;
+  }
   public function globalFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
     // returns an EntryGroup of entries corresponding to this user's global feed.
     if ($maxTime == Null) {
       $maxTime = new DateTime("now", $this->app->serverTimeZone);
     }
+    $this->app->addTiming("Start globalFeed");
 
-    // add each user's personal feed to the global feed.
+    // add each friend's personal feed to the global feed.
     $feedEntries = $this->animeList()->entries($minTime, $maxTime, $numEntries);
+
+    $this->app->addTiming("Finish user animeList");
+
     foreach ($this->friends() as $friend) {
       $feedEntries->append($friend['user']->animeList()->entries($minTime, $maxTime, $numEntries));
+      $this->app->addTiming("Finish adding friend animeList");
       $comments = [];
 
+      // now append all comments made by this friend between the given datetimes.
       $friendComments = $friend['user']->ownComments()->filter(function($a) use ($maxTime,$minTime) {
         return $a->time() < $maxTime && $a->time() > $minTime;
       });
@@ -1150,7 +1173,9 @@ class User extends BaseObject {
           $comments[] = new CommentEntry($this->app, intval($commentEntry->id));
         }
       }
+      $this->app->addTiming("Finish filtering friend comments");
       $feedEntries->append(new EntryGroup($this->app, $comments));
+      $this->app->addTiming("Finish adding friend comments");
     }
     return $feedEntries;
   }

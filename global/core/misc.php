@@ -306,7 +306,7 @@ function buildMethodSorter($method, $methodArgs, $order) {
   };
 }
 
-function array_sort_by_method($a, $method, $methodArgs=array(), $order="desc") {
+function array_sort_by_method($a, $method, $methodArgs=[], $order="desc") {
   // sorts a list of associative arrays by a given key in a given order.
   switch($order) {
     case 'asc':

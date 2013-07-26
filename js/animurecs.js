@@ -1,8 +1,34 @@
-var windowIntervals = [];
-
 // window scroll event throttling.
 var scrollThrottleDelay = 100;
 var scrollThrottleTimer = null;
+
+var interval = {
+  //to keep a reference to all the intervals
+  intervals : {},
+
+  //create another interval
+  make : function ( fun, delay, id ) {
+    //see explanation after the code
+    var newInterval = setInterval.apply(
+      window,
+      [ fun, delay ].concat( [].slice.call(arguments, 2) )
+    );
+    this.intervals[ id ] = newInterval;
+    return newInterval;
+  },
+
+  //clear a single interval
+  clear : function ( id ) {
+    return clearInterval( this.intervals[id] );
+  },
+
+  //clear all intervals
+  clearAll : function () {
+    for (var key in this.intervals) {
+      clearInterval(this.intervals[key]);
+    }
+  }
+};
 
 /* Default class modification */
 $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -131,6 +157,13 @@ function initDataTable(elt) {
   } else {
     defaultSortOrder = $(elt).find('thead > tr > th.dataTable-default-sort').hasAttr("data-sort-order") ? $(elt).find('thead > tr > th.dataTable-default-sort').attr("data-sort-order") : "asc";
   }
+  secondSortColumn = $(elt).find('thead > tr > th').index($(elt).find('thead > tr > th.dataTable-secondary-sort'));
+  if (secondSortColumn == -1) {
+    secondSortColumn = defaultSortColumn > 0 ? 0 : 1;
+    secondSortOrder = "asc";
+  } else {
+    secondSortOrder = $(elt).find('thead > tr > th.dataTable-secondary-sort').hasAttr("data-sort-order") ? $(elt).find('thead > tr > th.dataTable-secondary-sort').attr("data-sort-order") : "asc";
+  }
   recordsPerPage = $(elt).hasAttr('data-recordsPerPage') ? $(elt).attr('data-recordsPerPage') : 25;
   $(elt).dataTable({
     "sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
@@ -142,7 +175,7 @@ function initDataTable(elt) {
     "bPaginate": false,
     "bFilter": false,
     "bInfo": false,
-    "aaSorting": [[ defaultSortColumn, defaultSortOrder ]]
+    "aaSorting": [[defaultSortColumn, defaultSortOrder], [secondSortColumn, secondSortOrder]]
   });
 }
 
@@ -688,7 +721,8 @@ function initInterface(elt) {
     } else {
       joinChar = '&';
     }
-    windowIntervals.push(window.setInterval(function() {
+    interval.clear($(feedNode).id);
+    interval.make(function() {
       var feedDates = $(feedNode).children().map(function() {
         return $(this).find('div.feedDate').attr('data-time');
       }).get();
@@ -705,7 +739,7 @@ function initInterface(elt) {
         }
       });
       updateFeedTimes();
-    }, 10000));
+    }, 10000, $(feedNode).id);
   });
 
   /* ajax tab autoloading. */

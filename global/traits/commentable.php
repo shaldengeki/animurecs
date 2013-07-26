@@ -21,6 +21,11 @@ trait Commentable {
     }
     return $this->comments;
   }
+  public function lastCommentTime() {
+    return max(array_map(function($c) {
+      return $c->createdAt();
+    }, $this->comments()));
+  }
 }
 
 ?>

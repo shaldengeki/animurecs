@@ -199,10 +199,12 @@ class Tag extends BaseObject {
       $drop_anime = $this->drop_taggings($animeToDrop);
       foreach ($tagAnime as $animeToAdd) {
         if (!array_filter_by_property($this->anime()->anime(), 'id', $animeToAdd)) {
-          // find this tagID.
-          $animeID = intval($this->app->dbConn->table(Anime::$MODEL_TABLE)->fields('id')->where(['id' => $animeToAdd])->limit(1)->firstValue());
-          if ($animeID) {
-            $this->create_or_update_tagging($animeID, $currentUser);
+          // find this animeID.
+          try {
+            $thisAnime = Anime::findById($this->app, $animeToAdd);
+            $this->create_or_update_tagging($thisAnime->id, $currentUser);
+          } catch (DbException $e) {
+            // don't add a tagging for a non-existent anime ID.
           }
         }
       }

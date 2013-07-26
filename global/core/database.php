@@ -70,7 +70,10 @@ class DbConn extends PDO {
     return $this;
   }
 
-  public function where($wheres) {
+  public function where(array $wheres=Null) {
+    if ($wheres === Null) {
+      return $this;
+    }
     foreach ($wheres as $key=>$value) {
       if (is_numeric($key)) {
         if (is_array($value)) {
@@ -197,6 +200,9 @@ class DbConn extends PDO {
     }
     try {
       $prepQuery = parent::prepare($query);
+      if ($logger !== Null) {
+        $logger->err($query);
+      }
       $result = $prepQuery->execute($this->params);
     } catch (Exception $e) {
       $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
@@ -280,6 +286,14 @@ class DbConn extends PDO {
       throw new DbException("No rows were found matching query: ".$this->queryString());
     }
     return intval($result['COUNT('.$column.')']);
+  }
+  public function log(Log $logger) {
+    $this->logger = $logger;
+    return $this;
+  }
+  public function unlog() {
+    $this->logger = Null;
+    return $this;
   }
 }
 ?>

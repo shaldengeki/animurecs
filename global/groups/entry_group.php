@@ -31,12 +31,7 @@ class EntryGroup extends BaseGroup {
       }
     }
     if ($animeDict) {
-      // TODO: pull from memcached here.
-      $getAnime = $this->app->dbConn->table(Anime::$MODEL_TABLE)->where(['id' => array_keys($animeDict)])->assoc();
-      foreach ($getAnime as $anime) {
-        $animes[$anime['id']] = new Anime($this->app, intval($anime['id']));
-        $animes[$anime['id']]->set($anime);
-      }
+      $animes = Anime::findByIds($this->app, array_keys($animeDict));
       foreach ($this->entries() as $entry) {
         if (method_exists($entry, 'anime') && $entry->animeId !== Null) {
           $entry->set(['anime' => $animes[$entry->animeId]]);
@@ -61,11 +56,7 @@ class EntryGroup extends BaseGroup {
       $userDict[$entry->userId] = 1;
     }
     if ($userDict) {
-      $getUsers = $this->app->dbConn->table(User::$MODEL_TABLE)->where(['id' => array_keys($userDict)])->assoc();
-      foreach ($getUsers as $user) {
-        $users[$user['id']] = new User($this->app, intval($user['id']));
-        $users[$user['id']]->set($user);
-      }
+      $users = User::findByIds($this->app, array_keys($userDict));
       foreach ($this->entries() as $entry) {
         $setArray = ['user' => $users[$entry->userId]];
         if (method_exists($entry, 'parentId') && $entry->parentId !== Null && isset($users[$entry->parentId])) {
@@ -126,6 +117,11 @@ class EntryGroup extends BaseGroup {
       $this->_comments = $this->_getComments();
     }
     return $this->_comments;
+  }
+  public function lastCommentTime() {
+    return max(array_map(function($c) {
+      return $c->createdAt();
+    }, $this->comments()));
   }
   public function entries() {
     return $this->objects();
