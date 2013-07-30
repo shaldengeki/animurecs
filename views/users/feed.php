@@ -12,8 +12,6 @@
   $params['numEntries'] = (isset($params['numEntries']) && is_numeric($params['numEntries'])) ? intval($params['numEntries']) : 50;
   $params['bunchInterval'] = isset($params['bunchInterval']) ? $params['bunchInterval'] : new DateInterval("P10M");
 
-  $this->app->addTiming("Rendering feed.");
-
   // sort by comment time and grab only the latest numEntries.
   $params['entries'] = array_sort_by_method($params['entries']->load('comments')->entries(), 'time', [], 'desc');
   $params['entries'] = array_slice($params['entries'], 0, $params['numEntries']);
@@ -32,6 +30,4 @@
 </ul>
 <?php
   }
-  $this->app->addTiming("Finished rendering feed.");
-  $this->app->logger->err($this->app->timingInfo());
 ?>

@@ -18,6 +18,7 @@ class User extends BaseObject {
   protected $lastActive;
   protected $lastLogin;
   protected $lastIP;
+  protected $lastImport;
   protected $avatarPath;
 
   public $switchedUser;
@@ -37,14 +38,14 @@ class User extends BaseObject {
       $this->username = "guest";
       $this->name = "Guest";
       $this->usermask = $this->points = 0;
-      $this->passwordHash = $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
+      $this->passwordHash = $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastImport = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
       $this->animeList = new AnimeList($this->app, 0);
     } else {
       if (isset($_SESSION['switched_user'])) {
         $this->switchedUser = intval($_SESSION['switched_user']);
       }
-      $this->username = $this->passwordHash = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->avatarPath = $this->thumbPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
+      $this->username = $this->passwordHash = $this->name = $this->email = $this->about = $this->usermask = $this->achievementMask = $this->points = $this->createdAt = $this->lastActive = $this->lastIP = $this->lastImport = $this->avatarPath = $this->thumbPath = $this->friends = $this->friendRequests = $this->requestedFriends = $this->animeList = $this->ownComments = $this->comments = Null;
     }
   }
   public function username() {
@@ -116,6 +117,9 @@ class User extends BaseObject {
   }
   public function lastIP() {
     return $this->returnInfo('lastIP');
+  }
+  public function lastImport() {
+    return new DateTime($this->returnInfo('lastImport'), $this->app->serverTimeZone);
   }
   public function avatarPath() {
     return $this->returnInfo('avatarPath') ? $this->returnInfo('avatarPath') : "img/blank.png";
@@ -695,13 +699,16 @@ class User extends BaseObject {
     // check for existence of username and matching password.
     $bcrypt = new Bcrypt();
     try {
-      $findUser = User::find($this->app, ['username' => $username, 'activation_code IS NULL']);
+      $findUser = User::first($this->app, ['username' => $username]);
     } catch (DbException $e) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
-    $findUser = current($findUser);
+    if ($findUser->activationCode()) {
+      $this->app->delayedMessage("Please check your email (including your spam folder) to activate your account. If one hasn't been sent and it's been awhile, let shaldengeki (twitter at bottom of page) know.");
+      return False;
+    }
     if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash())) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
@@ -770,6 +777,14 @@ class User extends BaseObject {
   public function importMAL($malUsername) {
     // imports a user's MAL lists.
     // takes a MAL username and returns an array of animeID=>boolean pairs indicating import status for each.
+    $currTime = new DateTime('now', $this->app->serverTimeZone);
+    if ($this->lastImport() && $this->lastImport()->diff($currTime)->s <= 600) {
+      $this->app->delayedMessage("Please wait at least 10 minutes between MAL imports.");
+      return False;
+    }
+
+    // update last import time.
+    $this->create_or_update(['last_import' => $currTime->format("Y-m-d H:i:s")]);
     $malList = parseMALList($malUsername);
     if (!$malList) {
       throw new AppException($this->app, "Could not parse MAL list");

@@ -13,7 +13,7 @@ class DbConn extends PDO {
   //basic database connection class that provides input-escaping and standardized query error output.
   
   public $queryLog;
-  private $host, $port, $username, $password, $database, $memcached;
+  private $host, $port, $username, $password, $database;
 
   public function __construct($host=Config::MYSQL_HOST, $port=Config::MYSQL_PORT, $username=Config::MYSQL_USERNAME, $password=Config::MYSQL_PASSWORD, $database=Config::MYSQL_DATABASE, $fetchMode=PDO::FETCH_ASSOC) {
     $this->host = $host;
@@ -195,6 +195,7 @@ class DbConn extends PDO {
   public function query($query=Null) {
     // executes a query with standardized error message.
     $query = $query === Null ? $this->queryString() : $query;
+
     if (Config::DEBUG_ON) {
       $this->queryLog[] = $query;
     }

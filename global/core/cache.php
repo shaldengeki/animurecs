@@ -38,6 +38,7 @@ class Cache {
       }
     }
     do {
+      $cas = "";
       $cachedValue = $this->memcached->get($key, Null, $cas);
       if ($this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
         // key is not yet set in cache.

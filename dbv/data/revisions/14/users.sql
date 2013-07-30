@@ -1,0 +1,1 @@
+ALTER TABLE  `users` ADD  `last_import` DATETIME NOT NULL AFTER  `last_ip`
