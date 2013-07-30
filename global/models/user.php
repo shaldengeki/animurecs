@@ -778,7 +778,7 @@ class User extends BaseObject {
     // imports a user's MAL lists.
     // takes a MAL username and returns an array of animeID=>boolean pairs indicating import status for each.
     $currTime = new DateTime('now', $this->app->serverTimeZone);
-    if ($this->lastImport() && $this->lastImport()->diff($currTime)->s <= 600) {
+    if ($this->lastImport() && $currTime->getTimestamp() - $this->lastImport()->getTimestamp() <= 600) {
       $this->app->delayedMessage("Please wait at least 10 minutes between MAL imports.");
       return False;
     }
@@ -979,6 +979,9 @@ class User extends BaseObject {
           $this->app->redirect();
         }
         $importMAL = $this->importMAL($_POST['users']['mal_username']);
+        if (!$importMAL) {
+          $this->app->redirect();
+        }
         if (!in_array(False, $importMAL, True)) {
           $this->app->delayedMessage('Hooray! Your MAL was successfully imported.', 'success');
           $this->app->redirect($this->url("show"));
