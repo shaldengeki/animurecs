@@ -786,12 +786,9 @@ class User extends BaseObject {
     // update last import time.
     $this->create_or_update(['last_import' => $currTime->format("Y-m-d H:i:s")]);
     $malList = parseMALList($malUsername);
-    if (!$malList) {
-      throw new AppException($this->app, "Could not parse MAL list");
-    }
     $listIDs = [];
 
-    foreach($malList as $entry) {
+    foreach ($malList as $entry) {
       // ensure that the user doesn't already have this entry in their list.
       $entry['user_id'] = $this->id;
       try {
@@ -802,6 +799,7 @@ class User extends BaseObject {
           $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
           $listIDs[$entry['anime_id']] = $newEntry->create_or_update($entry);
         } catch (DbException $e) {
+          $this->app->statsd->increment('DbException');
           $this->app->logger->err($e->__toString());
           $listIDs[$entry['anime_id']] = False;
         }
@@ -978,8 +976,12 @@ class User extends BaseObject {
           $this->app->delayedMessage('Please enter a MAL username.');
           $this->app->redirect();
         }
-        $importMAL = $this->importMAL($_POST['users']['mal_username']);
-        if (!$importMAL) {
+        try {
+          $importMAL = $this->importMAL($_POST['users']['mal_username']);
+        } catch (CurlException $e) {
+          $this->app->statsd->increment('CurlException');
+          $this->app->logger->err($e->__toString());
+          $this->app->delayedMessage("We encountered an error while trying to grab the MAL for ".escape_output($_POST['users']['mal_username']).". Please try again later!")
           $this->app->redirect();
         }
         if (!in_array(False, $importMAL, True)) {

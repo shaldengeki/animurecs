@@ -20,8 +20,8 @@ class RecsEngine {
     } else {
       $requestFields = http_build_query($params);
     }
-    $url = "http://".$this->host.":".intval($this->port)."/".rawurlencode($model)."/".intval($id)."/".rawurlencode($action)."?".$requestFields;
-    $page = hitPage($url);
+    $curl = new Curl("http://".$this->host.":".intval($this->port)."/".rawurlencode($model)."/".intval($id)."/".rawurlencode($action)."?".$requestFields);
+    $page = $curl->get();
     return $page ? ($json ? json_decode($page, True) : $page) : False;
   }
   public function animeAverage(Anime $anime) {
