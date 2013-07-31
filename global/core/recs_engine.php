@@ -1,10 +1,13 @@
 <?php
 
 class RecsEngine {
+  use Loggable;
   protected $host, $port;
+  
   public function __construct($host=Null, $port=Null) {
     $this->host = $host;
     $this->port = $port;
+    $this->unlog();
   }
   public function __get($property) {
     // A property accessor exists
@@ -20,7 +23,12 @@ class RecsEngine {
     } else {
       $requestFields = http_build_query($params);
     }
-    $curl = new Curl("http://".$this->host.":".intval($this->port)."/".rawurlencode($model)."/".intval($id)."/".rawurlencode($action)."?".$requestFields);
+    $url = "http://".$this->host.":".intval($this->port)."/".rawurlencode($model)."/".intval($id)."/".rawurlencode($action)."?".$requestFields;
+    $curl = new Curl($url);
+    if ($this->canLog()) {
+      $this->logger->err("Getting recs URL: ".$url);
+      $curl->log($this->logger);
+    }
     $page = $curl->get();
     return $page ? ($json ? json_decode($page, True) : $page) : False;
   }

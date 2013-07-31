@@ -11,7 +11,8 @@ class DbException extends Exception {
 
 class DbConn extends PDO {
   //basic database connection class that provides input-escaping and standardized query error output.
-  
+  use Loggable;
+
   public $queryLog;
   private $host, $port, $username, $password, $database;
 
@@ -201,8 +202,8 @@ class DbConn extends PDO {
     }
     try {
       $prepQuery = parent::prepare($query);
-      if ($logger !== Null) {
-        $logger->err($query);
+      if ($this->canLog()) {
+        $this->logger->err($query);
       }
       $result = $prepQuery->execute($this->params);
     } catch (Exception $e) {
@@ -287,14 +288,6 @@ class DbConn extends PDO {
       throw new DbException("No rows were found matching query: ".$this->queryString());
     }
     return intval($result['COUNT('.$column.')']);
-  }
-  public function log(Log $logger) {
-    $this->logger = $logger;
-    return $this;
-  }
-  public function unlog() {
-    $this->logger = Null;
-    return $this;
   }
 }
 ?>

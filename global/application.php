@@ -168,13 +168,14 @@ class Application {
     $this->logger = $this->_connectLogger();
 
     try {
-      // core models, including base_object.
-      foreach (glob(Config::APP_ROOT."/global/core/*.php") as $filename) {
-        $this->_loadDependency($filename);
-      }
 
       // include all traits before models that depend on them.
       foreach (glob(Config::APP_ROOT."/global/traits/*.php") as $filename) {
+        $this->_loadDependency($filename);
+      }
+      
+      // core models, including base_object.
+      foreach (glob(Config::APP_ROOT."/global/core/*.php") as $filename) {
         $this->_loadDependency($filename);
       }
 
@@ -655,6 +656,9 @@ class Application {
         }
       }
     }
+    $this->clearOutput();
+    $this->display_error(500);
+    exit;
   }
 
   public function form(array $params=Null) {

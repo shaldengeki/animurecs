@@ -981,7 +981,10 @@ class User extends BaseObject {
         } catch (CurlException $e) {
           $this->app->statsd->increment('CurlException');
           $this->app->logger->err($e->__toString());
-          $this->app->delayedMessage("We encountered an error while trying to grab the MAL for ".escape_output($_POST['users']['mal_username']).". Please try again later!")
+          $this->app->delayedMessage("We encountered an error while trying to grab the MAL for ".escape_output($_POST['users']['mal_username']).". Please try again in a few minutes!");
+          $this->app->redirect();
+        }
+        if (!$importMAL) {
           $this->app->redirect();
         }
         if (!in_array(False, $importMAL, True)) {

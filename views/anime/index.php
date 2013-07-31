@@ -4,10 +4,11 @@
 
   // lists all anime.
   $firstAnime = Anime::first($this->app);
-  $paginationArray = ['page' => ''];
+  $paginationArray = [];
   if (isset($_REQUEST['search'])) {
     $paginationArray['search'] = $_REQUEST['search'];
   }
+  $paginationArray['page'] = '';
 
   $params['title'] = isset($params['title']) ? $params['title'] : "Browse Anime";
 

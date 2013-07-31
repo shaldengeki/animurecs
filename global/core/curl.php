@@ -10,13 +10,17 @@ class CurlException extends Exception {
 }
 
 class Curl {
+  use Loggable;
+
   protected $curl, $url, $cookie, $agent, $encoding, $referer;
   public function __construct($url) {
     $this->reset();
-    $this->url($url);
+    $this->unlog()->url($url);
   }
   public function reset() {
-    curl_close($this->curl);
+    if ($this->curl) {
+      curl_close($this->curl);
+    }
     $this->curl = curl_init();
     curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, True);
     curl_setopt($this->curl, CURLOPT_MAXREDIRS, 2);
@@ -25,9 +29,9 @@ class Curl {
       ->encoding("gzip,deflate")
       ->referer(Config::ROOT_URL)
       ->ssl(False)
-      ->follow()
-      ->timeout(500)
-      ->connectTimeout(500);
+      ->timeout(1000)
+      // ->connectTimeout(500)
+      ->follow();
     return $this;
   }
   public function url($url) {
@@ -73,9 +77,15 @@ class Curl {
   public function get() {
     $result = curl_exec($this->curl);
     $curlError = curl_error($this->curl);
+    if ($this->canLog()) {
+      $this->logger->err("Got URL: ".curl_getinfo($this->curl, CURLINFO_EFFECTIVE_URL));
+      $this->logger->err("Transfer info: ".print_r(curl_getinfo($this->curl), True));
+      $this->logger->err("Result: ".$result);
+      $this->logger->err("Error: ".$curlError);
+    }
     $this->reset();
-    if ($curlError) {
-      throw new CurlException($curlError);
+    if ($curlError || !$result) {
+      throw new CurlException("Error: ".$curlError."\nResult: ".$result);
     } else {
       return $result;      
     }
