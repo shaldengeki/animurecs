@@ -108,7 +108,7 @@ abstract class BaseObject {
     $className = static::MODEL_NAME();
     $cacheKey = $className.'-'.$id;
     $casToken = Null;
-    $cacheValue = $this->app->cache->get($cacheKey, $casToken);
+    $cacheValue = $app->cache->get($cacheKey, $casToken);
     if ($cacheValue) {
       $returnObj = new $className($app, $id);
       return $returnObj->set($cacheValue);

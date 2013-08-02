@@ -29,7 +29,7 @@ class Curl {
       ->encoding("gzip,deflate")
       ->referer(Config::ROOT_URL)
       ->ssl(False)
-      ->timeout(1000)
+      ->timeout(5000)
       // ->connectTimeout(500)
       ->follow();
     return $this;

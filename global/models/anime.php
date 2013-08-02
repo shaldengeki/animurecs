@@ -282,7 +282,7 @@ class Anime extends BaseObject {
         if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
           // find this tagID.
           try {
-            $thisTag = Tag::findById($tagToAdd);
+            $thisTag = Tag::findById($this->app, $tagToAdd);
             $this->create_or_update_tagging($thisTag->id, $this->app->user);
           } catch (DbException $e) {
             // don't create a tagging for a non-existent tag.

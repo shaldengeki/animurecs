@@ -126,8 +126,8 @@ class TagType extends BaseObject {
 
   public function render() {
     if ($this->app->action == 'new' || $this->app->action == 'edit') {
-      if (isset($_POST['tag_type']) && is_array($_POST['tag_type'])) {
-        $updateTagType = $this->create_or_update($_POST['tag_type']);
+      if (isset($_POST['tag_types']) && is_array($_POST['tag_types'])) {
+        $updateTagType = $this->create_or_update($_POST['tag_types']);
         if ($updateTagType) {
           $this->app->delayedMessage("Successfully updated.", "success");
           $this->app->redirect($this->url("show"));
