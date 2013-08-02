@@ -21,6 +21,9 @@ class TagType extends BaseObject {
   public function name() {
     return $this->returnInfo('name');
   }
+  public function pluralName() {
+    return $this->returnInfo('name')."s";
+  }
   public function description() {
     return $this->returnInfo('description');
   }

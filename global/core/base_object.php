@@ -94,10 +94,6 @@ abstract class BaseObject {
   public static function find($app, array $params=Null) {
     // given an optional array of search parameters,
     // returns a list of found objects.
-
-    if ($params === Null) {
-      return [static::first($app)];
-    }
     $className = static::MODEL_NAME();
     $findIDs = $app->dbConn->table(static::$MODEL_TABLE)->where($params)->order('id ASC')->assoc();
     $returnObjs = [];
