@@ -449,7 +449,13 @@ class Anime extends BaseObject {
         break;
       case 'related':
         $page = isset($_REQUEST['page']) && is_numeric($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
-        echo $this->view('related', ['page' => $page]);
+        $numPerPage = 8;
+        try {
+          $anime = $this->similar(($page - 1) * $numPerPage, $numPerPage);
+          echo $this->view('related', ['page' => $page, 'numPerPage' => $numPerPage, 'anime' => $anime]);
+        } catch (CurlException $e) {
+          echo "We ran into an error while fetching anime similar to this one. Please try again later!";
+        }
         exit;
         break;
       case 'stats':

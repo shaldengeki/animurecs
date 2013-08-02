@@ -29,7 +29,7 @@ class RecsEngine {
       $this->logger->err("Getting recs URL: ".$url);
       $curl->log($this->logger);
     }
-    $page = $curl->get();
+    $page = $curl->timeout(3000)->get();
     return $page ? ($json ? json_decode($page, True) : $page) : False;
   }
   public function animeAverage(Anime $anime) {
