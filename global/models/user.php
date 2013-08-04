@@ -840,13 +840,13 @@ class User extends BaseObject {
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['switched_user'] = $newUser->switchedUser;
-      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched to ".rawurlencode($newUser->username()).".", 'class' => 'success'];
+      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched to ".escape_output($newUser->username()).".", 'class' => 'success'];
     } else {
       $newUser = new User($this->app, $username);
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
-      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".rawurlencode($newUser->username()).".", 'class' => 'success'];
+      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".escape_output($newUser->username()).".", 'class' => 'success'];
     }
   }
   public function render() {
@@ -865,7 +865,7 @@ class User extends BaseObject {
         }
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
-          $this->app->delayedMessage("Your friend request has been sent to ".rawurlencode($this->username()).".", "success");
+          $this->app->delayedMessage("Your friend request has been sent to ".escape_output($this->username()).".", "success");
           $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while requesting this friend. Please try again.', 'error');
@@ -878,7 +878,7 @@ class User extends BaseObject {
         }
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
-          $this->app->delayedMessage("Hooray! You're now friends with ".rawurlencode($this->username()).".", 'success');
+          $this->app->delayedMessage("Hooray! You're now friends with ".escape_output($this->username()).".", 'success');
           $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while confirming this friend. Please try again.', 'error');
@@ -891,7 +891,7 @@ class User extends BaseObject {
         }
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
-          $this->app->delayedMessage("You ignored a friend request from ".rawurlencode($this->username()).".", 'success');
+          $this->app->delayedMessage("You ignored a friend request from ".escape_output($this->username()).".", 'success');
           $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while ignoring this friend. Please try again.', 'error');
