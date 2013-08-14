@@ -245,7 +245,8 @@ class Tag extends BaseObject {
   }
   public function getType() {
     // retrieves the tag type that this tag belongs to.
-    return new TagType($this->app, intval($this->app->dbConn->table(static::$MODEL_TABLE)->fields('tag_type_id')->where(['id' => $this->id])->firstValue()));
+    $tagTypeId = intval($this->app->dbConn->table(static::$MODEL_TABLE)->fields('tag_type_id')->where(['id' => $this->id])->firstValue());
+    return new TagType($this->app, $tagTypeId);
   }
   public function type() {
     if ($this->type === Null) {

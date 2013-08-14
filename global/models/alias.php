@@ -106,7 +106,7 @@ class Alias extends BaseObject {
         $tempObject = new $objType($this->app, intval($result['parent_id']));
         $tempObject->getInfo();
         $objects[intval($result['parent_id'])] = $tempObject;
-      } catch (Exception $e) {
+      } catch (DbException $e) {
         // ignore dangling aliases.
       }
     }

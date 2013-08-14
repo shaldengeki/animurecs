@@ -203,7 +203,7 @@ class DbConn extends PDO {
     try {
       $prepQuery = parent::prepare($query);
       if ($this->canLog()) {
-        $this->logger->err($query);
+        $this->logger->err($query."\nParams: ".print_r($this->params, True));
       }
       $result = $prepQuery->execute($this->params);
     } catch (Exception $e) {

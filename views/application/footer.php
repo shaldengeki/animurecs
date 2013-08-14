@@ -32,6 +32,30 @@
 <?php
   }
 ?>
+    <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js' type='text/javascript'></script>
+    <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js' type='text/javascript'></script>
+
+    <!--<script type='text/javascript' src='<?php echo Config::ROOT_URL; ?>/vendor/jquery-ui-timepicker-addon.min.js'></script>-->
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jquery.dropdownPlain.min.js' type='text/javascript'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js' type='text/javascript'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.3.1/jquery.cookie.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jquery.tokeninput.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jquery.json-2.3.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jquery.jqplot.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jqplot.barRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jqplot.categoryAxisRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jqplot.dateAxisRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jqplot.pieRenderer.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jqplot.highlighter.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/jqplot.trendline.min.js' type='text/javascript'></script>
+
+    <script src='//www.google.com/jsapi' type='text/javascript'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/d3-helpers.js' type='text/javascript'></script>
+
+    <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/js/bootstrap.min.js' type='text/javascript'></script>
+    <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
+    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=<?php echo $assetsVersion; ?>' type='text/javascript'></script>
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-37523517-1']);

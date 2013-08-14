@@ -9,7 +9,7 @@ img/anime
 *.psd
 ideas.txt
 composer.lock
-vendor
+/vendor/
 _site
 _includes
 _plugins
