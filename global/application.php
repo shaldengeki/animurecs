@@ -684,6 +684,7 @@ class Application {
     if ($params == Null) {
       $params = [];
     }
+    $params['class'] = isset($params['class']) ? "form-control ".$params['class'] : "form-control";
     if ($textValue == Null) {
       $textValue = "";
     }
