@@ -24,7 +24,7 @@
         <div class='control-group'>
           <label class='control-label' for='tags[description]'>Description</label>
           <div class='controls'>
-            <?php echo $tag->textArea('description', ['class' => 'field span4', 'rows' => 3], ($tag->id === 0) ? "" : escape_output($tag->description())); ?>
+            <?php echo $tag->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($tag->id === 0) ? "" : escape_output($tag->description())); ?>
           </div>
         </div>
         <div class='control-group'>
@@ -36,12 +36,12 @@
         <div class='control-group'>
           <label class='control-label' for='tags[anime_tags]'>Anime</label>
           <div class='controls'>
-            <?php echo $tag->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'title', 'data-url' => $anime->url('token_search'), 'data-value' => ($tag->id ? escape_output(json_encode($tagAnime)) : "[]")]); ?>
+            <?php echo $tag->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-sm', 'data-field' => 'title', 'data-url' => $anime->url('token_search'), 'data-value' => ($tag->id ? escape_output(json_encode($tagAnime)) : "[]")]); ?>
           </div>
         </div>
         <div class='form-actions'>
           <button type='submit' class='btn btn-primary'><?php echo ($tag->id === 0) ? "Create Tag" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($tag->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($tag->id === 0) ? "Go back" : "Discard changes"; ?></a>
 <?php
   if ($tag->id !== 0) {
 ?>

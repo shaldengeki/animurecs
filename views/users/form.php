@@ -73,7 +73,7 @@
         }
 ?>      <div class='form-actions'>
           <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Sign Up" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
         </div>
       </fieldset>
     </form>

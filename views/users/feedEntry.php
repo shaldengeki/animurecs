@@ -35,7 +35,7 @@
 <?php
       if ($entry->allow($this->app->user, 'delete')) {
 ?>
-          <ul class='feedEntryMenu hidden'><li><?php echo $entry->link("delete", "<i class='icon-trash'></i> Delete", Null, True); ?></li></ul>
+          <ul class='feedEntryMenu hidden'><li><?php echo $entry->link("delete", "<i class='glyphicon glyphicon-trash'></i> Delete", Null, True); ?></li></ul>
 <?php
       }
 ?>

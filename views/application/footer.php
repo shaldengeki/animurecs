@@ -53,7 +53,8 @@
     <script src='//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js' type='text/javascript'></script>
     <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/d3-helpers.js' type='text/javascript'></script>
 
-    <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/js/bootstrap.min.js' type='text/javascript'></script>
+    <!--<script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/js/bootstrap.min.js' type='text/javascript'></script>-->
+    <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/bootstrap.min.js' type='text/javascript'></script>
     <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
     <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=<?php echo $assetsVersion; ?>' type='text/javascript'></script>
     <script type="text/javascript">

@@ -672,6 +672,7 @@ class Application {
     if ($params == Null) {
       $params = [];
     }
+    $params['class'] = isset($params['class']) ? "form-control ".$params['class'] : "form-control";
     $inputAttrs = [];
     foreach ($params as $key=>$value) {
       $inputAttrs[] = escape_output($key)."='".escape_output($value)."'";

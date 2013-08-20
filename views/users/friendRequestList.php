@@ -21,9 +21,9 @@
     <p>
       <strong><?php echo $request['user']->link('show', $request['user']->username()); ?></strong> requested to be your friend on <?php echo $entryTime->format('G:i n/j/y'); ?>.
     </p>
-    <div class='row-fluid'>
-      <div class='span6'><?php echo $this->app->form(['action' => $this->url('confirm_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-primary'>Confirm</button></form></div>
-      <div class='span6'><?php echo $this->app->form(['action' => $this->url('ignore_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-warning'>Ignore</button></form></div>
+    <div class='row'>
+      <div class='col-md-6'><?php echo $this->app->form(['action' => $this->url('confirm_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-primary'>Confirm</button></form></div>
+      <div class='col-md-6'><?php echo $this->app->form(['action' => $this->url('ignore_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-warning'>Ignore</button></form></div>
     </div>
   </li>
 <?php

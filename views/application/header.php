@@ -26,38 +26,41 @@
     <script src='//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js' type='text/javascript'></script>
   </head>
   <body>
-    <div class='navbar navbar-inverse navbar-fixed-top'>
-      <div class='navbar-inner'>
-        <div class='container-fluid'>
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+    <div class='navbar navbar-inverse navbar-fixed-top' role='navigation'>
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
-          </a>
-          <a href='/' class='brand'>Animurecs</a>
-          <div class='nav-collapse collapse'>
+          </button>
+          <a href='/' class="navbar-brand" href="#">Animurecs</a>
+        </div>
+        <div class="collapse navbar-collapse">
 <?php
   if ($this->user && $this->user->loggedIn()) {
 ?>
-            <ul class='nav'>
+            <ul class="nav navbar-nav">
               <li class='divider-vertical'></li>
-              <li><?php echo $this->user->link("globalFeed", "<i class='icon-th-list icon-white'></i> Feed", Null, True); ?></li>
+              <li><?php echo $this->user->link("globalFeed", "<i class='glyphicon glyphicon-th-list glyphicon-white'></i> Feed", Null, True); ?></li>
               <li class='divider-vertical'></li>
-              <li><?php echo $this->user->link("show", "<i class='icon-home icon-white'></i> You", Null, True); ?></li>
+              <li><?php echo $this->user->link("show", "<i class='glyphicon glyphicon-home glyphicon-white'></i> You", Null, True); ?></li>
               <li class='divider-vertical'></li>
-              <li><a href='/users/'><i class='icon-globe icon-white'></i> Connect</a></li>
+              <li><a href='/users/'><i class='glyphicon glyphicon-globe glyphicon-white'></i> Connect</a></li>
               <li class='divider-vertical'></li>
-              <li><?php echo $this->user->link("discover", "<i class='icon-star icon-white'></i> Discover", Null, True); ?></li>
+              <li><?php echo $this->user->link("discover", "<i class='glyphicon glyphicon-star glyphicon-white'></i> Discover", Null, True); ?></li>
               <li class='divider-vertical'></li>
             </ul>
 <?php
   }
 ?>
-            <ul class='nav pull-right'>
+            <ul class='nav navbar-nav navbar-right'>
 <?php
   if ($this->user && $this->user->loggedIn()) {
 ?>
-              <li><?php echo $firstAnime->view('searchForm', [
+              <li>
+                <?php echo $firstAnime->view('searchForm', [
                 'form' => [
                     'class' => 'navbar-search'
                   ],
@@ -66,16 +69,17 @@
                     'class' => 'autocomplete search-query'
                   ],
                 'submitButton' => False
-              ]); ?></li>
+                ]); ?>
+              </li>
               <li id='navbar-alerts'>
 <?php
     if ($this->user && $this->user->outstandingFriendRequests) {
 ?>
-                <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-white'></i> <span class='msg-count'><span class='msg-count-inner'><?php echo count($this->user->outstandingFriendRequests); ?></span></span></a>
+                <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='glyphicon glyphicon-envelope glyphicon-white'></i> <span class='msg-count'><span class='msg-count-inner'><?php echo count($this->user->outstandingFriendRequests); ?></span></span></a>
 <?php
     } else {
 ?>
-                <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='icon-envelope icon-inactive'></i></a>
+                <span class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><i class='glyphicon glyphicon-envelope glyphicon-inactive'></i></a>
 <?php
     }
 ?>
@@ -83,7 +87,7 @@
                 </span>
               </li>
               <li id='navbar-user' class='dropdown'>
-                <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-user icon-white'></i><?php echo escape_output($this->user->username); ?><b class='caret'></b></a>
+                <a href='#' class='dropdown-toggle' data-toggle='dropdown'><i class='glyphicon glyphicon-user glyphicon-white'></i><?php echo escape_output($this->user->username); ?><b class='caret'></b></a>
                 <ul class='dropdown-menu'>
                   <li><?php echo $this->user->link("show", "Profile"); ?></li>
                   <li><?php echo $this->user->link("edit", "Settings"); ?></li>
@@ -118,7 +122,7 @@
 <?php
   if ($params['container']) {
 ?>
-    <div class='container-fluid'>
+    <div class='container'>
 <?php
   }
   foreach ($this->allMessages() as $message) {

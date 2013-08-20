@@ -88,8 +88,7 @@ function paginate($baseLink, $currPage=1, $maxPages=Null, $ajaxTarget=Null) {
     $link = "<a href='".$baseLink."[PAGE]'>";
   }
 
-  $output = "<div class='pagination pagination-centered'>
-  <ul>\n";
+  $output = "<div class='center-horizontal'><ul class='pagination'>\n";
   $i = 1;
   if ($currPage > 1) {
     $output .= "    <li>".str_replace("[PAGE]", $currPage-1, $link)."«</a></li>\n";
@@ -119,8 +118,8 @@ function paginate($baseLink, $currPage=1, $maxPages=Null, $ajaxTarget=Null) {
   if ($maxPages === Null || $currPage < $maxPages) {
     $output .= "    <li>".str_replace("[PAGE]", $currPage+1, $link)."»</a></li>\n";
   }
-  $output .= "  </ul>\n</div>\n";
-    return $output;
+  $output .= "</ul></div>\n";
+  return $output;
 }
 
 function statusArray() {
@@ -205,36 +204,36 @@ function display_history_plot(DbConn $database, User $user, $form_id) {
     echo "<div id='vis'></div>
   <form action='#'>
     <input type='hidden' id='form_id' name='form_id' value='".intval($form_id)."' />
-    <div class='row-fluid'>
-      <div class='span4'>
-        <div class='row-fluid'><h3 class='span12' style='text-align:center;'>Machines</h3></div>
-        <div class='row-fluid'>
-          <select multiple='multiple' id='machines' class='span12' size='10' name='machines[]'>\n";
+    <div class='row'>
+      <div class='col-md-4'>
+        <div class='row'><h3 class='col-md-12' style='text-align:center;'>Machines</h3></div>
+        <div class='row'>
+          <select multiple='multiple' id='machines' class='col-md-12' size='10' name='machines[]'>\n";
     while ($machine = mysqli_fetch_assoc($machines)) {
       echo "           <option value='".intval($machine['id'])."'>".escape_output($machine['name'])."</option>\n";
     }
     echo "         </select>
         </div>
       </div>
-      <div class='span4'>
-        <div class='row-fluid'><h3 class='span12' style='text-align:center;'>Fields</h3></div>
-        <div class='row-fluid'>
-          <select multiple='multiple' id='form_fields' class='span12' size='10' name='form_fields[]'>\n";
+      <div class='col-md-4'>
+        <div class='row'><h3 class='col-md-12' style='text-align:center;'>Fields</h3></div>
+        <div class='row'>
+          <select multiple='multiple' id='form_fields' class='col-md-12' size='10' name='form_fields[]'>\n";
     while ($field = mysqli_fetch_assoc($formFields)) {
       echo "            <option value='".intval($field['id'])."'>".escape_output($field['name'])."</option>\n";
     }
     echo "          </select>
         </div>
       </div>
-      <div class='span4'>
-        <div class='row-fluid'><h3 class='span12' style='text-align:center;'>Time Range</h3></div>
-        <div class='row-fluid'>
-          <div class='span12' style='text-align:center;'>(Coming soon)</div>
+      <div class='col-md-4'>
+        <div class='row'><h3 class='col-md-12' style='text-align:center;'>Time Range</h3></div>
+        <div class='row'>
+          <div class='col-md-12' style='text-align:center;'>(Coming soon)</div>
         </div>
       </div>
     </div>
-    <div class='row-fluid'>
-      <div class='span12' style='text-align:center;'>As a reminder, you can highlight multiple fields by either clicking and dragging, or holding down Control and clicking on the fields you want.</div>
+    <div class='row'>
+      <div class='col-md-12' style='text-align:center;'>As a reminder, you can highlight multiple fields by either clicking and dragging, or holding down Control and clicking on the fields you want.</div>
     </div>
     <div class='form-actions'>
       <a class='btn btn-xlarge btn-primary' href='#' onClick='drawLargeD3Plot();'>Redraw Plot</a>

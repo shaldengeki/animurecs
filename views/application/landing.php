@@ -16,7 +16,7 @@
         &nbsp;
       </div>
       <div class='row-fluid landing-container'>
-        <p class='lead'>Sign up for Animurecs for free: <a class='btn btn-large btn-success' href='/register.php'>Sign up</a></p>
+        <p class='lead'>Sign up for Animurecs for free: <a class='btn btn-lg btn-success' href='/register.php'>Sign up</a></p>
       </div>
       <div class="row-fluid landing-container">
         <div class="landing-box">
@@ -33,6 +33,6 @@
         </div>
       </div>
       <div class='row-fluid landing-container'>
-        <p class='lead'>Sign up for Animurecs for free: <a class='btn btn-large btn-success' href='/register.php'>Sign up</a></p>
+        <p class='lead'>Sign up for Animurecs for free: <a class='btn btn-lg btn-success' href='/register.php'>Sign up</a></p>
       </div>
     </div>

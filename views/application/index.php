@@ -7,21 +7,21 @@
 <!--      <div class="front-bg">
         <img class="front-image" src=<?php echo joinPaths(Config::ROOT_URL,"img/front-bg.jpg"); ?> />
       </div> -->
-      <div class="row-fluid">
+      <div class="row">
         <div class="hero-unit">
           <h1>Welcome to Animurecs!</h1>
           <p>Animurecs is an anime and manga database, built around the idea that watching anime is more fun when you're with friends.</p>
           <p>
-            <a href="/register.php" class="btn btn-success btn-large">
+            <a href="/register.php" class="btn btn-success btn-lg">
               Sign up today!
             </a>
           </p>
         </div>
       </div>
-      <div class="row-fluid">
+      <div class="row">
         <ul class="thumbnails">
-          <li class="span4">
-            <div class="thumbnail">
+          <li class="col-md-4">
+            <div class="img-thumbnail">
               <div class="caption">
                 <h4>Organize your anime</h4>
                 <p>
@@ -33,8 +33,8 @@
               </div>
             </div>
           </li>
-          <li class="span4">
-            <div class="thumbnail">
+          <li class="col-md-4">
+            <div class="img-thumbnail">
               <div class="caption">
                 <h4>Get personalized recommendations</h4>
                 <p>
@@ -46,8 +46,8 @@
               </div>
             </div>
           </li>
-          <li class="span4">
-            <div class="thumbnail">
+          <li class="col-md-4">
+            <div class="img-thumbnail">
               <div class="caption">
                 <h4>Keep in touch with friends</h4>
                 <p>

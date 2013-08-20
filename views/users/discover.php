@@ -4,7 +4,7 @@
   $firstAnime = Anime::first($this->app);
 ?>
 <div class='tabbable tabs-left'>
-  <ul class='nav nav-tabs'>
+  <ul class='nav nav-tabs .nav-stacked'>
     <li class='active ajaxTab' data-url="<?php echo $this->url('recommendations'); ?>"><a href='#yourRecs' data-toggle='tab'>Your Recs</a></li>
     <li class='ajaxTab' data-url="<?php echo $this->url('friendRecs'); ?>"><a href='#friendRecs' data-toggle='tab'>Friends</a></li>
     <li class='ajaxTab' data-url="<?php echo $this->url('groupwatches'); ?>"><a href='#groupwatches' data-toggle='tab'>Groupwatches</a></li>

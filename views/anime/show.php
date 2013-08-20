@@ -3,11 +3,11 @@
   $this->app->check_partial_include(__FILE__);
   $newEntry = new AnimeEntry($this->app, Null, ['user' => $this->app->user]);
 ?>
-     <div class='row-fluid'>
-        <div class='span3 userProfileColumn leftColumn'>
+     <div class='row'>
+        <div class='col-md-3 userProfileColumn leftColumn'>
           <ul class='thumbnails avatarContainer'>
-            <li class='span12'>
-              <div class='thumbnail profileAvatar'>
+            <li class='col-md-12'>
+              <div class='img-thumbnail profileAvatar'>
 <?php
   if ($this->imagePath() != '') {
 ?>                <?php echo $this->imageTag(['class' => 'img-rounded', 'alt' => '']); ?>
@@ -24,7 +24,7 @@
             <?php echo $this->view('tagList'); ?>
           </div>
         </div>
-        <div class='span9 userProfileColumn rightColumn'>
+        <div class='col-md-9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>
               <?php echo $this->link('show', $this->title()); ?>
@@ -48,14 +48,14 @@
                   <?php echo escape_output($this->description()); ?>
                 </p>
                 <ul class='thumbnails'>
-                  <li class='span4'>
+                  <li class='col-md-4'>
                     <p class='lead'>Global Average:</p>
                     <?php echo $this->scoreBar($this->ratingAvg()); ?>
                   </li>
 <?php
   if ($this->app->user->loggedIn()) {
 ?>
-                  <li class='span4'>
+                  <li class='col-md-4'>
 <?php
     if (!isset($this->app->user->animeList()->uniqueList()[$this->id]) || $this->app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
       $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
@@ -77,7 +77,7 @@
     }
   } else {
 ?>
-                  <li class='span4'>
+                  <li class='col-md-4'>
                     <p class='lead'>Predicted score:</p>
                     <p>Sign in to view your predicted score!</p>
 <?php
@@ -85,7 +85,7 @@
 ?>
                   </li>
 <?php /*
-                  <li class='span8'>
+                  <li class='col-md-8'>
                     <p class='lead'>Tags:</p>
                     <?php echo $this->view('tagCloud', ['user' => $this->app->user]); ?>
                   </li>

@@ -12,7 +12,7 @@
         </div>
         <div class='form-actions'>
           <button type='submit' class='btn btn-primary'>Switch</button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>Back</a>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'>Back</a>
         </div>
       </fieldset>
     </form>

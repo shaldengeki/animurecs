@@ -16,14 +16,14 @@
 ?>
   <h1>Error (403): Not signed in</h1>
   <p>Please log in to view this page.</p>
-  <div class='row-fluid'>
-    <div class='span3'>&nbsp;</div>
-    <div class='span6'>
+  <div class='row'>
+    <div class='col-md-3'>&nbsp;</div>
+    <div class='col-md-6'>
 <?php
       echo $this->user->view('login', $params);
   }
 ?>
     </div>
-    <div class='span3'>&nbsp;</div>
+    <div class='col-md-3'>&nbsp;</div>
   </div>
 </div>

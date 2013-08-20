@@ -25,20 +25,20 @@
         <div class='control-group'>
           <label class='control-label' for='anime[description]'>Description</label>
           <div class='controls'>
-            <?php echo $anime->textArea('description', ['class' => 'field span4', 'rows' => 3], ($anime->id === 0) ? "" : escape_output($anime->description())); ?>
+            <?php echo $anime->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($anime->id === 0) ? "" : escape_output($anime->description())); ?>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[episode_count]'>Episodes</label>
           <div class='controls'>
-            <?php echo $anime->input('episode_count', ['type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-small']); ?> episodes at 
-            <?php echo $anime->input('episode_length', ['name' => 'anime[episode_minutes]', 'id' => 'anime[episode_minutes]', 'value' => round($anime->episodeLength()/60, 2), 'type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-small']); ?> minutes per episode
+            <?php echo $anime->input('episode_count', ['type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-sm']); ?> episodes at 
+            <?php echo $anime->input('episode_length', ['name' => 'anime[episode_minutes]', 'id' => 'anime[episode_minutes]', 'value' => round($anime->episodeLength()/60, 2), 'type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-sm']); ?> minutes per episode
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[anime_tags]'>Tags</label>
           <div class='controls'>
-            <?php echo $anime->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-small', 'data-field' => 'name', 'data-url' => $firstTag->url("token_search"), 'data-value' => ($anime->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))]); ?>
+            <?php echo $anime->input('anime_tags', ['type' => 'text', 'class' => 'token-input input-sm', 'data-field' => 'name', 'data-url' => $firstTag->url("token_search"), 'data-value' => ($anime->id === 0 ? "[]" : escape_output(json_encode(array_values($animeTags))))]); ?>
           </div>
         </div>
 <?php
@@ -69,7 +69,7 @@
   }
 ?>    <div class='form-actions'>
           <button type='submit' class='btn btn-primary'><?php echo ($anime->id === 0) ? "Add Anime" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($anime->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($anime->id === 0) ? "Go back" : "Discard changes"; ?></a>
 <?php
   if ($anime->id !== 0) {
 ?>

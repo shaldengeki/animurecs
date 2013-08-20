@@ -54,8 +54,8 @@
     $hatedTags = array_slice($regAverages, $numTags >= 10 ? -10 : -1 * floor($numTags/2), Null, True);
     asort($hatedTags);
 ?>
-<div class='row-fluid'>
-  <div class='span6'>
+<div class='row'>
+  <div class='col-md-6'>
     <div class='page-header'>
       <h3>Favourite <?php echo $tagTypes[$tagTypeID]->pluralName(); ?>:</h3>
     </div>

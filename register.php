@@ -12,9 +12,13 @@ if ($app->user->allow($app->user, 'new') && isset($_POST['username']) && isset($
   }
   $app->redirect($location);
 } else {
-  echo $app->render('<div class="row-fluid">
-  <div class="span4">&nbsp;</div>
-  <div class="span4">'.$app->user->view('register').'</div>
-  <div class="span4">&nbsp;</div></div>');
+  echo $app->render('<div class="row">
+  <div class="col-md-3">&nbsp;</div>
+  <div class="col-md-6">
+    <div class="row">'
+      .$app->user->view('register').'
+    </div>
+  </div>
+  <div class="col-md-3">&nbsp;</div></div>');
 }
 ?>

@@ -13,13 +13,13 @@
         <div class='control-group'>
           <label class='control-label' for='comments[message]'>Comment</label>
           <div class='controls'>
-            <?php echo $this->textArea('message', ['class' => 'field span4', 'rows' => 3], ($this->id === 0) ? "" : escape_output($this->message())); ?>
+            <?php echo $this->textArea('message', ['class' => 'field col-md-4', 'rows' => 3], ($this->id === 0) ? "" : escape_output($this->message())); ?>
           </div>
         </div>
 
         <div class='form-actions'>
           <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Add Comment" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
         </div>
       </fieldset>
     </form>

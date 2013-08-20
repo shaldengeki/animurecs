@@ -2,8 +2,8 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-<div class="row-fluid">
-  <div class="span6">
+<div class="row">
+  <div class="col-md-6">
     <?php//echo $this->view('feed', $params['conversations']); ?>
     <h1>Welcome!</h1>
     <p>
@@ -90,7 +90,7 @@
       </li>
     </ol>
   </div>
-  <div class='span6'>
+  <div class='col-md-6'>
     <h2>Your Feed</h2>
     <?php echo $this->view('feed', $params['global']); ?>
   </div>

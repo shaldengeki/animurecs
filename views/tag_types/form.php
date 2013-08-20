@@ -18,12 +18,12 @@
         <div class='control-group'>
           <label class='control-label' for='tag_types[description]'>Description</label>
           <div class='controls'>
-            <?php echo $tagType->textArea('description', ['class' => 'field span4', 'rows' => 3], ($tagType->id === 0) ? "" : escape_output($tagType->description)); ?>
+            <?php echo $tagType->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($tagType->id === 0) ? "" : escape_output($tagType->description)); ?>
           </div>
         </div>
         <div class='form-actions'>
           <button type='submit' class='btn btn-primary'><?php echo ($tagType->id === 0) ? "Create Tag Type" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'><?php echo ($tagType->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($tagType->id === 0) ? "Go back" : "Discard changes"; ?></a>
 <?php
   if ($tagType->id !== 0) {
 ?>

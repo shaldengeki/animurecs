@@ -3,11 +3,11 @@
   $this->app->check_partial_include(__FILE__);
   $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
 ?>
-     <div class='row-fluid'>
-        <div class='span3 userProfileColumn leftColumn'>
+     <div class='row'>
+        <div class='col-md-3 userProfileColumn leftColumn'>
           <ul class='thumbnails avatarContainer'>
-            <li class='span12'>
-              <div class='thumbnail profileAvatar'>
+            <li class='col-md-12'>
+              <div class='img-thumbnail profileAvatar'>
 <?php
 if ($this->avatarPath() != '') {
 ?>
@@ -37,31 +37,31 @@ if ($this->avatarPath() != '') {
             </ul>
           </div>
         </div>
-        <div class='span9 userProfileColumn rightColumn'>
+        <div class='col-md-9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <div class='page-header'>
               <h1>
                 <?php echo $this->link('show', $this->username()); ?>
                 <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
-                <?php echo $this->isAdmin() ? "<span class='label label-important staffUserTag'>Admin</span>" : ""; ?>
+                <?php echo $this->isAdmin() ? "<span class='label label-danger staffUserTag'>Admin</span>" : ""; ?>
                 <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
               <?php 
                 if ($this->allow($this->app->user, 'request_friend') && $this->id != $this->app->user->id) {
                   if ($this->isFriend($this->app->user)) {
 ?>
-                <span class='pull-right'><button type='button' class='btn btn-success btn-large disabled' disabled='disabled'>Friends</button></span>
+                <span class='pull-right'><button type='button' class='btn btn-success btn-lg disabled' disabled='disabled'>Friends</button></span>
 <?php
                   } elseif ($this->hasFriendRequestFrom($this->app->user)) {
 ?>
-                <span class='pull-right'><button type='button' class='btn btn-warning btn-large disabled' disabled='disabled'>Request Sent</button></span>
+                <span class='pull-right'><button type='button' class='btn btn-warning btn-lg disabled' disabled='disabled'>Request Sent</button></span>
 <?php                    
                   } elseif ($this->hasRequestedFriend($this->app->user)) {
-                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Confirm Request'];
+                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-lg', 'value' => 'Confirm Request'];
 ?>
                 <span class='pull-right'><?php echo $this->app->form(['action' => $this->url('confirm_friend')]).$this->app->input($buttonParams); ?></form></span>
 <?php
                   } else {
-                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-large', 'value' => 'Add Friend'];
+                    $buttonParams = ['type' => 'submit', 'class' => 'btn btn-primary btn-lg', 'value' => 'Add Friend'];
 ?>
                 <span class='pull-right'><?php echo $this->app->form(['action' => $this->url('request_friend')]).$this->app->input($buttonParams); ?></form></span>
 <?php
@@ -73,20 +73,21 @@ if ($this->avatarPath() != '') {
             <p class='lead'>
               <?php echo escape_output($this->about()); ?>
             </p>
+            <ul class='thumbnails'>
 <?php
   if ($this->id !== $this->app->user->id) {
-?>            <ul class='thumbnails'>
-              <li class='span4'>
+?>
+              <li class='col-md-4'>
                 <p>Anime compatibility:</p>
                 <?php echo $this->animeList()->compatibilityBar($this->app->user->animeList()); ?>
               </li>
 <?php
   }
 ?>
-              <li class='span4'>
+              <li class='col-md-4'>
                 <?php echo $this->view('pointsBar'); ?>
               </li>
-              <li class='span4'>
+              <li class='col-md-4'>
                 
               </li>
             </ul>

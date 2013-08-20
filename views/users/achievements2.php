@@ -9,8 +9,8 @@
     if ($achievement->alreadyAwarded($this)) {
       $noAchieves = False;
 ?>
-  <div class='row-fluid'>
-    <div class='span8'>
+  <div class='row'>
+    <div class='col-md-8'>
       <h4><?php echo escape_output($achievement->name); ?><?php echo $achievement->children ? " (".intval($achievement->level).")" : "";?></h4>
       <p><?php echo $achievement->description(); ?></p>
 <?php
@@ -33,7 +33,7 @@
       }
 ?>
     </div>
-    <div class='span4'>
+    <div class='col-md-4'>
       <?php echo $achievement->imageTag(); ?>
     </div>
   </div>

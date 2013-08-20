@@ -16,13 +16,13 @@
 
   $params['wilsons'] = isset($params['wilsons']) ? $params['wilsons'] : [];
 ?>
-<div class='row-fluid'>
+<div class='row'>
   <h1><?php echo escape_output($params['title']); ?></h1>
   <?php echo $firstAnime->view('searchForm', ['form' => ['class' => 'form-inline pull-right']]); ?>
 </div>
 <?php echo $params['numPages'] > 1 ? paginate($firstAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
 
-<div class='row-fluid'>
+<div class='row'>
   <?php echo $this->view('grid', ['anime' => $animeGroup, 'wilsons' => $params['wilsons']]); ?>
 </div>
 

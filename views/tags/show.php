@@ -23,12 +23,12 @@
 ?>
 <h1><?php echo $this->link('show', ($this->type()->id != 1 ? $this->type()->name().":" : "").$this->name()).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
 <?php echo $this->description() ? "<p class='lead'>".escape_output($this->description())."</p>" : "" ?>
-<div class='row-fluid'>
-  <div class='span2'>
+<div class='row'>
+  <div class='col-md-2'>
     <h2>Tags:</h2>
     <?php echo $animeGroup->view('tagList', ['numAnime' => 20]); ?>
   </div>
-  <div class='span10'>
+  <div class='col-md-10'>
     <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $animePages); ?>
     <?php echo $firstAnime->view('grid', ['anime' => $animeGroup, 'predictions' => $animePredictions]); ?>
     <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $animePages); ?>
