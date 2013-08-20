@@ -98,7 +98,7 @@ if ($this->avatarPath() != '') {
               <li class='ajaxTab' data-url='<?php echo $this->url("anime_list"); ?>'><a href='#userList' data-toggle='tab'>List</a></li>
               <li class='ajaxTab' data-url='<?php echo $this->url("stats"); ?>'><a href='#userStats' data-toggle='tab'>Stats</a></li>
               <!--<li class='ajaxTab' data-url='<?php //echo $this->url("achievements"); ?>'><a href='#userAchievements' data-toggle='tab'>Achievements</a></li>-->
-              <li class='ajaxTab' data-url='<?php echo $this->url("friends"); ?>'><a href='#friends' data-toggle='tab'>Friends</a></li>
+              <li class='ajaxTab' data-url='<?php echo $this->url("friends"); ?>'><a href='#friends' data-toggle='tab'>Friends (<?php echo count($this->friends()); ?>)</a></li>
               <li class='ajaxTab' data-url='<?php echo $this->url("achievements2"); ?>'><a href='#userAchievements2' data-toggle='tab'>Achievements (beta)</a></li>
             </ul>
             <div class='tab-content'>
