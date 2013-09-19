@@ -184,7 +184,7 @@ function parseMALList($username, $type="anime") {
   $nowTime = new DateTime("now", $serverTimezone);
 
   $curl = new Curl("http://myanimelist.net/malappinfo.php?u=".rawurlencode($username)."&status=all&type=".rawurlencode($type));
-  $xmlPage = $curl->get();
+  $xmlPage = $curl->timeout(5000)->get();
 
   $listXML = new DOMDocument();
   $listXML->loadXML($xmlPage);

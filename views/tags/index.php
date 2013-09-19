@@ -27,7 +27,7 @@
   </thead>
   <tbody>
 <?php
-  while ($thisID = $tag->fetch_assoc()) {
+  while ($thisID = $tag->fetch()) {
     $thisTag = new Tag($this->app, intval($thisID['id']));
 ?>
     <tr>

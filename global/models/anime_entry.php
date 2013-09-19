@@ -165,8 +165,8 @@ class AnimeEntry extends BaseEntry {
         if (!$this->app->checkCSRF()) {
           $this->app->display_error(403);
         }
-        $deleteList = $this->delete();
-        if ($deleteList) {
+        $deleteEntry = $this->delete();
+        if ($deleteEntry) {
           $status = "Successfully removed an entry from your anime list.";
           $class = "success";
           break;

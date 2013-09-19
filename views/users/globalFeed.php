@@ -4,7 +4,6 @@
 ?>
 <div class="row">
   <div class="col-md-6">
-    <?php//echo $this->view('feed', $params['conversations']); ?>
     <h1>Welcome!</h1>
     <p>
       06/29/13: The past two weeks have been really busy, but I'm still working on AR in the background. I've migrated bugs and my TODO to <a href='https://github.com/shaldengeki/animurecs/issues'>GitHub</a> so you can see my roadmap there.

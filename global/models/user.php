@@ -791,9 +791,8 @@ class User extends BaseObject {
     foreach ($malList as $entry) {
       // ensure that the user doesn't already have this entry in their list.
       $entry['user_id'] = $this->id;
-      try {
-        $foundEntry = AnimeEntry::find($this->app, $entry);
-      } catch (DbException $e) {
+      $foundEntry = AnimeEntry::find($this->app, $entry);
+      if (!$foundEntry) {
         // entry doesn't already exist.
         try {
           $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
@@ -803,7 +802,6 @@ class User extends BaseObject {
           $this->app->logger->err($e->__toString());
           $listIDs[$entry['anime_id']] = False;
         }
-
       }
     }
 
@@ -985,6 +983,7 @@ class User extends BaseObject {
           $this->app->redirect();
         }
         if (!$importMAL) {
+          $this->app->delayedMessage("No new entries were found while updating your MAL.");
           $this->app->redirect();
         }
         if (!in_array(False, $importMAL, True)) {

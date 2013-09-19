@@ -133,6 +133,14 @@ abstract class BaseEntry extends BaseObject {
     }
     return True;
   }
+  public function delete($entries=Null) {
+    // delete comments on this thing before deleting this thing.
+    foreach ($this->comments() as $comment) {
+      $comment->delete();
+    }
+    parent::delete();
+  }
+
   public function create_or_update(array $entry, array $whereConditions=Null) {
     /*
       Creates or updates an existing list entry for the current user.
