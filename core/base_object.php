@@ -289,7 +289,6 @@ abstract class BaseObject {
       }
     }
 
-    $this->app->dbConn->log($this->app->logger);
     $this->app->dbConn->table(static::$TABLE);
     $this->app->dbConn->where([
                       static::$TABLE.".".static::$FIELDS['id']['db'] => $this->id
