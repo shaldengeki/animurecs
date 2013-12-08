@@ -2,7 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 
-  $firstAlias = Alias::first($this->app);
+  $firstAlias = Alias::Get($this->app);
   $alias = isset($params['alias']) ? $params['alias'] : $this;
   $params['currentObject'] = isset($params['currentObject']) ? $params['currentObject'] : Null;
 

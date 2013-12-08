@@ -6,7 +6,7 @@
   // regularize by mean tag mean, weighted by mean number of ratings per tag.
   $tagRatings = [];
   $tags = [];
-  $tagTypes = TagType::find($this->app);
+  $tagTypes = TagType::GetList($this->app);
   foreach ($this->animeList()->uniqueList() as $entry) {
     if (round(floatval($entry['score']), 2) != 0) {
       foreach ($entry['anime']->tags() as $tag) {

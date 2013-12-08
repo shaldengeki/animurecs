@@ -1,7 +1,7 @@
 *.sublime-project
 *.sublime-workspace
 dbv/data/meta/revision
-global/config.php
+config.php
 Thumbs.db
 less
 img/users

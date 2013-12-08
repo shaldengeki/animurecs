@@ -2,11 +2,11 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 
-  $firstAnime = Anime::first($this->app);
+  $firstAnime = Anime::Get($this->app);
   $anime = isset($params['anime']) ? $params['anime'] : $this;
 
   $animeTags = [];
-  $firstTag = Tag::first($anime->app);
+  $firstTag = Tag::Get($anime->app);
   if ($anime->tags()) {
     foreach ($anime->tags()->load('info') as $tag) {
       $animeTags[] = ['id' => $tag->id, 'name' => $tag->name()];

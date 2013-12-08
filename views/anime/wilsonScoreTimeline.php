@@ -7,7 +7,7 @@
 
   // first, get time range of this anime's ratings.
   //displays a graph of an anime's wilson score over time.
-  $times = $this->app->dbConn->table(AnimeList::$MODEL_TABLE)->fields("UNIX_TIMESTAMP(MIN(time)) AS start", "UNIX_TIMESTAMP(MAX(time)) AS end")->where(['anime_id' => $this->id, 'score != 0', 'status != 0'])->firstRow();
+  $times = $this->app->dbConn->table(AnimeList::$TABLE)->fields("UNIX_TIMESTAMP(MIN(time)) AS start", "UNIX_TIMESTAMP(MAX(time)) AS end")->where(['anime_id' => $this->id, 'score != 0', 'status != 0'])->firstRow();
   if ($startTime === False) {
     exit;
   }

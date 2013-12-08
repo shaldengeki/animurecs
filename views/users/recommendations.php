@@ -18,7 +18,7 @@
       $predictions[$rec['id']] = $rec['predicted_score'];
     }
   }
-  $firstAnime = Anime::first($this->app);
+  $firstAnime = Anime::Get($this->app);
     
 ?>
 <div id='recommendation-content'>

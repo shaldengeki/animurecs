@@ -32,22 +32,22 @@ class DbConnTest extends PHPUnit_Framework_TestCase {
     $this->assertInstanceOf('PDOStatement', $this->dbConn->query("SHOW TABLES"));
   }
   public function testQueryFirstRow() {
-    $queryResult = $this->dbConn->table(Anime::$MODEL_TABLE)->firstRow();
+    $queryResult = $this->dbConn->table(Anime::$TABLE)->firstRow();
     $this->assertInternalType('array', $queryResult);
     $this->assertCount(1, $queryResult);
   }
   public function testQueryFirstValue() {
-    $queryResult = $this->dbConn->table(Anime::$MODEL_TABLE)->firstValue();
+    $queryResult = $this->dbConn->table(Anime::$TABLE)->firstValue();
     $this->assertInternalType('string', $queryResult);
     $this->assertTrue(strlen($queryResult) > 0, 'is not an empty string');
   }
   public function testQueryAssocWithDefaultArguments() {
-    $queryResult = $this->dbConn->table(Anime::$MODEL_TABLE)->assoc();
+    $queryResult = $this->dbConn->table(Anime::$TABLE)->assoc();
     $this->assertInternalType('array', $queryResult);
     $this->assertNotCount(0, $queryResult);
   }
   public function testQueryAssocWithProvidedArguments() {
-    $queryResult = $this->dbConn->table(Anime::$MODEL_TABLE)->limit(10)->assoc("id", "id");
+    $queryResult = $this->dbConn->table(Anime::$TABLE)->limit(10)->assoc("id", "id");
     $this->assertInternalType('array', $queryResult);
     $this->assertNotCount(0, $queryResult);
     foreach ($queryResult as $key=>$value) {
@@ -55,12 +55,12 @@ class DbConnTest extends PHPUnit_Framework_TestCase {
     }
   }
   public function testcountWithDefaultArguments() {
-    $queryResult = $this->dbConn->table(Anime::$MODEL_TABLE)->fields("COUNT(*)")->count();
+    $queryResult = $this->dbConn->table(Anime::$TABLE)->fields("COUNT(*)")->count();
     $this->assertInternalType('int', $queryResult);
     $this->assertGreaterThan(0, $queryResult, 'is greater than 0');
   }
   public function testcountWithProvidedArguments() {
-    $queryResult = $this->dbConn->table(Anime::$MODEL_TABLE)->fields("COUNT(*)")->count("*");
+    $queryResult = $this->dbConn->table(Anime::$TABLE)->fields("COUNT(*)")->count("*");
     $this->assertInternalType('int', $queryResult);
     $this->assertGreaterThan(0, $queryResult, 'is greater than 0');
   }

@@ -1,7 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $anime = Anime::first($this->app);
+  $anime = Anime::Get($this->app);
   $defaultParams['form'] = [
                             'method' => 'get',
                             'class' => 'form-inline',

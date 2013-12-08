@@ -1,7 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $firstAnime = Anime::first($this->app);
+  $firstAnime = Anime::Get($this->app);
 
   $params['anime'] = isset($params['anime']) ? $params['anime'] : [];
   $params['numPerPage'] = isset($params['numPerPage']) ? intval($params['numPerPage']) : 8;

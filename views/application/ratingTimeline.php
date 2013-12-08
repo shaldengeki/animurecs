@@ -36,7 +36,7 @@
   if ($groupBySeconds < 86400) {
     $groupBySeconds = 86400;
   }
-  $timeline = $this->dbConn->table(AnimeList::$MODEL_TABLE)->fields($params['uniqueIDField'], 'UNIX_TIMESTAMP(time) AS time', 'score')
+  $timeline = $this->dbConn->table(AnimeList::$TABLE)->fields($params['uniqueIDField'], 'UNIX_TIMESTAMP(time) AS time', 'score')
     ->where([$params['idField'] => $params['id'], 'score != 0', 'status != 0'])->order('time ASC')->query();
   $currTime = $params['start'];
   $ratings = [];

@@ -10,7 +10,7 @@
   $this->tags()->load('info');
 
   // order the tags in this animeGroup's tags by tagType id.
-  $tagTypes = TagType::find($this->app);
+  $tagTypes = TagType::GetList($this->app);
   $tagCounts = [];
   foreach ($this->tagCounts() as $id=>$countArray) {
     $tagCounts[$id] = $countArray['count'];

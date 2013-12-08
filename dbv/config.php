@@ -5,8 +5,8 @@
  * If you leave any of the two constants below blank, authentication will be disabled
  * @see http://dbv.vizuina.com/documentation/#optional-settings
  */
-define('DBV_USERNAME', Config::MYSQL_USERNAME);
-define('DBV_PASSWORD', Config::MYSQL_PASSWORD);
+define('DBV_USERNAME', Config::DB_USERNAME);
+define('DBV_PASSWORD', Config::DB_PASSWORD);
 
 /**
  * @see http://dbv.vizuina.com/documentation/#writing-adapters

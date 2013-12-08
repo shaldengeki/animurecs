@@ -12,7 +12,7 @@
       $params['selected'] = 0;
     }
   }
-  $allTypes = $this->app->dbConn->table(TagType::$MODEL_TABLE)->fields('id', 'name')->order('name ASC')->query();
+  $allTypes = $this->app->dbConn->table(TagType::$TABLE)->fields('id', 'name')->order('name ASC')->query();
 ?>
 <select id='<?php echo escape_output($params['select_id']); ?>' name='<?php echo escape_output($params['select_id']); ?>'>
 <?php

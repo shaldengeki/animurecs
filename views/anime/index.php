@@ -3,7 +3,7 @@
   $this->app->check_partial_include(__FILE__);
 
   // lists all anime.
-  $firstAnime = Anime::first($this->app);
+  $firstAnime = Anime::Get($this->app);
   $paginationArray = [];
   if (isset($_REQUEST['search'])) {
     $paginationArray['search'] = $_REQUEST['search'];

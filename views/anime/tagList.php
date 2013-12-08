@@ -8,7 +8,7 @@
   $params['numTags'] = isset($params['numTags']) ? intval($params['numTags']) : 20;
 
   // order the tags in this animeGroup's tags by tagType id
-  $tagTypes = TagType::find($this->app);
+  $tagTypes = TagType::GetList($this->app);
   $tagCounts = $this->tags()->load('info')->tagCounts();
   $tagsByTagType = [];
   foreach ($tagCounts as $tagCount) {

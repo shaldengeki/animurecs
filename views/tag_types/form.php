@@ -1,7 +1,7 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
-  $firstTagType = TagType::first($this->app);
+  $firstTagType = TagType::Get($this->app);
   $tagType = isset($params['tagType']) ? $params['tagType'] : $this;
 
 ?>

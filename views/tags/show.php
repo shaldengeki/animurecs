@@ -3,7 +3,7 @@
   $this->app->check_partial_include(__FILE__);
 
   $resultsPerPage = 24;
-  $firstAnime = Anime::first($this->app);
+  $firstAnime = Anime::Get($this->app);
 
   if ($this->app->user->loggedIn()) {
     $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime()->anime(), 0, count($this->anime()->anime()));

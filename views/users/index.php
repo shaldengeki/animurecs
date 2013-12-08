@@ -16,7 +16,7 @@
         </thead>
         <tbody>
 <?php
-  $userGroup = new UserGroup($this->app, array_keys($this->app->dbConn->table(User::$MODEL_TABLE)->fields('id')->order('username ASC')->assoc('id')));
+  $userGroup = new UserGroup($this->app, array_keys($this->app->dbConn->table(User::$TABLE)->fields('id')->order('username ASC')->assoc('id')));
   foreach ($userGroup->load('info') as $thisUser) {
 ?>          <tr>
             <td><?php echo $thisUser->link("show", $thisUser->username()); ?></td>

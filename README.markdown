@@ -10,7 +10,7 @@ To get started (after installing the above dependencies), you should do the foll
 3. Modify `dbv/config.php.sample` with the authentication setup of your choice and rename it to `dbv/config.php`
 4. Open up `dbv/index.php` in your browser and push all the disk schema to your database
 
-After that, you'll want to write a rewrite rule for your webserver so you can have pretty URLs. For nginx, it'd look something like this (inside your server block):
+After that, you'll want to set up your webserver. Point your server's document root to the public folder, and then create a rewrite rule to route all requests to index.php inside the public folder. For nginx it'd look like this:
 
     if (!-e $request_filename) {
         rewrite  ^/([a-zA-Z0-9\_]+)?(/(.+?))?(/([0-9A-Za-z\_]+))?/?(\.([a-zA-Z]+))?/?$ /index.php?model=$1&id=$3&action=$5&format=$7 last;

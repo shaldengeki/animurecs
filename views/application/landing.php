@@ -3,7 +3,7 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $firstUser = User::first($this);
+  $firstUser = User::Get($this);
 ?>
     <div class='landing'>
       <div class="row-fluid landing-banner">

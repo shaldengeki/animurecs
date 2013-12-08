@@ -2,14 +2,14 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
   $this->app->check_partial_include(__FILE__);
 
-  $firstTag = Tag::first($this->app);
+  $firstTag = Tag::Get($this->app);
   $tag = isset($params['tag']) ? $params['tag'] : $this;
 
   $tagAnime = [];
   foreach ($this->anime()->load('info') as $anime) {
     $tagAnime[] = ['id' => $anime->id, 'title' => $anime->title()];
   }
-  $anime = Anime::first($this->app);
+  $anime = Anime::Get($this->app);
 ?>
     <?php echo $tag->app->form(['action' => ($tag->id === 0) ? $tag->url("new") : $tag->url("edit"), 'class' => 'form-inline']); ?>
       <?php echo ($tag->id === 0) ? "" : $tag->input('id', ['type' => 'hidden']); ?>
