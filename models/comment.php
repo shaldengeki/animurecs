@@ -51,16 +51,11 @@ class Comment extends BaseObject {
       'type' => 'many'
     ]
   ];
-  protected $userId;
-  protected $user;
-  protected $type;
-  protected $parentId;
-  protected $parent;
-  protected $ancestor;
-  protected $depth;
-  protected $message;
+  public $parent;
+  public $ancestor;
+  public $depth;
 
-  protected $entries;
+  public $entries;
 
   public function __construct(Application $app, $id=Null, User $user=Null, BaseObject $parent=Null) {
     parent::__construct($app, $id);
@@ -82,14 +77,14 @@ class Comment extends BaseObject {
   }
   public function ancestor() {
     if ($this->ancestor === Null) {
-      $this->ancestor = method_exists($this->parent(), 'parent') && $this->parent()->type() != "User" && $this->parent()->type() != "Anime" ? $this->parent()->ancestor() : $this->parent();
+      $this->ancestor = method_exists($this->parent(), 'parent') && $this->parent()->type != "User" && $this->parent()->type != "Anime" ? $this->parent()->ancestor() : $this->parent();
     }
     return $this->ancestor;
   }
   public function parent() {
     if ($this->parent === Null) {
-      $type = $this->type();
-      $this->parent = new $type($this->app, $this->parentId());
+      $type = $this->type;
+      $this->parent = new $type($this->app, $this->parentId);
     }
     return $this->parent;
   }
@@ -111,14 +106,14 @@ class Comment extends BaseObject {
     switch($action) {
       case 'edit':
         // if this user is the owner of the comment, allow them to edit this comment.
-        if ($authingUser->id === $this->user()->id || $authingUser->isStaff()) {
+        if ($authingUser->id === $this->user->id || $authingUser->isStaff()) {
           return True;
         }
         return False;
         break;
       case 'delete':
         // if this user is the owner, or if they're the owner of the thing that the comment is posted on, allow them to delete this comment.
-        if ($authingUser->id === $this->user()->id || $this->parent()->allow($authingUser, $action) || $authingUser->isStaff()) {
+        if ($authingUser->id === $this->user->id || $this->parent()->allow($authingUser, $action) || $authingUser->isStaff()) {
           return True;
         }
         return False;
@@ -203,7 +198,7 @@ class Comment extends BaseObject {
         $this->app->redirect($this->parent()->url());
       }
       $targetParent = $this->parent();
-      $targetUser = $this->user();
+      $targetUser = $this->user;
     } elseif ($this->app->action === 'new') {
       $type = isset($_POST['comments']['type']) ? $_POST['comments']['type'] : (isset($_REQUEST['type']) ? $_REQUEST['type'] : Null);
       try {

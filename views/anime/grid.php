@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $params['anime'] = isset($params['anime']) ? $params['anime'] : new AnimeGroup($this->app, []);
   $params['predictions'] = isset($params['predictions']) ? $params['predictions'] : [];

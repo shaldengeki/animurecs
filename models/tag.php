@@ -83,17 +83,10 @@ class Tag extends BaseObject {
       'join_table_join_col' => 'manga_id'      
     ]*/
   ];
-  protected $name;
-  protected $description;
-  protected $type;
+  public $numAnime;
 
-  protected $createdUser;
-
-  protected $numAnime;
-  protected $anime;
-
-  protected $numManga;
-  protected $manga;
+  // public $numManga;
+  // public $manga;
 
   public function __construct(Application $app, $id=Null, $name=Null) {
     if ($name !== Null) {
@@ -140,13 +133,11 @@ class Tag extends BaseObject {
       Returns a boolean.
     */
     // check to see if this is an update.
-    $this->anime();
-    if (isset($this->anime()[intval($anime_id)])) {
+    if (isset($this->anime[intval($anime_id)])) {
       return True;
     }
     try {
       $anime = new Anime($this->app, intval($anime_id));
-      $anime->load();
     } catch (Exception $e) {
       return False;
     }
@@ -165,9 +156,8 @@ class Tag extends BaseObject {
       Takes an array of anime ids as input, defaulting to all anime.
       Returns a boolean.
     */
-    $this->anime();
     if ($animus === Null) {
-      $animus = array_keys($this->anime()->anime());
+      $animus = array_keys($this->anime);
     }
     $animeIDs = [];
     foreach ($animus as $anime) {
@@ -257,14 +247,14 @@ class Tag extends BaseObject {
     if (isset($tagAnime)) {
       // drop any unneeded access rules.
       $animeToDrop = [];
-      foreach ($this->anime() as $anime) {
+      foreach ($this->anime as $anime) {
         if (!in_array($anime->id, $tagAnime)) {
           $animeToDrop[] = intval($anime->id);
         }
       }
       $drop_anime = $this->drop_taggings($animeToDrop);
       foreach ($tagAnime as $animeToAdd) {
-        if (!array_filter_by_property($this->anime()->anime(), 'id', $animeToAdd)) {
+        if (!array_filter_by_property($this->anime, 'id', $animeToAdd)) {
           // find this animeID.
           try {
             $thisAnime = Anime::findById($this->app, $animeToAdd);
@@ -289,7 +279,7 @@ class Tag extends BaseObject {
     // Returns a bool reflecting whether or not the current anime is approved.
     // doesn't do anything for now. maybe use later.
     /* 
-    if ($this->approvedOn() === '' or !$this->approvedOn()) {
+    if ($this->approvedOn === '' or !$this->approvedOn) {
       return False;
     }
     return True;
@@ -353,14 +343,14 @@ class Tag extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = "Editing ".escape_output($this->name());
+        $title = "Editing ".escape_output($this->name);
         $output = $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = "Tag: ".escape_output($this->name());
+        $title = "Tag: ".escape_output($this->name);
         $output = $this->view('show', ['recsEngine' => $this->app->recsEngine]);
         break;
       case 'delete':
@@ -370,7 +360,7 @@ class Tag extends BaseObject {
         if (!$this->app->checkCSRF()) {
           $this->app->display(403);
         }
-        $tagName = $this->name();
+        $tagName = $this->name;
         $deleteTag = $this->delete();
         if ($deleteTag) {
           $this->app->delayedMessage('Successfully deleted '.$tagName.'.', "success");
@@ -391,7 +381,7 @@ class Tag extends BaseObject {
   public function url($action="show", $format=Null, array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.
     if ($name === Null) {
-      $name = $this->name();
+      $name = $this->name;
     }
     $urlParams = "";
     if (is_array($params)) {
@@ -406,12 +396,12 @@ class Tag extends BaseObject {
       $params = [];
     }
     if (!isset($params['title'])) {
-      $params['title'] = $this->name();
+      $params['title'] = $this->name;
     }
     if (!isset($params['class'])) {
-      $params['class'] = 'tag-'.$this->type()->name;
+      $params['class'] = 'tag-'.$this->type->name;
     } else {
-      $params['class'] .= ' tag-'.$this->type()->name;
+      $params['class'] .= ' tag-'.$this->type->name;
     }
     foreach ($params as $key => $value) {
       $linkParams[] = escape_output($key)."='".escape_output($value)."'";

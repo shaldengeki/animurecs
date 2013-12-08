@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   // displays a list of tags for this anime, sorted by tag type and then count of tag.
@@ -9,7 +9,11 @@
 
   // order the tags in this animeGroup's tags by tagType id
   $tagTypes = TagType::GetList($this->app);
-  $tagCounts = $this->tags()->load('info')->tagCounts();
+
+  // TODO: put this logic in the controller
+  // $tagCounts = $this->tags()->load('info')->tagCounts();
+  $tagCounts = [];
+
   $tagsByTagType = [];
   foreach ($tagCounts as $tagCount) {
     if (!isset($tagsByTagType[$tagCount['tag']->type->id])) {

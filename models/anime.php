@@ -89,15 +89,13 @@ class Anime extends BaseObject {
     ]
   ];
 
-  protected $entries;
-  protected $latestEntries;
-  protected $ratings;
+  public $entries;
+  public $latestEntries;
+  public $ratings;
 
-  protected $ratingCount;
-  protected $ratingAvg;
-  protected $regularizedAvg;
-
-  protected $tags;
+  public $ratingCount;
+  public $ratingAvg;
+  public $regularizedAvg;
 
   public function __construct(Application $app, $id=Null, $title=Null) {
     if ($title !== Null) {
@@ -112,10 +110,10 @@ class Anime extends BaseObject {
     }
   }
   public function description($short=False) {
-    return $short ? shortenText($this->returnInfo('description')) : $this->returnInfo('description');
+    return $short ? shortenText($this->description) : $this->description;
   }
   public function imagePath() {
-    return $this->returnInfo('imagePath') ? $this->returnInfo('imagePath') : "img/blank.png";
+    return $this->imagePath ? $this->imagePath : "img/blank.png";
   }
   public function imageTag(array $params=Null) {
     return $this->image($this->imagePath(), $params);
@@ -128,7 +126,7 @@ class Anime extends BaseObject {
   }
   public function isApproved() {
     // Returns a bool reflecting whether or not the current anime is approved.
-    return (bool) $this->approvedOn();
+    return (bool) $this->approvedOn;
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -173,13 +171,11 @@ class Anime extends BaseObject {
       Returns a boolean.
     */
     // check to see if this is an update.
-    $tags = $this->tags();
-    if (isset($tags[intval($tag_id)])) {
+    if (isset($this->tags[intval($tag_id)])) {
       return True;
     }
     try {
       $tag = new Tag($this->app, intval($tag_id));
-      $tag->load();
     } catch (DbException $e) {
       return False;
     }
@@ -200,9 +196,8 @@ class Anime extends BaseObject {
       Takes an array of tag ids as input, defaulting to all tags.
       Returns a boolean.
     */
-    $this->tags();
     if ($tags === Null) {
-      $tags = array_keys($this->tags()->tags());
+      $tags = array_keys($this->tags);
     }
     $tagIDs = [];
     foreach ($tags as $tag) {
@@ -327,7 +322,7 @@ class Anime extends BaseObject {
     if (isset($animeTags)) {
       // drop any unneeded  tags.
       $tagsToDrop = [];
-      foreach ($this->tags() as $tag) {
+      foreach ($this->tags as $tag) {
         if (!in_array($tag->id, $animeTags)) {
           $tagsToDrop[] = intval($tag->id);
         }
@@ -335,7 +330,7 @@ class Anime extends BaseObject {
       $this->drop_taggings($tagsToDrop);
       foreach ($animeTags as $tagToAdd) {
         // add any needed tags.
-        if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
+        if (!$this->tags || !array_filter_by_property($this->tags, 'id', $tagToAdd)) {
           // find this tagID.
           try {
             $thisTag = Tag::findById($this->app, $tagToAdd);
@@ -353,21 +348,6 @@ class Anime extends BaseObject {
     // first, drop all taggings.
     $this->drop_taggings();
     return parent::delete($entries);
-  }
-  public function getTags() {
-    // retrieves a list of tag objects corresponding to tags belonging to this anime.
-    $tags = [];
-    $tagIDs = $this->app->dbConn->table('anime_tags')->fields('tag_id')->join('tags ON tags.id=tag_id')->where(['anime_id' => $this->id])->order('tags.tag_type_id ASC', 'tags.name ASC')->query();
-    while ($tagID = $tagIDs->fetch()) {
-      $tags[intval($tagID['tag_id'])] = new Tag($this->app, intval($tagID['tag_id']));
-    }
-    return $tags;
-  }
-  public function tags() {
-    if ($this->tags === Null) {
-      $this->tags = new TagGroup($this->app, $this->getTags());
-    }
-    return $this->tags;
   }
   public function getEntries() {
     // retrieves a list of id arrays corresponding to the list entries belonging to this anime.
@@ -411,8 +391,8 @@ class Anime extends BaseObject {
   public function getRatings() {
     $users = [];
     $ratings = array_filter($this->entries()->entries(), function ($value) use (&$users) {
-      if (!isset($users[$value->user()->id]) && round(floatval($value->score), 2) != 0) {
-        $users[$value->user()->id] = 1;
+      if (!isset($users[$value->user->id]) && round(floatval($value->score), 2) != 0) {
+        $users[$value->user->id] = 1;
         return True;
       }
       return False;
@@ -475,16 +455,16 @@ class Anime extends BaseObject {
         try {
           $updateAnime = $this->create_or_update($_POST['anime']);
         } catch (ValidationException $e) {
-          $this->app->delayedMessage("Some problems were found with your input while ".$verbProgressive." ".$this->title().":\n".$e->listMessages());
+          $this->app->delayedMessage("Some problems were found with your input while ".$verbProgressive." ".$this->title.":\n".$e->listMessages());
           $this->app->redirect();
         }
         if ($updateAnime) {
           // fetch the new ID.
           $newAnime = new Anime($this->app, $updateAnime);
-          $this->app->delayedMessage("Successfully ".$verbPast." ".$newAnime->title().".", "success");
+          $this->app->delayedMessage("Successfully ".$verbPast." ".$newAnime->title.".", "success");
           $this->app->redirect($newAnime->url("show"));
         } else {
-          $this->app->delayedMessage("An error occurred while ".$verbProgressive." ".$this->title().".", "error");
+          $this->app->delayedMessage("An error occurred while ".$verbProgressive." ".$this->title.".", "error");
           $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")));
         }
       }
@@ -502,7 +482,7 @@ class Anime extends BaseObject {
         $searchResults = $blankAlias->search($_REQUEST['term']);
         $animus = [];
         foreach ($searchResults as $anime) {
-          $animus[] = ['id' => $anime->id, 'title' => $anime->title()];
+          $animus[] = ['id' => $anime->id, 'title' => $anime->title];
         }
         echo json_encode($animus);
         exit;
@@ -530,14 +510,14 @@ class Anime extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = "Editing ".escape_output($this->title());
+        $title = "Editing ".escape_output($this->title);
         $output .= $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = escape_output($this->title());
+        $title = escape_output($this->title);
         $output = $this->view("show", ['entries' => $this->entries(Null, Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
         break;
       case 'delete':
@@ -547,7 +527,7 @@ class Anime extends BaseObject {
         if (!$this->app->checkCSRF()) {
           $this->app->display_error(403);
         }
-        $animeTitle = $this->title();
+        $animeTitle = $this->title;
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
           $this->app->delayedMessage('Successfully deleted '.$animeTitle.'.', 'success');
@@ -621,7 +601,7 @@ class Anime extends BaseObject {
   public function url($action="show", $format=Null, array $params=Null, $title=Null) {
     // returns the url that maps to this object and the given action.
     if ($title === Null) {
-      $title = $this->title();
+      $title = $this->title;
     }
     $urlParams = "";
     if (is_array($params)) {

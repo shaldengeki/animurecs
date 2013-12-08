@@ -3,29 +3,72 @@
 class CommentEntry extends BaseEntry {
   public static $TABLE = "comments";
   public static $PLURAL = "comments";
+  public static $FIELDS = [
+    'id' => [
+      'type' => 'int',
+      'db' => 'id'
+    ],
+    'userId' => [
+      'type' => 'int',
+      'db' => 'user_id'
+    ],
+    'type' => [
+      'type' => 'str',
+      'db' => 'type'
+    ],
+    'parentId' => [
+      'type' => 'int',
+      'db' => 'parent_id'
+    ],
+    'message' => [
+      'type' => 'str',
+      'db' => 'message'
+    ],
+    'createdAt' => [
+      'type' => 'date',
+      'db' => 'created_at'
+    ],
+    'updatedAt' => [
+      'type' => 'date',
+      'db' => 'updated_at'
+    ]
+  ];
+  public static $JOINS = [
+    'user' => [
+      'obj' => 'User',
+      'table' => 'users',
+      'own_col' => 'user_id',
+      'join_col' => 'id',
+      'type' => 'one'
+    ],
+    'comments' => [
+      'obj' => 'CommentEntry',
+      'table' => 'comments',
+      'own_col' => 'id',
+      'join_col' => 'parent_id',
+      'condition' => "comments.type = 'CommentEntry'",
+      'type' => 'many'
+    ]
+  ];
+
   public static $URL = "comment_entries";
   public static $ENTRY_TYPE = "Comment";
   public static $TYPE_VERB = "watching";
   public static $TYPE_ID = "comment_id";
 
-  protected $comment, $commentId;
-  protected $parent;
+  public $comment;
+  public $parent;
 
   public function __construct(Application $app, $id=Null, $params=Null) {
     parent::__construct($app, $id, $params);
     if ($id === 0) {
       $this->comment = new Comment($this->app, 0);
       $this->commentId = 0;
-    } else {
-      $this->comment = $this->commentId = Null;
     }
-  }
-  public function commentId() {
-    return $this->returnInfo('id');
   }
   public function comment() {
     if ($this->comment === Null) {
-      $this->comment = new Comment($this->app, $this->commentId());
+      $this->comment = new Comment($this->app, $this->id);
     }
     return $this->comment;
   }
@@ -39,18 +82,18 @@ class CommentEntry extends BaseEntry {
     return $this->comment()->ancestor();
   }
   public function type() {
-    return $this->comment()->type();
+    return $this->comment()->type;
   }
   public function message() {
-    return $this->comment()->message();
+    return $this->comment()->message;
   }
   public function time() {
-    return $this->comment()->createdAt();
+    return $this->comment()->createdAt;
   }
   public function formatFeedEntry() {
     /* TODO: make this work for comments posted on anime etc */
-    if ($this->app->user->id != $this->comment()->user()->id) {
-      $feedTitle = $this->comment()->user()->link("show", $this->comment()->user()->username);
+    if ($this->app->user->id != $this->comment()->user->id) {
+      $feedTitle = $this->comment()->user->link("show", $this->comment()->user->username);
     } else {
       $feedTitle = "You";
     }
@@ -63,7 +106,7 @@ class CommentEntry extends BaseEntry {
       $feedTitle .= " to ".$receivingUser;
     }
     $feedTitle .= ":";
-    return ['title' => $feedTitle, 'text' => escape_output($this->comment()->message())];
+    return ['title' => $feedTitle, 'text' => escape_output($this->comment()->message)];
   }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this comment and the given action.

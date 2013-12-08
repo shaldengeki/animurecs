@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   $firstAnime = Anime::Get($this->app);
@@ -7,9 +7,9 @@
 
   $animeTags = [];
   $firstTag = Tag::Get($anime->app);
-  if ($anime->tags()) {
-    foreach ($anime->tags()->load('info') as $tag) {
-      $animeTags[] = ['id' => $tag->id, 'name' => $tag->name()];
+  if ($anime->tags) {
+    foreach ($anime->tags as $tag) {
+      $animeTags[] = ['id' => $tag->id, 'name' => $tag->name];
     }
   }
   echo $anime->app->form(['action' => ($anime->id === 0) ? $firstAnime->url("new") : $anime->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal']);
@@ -25,14 +25,14 @@
         <div class='control-group'>
           <label class='control-label' for='anime[description]'>Description</label>
           <div class='controls'>
-            <?php echo $anime->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($anime->id === 0) ? "" : escape_output($anime->description())); ?>
+            <?php echo $anime->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($anime->id === 0) ? "" : escape_output($anime->description)); ?>
           </div>
         </div>
         <div class='control-group'>
           <label class='control-label' for='anime[episode_count]'>Episodes</label>
           <div class='controls'>
             <?php echo $anime->input('episode_count', ['type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-sm']); ?> episodes at 
-            <?php echo $anime->input('episode_length', ['name' => 'anime[episode_minutes]', 'id' => 'anime[episode_minutes]', 'value' => round($anime->episodeLength()/60, 2), 'type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-sm']); ?> minutes per episode
+            <?php echo $anime->input('episode_length', ['name' => 'anime[episode_minutes]', 'id' => 'anime[episode_minutes]', 'value' => round($anime->episodeLength/60, 2), 'type' => 'number', 'min' => 0, 'step' => 1, 'class' => 'input-sm']); ?> minutes per episode
           </div>
         </div>
         <div class='control-group'>
@@ -63,7 +63,7 @@
               }
               echo $anime->input('approved', $approvedParams); ?>
           </div>
-          <?php echo $anime->input('approved_user_id', ['type' => 'hidden', 'value' => ($anime->isApproved() ? intval($anime->approvedUser()->id) : intval($anime->app->user->id))]); ?>
+          <?php echo $anime->input('approved_user_id', ['type' => 'hidden', 'value' => ($anime->isApproved() ? intval($anime->approvedUser->id) : intval($anime->app->user->id))]); ?>
         </div>
 <?php
   }

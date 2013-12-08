@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $firstAnime = Anime::Get($this->app);
   $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
@@ -48,7 +48,7 @@
                       <div class='input-group input-group-sm col-md-3'>
                         <span class="input-group-addon">Ep</span>
                         <?php echo $newEntry->input('episode', ['type' => 'number', 'min' => 0, 'step' => 1, 'value' => $animeEntry['episode'] ? $animeEntry['episode'] : ""]); ?>
-                        <span class="input-group-addon"><?php echo $params['anime'] ? "/".$params['anime']->episodeCount() : ""; ?></span>
+                        <span class="input-group-addon"><?php echo $params['anime'] ? "/".$params['anime']->episodeCount : ""; ?></span>
                       </div>
                       <input type='submit' class='btn btn-sm btn-primary updateEntryButton' value='Update' />
                     </span>

@@ -120,7 +120,7 @@ class EntryGroup extends BaseGroup {
   }
   public function lastCommentTime() {
     return max(array_map(function($c) {
-      return $c->createdAt();
+      return $c->createdAt;
     }, $this->comments()));
   }
   public function entries() {

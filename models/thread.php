@@ -57,14 +57,8 @@ class Thread extends BaseObject {
     //   'type' => 'many'
     // ],
   ];
-  protected $title;
-  protected $description;
-
   protected $entries;
   protected $latestEntries;
-
-  protected $user;
-  protected $tags;
 
   public function __construct(Application $app, $id=Null, $title=Null) {
     if ($title !== Null) {
@@ -86,7 +80,7 @@ class Thread extends BaseObject {
       case 'remove_tag':
       case 'edit':
       case 'delete':
-        if ($this->user()->id == $authingUser->id || $authingUser->isStaff()) {
+        if ($this->user->id == $authingUser->id || $authingUser->isStaff()) {
           return True;
         }
         return False;
@@ -121,13 +115,11 @@ class Thread extends BaseObject {
       Returns a boolean.
     */
     // check to see if this is an update.
-    $tags = $this->tags();
-    if (isset($tags[intval($tag_id)])) {
+    if (isset($this->tags[intval($tag_id)])) {
       return True;
     }
     try {
       $tag = new Tag($this->app, intval($tag_id));
-      $tag->load();
     } catch (DbException $e) {
       return False;
     }
@@ -146,9 +138,8 @@ class Thread extends BaseObject {
       Takes an array of tag ids as input, defaulting to all tags.
       Returns a boolean.
     */
-    $this->tags();
     if ($tags === Null) {
-      $tags = array_keys($this->tags()->tags());
+      $tags = array_keys($this->tags);
     }
     $tagIDs = [];
     foreach ($tags as $tag) {
@@ -205,7 +196,7 @@ class Thread extends BaseObject {
     if (isset($thread['thread_tags'])) {
       // drop any unneeded tags.
       $tagsToDrop = [];
-      foreach ($this->tags() as $tag) {
+      foreach ($this->tags as $tag) {
         if (!in_array($tag->id, $thread['thread_tags'])) {
           $tagsToDrop[] = intval($tag->id);
         }
@@ -213,7 +204,7 @@ class Thread extends BaseObject {
       $drop_tags = $this->drop_taggings($tagsToDrop);
       foreach ($thread['thread_tags'] as $tagToAdd) {
         // add any needed tags.
-        if (!$this->tags() || !array_filter_by_property($this->tags()->tags(), 'id', $tagToAdd)) {
+        if (!$this->tags || !array_filter_by_property($this->tags, 'id', $tagToAdd)) {
           // find this tagID.
           $tagID = intval($this->app->dbConn->table(Tag::$TABLE)->fields('id')->where(['id' => $tagToAdd])->limit(1)->firstValue());
           if ($tagID) {
@@ -264,7 +255,7 @@ class Thread extends BaseObject {
         $searchResults = $blankAlias->search($_REQUEST['term']);
         $animus = [];
         foreach ($searchResults as $anime) {
-          $animus[] = ['id' => $anime->id, 'title' => $anime->title()];
+          $animus[] = ['id' => $anime->id, 'title' => $anime->title];
         }
         echo json_encode($animus);
         exit;
@@ -288,24 +279,24 @@ class Thread extends BaseObject {
           if ($updateAnime) {
             // fetch the new ID.
             $newAnime = new Anime($this->app, $updateAnime);
-            $this->app->delayedMessage("Successfully created or updated ".$newAnime->title().".", "success");
+            $this->app->delayedMessage("Successfully created or updated ".$newAnime->title.".", "success");
             $this->app->redirect($newAnime->url("show"));
           } else {
-            $this->app->delayedMessage("An error occurred while creating or updating ".$this->title().".", "error");
+            $this->app->delayedMessage("An error occurred while creating or updating ".$this->title.".", "error");
             $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
           }
         }
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = "Editing ".escape_output($this->title());
+        $title = "Editing ".escape_output($this->title);
         $output .= $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = escape_output($this->title());
+        $title = escape_output($this->title);
         $output = $this->view("show", ['entries' => $this->entries(Null, Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
         break;
       case 'delete':
@@ -315,7 +306,7 @@ class Thread extends BaseObject {
         if (!$this->app->checkCSRF()) {
           $this->app->display_error(403);
         }
-        $animeTitle = $this->title();
+        $animeTitle = $this->title;
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
           $this->app->delayedMessage('Successfully deleted '.$animeTitle.'.', "success");
@@ -357,9 +348,9 @@ class Thread extends BaseObject {
   }
   // public function tagList(User $currentUser) {
   //   $output = "<ul class='tagList'>\n";
-  //   $tagCounts = $this->tags()->load('info')->tagCounts();
+  //   $tagCounts = $this->tags->load('info')->tagCounts();
   //   foreach ($tagCounts as $tagID => $count) {
-  //     $output .= "<li>".$this->tags()[$tagID]->link("show", $this->tags()[$tagID]->name)." ".intval($count)."</li>\n";
+  //     $output .= "<li>".$this->tags[$tagID]->link("show", $this->tags[$tagID]->name)." ".intval($count)."</li>\n";
   //   }
   //   $output .= "</ul>\n";
   //   return $output;
@@ -367,7 +358,7 @@ class Thread extends BaseObject {
   public function url($action="show", $format=Null, array $params=Null, $title=Null) {
     // returns the url that maps to this object and the given action.
     if ($title === Null) {
-      $title = $this->id."-".$this->title();
+      $title = $this->id."-".$this->title;
     }
     $urlParams = "";
     if (is_array($params)) {

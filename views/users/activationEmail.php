@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
 <html>
@@ -12,7 +12,7 @@
       <div class="content" style="background-color: white; -webkit-border-bottom-right-radius: 5px; -webkit-border-bottom-left-radius: 5px; -moz-border-radius-bottomright: 5px; -moz-border-radius-bottomleft: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; padding: 10px;">
         <h2>Dear <?php echo escape_output($this->username); ?>,</h2>
         <p>
-          Thanks for signing up to Animurecs! To get started, you'll need to activate your account by clicking <a href='<?php echo Config::ROOT_URL.$this->url('activate', Null, ['code' => $this->activationCode()]); ?>'>here</a>. If you haven't signed up for an account, don't worry - you can safely disregard this email.
+          Thanks for signing up to Animurecs! To get started, you'll need to activate your account by clicking <a href='<?php echo Config::ROOT_URL.$this->url('activate', Null, ['code' => $this->activationCode]); ?>'>here</a>. If you haven't signed up for an account, don't worry - you can safely disregard this email.
         </p>
         <h3>Getting Started</h3>
         <p>

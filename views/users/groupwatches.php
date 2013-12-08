@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   // get list of anime that this user and at least one other friend have on their list in the same category.
@@ -73,7 +73,7 @@
   <ul class='media-list'>
     <li class='media groupwatch-entry'>
       <div class='pull-left'>
-        <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title())."</h4>", Null, True, ['title' => $groupwatch['anime']->title, 'data-toggle' => 'tooltip', 'data-placement' => 'top']); ?>
+        <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title)."</h4>", Null, True, ['title' => $groupwatch['anime']->title, 'data-toggle' => 'tooltip', 'data-placement' => 'top']); ?>
         <?php echo $groupwatch['anime']->link("show", $groupwatch['anime']->imageTag(['class' => 'media-object col-md-3']), Null, True, ['title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
         <p><em>Predicted rating: <?php echo round($predictedRatings[$groupwatch['anime']->id], 2); ?></em></p>
       </div>
@@ -83,7 +83,7 @@
           foreach ($groupwatch['users'] as $friend) {
 ?>
           <li>
-            <?php echo $friend->link("show", "<h5>".escape_output($friend->username())."</h5>".$friend->thumbImage(), Null, True); ?>
+            <?php echo $friend->link("show", "<h5>".escape_output($friend->username)."</h5>".$friend->thumbImage(), Null, True); ?>
             <?php echo "<p><em>".($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'] ? "On episode ".intval($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'])."" : "Hasn't started")."</em></p>"; ?>
           </li>
 <?php        

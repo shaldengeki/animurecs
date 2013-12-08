@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
     <?php echo $this->app->form(['action' => $_SERVER['SCRIPT_NAME'], 'name' => 'register', 'class' => 'form-horizontal']); ?>

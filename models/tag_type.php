@@ -44,11 +44,7 @@ class TagType extends BaseObject {
       'type' => 'one'
     ]
   ];
-  protected $name;
-  protected $description;
 
-  protected $tags;
-  protected $createdUser;
   public function __construct(Application $app, $id=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -58,7 +54,7 @@ class TagType extends BaseObject {
     }
   }
   public function pluralName() {
-    return $this->returnInfo('name')."s";
+    return $this->name."s";
   }
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
@@ -154,14 +150,14 @@ class TagType extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = "Editing ".escape_output($this->name());
+        $title = "Editing ".escape_output($this->name);
         $output = $this->view('edit');
         break;
       case 'show':
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $title = escape_output($this->name());
+        $title = escape_output($this->name);
         $output = $this->view('show');
         break;
       case 'delete':
@@ -173,10 +169,10 @@ class TagType extends BaseObject {
         }
         $deleteTagType = $this->delete();
         if ($deleteTagType) {
-          $this->app->delayedMessage('Successfully deleted '.$this->name().'.', "success");
+          $this->app->delayedMessage('Successfully deleted '.$this->name.'.', "success");
           $this->app->redirect();
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$this->name().'.', 'error');
+          $this->app->delayedMessage('An error occurred while deleting '.$this->name.'.', 'error');
           $this->app->redirect();
         }
         break;

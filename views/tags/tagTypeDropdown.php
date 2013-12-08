@@ -1,13 +1,13 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   if (!isset($params['select_id'])) {
     $params['select_id'] = 'tag[tag_type_id]';
   }
   if (!isset($params['selected'])) {
-    if ($this->type()) {
-      $params['selected'] = intval($this->type()->id);
+    if ($this->type) {
+      $params['selected'] = intval($this->type->id);
     } else {
       $params['selected'] = 0;
     }

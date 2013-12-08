@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
 <div class='achievements'>
@@ -12,7 +12,7 @@
   <div class='row'>
     <div class='col-md-8'>
       <h4><?php echo escape_output($achievement->name); ?><?php echo $achievement->children ? " (".intval($achievement->level).")" : "";?></h4>
-      <p><?php echo $achievement->description(); ?></p>
+      <p><?php echo $achievement->description; ?></p>
 <?php
       if ($achievement->children) {
         $child = $achievement->children[0];

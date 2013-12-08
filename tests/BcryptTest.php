@@ -5,7 +5,7 @@
   Tests for bcrypt object.
 */
 
-require_once('global/core/bcrypt.php');
+require_once('core/bcrypt.php');
 
 class BcryptTest extends PHPUnit_Framework_TestCase {
   protected $bcrypt;

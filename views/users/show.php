@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
 ?>
@@ -9,7 +9,7 @@
             <li class='col-md-12'>
               <div class='img-thumbnail profileAvatar'>
 <?php
-if ($this->avatarPath() != '') {
+if ($this->avatarPath != '') {
 ?>
                 <?php echo $this->avatarImage(['class' => 'img-rounded', 'alt' => '']); ?>
 <?php
@@ -41,7 +41,7 @@ if ($this->avatarPath() != '') {
           <div class='profileUserInfo'>
             <div class='page-header'>
               <h1>
-                <?php echo $this->link('show', $this->username()); ?>
+                <?php echo $this->link('show', $this->username); ?>
                 <?php echo $this->isModerator() ? "<span class='label label-info staffUserTag'>Moderator</span>" : ""; ?>
                 <?php echo $this->isAdmin() ? "<span class='label label-danger staffUserTag'>Admin</span>" : ""; ?>
                 <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : "" ?>
@@ -71,7 +71,7 @@ if ($this->avatarPath() != '') {
               </h1>
             </div>
             <p class='lead'>
-              <?php echo escape_output($this->about()); ?>
+              <?php echo escape_output($this->about); ?>
             </p>
             <ul class='thumbnails'>
 <?php

@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $newEntry = new AnimeEntry($this->app, Null, ['user' => $this->app->user]);
 ?>
@@ -27,7 +27,7 @@
         <div class='col-md-9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>
             <h1>
-              <?php echo $this->link('show', $this->title()); ?>
+              <?php echo $this->link('show', $this->title); ?>
               <?php echo $this->allow($this->app->user, "edit") ? "<small>(".$this->link("edit", "edit").")</small>" : ""; ?>
             </h1>
 
@@ -45,7 +45,7 @@
             <div class='tab-content'>
               <div class='tab-pane active' id='generalInfo'>
                 <p>
-                  <?php echo escape_output($this->description()); ?>
+                  <?php echo escape_output($this->description); ?>
                 </p>
                 <ul class='thumbnails'>
                   <li class='col-md-4'>

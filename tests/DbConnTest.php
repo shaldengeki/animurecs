@@ -5,9 +5,9 @@
   Tests for database connection and querying object.
 */
 
-require_once('global/config.php');
-require_once('global/core/database.php');
-require_once('global/model/anime.php');
+require_once('config.php');
+require_once('core/database.php');
+require_once('model/anime.php');
 
 class DbConnTest extends PHPUnit_Framework_TestCase {
   private $dbConn;

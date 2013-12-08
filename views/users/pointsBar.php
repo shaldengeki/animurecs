@@ -1,10 +1,10 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
 <p>Points:</p>
 <?php
-  if ($this->points() === Null || $this->points() == 0) {
+  if ($this->points === Null || $this->points == 0) {
 ?>
 <div class='progress progress-info'><div class='bar' style='width: 0%'></div>0</div>
 <?php
@@ -14,7 +14,7 @@
     } else {
       $totalPoints = $this->app->totalPoints();
     }
-    $pointRatio = $this->points() * 1.0 / $totalPoints;
+    $pointRatio = $this->points * 1.0 / $totalPoints;
     if ($pointRatio >= .75) {
       $barClass = "danger";
     } elseif ($pointRatio >= .5) {
@@ -25,7 +25,7 @@
       $barClass = "info";
     }
 ?>
-<div class='progress progress-<?php echo $barClass; ?>'><div class='bar' style='width: <?php echo round($pointRatio*100.0); ?>%'><?php echo $this->points(); ?></div></div>
+<div class='progress progress-<?php echo $barClass; ?>'><div class='bar' style='width: <?php echo round($pointRatio*100.0); ?>%'><?php echo $this->points; ?></div></div>
 <?php
   }
 ?>

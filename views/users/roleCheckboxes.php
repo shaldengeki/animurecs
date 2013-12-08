@@ -1,13 +1,13 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   if (!isset($params['select_id'])) {
     $params['select_id'] = 'users[usermask][]';
   }
   if (!isset($params['selected'])) {
-    if ($this->usermask()) {
-      $params['selected'] = intval($this->usermask());
+    if ($this->usermask) {
+      $params['selected'] = intval($this->usermask);
     } else {
       $params['selected'] = 0;
     }

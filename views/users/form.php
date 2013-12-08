@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
     <?php echo $this->app->form(['action' => ($this->id === 0) ? $this->url("new") : $this->url("edit"), 'enctype' => 'multipart/form-data', 'class' => 'form-horizontal']); ?>
@@ -46,7 +46,7 @@
         <div class='control-group'>
           <label class='control-label' for='users[about]'>About</label>
           <div class='controls'>
-            <?php echo $this->textArea('about', ['rows' => 5], ($this->id === 0) ? "" : escape_output($this->about())); ?>
+            <?php echo $this->textArea('about', ['rows' => 5], ($this->id === 0) ? "" : escape_output($this->about)); ?>
           </div>
         </div>
 <?php
@@ -68,7 +68,7 @@
         </div>
 <?php
   } else {
-?>      <input type='hidden' name='users[usermask][]' value='<?php echo $this->id === 0 ? 1 : intval($this->usermask()); ?>' />
+?>      <input type='hidden' name='users[usermask][]' value='<?php echo $this->id === 0 ? 1 : intval($this->usermask); ?>' />
 <?php
         }
 ?>      <div class='form-actions'>

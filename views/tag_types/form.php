@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $firstTagType = TagType::Get($this->app);
   $tagType = isset($params['tagType']) ? $params['tagType'] : $this;
@@ -7,7 +7,7 @@
 ?>
     <?php echo $tagType->app->form(['action' => ($tagType->id === 0) ? $tagType->url("new") : $tagType->url("edit"), 'class' => 'form-inline']); ?>
       <?php echo ($tagType->id === 0) ? "" : $tagType->input('id', ['type' => 'hidden']); ?>
-      <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser()->id : $tagType->app->user->id)]); ?>
+      <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser->id : $tagType->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tag_types[name]'>Name</label>

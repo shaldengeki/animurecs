@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   // lists all tags.
@@ -30,8 +30,8 @@
     $thisTagType = new TagType($this->app, intval($thisID['id']));
 ?>
     <tr>
-      <td><?php echo $thisTagType->link("show", $thisTagType->name()); ?></td>
-      <td><?php echo escape_output($thisTagType->description()); ?></td>
+      <td><?php echo $thisTagType->link("show", $thisTagType->name); ?></td>
+      <td><?php echo escape_output($thisTagType->description); ?></td>
       <td><?php echo $thisTagType->allow($this->app->user, "edit") ? $thisTagType->link("edit", "Edit") : ""; ?></td>
       <td><?php echo $thisTagType->allow($this->app->user, "delete") ? $thisTagType->link("delete", "Delete") : ""; ?></td>
     </tr>

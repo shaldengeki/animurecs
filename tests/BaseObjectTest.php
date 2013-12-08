@@ -5,13 +5,13 @@
   Tests for base object.
 */
 
-require_once('global/config.php');
-require_once('global/core/database.php');
-require_once('global/application.php');
-require_once('global/core/base_object.php');
-require_once('global/traits/feedable.php');
-require_once('global/traits/commentable.php');
-require_once('global/models/user.php');
+require_once('config.php');
+require_once('core/database.php');
+require_once('application.php');
+require_once('core/base_object.php');
+require_once('traits/feedable.php');
+require_once('traits/commentable.php');
+require_once('models/user.php');
 
 class BaseObjectTestObserver {
   public function update($event, BaseObject $parent, array $updateParams=Null) {

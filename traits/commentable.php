@@ -4,8 +4,6 @@ trait Commentable {
   // allows an object to have comments on its profile.
   // you'll also need to provide a 'comment' case in the class's allow() method.
   
-  protected $comments;
-
   public function getComments() {
     // returns a list of commentEntry objects sent by this user.
     $ownedComments = $this->app->dbConn->table(Comment::$TABLE)
@@ -30,7 +28,7 @@ trait Commentable {
   }
   public function lastCommentTime() {
     return max(array_map(function($c) {
-      return $c->createdAt();
+      return $c->createdAt;
     }, $this->comments()));
   }
 }

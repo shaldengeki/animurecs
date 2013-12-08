@@ -267,11 +267,11 @@ abstract class BaseObject {
           switch ($thisJoin['type']) {
             case 'one':
             case 'many':
-              $this->dbConn->join($thisJoin['table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
+              $this->app->dbConn->join($thisJoin['table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
               break;
             case 'habtm':
-              $this->dbConn->join($thisJoin['join_table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['join_table'].".".$thisJoin['join_table_own_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
-              $this->dbConn->join($thisJoin['table']." ON ".$thisJoin['join_table'].".".$thisJoin['join_table_join_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['join_table_condition']) ? " AND ".$thisJoin['join_table_condition'] : "" ));
+              $this->app->dbConn->join($thisJoin['join_table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['join_table'].".".$thisJoin['join_table_own_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
+              $this->app->dbConn->join($thisJoin['table']." ON ".$thisJoin['join_table'].".".$thisJoin['join_table_join_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['join_table_condition']) ? " AND ".$thisJoin['join_table_condition'] : "" ));
               break;
             default:
               throw new ModelException("Invalid join type: ".$thisJoin['type']);
@@ -289,12 +289,13 @@ abstract class BaseObject {
       }
     }
 
-    $this->dbConn->table(static::$TABLE);
-    $this->dbConn->where([
+    $this->app->dbConn->log($this->app->logger);
+    $this->app->dbConn->table(static::$TABLE);
+    $this->app->dbConn->where([
                       static::$TABLE.".".static::$FIELDS['id']['db'] => $this->id
                      ]);
     if ($includes) {
-      $rows = $this->dbConn->query();
+      $rows = $this->app->dbConn->query();
       $infoSet = False;
       while ($row = $rows->fetch()) {
         if (!$infoSet) {
@@ -323,16 +324,25 @@ abstract class BaseObject {
       }
       return $this;
     } else {
-      $row = $this->dbConn->limit(1)
+      $row = $this->app->dbConn->limit(1)
                       ->firstRow();
-
       $this->app->cache->set($cacheKey, $row);
       return $this->set($row);
     }
   }
+  public function getFields() {
+    $fields = [];
+    foreach (array_keys(static::$FIELDS) as $field) {
+      if (isset($this->{$field})) {
+        $fields[$field] = $this->{$field};
+      }
+    }
+    return $fields;
+  }
+
   public function prev() {
     // gets the model with the next-lowest id.
-    $findRow = $this->dbConn->table(static::$TABLE)
+    $findRow = $this->app->dbConn->table(static::$TABLE)
                         ->where([static::$FIELDS['id']['db']."<".$this->id])
                         ->order(static::$FIELDS['id']['db']." DESC")
                         ->limit(1)
@@ -343,7 +353,7 @@ abstract class BaseObject {
   }
   public function next() {
     // gets the model with the next-highest id.
-    $findRow = $this->dbConn->table(static::$TABLE)
+    $findRow = $this->app->dbConn->table(static::$TABLE)
                         ->where([static::$FIELDS['id']['db'].">".$this->id])
                         ->order(static::$FIELDS['id']['db']." ASC")
                         ->limit(1)

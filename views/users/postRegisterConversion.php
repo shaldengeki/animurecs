@@ -1,8 +1,8 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
-  $this->app->delayedMessage("Congrats! You're now signed in as ".$this->username().". Why not start out by adding some anime to your list?", "success");
+  $this->app->delayedMessage("Congrats! You're now signed in as ".$this->username.". Why not start out by adding some anime to your list?", "success");
 ?>
 <!-- Google Code for Register Conversion Page -->
 <script type="text/javascript">

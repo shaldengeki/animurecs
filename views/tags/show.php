@@ -1,28 +1,28 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   $resultsPerPage = 24;
   $firstAnime = Anime::Get($this->app);
 
   if ($this->app->user->loggedIn()) {
-    $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime()->anime(), 0, count($this->anime()->anime()));
+    $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
     if (is_array($predictedRatings)) {
       arsort($predictedRatings);
     } else {
-      $predictedRatings = $this->anime()->anime();
+      $predictedRatings = $this->anime;
     }    
     $animePredictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True);
     $animeGroup = new AnimeGroup($this->app, array_keys($animePredictions));
   } else {
-    $animeGroup = new AnimeGroup($this->app, array_keys(array_slice($this->anime()->anime(), (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
+    $animeGroup = new AnimeGroup($this->app, array_keys(array_slice($this->anime, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
     $animePredictions = [];
   }
 
   $animePages = ceil(count($predictedRatings)/$resultsPerPage);
 ?>
-<h1><?php echo $this->link('show', ($this->type()->id != 1 ? $this->type()->name().":" : "").$this->name()).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
-<?php echo $this->description() ? "<p class='lead'>".escape_output($this->description())."</p>" : "" ?>
+<h1><?php echo $this->link('show', ($this->type->id != 1 ? $this->type->name.":" : "").$this->name).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
+<?php echo $this->description ? "<p class='lead'>".escape_output($this->description)."</p>" : "" ?>
 <div class='row'>
   <div class='col-md-2'>
     <h2>Tags:</h2>

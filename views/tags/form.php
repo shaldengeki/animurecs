@@ -1,19 +1,19 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   $firstTag = Tag::Get($this->app);
   $tag = isset($params['tag']) ? $params['tag'] : $this;
 
   $tagAnime = [];
-  foreach ($this->anime()->load('info') as $anime) {
-    $tagAnime[] = ['id' => $anime->id, 'title' => $anime->title()];
+  foreach ($this->anime as $anime) {
+    $tagAnime[] = ['id' => $anime->id, 'title' => $anime->title];
   }
   $anime = Anime::Get($this->app);
 ?>
     <?php echo $tag->app->form(['action' => ($tag->id === 0) ? $tag->url("new") : $tag->url("edit"), 'class' => 'form-inline']); ?>
       <?php echo ($tag->id === 0) ? "" : $tag->input('id', ['type' => 'hidden']); ?>
-      <?php echo $tag->input('created_user_id', ['type' => 'hidden', 'value' => ($tag->id ? $tag->createdUser()->id : $tag->app->user->id)]); ?>
+      <?php echo $tag->input('created_user_id', ['type' => 'hidden', 'value' => ($tag->id ? $tag->createdUser->id : $tag->app->user->id)]); ?>
       <fieldset>
         <div class='control-group'>
           <label class='control-label' for='tags[name]'>Name</label>
@@ -24,7 +24,7 @@
         <div class='control-group'>
           <label class='control-label' for='tags[description]'>Description</label>
           <div class='controls'>
-            <?php echo $tag->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($tag->id === 0) ? "" : escape_output($tag->description())); ?>
+            <?php echo $tag->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($tag->id === 0) ? "" : escape_output($tag->description)); ?>
           </div>
         </div>
         <div class='control-group'>

@@ -1,8 +1,8 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
-            <h1><?php echo escape_output($this->username()); ?></h1>
+            <h1><?php echo escape_output($this->username); ?></h1>
             <div class='editUserTabs'>
               <ul class='nav nav-tabs'>
                 <li class='active'><a href='#generalSettings' data-toggle='tab'>General</a></li>

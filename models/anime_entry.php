@@ -2,16 +2,66 @@
 
 class AnimeEntry extends BaseEntry {
   public static $TABLE = "anime_lists";
-  public static $URL = "anime_entries";
   public static $PLURAL = "animeLists";
+  public static $FIELDS = [
+    'id' => [
+      'type' => 'int',
+      'db' => 'id'
+    ],
+    'userId' => [
+      'type' => 'int',
+      'db' => 'user_id'
+    ],
+    'animeId' => [
+      'type' => 'int',
+      'db' => 'anime_id'
+    ],
+    'time' => [
+      'type' => 'date',
+      'db' => 'time'
+    ],
+    'status' => [
+      'type' => 'int',
+      'db' => 'status'
+    ],
+    'score' => [
+      'type' => 'float',
+      'db' => 'score'
+    ],
+    'episode' => [
+      'type' => 'int',
+      'db' => 'episode'
+    ]
+  ];
+  public static $JOINS = [
+    'user' => [
+      'obj' => 'User',
+      'table' => 'users',
+      'own_col' => 'user_id',
+      'join_col' => 'id',
+      'type' => 'one'
+    ],
+    'anime' => [
+      'obj' => 'Anime',
+      'table' => 'anime',
+      'own_col' => 'anime_id',
+      'join_col' => 'id',
+      'type' => 'one'
+    ],
+    'comments' => [
+      'obj' => 'CommentEntry',
+      'table' => 'comments',
+      'own_col' => 'id',
+      'join_col' => 'parent_id',
+      'condition' => "comments.type = 'AnimeEntry'",
+      'type' => 'many'
+    ]
+  ];
+
+  public static $URL = "anime_entries";
   public static $ENTRY_TYPE = "Anime";
   public static $TYPE_ID = "anime_id";
   public static $PART_NAME = "episode";
-
-  protected $anime, $animeId;
-  protected $episode;
-  protected $list;
-  protected $comments;
 
   public function __construct(Application $app, $id=Null, $params=Null) {
     parent::__construct($app, $id, $params);
@@ -19,61 +69,37 @@ class AnimeEntry extends BaseEntry {
       $this->anime = new Anime($this->app, 0);
       $this->animeId = $this->userId = 0;
       $this->episode = 0;
-      $this->list = new AnimeList($this->app, $this->userId);
-    } else {
-      if (!is_numeric($this->animeId)) {
-        $this->animeId = Null;
-      }
-      $this->anime = $this->episode = Null;
-      if (!isset($this->list)) {
-        $this->list = $this->user()->animeList;
-      }
     }
   }
-  public function animeId() {
-    return $this->returnInfo('animeId');
+  public function animeList() {
+    return $this->user->animeList();
   }
-  public function anime() {
-    if ($this->anime === Null) {
-      $this->anime = new Anime($this->app, $this->animeId());
-    }
-    return $this->anime;
-  }
-  public function episode() {
-    return $this->returnInfo('episode');
-  }
-  private function _getComments() {
-    $comments = $this->app->dbConn->table(Comment::$TABLE)->fields('id')->where(['type' => 'AnimeEntry', 'parent_id' => $this->id])->order('created_at ASC')->assoc('id', 'id');
-    return new CommentGroup($this->app, array_keys($comments));
-  }
-  public function comments() {
-    if ($this->comments === Null) {
-      $this->comments = $this->_getComments();
-    }
-    return $this->comments;
+
+  public function time() {
+    return $this->time;
   }
   public function formatFeedEntry() {
     // fetch the previous feed entry and compare values against current entry.
 
     $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
-    $diffInterval = $nowTime->diff($this->time());
-    $prevEntry = $this->list->prevEntry($this->anime()->id, $this->time());
+    $diffInterval = $nowTime->diff($this->time);
+    $prevEntry = $this->animeList()->prevEntry($this->anime->id, $this->time);
 
-    $statusChanged = (bool) ($this->status() != $prevEntry->status());
-    $scoreChanged = (bool) ($this->score() != $prevEntry->score());
-    $partChanged = (bool) ($this->{AnimeList::$PART_NAME}() != $prevEntry->{AnimeList::$PART_NAME}());
+    $statusChanged = (bool) ($this->status != $prevEntry->status);
+    $scoreChanged = (bool) ($this->score != $prevEntry->score);
+    $partChanged = (bool) ($this->{AnimeList::$PART_NAME} != $prevEntry->{AnimeList::$PART_NAME});
     
     // concatenate appropriate parts of this status text.
     $statusTexts = [];
     if ($statusChanged) {
-      $statusTexts[] = $this->list->statusStrings[intval((bool)$prevEntry)][intval($this->status())];
+      $statusTexts[] = $this->animeList()->statusStrings[intval((bool)$prevEntry)][intval($this->status)];
     }
     if ($scoreChanged) {
-      $statusTexts[] = $this->list->scoreStrings[intval($this->score() == 0)][intval($statusChanged)];
+      $statusTexts[] = $this->animeList()->scoreStrings[intval($this->score == 0)][intval($statusChanged)];
     }
-    if ($partChanged && ($this->{AnimeList::$PART_NAME} != $this->anime()->{AnimeList::$PART_NAME."Count"} || $this->status() != 2)) {
-      $statusTexts[] = $this->list->partStrings[intval($statusChanged || $scoreChanged)];
+    if ($partChanged && ($this->{AnimeList::$PART_NAME} != $this->anime->{AnimeList::$PART_NAME."Count"} || $this->status != 2)) {
+      $statusTexts[] = $this->animeList()->partStrings[intval($statusChanged || $scoreChanged)];
     }
     $statusText = "";
     if ($statusTexts) {
@@ -82,13 +108,13 @@ class AnimeEntry extends BaseEntry {
       // replace placeholders.
       $statusText = str_replace("[TYPE_VERB]", AnimeList::$TYPE_VERB, $statusText);
       $statusText = str_replace("[PART_NAME]", AnimeList::$PART_NAME, $statusText);
-      $statusText = str_replace("[TITLE]", $this->anime()->link("show", $this->anime()->title), $statusText);
-      $statusText = str_replace("[SCORE]", $this->score(), $statusText);
+      $statusText = str_replace("[TITLE]", $this->anime->link("show", $this->anime->title), $statusText);
+      $statusText = str_replace("[SCORE]", $this->score, $statusText);
       $statusText = str_replace("[PART]", $this->{AnimeList::$PART_NAME}, $statusText);
-      $statusText = str_replace("/[TOTAL_PARTS]", $this->anime()->{AnimeList::$PART_NAME."Count"} ? "/".$this->anime()->{AnimeList::$PART_NAME."Count"} : "", $statusText);
+      $statusText = str_replace("/[TOTAL_PARTS]", $this->anime->{AnimeList::$PART_NAME."Count"} ? "/".$this->anime->{AnimeList::$PART_NAME."Count"} : "", $statusText);
       $statusText = ucfirst($statusText).".";
     }
-    return ['title' => $this->user()->link("show", $this->user()->username), 'text' => $statusText];
+    return ['title' => $this->user->link("show", $this->user->username), 'text' => $statusText];
   }
   public function render() {
     $status = "";

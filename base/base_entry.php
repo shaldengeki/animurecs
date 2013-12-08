@@ -48,10 +48,6 @@ abstract class BaseEntry extends BaseObject {
 
   public static $ENTRY_TYPE, $TYPE_ID, $PART_NAME = "";
 
-  protected $user, $userId;
-  protected $time;
-  protected $status, $score;
-
   // this is the parent object to which the entry belongs.
   // e.g. for an animelist entry on a user's page, it'd be the animelist
   // and for a comment entry on the user's page, it'd be the comment
@@ -82,7 +78,7 @@ abstract class BaseEntry extends BaseObject {
         break;
       case 'edit':
       case 'delete':
-        if ($authingUser->id == $this->userId() || $authingUser->isStaff()) {
+        if ($authingUser->id == $this->user->id || $authingUser->isStaff()) {
           return True;
         }
         return False;

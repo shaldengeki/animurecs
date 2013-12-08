@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
   // get list of user's favourite tags, ordered by regularized average
@@ -9,14 +9,14 @@
   $tagTypes = TagType::GetList($this->app);
   foreach ($this->animeList()->uniqueList() as $entry) {
     if (round(floatval($entry['score']), 2) != 0) {
-      foreach ($entry['anime']->tags() as $tag) {
-        if (!isset($tagRatings[$tag->type()->id])) {
-          $tagRatings[$tag->type()->id] = [];
+      foreach ($entry['anime']->tags as $tag) {
+        if (!isset($tagRatings[$tag->type->id])) {
+          $tagRatings[$tag->type->id] = [];
         }
-        if (isset($tagRatings[$tag->type()->id][$tag->id])) {
-          $tagRatings[$tag->type()->id][$tag->id][] = round(floatval($entry['score']), 2);
+        if (isset($tagRatings[$tag->type->id][$tag->id])) {
+          $tagRatings[$tag->type->id][$tag->id][] = round(floatval($entry['score']), 2);
         } else {
-          $tagRatings[$tag->type()->id][$tag->id] = [round(floatval($entry['score']), 2)];
+          $tagRatings[$tag->type->id][$tag->id] = [round(floatval($entry['score']), 2)];
           $tags[$tag->id] = $tag;
         }
       }
@@ -39,6 +39,7 @@
   }
   $globalAverageWeight = array_mean($ratingCounts);
   $tagGlobalAverage = $tagGlobalAverageCount > 0 ? $tagGlobalAverageSum / $tagGlobalAverageCount : 0;
+
   foreach ($tagRatings as $tagTypeID => $typeTags) {
     $regAverages = [];
     $numTags = 0;
@@ -64,7 +65,7 @@
 <?php
     foreach ($likedTags as $tagID=>$rating) {
 ?>
-    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name(), Null, False, ['title' => 'Score: '.round($rating[0], 2).', '.$rating[1].' anime']); ?></li>
+    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name, Null, False, ['title' => 'Score: '.round($rating[0], 2).', '.$rating[1].' anime']); ?></li>
 <?php
     }
 ?>
@@ -79,7 +80,7 @@
 <?php
     foreach ($hatedTags as $tagID=>$rating) {
 ?>
-    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name(), Null, False, ['title' => 'Score: '.round($rating[0], 2).', '.$rating[1].' anime']); ?></li>
+    <li><?php echo $tags[$tagID]->link('show', $tags[$tagID]->name, Null, False, ['title' => 'Score: '.round($rating[0], 2).', '.$rating[1].' anime']); ?></li>
 <?php
     }
 ?>

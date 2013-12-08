@@ -1,10 +1,6 @@
 <?php
 
 class Alias extends BaseObject {
-  protected $name;
-  protected $type;
-  protected $parentId;
-  protected $parent;
   public static $TABLE = "aliases";
   public static $PLURAL = "aliases";
   public static $FIELDS = [
@@ -115,7 +111,7 @@ class Alias extends BaseObject {
       $parentClass = get_class($this->parent());
       $objType = $parentClass::MODEL_NAME();
     } else {
-      $objType = $this->type();
+      $objType = $this->type;
     }
     while ($result = $search->fetch()) {
       try {

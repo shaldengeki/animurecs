@@ -83,6 +83,13 @@ class User extends BaseObject {
       'obj' => 'CommentEntry',
       'table' => 'comments',
       'own_col' => 'id',
+      'join_col' => 'user_id',
+      'type' => 'many'
+    ],
+    'comments' => [
+      'obj' => 'CommentEntry',
+      'table' => 'comments',
+      'own_col' => 'id',
       'join_col' => 'parent_id',
       'condition' => "comments.type = 'User'",
       'type' => 'many'
@@ -90,28 +97,12 @@ class User extends BaseObject {
   ];
   public static $maxFailedLogins = 10;
 
-  protected $username;
-  protected $passwordHash;
-  protected $name;
-  protected $email;
-  protected $activationCode;
-  protected $about;
-  protected $usermask;
-  protected $achievementMask;
-  protected $points;
-  protected $lastActive;
-  protected $lastLogin;
-  protected $lastIP;
-  protected $lastImport;
-  protected $avatarPath;
-
   public $switchedUser;
 
-  protected $animeList;
-  protected $friends;
-  protected $friendRequests;
-  protected $requestedFriends;
-  protected $ownComments;
+  public $animeList;
+  public $friends;
+  public $friendRequests;
+  public $requestedFriends;
 
   public function __construct(Application $app, $id=Null, $username=Null) {
     if ($username !== Null) {
@@ -141,16 +132,16 @@ class User extends BaseObject {
   }
   public function usermaskText() {
     $roles = [];
-    if ($this->usermask() == 0) {
+    if ($this->usermask == 0) {
       return "Guest";
     }
-    if ($this->usermask() & 4) {
+    if ($this->usermask & 4) {
       $roles[] = "Administrator";
     }
-    if ($this->usermask() & 2) {
+    if ($this->usermask & 2) {
       $roles[] = "Moderator";
     }
-    if ($this->usermask() & 1) {
+    if ($this->usermask & 1) {
       $roles[] = "User";
     }
     if (!$roles) {
@@ -166,10 +157,10 @@ class User extends BaseObject {
     }, $permArray));
   }
   public function avatarPath() {
-    return $this->returnInfo('avatarPath') ? $this->returnInfo('avatarPath') : "img/blank.png";
+    return $this->avatarPath ? $this->avatarPath : "img/blank.png";
   }
   public function thumbPath() {
-    return $this->returnInfo('thumbPath') ? $this->returnInfo('thumbPath') : $this->avatarPath();
+    return $this->thumbPath ? $this->thumbPath : $this->avatarPath;
   }
   public function avatarImage(array $params=Null) {
     return $this->image($this->avatarPath, $params);
@@ -463,16 +454,16 @@ class User extends BaseObject {
   }
   public function isCurrentlyActive() {
     // return bool reflecting whether or not user has done something recently.
-    return $this->lastActive()->diff(new DateTime("now", $this->app->serverTimeZone))->i < 5;
+    return $this->lastActive->diff(new DateTime("now", $this->app->serverTimeZone))->i < 5;
   }
   public function isModerator() {
-    if (!$this->usermask() or !(intval($this->usermask()) & 2)) {
+    if (!$this->usermask or !(intval($this->usermask) & 2)) {
       return False;
     }
     return True;
   }
   public function isAdmin() {
-    if (!$this->usermask() or !(intval($this->usermask()) & 4)) {
+    if (!$this->usermask or !(intval($this->usermask) & 4)) {
       return False;
     }
     return True;
@@ -499,7 +490,7 @@ class User extends BaseObject {
           $validationErrors[] = "Username must be between 1 and 40 characters";
         }
         // username must be unique if we're changing.
-        if ($user['username'] != $this->username() && User::Count($this->app, [['LOWER(username)=?', strtolower($user['username'])]]) > 0) {
+        if ($user['username'] != $this->username && User::Count($this->app, [['LOWER(username)=?', strtolower($user['username'])]]) > 0) {
           $validationErrors[] = "New username is already taken";
         }
       }
@@ -518,7 +509,7 @@ class User extends BaseObject {
         $validationErrors[] = "Malformed email address";
       }
       // email must be unique if we're changing.
-      if (($this->id === 0 || $user['email'] != $this->email()) && User::Count($this->app, [['LOWER(email)=?', strtolower($user['email'])]]) > 0) {
+      if (($this->id === 0 || $user['email'] != $this->email) && User::Count($this->app, [['LOWER(email)=?', strtolower($user['email'])]]) > 0) {
         $validationErrors[] = "This email has already been taken. Try resetting your password!";
       }
     }
@@ -630,16 +621,16 @@ class User extends BaseObject {
       }
 
       // move file to destination and save path in db.
-      if (!is_dir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)))) {
-        mkdir(joinPaths(Config::APP_ROOT, "img", "users", intval($this->id)));
+      if (!is_dir(joinPaths(Config::APP_ROOT, "public", "img", "users", intval($this->id)))) {
+        mkdir(joinPaths(Config::APP_ROOT, "public", "img", "users", intval($this->id)));
       }
       $imagePathInfo = pathinfo($file_array['tmp_name']['avatar_image']);
       $imagePath = joinPaths("img", "users", intval($this->id), $this->id.'.'.$imageExtension);
       $thumbnailPath = joinPaths("img", "users", intval($this->id), $this->id.'-thumb.'.$imageExtension);
-      if ($this->avatarPath()) {
+      if ($this->avatarPath) {
         try {
-          $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath()));
-          $oldThumbPathParts = explode(".", $this->avatarPath());
+          $removeOldAvatar = unlink(joinPaths(Config::APP_ROOT, $this->avatarPath));
+          $oldThumbPathParts = explode(".", $this->avatarPath);
           $oldThumbPath = implode(".", array_slice($oldThumbPathParts, 0, -1))."-thumb.".array_slice($oldThumbPathParts, -1, 1);
           $removeOldThumb = unlink($oldThumbPath);
         } catch (ErrorException $e) {
@@ -655,7 +646,7 @@ class User extends BaseObject {
         throw new ValidationException($this->app, $file_array, 'An error occurred while saving your avatar');
       }
     } else {
-      $imagePath = $this->avatarPath();
+      $imagePath = $this->avatarPath;
     }
     $user['avatar_path'] = $imagePath;
     $user['thumb_path'] = $thumbnailImage ? $thumbnailPath : "";
@@ -674,7 +665,7 @@ class User extends BaseObject {
 
     $this->beforeDelete([]);
     // delete objects that belong to this user.
-    foreach ($this->comments() as $comment) {
+    foreach ($this->comments as $comment) {
       $comment->delete();
     }
     $this->animeList()->delete();
@@ -698,7 +689,7 @@ class User extends BaseObject {
     if (!is_integral($points)) {
       throw new InvalidParameterException($this->app, [$points], 'integral');
     }
-    return $this->create_or_update(['points' => $this->points() + intval($points)]);
+    return $this->create_or_update(['points' => $this->points + intval($points)]);
   }
   public function logFailedLogin($username) {
     $dateTime = new DateTime('now', $this->app->serverTimeZone);
@@ -708,11 +699,11 @@ class User extends BaseObject {
     // sets the current session to this user.
     if ($this->id) {
       $_SESSION['id'] = $this->id;
-      $_SESSION['name'] = $this->name();
-      $_SESSION['username'] = $this->username();
-      $_SESSION['email'] = $this->email();
-      $_SESSION['usermask'] = $this->usermask();
-      $_SESSION['avatarPath'] = $this->avatarPath();
+      $_SESSION['name'] = $this->name;
+      $_SESSION['username'] = $this->username;
+      $_SESSION['email'] = $this->email;
+      $_SESSION['usermask'] = $this->usermask;
+      $_SESSION['avatarPath'] = $this->avatarPath;
       return True;
     }
     return False;
@@ -734,11 +725,11 @@ class User extends BaseObject {
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
-    if ($findUser->activationCode()) {
+    if ($findUser->activationCode) {
       $this->app->delayedMessage("Please check your email (including your spam folder) to activate your account. If one hasn't been sent and it's been awhile, let shaldengeki (twitter at bottom of page) know.");
       return False;
     }
-    if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash())) {
+    if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash)) {
       $this->logFailedLogin($username);
       $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
@@ -749,7 +740,7 @@ class User extends BaseObject {
     $newUser->setCurrentSession();
 
     // check for failed logins.
-    $failedLoginQuery = $this->app->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin()->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC')->assoc();
+    $failedLoginQuery = $this->app->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC')->assoc();
     if ($failedLoginQuery) {
       foreach ($failedLoginQuery as $failedLogin) {
         $this->app->delayedMessage('There was a failed login attempt from '.$failedLogin['ip'].' at '.$failedLogin['time'].'.', 'error');
@@ -791,7 +782,7 @@ class User extends BaseObject {
     $message = Swift_Message::newInstance()
       ->setSubject('Animurecs account activation')
       ->setFrom([Config::SMTP_USERNAME => 'Animurecs'])
-      ->setTo([$newUser->email() => $newUser->name()])
+      ->setTo([$newUser->email => $newUser->name])
       ->setBody($newUser->view('activationEmail'), 'text/html');
     $result = $this->app->mailer->send($message);
 
@@ -807,7 +798,7 @@ class User extends BaseObject {
     // imports a user's MAL lists.
     // takes a MAL username and returns an array of animeID=>boolean pairs indicating import status for each.
     $currTime = new DateTime('now', $this->app->serverTimeZone);
-    if ($this->lastImport() && $currTime->getTimestamp() - $this->lastImport()->getTimestamp() <= 600) {
+    if ($this->lastImport && $currTime->getTimestamp() - $this->lastImport->getTimestamp() <= 600) {
       $this->app->delayedMessage("Please wait at least 10 minutes between MAL imports.");
       return False;
     }
@@ -841,12 +832,12 @@ class User extends BaseObject {
   }
   public function addAchievement(BaseAchievement $achievement) {
     $this->fire('addAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
-    $updateArray = ['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() + pow(2, $achievement->id - 1)];
+    $updateArray = ['points' => $this->points + $achievement->points, 'achievement_mask' => $this->achievementMask + pow(2, $achievement->id - 1)];
     return $this->create_or_update($updateArray);
   }
   public function removeAchievement(BaseAchievement $achievement) {
     $this->fire('removeAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
-    return $this->create_or_update(['points' => $this->points() + $achievement->points, 'achievement_mask' => $this->achievementMask() - pow(2, $achievement->id - 1)]);
+    return $this->create_or_update(['points' => $this->points + $achievement->points, 'achievement_mask' => $this->achievementMask - pow(2, $achievement->id - 1)]);
   }
   public function switchUser($username, $switch_back=True) {
     /*
@@ -867,13 +858,13 @@ class User extends BaseObject {
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['switched_user'] = $newUser->switchedUser;
-      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched to ".escape_output($newUser->username()).".", 'class' => 'success'];
+      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched to ".escape_output($newUser->username).".", 'class' => 'success'];
     } else {
       $newUser = new User($this->app, $username);
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
-      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".escape_output($newUser->username()).".", 'class' => 'success'];
+      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".escape_output($newUser->username).".", 'class' => 'success'];
     }
   }
   public function render() {
@@ -892,7 +883,7 @@ class User extends BaseObject {
         }
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
-          $this->app->delayedMessage("Your friend request has been sent to ".escape_output($this->username()).".", "success");
+          $this->app->delayedMessage("Your friend request has been sent to ".escape_output($this->username).".", "success");
           $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while requesting this friend. Please try again.', 'error');
@@ -905,7 +896,7 @@ class User extends BaseObject {
         }
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
-          $this->app->delayedMessage("Hooray! You're now friends with ".escape_output($this->username()).".", 'success');
+          $this->app->delayedMessage("Hooray! You're now friends with ".escape_output($this->username).".", 'success');
           $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while confirming this friend. Please try again.', 'error');
@@ -918,7 +909,7 @@ class User extends BaseObject {
         }
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
-          $this->app->delayedMessage("You ignored a friend request from ".escape_output($this->username()).".", 'success');
+          $this->app->delayedMessage("You ignored a friend request from ".escape_output($this->username).".", 'success');
           $this->app->redirect();
         } else {
           $this->app->delayedMessage('An error occurred while ignoring this friend. Please try again.', 'error');
@@ -952,7 +943,7 @@ class User extends BaseObject {
       case 'edit':
         if (isset($_POST['users']) && is_array($_POST['users'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
-          if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->app->user->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->app->user->usermask()) || $this->app->user->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask())) {
+          if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->app->user->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->app->user->usermask) || $this->app->user->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask)) {
             $this->app->delayedMessage("You can't set permissions beyond your own userlevel: ".array_sum($_POST['users']['usermask']), 'error');
             $this->app->redirect();
           }
@@ -975,12 +966,12 @@ class User extends BaseObject {
         if ($this->id === 0) {
           $this->app->display_error(404);
         }
-        $title = "Editing ".escape_output($this->username());
+        $title = "Editing ".escape_output($this->username);
         $output = $this->view("edit");
         break;
 
       case 'activate':
-        if (!$this->activationCode() || !isset($_REQUEST['code']) || $_REQUEST['code'] != $this->activationCode()) {
+        if (!$this->activationCode || !isset($_REQUEST['code']) || $_REQUEST['code'] != $this->activationCode) {
           $this->app->delayedMessage('The activation code you provided was incorrect. Please check your email and try again.', 'error');
           $this->app->redirect();
         } else {
@@ -1042,7 +1033,7 @@ class User extends BaseObject {
         if ($this->id === 0) {
           $this->app->display_error(404);
         }
-        $title = escape_output($this->username())."'s Profile";
+        $title = escape_output($this->username)."'s Profile";
         $output = $this->view("show");
         break;
       case 'feed':
@@ -1105,7 +1096,7 @@ class User extends BaseObject {
         } elseif (!$this->app->checkCSRF()) {
           $this->app->display_error(403);
         }
-        $username = $this->username();
+        $username = $this->username;
         $deleteUser = $this->delete();
         if ($deleteUser) {
           $this->app->delayedMessage('Successfully deleted '.$username.'.', 'success');
@@ -1178,7 +1169,7 @@ class User extends BaseObject {
     foreach ($this->friendRequests() as $request) {
       $entryTime = new DateTime($request['time'], $this->app->serverTimeZone);
       $entryTime->setTimezone($this->app->outputTimeZone);
-      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username())."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", Null, True, Null, Null, $request['user']->id)."</li>\n";
+      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username)."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", Null, True, Null, Null, $request['user']->id)."</li>\n";
     }
     return $output;
   }
@@ -1188,16 +1179,20 @@ class User extends BaseObject {
       $maxTime = new DateTime("now", $this->app->serverTimeZone);
     }
     $feedEntries = $this->animeList()->entries($minTime, $maxTime, $numEntries);
-    $feedEntries->append($this->comments()->filter(function($a) use ($maxTime, $minTime) {
+
+    $filteredComments = new EntryGroup($this->app, array_sort_by_property(array_filter($this->comments->entries(), function($a) use ($maxTime, $minTime) {
       return $a->time < $maxTime && $a->time > $minTime;
-    })->sort(buildPropertySorter("time", -1))->limit($numEntries));
+    }), 'time', 'desc'));
+
+    $feedEntries->append($filteredComments->limit($numEntries));
+
     return $feedEntries;
     //return $this->animeList()->feed($feedEntries, $numEntries, "<blockquote><p>No entries yet - add some above!</p></blockquote>\n");
   }
   public function conversationFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
     // returns an EntryGroup corresponding to the last-active conversations that this user was a part of.
-    $feedEntries = $this->comments();
-    $feedEntries->append($this->ownComments());
+    $feedEntries = $this->comments;
+    $feedEntries->append($this->ownComments);
     return $feedEntries;
   }
   public function globalFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
@@ -1218,11 +1213,12 @@ class User extends BaseObject {
       $comments = [];
 
       // now append all comments made by this friend between the given datetimes.
-      $friendComments = $friend['user']->ownComments()->filter(function($a) use ($maxTime,$minTime) {
+      $friendComments = $friend['user']->ownComments === Null ? [] : $friend['user']->ownComments;
+      $friendComments = array_filter($friendComments, function($a) use ($maxTime,$minTime) {
         return $a->time() < $maxTime && $a->time() > $minTime;
       });
 
-      foreach ($friendComments->entries() as $commentEntry) {
+      foreach ($friendComments as $commentEntry) {
         // only append top-level comments.
         if ($commentEntry->depth() === 0) {
           $comments[] = new CommentEntry($this->app, intval($commentEntry->id));
@@ -1237,7 +1233,7 @@ class User extends BaseObject {
   public function url($action="show", $format=Null, array $params=Null, $username=Null) {
     // returns the url that maps to this object and the given action.
     if ($username === Null) {
-      $username = $this->username();
+      $username = $this->username;
     }
     return parent::url($action, $format, $params, $username);
   }

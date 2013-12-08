@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
 <ul class='dropdown-menu'>
@@ -19,7 +19,7 @@
 ?>
   <li class='friendRequestEntry'>
     <p>
-      <strong><?php echo $request['user']->link('show', $request['user']->username()); ?></strong> requested to be your friend on <?php echo $entryTime->format('G:i n/j/y'); ?>.
+      <strong><?php echo $request['user']->link('show', $request['user']->username); ?></strong> requested to be your friend on <?php echo $entryTime->format('G:i n/j/y'); ?>.
     </p>
     <div class='row'>
       <div class='col-md-6'><?php echo $this->app->form(['action' => $this->url('confirm_friend', Null, Null, $request['user']->username), 'class' => 'form-horizontal']); ?><button type='submit' class='btn btn-primary'>Confirm</button></form></div>

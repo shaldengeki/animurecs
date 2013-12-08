@@ -1,5 +1,5 @@
 <?php
-  require_once($_SERVER['DOCUMENT_ROOT']."/global/includes.php");
+  require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 ?>
       <div class='page-header'>
@@ -19,7 +19,7 @@
   $userGroup = new UserGroup($this->app, array_keys($this->app->dbConn->table(User::$TABLE)->fields('id')->order('username ASC')->assoc('id')));
   foreach ($userGroup->load('info') as $thisUser) {
 ?>          <tr>
-            <td><?php echo $thisUser->link("show", $thisUser->username()); ?></td>
+            <td><?php echo $thisUser->link("show", $thisUser->username); ?></td>
             <td><?php echo escape_output($thisUser->usermaskText()); ?></td>
             <td><?php echo $this->app->user->isAdmin() ? $thisUser->link("edit", "Edit") : ""; ?></td>
             <td><?php echo $this->app->user->isAdmin() ? $thisUser->link("delete", "Delete"): ""; ?></td>

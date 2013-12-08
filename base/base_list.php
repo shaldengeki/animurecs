@@ -37,18 +37,23 @@ abstract class BaseList extends BaseObject {
     parent::__construct($app, $user_id);
     // strings with which to build feed messages.
     // the status messages we build will be different depending on 1) whether or not this is the first entry, and 2) what the status actually is.
-    $this->statusStrings = [0 => [0 => "did something mysterious with [TITLE]",
-                                      1 => "is now [TYPE_VERB] [TITLE]",
-                                      2 => "marked [TITLE] as completed",
-                                      3 => "marked [TITLE] as on-hold",
-                                      4 => "marked [TITLE] as dropped",
-                                      6 => "plans to watch [TITLE]"],
-                                  1 => [0 => "removed [TITLE]",
-                                            1 => "started [TYPE_VERB] [TITLE]",
-                                            2 => "finished [TITLE]",
-                                            3 => "put [TITLE] on hold",
-                                            4 => "dropped [TITLE]",
-                                            6 => "now plans to watch [TITLE]"]];
+    $this->statusStrings = [0 => [
+                              0 => "did something mysterious with [TITLE]",
+                              1 => "is now [TYPE_VERB] [TITLE]",
+                              2 => "marked [TITLE] as completed",
+                              3 => "marked [TITLE] as on-hold",
+                              4 => "marked [TITLE] as dropped",
+                              6 => "plans to watch [TITLE]"
+                            ],
+                            1 => [
+                              0 => "removed [TITLE]",
+                              1 => "started [TYPE_VERB] [TITLE]",
+                              2 => "finished [TITLE]",
+                              3 => "put [TITLE] on hold",
+                              4 => "dropped [TITLE]",
+                              6 => "now plans to watch [TITLE]"
+                            ]
+                          ];
     $this->scoreStrings = [0 => ["rated [TITLE] a [SCORE]/10", "and rated it a [SCORE]/10"],
                           1 => ["unrated [TITLE]", "and unrated it"]];
     $this->partStrings = ["just finished [PART_NAME] [PART]/[TOTAL_PARTS] of [TITLE]", "and finished [PART_NAME] [PART]/[TOTAL_PARTS]"];
