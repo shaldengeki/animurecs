@@ -15,7 +15,7 @@ class TagGroup extends BaseGroup {
     $tagTypes = [];
     if ($tagTypeDict) {
       $cacheKeys = array_map(function($tagTypeID) {
-        return "TagType-".$tagTypeID;
+        return TagType::CacheKey($tagTypeID);
       }, array_keys($tagTypeDict));
       $casTokens = [];
 

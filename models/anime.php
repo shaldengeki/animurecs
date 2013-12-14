@@ -422,7 +422,7 @@ class Anime extends BaseObject {
     if ($this->ratingAvg === Null) {
       $this->calcRatingStats();
     }
-    return $this->ratingAvg;
+    return $this->ratingCount;
   }
   public function ratingAvg() {
     if ($this->ratingAvg === Null) {
@@ -437,7 +437,7 @@ class Anime extends BaseObject {
     // Returns an AnimeGroup consisting of the n most-similar anime to the current anime.
     // pull from cache if possible.
     $cas = "";
-    $cacheKey = "Anime-".$this->id."-similar-".$start."-".$n;
+    $cacheKey = $this->cacheKey(['similar', $start, $n]);
     $result = $this->app->cache->get($cacheKey, $cas);
     if ($this->app->cache->resultCode() == Memcached::RES_NOTFOUND) {
       $result = $this->app->recsEngine->similarAnime($this, $start, $n);
@@ -527,13 +527,13 @@ class Anime extends BaseObject {
         if (!$this->app->checkCSRF()) {
           $this->app->display_error(403);
         }
-        $animeTitle = $this->title;
+        $cachedTitle = $this->title;
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
-          $this->app->delayedMessage('Successfully deleted '.$animeTitle.'.', 'success');
+          $this->app->delayedMessage('Successfully deleted '.$cachedTitle.'.', 'success');
           $this->app->redirect();
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$animeTitle.'.', 'error');
+          $this->app->delayedMessage('An error occurred while deleting '.$cachedTitle.'.', 'error');
           $this->app->redirect();
         }
         break;
@@ -578,22 +578,6 @@ class Anime extends BaseObject {
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);
-  }
-  public function scoreBar($score=Null) {
-    // returns markup for a score bar for a score given to this anime.
-    if ($score === Null || $score == 0) {
-      return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div>Unknown</div>";
-    }
-    if ($score >= 7.5) {
-      $barClass = "danger";
-    } elseif ($score >= 5.0) {
-      $barClass = "warning";
-    } elseif ($score >= 2.5) {
-      $barClass = "success";
-    } else {
-      $barClass = "info";
-    }
-    return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($score*10.0)."%'>".round($score, 1)."/10</div></div>";
   }
   public function formatFeedEntry(BaseEntry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);

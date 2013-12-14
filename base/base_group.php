@@ -153,9 +153,9 @@ class BaseGroup implements Iterator, ArrayAccess {
       if ($inclusion) {
         $objectName = get_class(current($objectList));
         $modelName = $objectName::MODEL_NAME();
-        $cacheKeys = array_map(function($id) use ($modelName) {
-          return $modelName."-".$id;
-        }, $inclusion);
+        $cacheKeys = array_map(function($object) {
+          return $object->cacheKey();
+        }, $objectList);
         $casTokens = [];
 
         // fetch as many objects as we can from the cache.
@@ -177,8 +177,9 @@ class BaseGroup implements Iterator, ArrayAccess {
           $infoToCache = [];
           $objectInfo = $this->app->dbConn->table($groupTable)->where(['id' => $inclusion])->assoc();
           foreach ($objectInfo as $info) {
-            $objectList[$idToListIndex[intval($info['id'])]]->set($info);
-            $infoToCache[$modelName."-".$info['id']] = $info;
+            $object = $objectList[$idToListIndex[intval($info['id'])]];
+            $object->set($info);
+            $infoToCache[$object->cacheKey()] = $info;
           }
           // now set these object values in the cache.
           foreach ($infoToCache as $cacheKey=>$cacheValue) {

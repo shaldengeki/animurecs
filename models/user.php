@@ -567,7 +567,7 @@ class User extends BaseObject {
         throw new ValidationException($this->app, $file_array, 'An error occurred while uploading your avatar');
       }
 
-      $acceptableFormats = ["GIF", "GIF87", "BMP", "BMP2", "BMP3", "GIF", "GIF87", "ICO", "JPEG", "JPG", "PNG", "PNG24", "PNG32", "PNG8", "TGA", "TIFF", "TIFF64", "WBMP"];
+      $acceptableFormats = ["BMP", "BMP2", "BMP3", "GIF", "GIF87", "ICO", "JPEG", "JPG", "PNG", "PNG24", "PNG32", "PNG8", "TGA", "TIFF", "TIFF64", "WBMP"];
       // load image and resize it.
       try {
         $avatarImage = new Imagick($file_array['tmp_name']['avatar_image']);
@@ -1162,16 +1162,6 @@ class User extends BaseObject {
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);
-  }
-  public function friendRequestsList() {
-    // returns markup for the list of friend requests directed at this user.
-    $output = "";
-    foreach ($this->friendRequests() as $request) {
-      $entryTime = new DateTime($request['time'], $this->app->serverTimeZone);
-      $entryTime->setTimezone($this->app->outputTimeZone);
-      $output .= "<li class='friendRequestEntry'><strong>".escape_output($request['user']->username)."</strong> requested to be your friend on ".$entryTime->format('G:i n/j/y').".".$this->link('confirm_friend', "Accept", Null, True, Null, Null, $request['user']->id)."</li>\n";
-    }
-    return $output;
   }
   public function profileFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
     // returns an EntryGroup consisting of entries for this user's profile feed.

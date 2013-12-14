@@ -265,18 +265,17 @@ class Application {
 
     // clear cache for a database object every time it's updated or deleted.
     $this->bind(['BaseObject.afterUpdate', 'BaseObject.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parentClass = get_class($parent);
-      $parent->app->cache->delete($parentClass::MODEL_NAME()."-".intval($parent->id));
+      $parent->app->cache->delete($parent->cacheKey());
     }));
     $this->bind(['Anime.afterUpdate', 'Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete("Anime-".intval($parent->id)."-similar");
+      $parent->app->cache->delete($parent->cacheKey(['similar']));
     }));
     $this->bind(['Anime.tag', 'Anime.untag', 'Tag.tag', 'Tag.untag'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete('Anime-'.intval($updateParams['anime_id']).'-tagIDs');
-      $parent->app->cache->delete('Tag-'.intval($updateParams['tag_id']).'-animeIDs');
+      $parent->app->cache->delete(Anime::CacheKey(intval($updateParams['anime_id']), ['tagIDs']));
+      $parent->app->cache->delete(Tag::CacheKey(intval($updateParams['tag_id']), ['animeIDs']));
     }));
     $this->bind(['AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete("AnimeEntry-".intval($updateParams['id']));
+      $parent->app->cache->delete(AnimeEntry::CacheKey(intval($updateParams['id'])));
     }));
 
 

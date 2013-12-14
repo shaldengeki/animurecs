@@ -124,7 +124,7 @@ abstract class BaseObject {
     $className = static::MODEL_NAME();
     $newObj = Null;
     if (isset($params['id'])) {
-      $cacheKey = $className.'-'.$params['id'];
+      $cacheKey = static::CacheKey($params['id']);
       $cacheValue = $app->cache->get($cacheKey, $casToken);
       if ($cacheValue) {
         $newObj = new $className($app, intval($params['id']));
@@ -182,8 +182,8 @@ abstract class BaseObject {
   }
   public static function FindByIds(\Application $app, array $ids) {
     $className = static::MODEL_NAME();
-    $cacheKeys = array_map(function ($id) use ($className) {
-      return $className.'-'.$id;
+    $cacheKeys = array_map(function ($id) {
+      return static::CacheKey($id);
     }, $ids);
     $casTokens = [];
     $cacheValues = $app->cache->get($cacheKeys, $casTokens);
@@ -253,12 +253,21 @@ abstract class BaseObject {
     }
     return $this;
   }
+  public static function CacheKey($id, $extras=Null) {
+    $parts = [static::MODEL_NAME(), $id];
+    if ($extras) {
+      $parts = array_merge($parts, $extras);
+    }
+    return implode("-", $parts);
+  }
+  public function cacheKey($extras=Null) {
+    return static::CacheKey($this->id, $extras);
+  }
   public function load() {
     if ($this->id === Null) {
       // should never reach here!
       throw new DbException(static::MODEL_NAME().' with null ID not found in database');
     }
-    $cacheKey = static::MODEL_NAME()."-".intval($this->id);
     $includes = func_get_args();
     if ($includes) {
       foreach ($includes as $include) {
@@ -282,7 +291,7 @@ abstract class BaseObject {
     } else {
       // attempt to retrieve ths object from the cache.
       $cas = "";
-      $info = $this->app->cache->get($cacheKey, $foo, $cas);
+      $info = $this->app->cache->get($this->cacheKey(), $foo, $cas);
       if ($this->app->cache->resultCode() !== Memcached::RES_NOTFOUND) {
         $this->set($info);
         return $this;
@@ -325,7 +334,7 @@ abstract class BaseObject {
     } else {
       $row = $this->app->dbConn->limit(1)
                       ->firstRow();
-      $this->app->cache->set($cacheKey, $row);
+      $this->app->cache->set($this->cacheKey(), $row);
       return $this->set($row);
     }
   }

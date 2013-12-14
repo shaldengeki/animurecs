@@ -50,7 +50,7 @@
                 <ul class='thumbnails'>
                   <li class='col-md-4'>
                     <p class='lead'>Global Average:</p>
-                    <?php echo $this->scoreBar($this->ratingAvg()); ?>
+                    <?php echo $this->view('scoreBar', ['score' => $this->ratingAvg()]); ?>
                   </li>
 <?php
   if ($this->app->user->loggedIn()) {
@@ -61,13 +61,13 @@
       $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
 ?>
                     <p class='lead'>Predicted score:</p>
-                    <?php echo $this->scoreBar($userRating); ?>
+                    <?php echo $this->view('scoreBar', ['score' => $userRating]); ?>
 <?php
     } else {
       $userRating = $this->app->user->animeList()->uniqueList()[$this->id]['score'];
 ?>
                     <p class='lead'>You rated this:</p>
-                    <?php echo $this->scoreBar($userRating); ?>
+                    <?php echo $this->view('scoreBar', ['score' => $userRating]); ?>
 <?php
     }
     if ($userRating != 0) {

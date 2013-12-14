@@ -231,7 +231,7 @@ class Thread extends BaseObject {
     // Returns an AnimeGroup consisting of the n most-similar anime to the current anime.
     // pull from cache if possible.
     $cas = "";
-    $cacheKey = "Anime-".$this->id."-similar-".$start."-".$n;
+    $cacheKey = $this->cacheKey(['similar', $start, $n]);
     $result = $this->app->cache->get($cacheKey, $cas);
     if ($this->app->cache->resultCode() == Memcached::RES_NOTFOUND) {
       $result = $this->app->recsEngine->similarAnime($this, $start, $n);
