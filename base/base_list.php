@@ -29,7 +29,7 @@ abstract class BaseList extends BaseObject {
 
   protected $startTime, $endTime;
   protected $uniqueListAvg, $uniqueListStdDev, $entryAvg, $entryStdDev;
-  protected $statusStrings, $scoreStrings, $partStrings;
+  public $statusStrings, $scoreStrings, $partStrings;
 
   protected $entries, $uniqueList;
 
@@ -57,6 +57,7 @@ abstract class BaseList extends BaseObject {
     $this->scoreStrings = [0 => ["rated [TITLE] a [SCORE]/10", "and rated it a [SCORE]/10"],
                           1 => ["unrated [TITLE]", "and unrated it"]];
     $this->partStrings = ["just finished [PART_NAME] [PART]/[TOTAL_PARTS] of [TITLE]", "and finished [PART_NAME] [PART]/[TOTAL_PARTS]"];
+
     $this->uniqueListAvg = $this->uniqueListStdDev = $this->entryAvg = $this->entryStdDev = Null;
     $this->user = Null;
     if ($user_id === 0) {
@@ -116,6 +117,7 @@ abstract class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = [];
+    $this->app->dbConn->reset();
     $entries = $this->app->dbConn->table(static::$TABLE)
                 ->where(['user_id' => $this->user_id])
                 ->order('time DESC')
@@ -124,7 +126,8 @@ abstract class BaseList extends BaseObject {
     $entryType = static::$LIST_TYPE."Entry";
     while ($entry = $entries->fetch()) {
       $entry['list'] = $this;
-      $returnList[intval($entry['id'])] = new $entryType($this->app, intval($entry['id']), $entry);
+      $currEntry = new $entryType($this->app, intval($entry['id']));
+      $returnList[intval($entry['id'])] = $currEntry->set($entry);
       $entrySum += round(floatval($entry['score']), 2);
       $entryCount++;
     }
@@ -201,17 +204,27 @@ abstract class BaseList extends BaseObject {
   public function prevEntry($id, DateTime $beforeTime) {
     // Returns the previous entry in this user's entry list for static::$TYPE_ID and before $beforeTime.
     $entryType = static::$LIST_TYPE."Entry";
-    $prevEntry = new $entryType($this->app, 0);
 
-    foreach ($this->entries()->entries() as $entry) {
-      if ($entry->time >= $beforeTime) {
-        continue;
-      }
-      if ($entry->{strtolower(static::$LIST_TYPE)}->id == $id) {
-        return $entry;
-      }
+    try {
+      $prevEntry = $entryType::Get($this->app, [
+        strtolower(static::$LIST_TYPE).'_id' => $id,
+        'user_id' => $this->id,
+        ['time < ?', $beforeTime->format("Y-m-d H:i:s")]
+      ]);
+      return $prevEntry;
+    } catch (DbException $e) {
+      return new $entryType($this->app, 0);
     }
-    return $prevEntry;
+    // $prevEntry = new $entryType($this->app, 0);
+    // foreach ($this->entries()->entries() as $entry) {
+    //   if ($entry->time >= $beforeTime) {
+    //     continue;
+    //   }
+    //   if ($entry->{strtolower(static::$LIST_TYPE)}->id == $id) {
+    //     return $entry;
+    //   }
+    // }
+    // return $prevEntry;
   }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.

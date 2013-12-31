@@ -73,7 +73,7 @@ abstract class BaseObject {
 
   public static $TABLE, $URL, $PLURAL, $MODEL_NAME, $FIELDS, $JOINS;
 
-  protected $createdAt, $updatedAt;
+  public $createdAt, $updatedAt;
   protected $observers = [];
 
   public function __construct(Application $app, $id=Null) {
@@ -83,7 +83,7 @@ abstract class BaseObject {
   public static function DB_FIELD($field) {
     // takes a nice property-name and returns the corresponding db column name.
     if (!isset(static::$FIELDS[$field])) {
-      throw new ModelException("Unknown field: ".$field);
+      throw new ModelException($this->app, "Unknown field: ".$field);
     }
     return static::$FIELDS[$field]['db'];
   }
@@ -103,7 +103,28 @@ abstract class BaseObject {
   }
   public static function FULL_DB_FIELD_NAME($field) {
     // takes a nice property-name and returns the corresponding db.table.column_name
-    return Config::DB_NAME.'.'.static::$TABLE.'.'.static::DB_FIELD($field);
+    return static::$TABLE.'.'.static::DB_FIELD($field);
+  }
+  public static function JOIN_FIELD($field) {
+    // takes a nice property-name and returns the corresponding db.table_name__column_name to be used in joins.
+    return static::$TABLE.'__'.static::DB_FIELD($field);
+  }
+  public static function JOIN_FIELDS() {
+    // returns a dict of join_field_name => db_field_names.
+    $joinFields = [];
+    foreach (array_keys(static::$FIELDS) as $field) {
+      $joinFields[static::JOIN_FIELD($field)] = static::DB_FIELD($field);
+    }
+    return $joinFields;
+  }
+  public static function JOIN_TO_DB_FIELD($join_field) {
+    // takes a join field named by static::JOIN_FIELD and returns the proper DB field name.
+    foreach (array_keys(static::$FIELDS) as $field) {
+      if ($join_field === static::JOIN_FIELD($field)) {
+        return static::DB_FIELD($field);
+      }
+    }
+    return False;
   }
 
   public static function MODEL_NAME() {
@@ -124,7 +145,7 @@ abstract class BaseObject {
     $className = static::MODEL_NAME();
     $newObj = Null;
     if (isset($params['id'])) {
-      $cacheKey = static::CacheKey($params['id']);
+      $cacheKey = static::GenerateCacheKeyFromID($params['id']);
       $cacheValue = $app->cache->get($cacheKey, $casToken);
       if ($cacheValue) {
         $newObj = new $className($app, intval($params['id']));
@@ -183,7 +204,7 @@ abstract class BaseObject {
   public static function FindByIds(\Application $app, array $ids) {
     $className = static::MODEL_NAME();
     $cacheKeys = array_map(function ($id) {
-      return static::CacheKey($id);
+      return static::GenerateCacheKeyFromID($id);
     }, $ids);
     $casTokens = [];
     $cacheValues = $app->cache->get($cacheKeys, $casTokens);
@@ -253,7 +274,7 @@ abstract class BaseObject {
     }
     return $this;
   }
-  public static function CacheKey($id, $extras=Null) {
+  public static function GenerateCacheKeyFromID($id, $extras=Null) {
     $parts = [static::MODEL_NAME(), $id];
     if ($extras) {
       $parts = array_merge($parts, $extras);
@@ -261,18 +282,28 @@ abstract class BaseObject {
     return implode("-", $parts);
   }
   public function cacheKey($extras=Null) {
-    return static::CacheKey($this->id, $extras);
+    return static::GenerateCacheKeyFromID($this->id, $extras);
   }
   public function load() {
     if ($this->id === Null) {
       // should never reach here!
       throw new DbException(static::MODEL_NAME().' with null ID not found in database');
     }
+    // include all fields.
+    foreach (array_keys(static::$FIELDS) as $field) {
+      $this->app->dbConn->fields(static::FULL_DB_FIELD_NAME($field));
+    }
+
     $includes = func_get_args();
     if ($includes) {
       foreach ($includes as $include) {
         if (isset(static::$JOINS[$include])) {
           $thisJoin = static::$JOINS[$include];
+          $className = $thisJoin['obj'];
+          foreach (array_keys($className::$FIELDS) AS $field) {
+            $this->app->dbConn->fields($className::FULL_DB_FIELD_NAME($field).' AS '.$className::JOIN_FIELD($field));
+          }
+
           switch ($thisJoin['type']) {
             case 'one':
             case 'many':
@@ -283,7 +314,8 @@ abstract class BaseObject {
               $this->app->dbConn->join($thisJoin['table']." ON ".$thisJoin['join_table'].".".$thisJoin['join_table_join_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['join_table_condition']) ? " AND ".$thisJoin['join_table_condition'] : "" ));
               break;
             default:
-              throw new ModelException("Invalid join type: ".$thisJoin['type']);
+              $this->app->dbConn->reset();
+              throw new ModelException($this->app, "Invalid join type: ".$thisJoin['type']);
               break;
           }
         }
@@ -312,19 +344,28 @@ abstract class BaseObject {
         }
         foreach ($includes as $include) {
           if (isset(static::$JOINS[$include])) {
+
+            // filter out just the columns belonging to this joined model so we can set them properly.
             $thisJoin = static::$JOINS[$include];
+            $className = $thisJoin['obj'];
+            $joinRow = [];
+            $joinFields = $className::JOIN_FIELDS();
+            foreach (array_keys($row) as $key) {
+              if (isset($joinFields[$key])) {
+                $joinRow[$joinFields[$key]] = $row[$key];
+              }
+            }
             if (!isset($this->{$include})) {
               $this->{$include} = $thisJoin['type'] === 'many' ? [] : Null;
             }
-            $className = $thisJoin['obj'];
-            $newObj = new $className($this->app, $row[$className::$FIELDS['id']['db']]);
+            $newObj = new $className($this->app, $joinRow[$className::$FIELDS['id']['db']]);
             switch ($thisJoin['type']) {
               case 'many':
-                $this->{$include}[] = $newObj->set($row);
+                $this->{$include}[] = $newObj->set($joinRow);
                 break;
               case 'one':
               default:
-                $this->{$include} = $newObj->set($row);
+                $this->{$include} = $newObj->set($joinRow);
                 break;
             }
           }
@@ -379,13 +420,13 @@ abstract class BaseObject {
       if (isset(static::$FIELDS[$property])) {
         // this is a property in the model's table.
         return $this->load()
-                    ->{$property};
+          ->{$property};
       } elseif (isset(static::$JOINS[$property])) {
         // this is a join on the model.
         return $this->load($property)
-                    ->{$property};
+          ->{$property};
       } else {
-        throw new ModelException("Requested attribute does not exist: ".$property." on: ".get_called_class());
+        throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());
       }
     }
   }

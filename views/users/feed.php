@@ -20,6 +20,7 @@
   } else {
     // now pull info en masse for these entries.
     $entryGroup = new EntryGroup($this->app, $params['entries']);
+
 ?>
 <ul class='media-list ajaxFeed' data-url='<?php echo (isset($params['feedURL']) ? $params['feedURL'] : $this->url("feed")); ?>'>
 <?php

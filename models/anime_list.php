@@ -10,6 +10,7 @@ class AnimeList extends BaseList {
   public static $FEED_TYPE = "Anime";
   public static $TYPE_ID = "anime_id";
 
+  public $statusStrings, $scoreStrings, $partStrings;
   public function __construct(Application $app, $user_id=Null) {
     parent::__construct($app, $user_id);
   }

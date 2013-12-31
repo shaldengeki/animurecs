@@ -197,6 +197,9 @@ abstract class BaseEntry extends BaseObject {
 
   // all feed entry classes must implement a way to format said feed entries into markup.
   abstract public function formatFeedEntry();
+
+  // also a method to determine the time that this entry was posted.
+  abstract public function time();
 }
 
 ?>

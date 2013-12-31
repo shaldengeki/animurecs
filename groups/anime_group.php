@@ -21,7 +21,7 @@ class AnimeGroup extends BaseGroup {
 
     if ($animeIDs) {
       $cacheKeys = array_map(function($animeID) {
-        return Anime::CacheKey($animeID, ['tagIDs']);
+        return Anime::GenerateCacheKeyFromID($animeID, ['tagIDs']);
       }, $animeIDs);
       $casTokens = [];
 
@@ -56,7 +56,7 @@ class AnimeGroup extends BaseGroup {
         }
         // finally, store these new records in the cache.
         foreach ($animeTags as $animeID => $tagIDs) {
-          $cacheKey = Anime::CacheKey($animeID, ['tagIDs']);
+          $cacheKey = Anime::GenerateCacheKeyFromID($animeID, ['tagIDs']);
           $this->app->cache->set($cacheKey, $tagIDs);
         }
       }

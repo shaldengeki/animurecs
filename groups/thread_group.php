@@ -19,7 +19,7 @@ class ThreadGroup extends BaseGroup {
 
     if ($threadIDs) {
       $cacheKeys = array_map(function($threadID) {
-        return Thread::CacheKey($threadID, ['tagIDs']);
+        return Thread::GenerateCacheKeyFromID($threadID, ['tagIDs']);
       }, $threadIDs);
       $casTokens = [];
 
@@ -54,7 +54,7 @@ class ThreadGroup extends BaseGroup {
         }
         // finally, store these new records in the cache.
         foreach ($threadTags as $threadID => $tagIDs) {
-          $cacheKey = Thread::CacheKey($threadID, ['tagIDs']);
+          $cacheKey = Thread::GenerateCacheKeyFromID($threadID, ['tagIDs']);
           $this->app->cache->set($cacheKey, $tagIDs);
         }
       }

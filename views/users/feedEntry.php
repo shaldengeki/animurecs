@@ -16,7 +16,14 @@
   $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
   foreach ($params['entries'] as $entry) {
-    $diffInterval = $nowTime->diff($params['entry']->time());
+    // try {
+      $diffInterval = $nowTime->diff($params['entry']->time());
+    // } catch (ErrorException $e) {
+    //   ob_end_clean();
+    //   unset($params['entry']->app);
+    //   echo "<pre>".print_r($params['entry'], True)."</pre>";
+    //   exit;
+    // }
     $feedMessage = $entry->formatFeedEntry();
 
     if ($feedMessage['text']) {
@@ -42,8 +49,7 @@
         </div>
 <?php
       if ($entry->comments) {
-        $commentGroup = new EntryGroup($this->app, $entry->comments);
-        foreach ($commentGroup->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
+        foreach ($entry->comments->load('info')->load('users')->load('comments')->entries() as $commentEntry) {
           echo $this->view('feedEntry', ['entry' => $commentEntry, 'nested' => True]);
         }
       }

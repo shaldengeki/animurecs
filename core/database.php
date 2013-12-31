@@ -14,7 +14,7 @@ class DbConn extends PDO {
   use Loggable;
 
   public $queryLog;
-  private $host, $port, $username, $password, $database;
+  private $host, $port, $username, $password, $database, $prevQuery;
 
   public function __construct($host=Config::DB_HOST, $port=Config::DB_PORT, $username=Config::DB_USERNAME, $password=Config::DB_PASSWORD, $database=Config::DB_NAME, $fetchMode=PDO::FETCH_ASSOC) {
     $this->host = $host;
@@ -196,9 +196,10 @@ class DbConn extends PDO {
   public function query($query=Null) {
     // executes a query with standardized error message.
     $query = $query === Null ? $this->queryString() : $query;
+    $this->prevQuery = $query;
 
     if (Config::DEBUG_ON) {
-      $this->queryLog[] = $query;
+      $this->queryLog[] = $query." | ".print_r($this->params, True);
     }
     try {
       $prepQuery = parent::prepare($query);
@@ -208,10 +209,12 @@ class DbConn extends PDO {
       $result = $prepQuery->execute($this->params);
     } catch (Exception $e) {
       $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
+      $this->reset();
       throw new DbException($exceptionText, 0, $e);
     }
     if (!$result) {
       $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
+      $this->reset();
       throw new DbException($exceptionText, 0, $e);
     }
     $this->reset();
@@ -240,7 +243,7 @@ class DbConn extends PDO {
     // pulls the first row returned from the query.
     $result = $this->query();
     if (!$result || $result->rowCount() < 1) {
-      throw new DbException("No rows were found matching query: ".$this->queryString());
+      throw new DbException("No rows were found matching query: ".$this->prevQuery);
     }
     $returnValue = $result->fetch();
     $result->closeCursor();
@@ -250,7 +253,7 @@ class DbConn extends PDO {
     // pulls the first key from the first row returned by the query.
     $result = $this->firstRow();
     if (!$result || count($result) != 1) {
-      throw new DbException("No rows were found matching query: ".$this->queryString());
+      throw new DbException("No rows were found matching query: ".$this->prevQuery);
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
@@ -259,7 +262,7 @@ class DbConn extends PDO {
     // pulls an associative array of columns for the first row returned by the query.
     $result = $this->query();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$this->queryString());
+      throw new DbException("No rows were found matching query: ".$this->prevQuery);
     }
     if ($result->rowCount() < 1) {
       return [];
@@ -285,7 +288,7 @@ class DbConn extends PDO {
   public function count($column="*") {
     $result = $this->firstRow();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$this->queryString());
+      throw new DbException("No rows were found matching query: ".$this->prevQuery);
     }
     return intval($result['COUNT('.$column.')']);
   }

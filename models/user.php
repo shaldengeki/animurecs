@@ -106,7 +106,8 @@ class User extends BaseObject {
 
   public function __construct(Application $app, $id=Null, $username=Null) {
     if ($username !== Null) {
-      $id = intval($app->dbConn->table(static::$TABLE)->fields('id')->where(['username' => $username])->limit(1)->firstValue());
+      $user = User::Get($app, ['username' => $username]);
+      $id = $user->id;
     }
     parent::__construct($app, $id);
     if ($id === 0) {
@@ -171,6 +172,7 @@ class User extends BaseObject {
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
     // keyed by not-this-userID.
+    $this->app->dbConn->reset();
     $friendReqs = $this->app->dbConn->table('users_friends')->fields('user_id_1', 'user_id_2', 'u1.username AS username_1', 'u2.username AS username_2', 'time', 'message')
       ->join('users AS u1 ON u1.id=user_id_1')
       ->join('users AS u2 ON u2.id=user_id_2')
@@ -710,7 +712,13 @@ class User extends BaseObject {
   }
   public function logIn($username, $password) {
     // rate-limit requests.
-    $failedLoginCount = $this->app->dbConn->table('failed_logins')->fields('COUNT(*)')->where(['ip' => $_SERVER['REMOTE_ADDR'], "time > NOW() - INTERVAL 1 HOUR"])->count();
+    $failedLoginCount = $this->app->dbConn->table('failed_logins')
+      ->fields('COUNT(*)')
+      ->where([
+        'ip' => $_SERVER['REMOTE_ADDR'],
+        "time > NOW() - INTERVAL 1 HOUR"
+      ])
+      ->count();
     if ($failedLoginCount > self::$maxFailedLogins) {
       $this->app->delayedMessage("You have had too many unsuccessful login attempts. Please wait awhile and try again.", "error");
       return False;
@@ -740,7 +748,14 @@ class User extends BaseObject {
     $newUser->setCurrentSession();
 
     // check for failed logins.
-    $failedLoginQuery = $this->app->dbConn->table('failed_logins')->fields('ip', 'time')->where(['username' => $username, ['time > ?', $newUser->lastLogin->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]])->order('time DESC')->assoc();
+    $failedLoginQuery = $this->app->dbConn->table('failed_logins')
+      ->fields('ip', 'time')
+      ->where([
+        'username' => $username, 
+        ['time > ?', $newUser->lastLogin->setTimezone($this->app->serverTimeZone)->format('Y-m-d H:i:s')]
+      ])
+      ->order('time DESC')
+      ->assoc();
     if ($failedLoginQuery) {
       foreach ($failedLoginQuery as $failedLogin) {
         $this->app->delayedMessage('There was a failed login attempt from '.$failedLogin['ip'].' at '.$failedLogin['time'].'.', 'error');
@@ -749,8 +764,12 @@ class User extends BaseObject {
 
     //update last login info.
     $currTime = new DateTime('now', $this->app->serverTimeZone);
-    $updateUser = ['last_login' => $currTime->format('Y-m-d H:i:s'), 'last_ip' => $_SERVER['REMOTE_ADDR']];
+    $updateUser = [
+      'last_login' => $currTime->format('Y-m-d H:i:s'),
+      'last_ip' => $_SERVER['REMOTE_ADDR']
+    ];
     $newUser->create_or_update($updateUser);
+
     $newUser->fire('logIn');
     $this->app->delayedMessage("Successfully logged in.", "success");
 
@@ -1190,16 +1209,18 @@ class User extends BaseObject {
     if ($maxTime == Null) {
       $maxTime = new DateTime("now", $this->app->serverTimeZone);
     }
-    $this->app->addTiming("Start globalFeed");
+    $this->app->addTiming("Start globalFeed: | ".$maxTime->format('U')." | ".$numEntries);
 
     // add each friend's personal feed to the global feed.
     $feedEntries = $this->animeList()->entries($minTime, $maxTime, $numEntries);
 
-    $this->app->addTiming("Finish user animeList");
+    $this->app->addTiming("Finish getting user anime list: ".$feedEntries->length());
 
     foreach ($this->friends() as $friend) {
-      $feedEntries->append($friend['user']->animeList()->entries($minTime, $maxTime, $numEntries));
-      $this->app->addTiming("Finish adding friend animeList");
+      $animeList = $friend['user']->animeList();
+      $this->app->addTiming("Finish getting friend anime list: ".$animeList->length());
+      $feedEntries->append($animeList->entries($minTime, $maxTime, $numEntries));
+      $this->app->addTiming("Finish adding friend anime list: ".$feedEntries->length());
       $comments = [];
 
       // now append all comments made by this friend between the given datetimes.
@@ -1216,7 +1237,7 @@ class User extends BaseObject {
       }
       $this->app->addTiming("Finish filtering friend comments");
       $feedEntries->append(new EntryGroup($this->app, $comments));
-      $this->app->addTiming("Finish adding friend comments");
+      $this->app->addTiming("Finish adding friend comments: ".$feedEntries->length());
     }
     return $feedEntries;
   }

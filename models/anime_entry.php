@@ -74,16 +74,17 @@ class AnimeEntry extends BaseEntry {
   public function animeList() {
     return $this->user->animeList();
   }
-
   public function time() {
     return $this->time;
   }
+
   public function formatFeedEntry() {
     // fetch the previous feed entry and compare values against current entry.
 
     $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
     $diffInterval = $nowTime->diff($this->time);
+
     $prevEntry = $this->animeList()->prevEntry($this->anime->id, $this->time);
 
     $statusChanged = (bool) ($this->status != $prevEntry->status);
@@ -106,6 +107,7 @@ class AnimeEntry extends BaseEntry {
       $statusText = implode(" ", $statusTexts);
 
       // replace placeholders.
+
       $statusText = str_replace("[TYPE_VERB]", AnimeList::$TYPE_VERB, $statusText);
       $statusText = str_replace("[PART_NAME]", AnimeList::$PART_NAME, $statusText);
       $statusText = str_replace("[TITLE]", $this->anime->link("show", $this->anime->title), $statusText);

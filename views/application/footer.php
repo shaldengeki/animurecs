@@ -8,19 +8,31 @@
 ?>
       <footer>
         <hr />
-        <ul>
-          <li><a href='/'>Home</a></li>
-          <li><a href='http://blog.animurecs.com'>Blog</a></li>
-          <li><a href='https://twitter.com/guocharles'>Twitter</a></li>
-          <li><a href='https://github.com/shaldengeki/animurecs'>Github</a></li>
-        </ul>
-        <?php echo $adminUser ? "<p>Created and maintained by ".$adminUser->link('show', $adminUser->username).".</p>" : ""; ?>
+        <div class='row'>
+          <ul class='pull-right'>
+            <li><a href='/'>Home</a></li>
+            <li><a href='http://blog.animurecs.com'>Blog</a></li>
+            <li><a href='https://twitter.com/guocharles'>Twitter</a></li>
+            <li><a href='https://github.com/shaldengeki/animurecs'>Github</a></li>
+          </ul>
+          <?php echo $adminUser ? "<p>Created and maintained by ".$adminUser->link('show', $adminUser->username).".</p>" : ""; ?>
+        </div>
 <?php
   if (Config::DEBUG_ON) {
 ?>
-        <pre><?php echo escape_output(print_r($this->dbConn->queryLog, True)); ?></pre>
-        <pre>Rendering took <?php echo round((microtime(true) - $this->startRender)*1000, 2); ?>ms</pre>
-        <!--<pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>-->
+        <div class='row'>
+          <pre><?php echo escape_output(print_r($this->dbConn->queryLog, True)); ?></pre>
+        </div>
+        <div class='row'>
+          <pre>Rendering took <?php echo round((microtime(true) - $this->startRender)*1000, 2); ?>ms</pre>
+        </div>
+        <div class='row'>
+          <pre><?php echo escape_output(print_r($_SESSION, True)); ?></pre>
+          <pre><?php echo escape_output(print_r($_REQUEST, True)); ?></pre>
+          <pre><?php echo escape_output(print_r($_POST, True)); ?></pre>
+          <pre><?php echo escape_output(print_r($this->timingInfo(), True)); ?></pre>
+          <!--<pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>-->
+        </div>
 <?php
   }
 ?>

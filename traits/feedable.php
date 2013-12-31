@@ -13,16 +13,23 @@ trait Feedable {
     if ($this->entries === Null) {
       $this->entries = $this->getEntries();
     }
+
+    $this->app->addTiming("Finish getting entries: ".count($this->entries));
+
     if ($minTime !== Null || $maxTime !== Null || $limit !== Null) {
       // Returns a list of up to $limit entries up to $maxTime.
       $maxTime = $maxTime === Null ? new DateTime("now", $this->app->outputTimeZone) : $maxTime;
       $minTime = $minTime === Null ? new DateTime("@0", $this->app->outputTimeZone) : $minTime;
 
+      $this->app->addTiming("Got times: ".$minTime->format('U')." | ".$maxTime->format('U'));
+
       // loop through all of this feedable's entries until we reach the end or our limit.
       $returnList = [];
       $entryCount = 0;
       foreach ($this->entries()->entries() as $entry) {
-        if ($entry->time() >= $maxTime || $entry->time() <= $minTime) {
+        // $this->app->addTiming("Got entry: ".$entry->time);
+
+        if ($entry->time >= $maxTime || $entry->time <= $minTime) {
           continue;
         }
         $returnList[] = $entry;

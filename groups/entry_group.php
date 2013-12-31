@@ -78,7 +78,7 @@ class EntryGroup extends BaseGroup {
     foreach ($this->entries() as $entry) {
       $entryClass = get_class($entry);
       if (method_exists($entry, 'comment')) {
-        $commentDict["(`id` = ".$entry->commentId.")"] = 1;
+        $commentDict["(`id` = ".$entry->comment()->id.")"] = 1;
       }
       $commentDict["(`type` = '".$entryClass::MODEL_NAME()."' && `parent_id` = ".$entry->id.")"] = 1;
     }
@@ -101,7 +101,7 @@ class EntryGroup extends BaseGroup {
       foreach ($this->entries() as $entry) {
         $entryClass = get_class($entry);
         if (method_exists($entry, 'comment')) {
-          $entry->set(['comment' => $comments[$entry->commentId]->comment()]);
+          $entry->set(['comment' => $comments[$entry->comment()->id]->comment()]);
         }
         if (isset($comments[$entryClass::MODEL_NAME()][$entry->id])) {
           $entry->set(['comments' => $comments[$entryClass::MODEL_NAME()][$entry->id]]);

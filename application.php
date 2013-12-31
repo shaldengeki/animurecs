@@ -230,7 +230,9 @@ class Application {
       $this->display_error(500);
     }
 
-    session_set_cookie_params(0, '/', '.animurecs.com', True, True);
+    if (Config::DOMAIN_NAME != 'localhost') {
+      session_set_cookie_params(0, '/', '.'.Config::DOMAIN_NAME, True, True);
+    }
     session_start();
 
     date_default_timezone_set(Config::SERVER_TIMEZONE);
@@ -271,11 +273,11 @@ class Application {
       $parent->app->cache->delete($parent->cacheKey(['similar']));
     }));
     $this->bind(['Anime.tag', 'Anime.untag', 'Tag.tag', 'Tag.untag'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete(Anime::CacheKey(intval($updateParams['anime_id']), ['tagIDs']));
-      $parent->app->cache->delete(Tag::CacheKey(intval($updateParams['tag_id']), ['animeIDs']));
+      $parent->app->cache->delete(Anime::GenerateCacheKeyFromID(intval($updateParams['anime_id']), ['tagIDs']));
+      $parent->app->cache->delete(Tag::GenerateCacheKeyFromID(intval($updateParams['tag_id']), ['animeIDs']));
     }));
     $this->bind(['AnimeEntry.afterUpdate', 'AnimeEntry.afterCreate', 'AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->cache->delete(AnimeEntry::CacheKey(intval($updateParams['id'])));
+      $parent->app->cache->delete(AnimeEntry::GenerateCacheKeyFromID(intval($updateParams['id'])));
     }));
 
 
@@ -611,6 +613,7 @@ class Application {
         }
       } catch (DbException $e) {
         $this->statsd->increment("DbException");
+        $this->logger->err($e->__toString());
         $this->display_error(404);
       }
       if ($this->target->id !== 0) {
