@@ -355,8 +355,8 @@ class Anime extends BaseObject {
                       ->order('time DESC')
                       ->query();
     while ($entry = $animeEntries->fetch()) {
-      $newEntry = new AnimeEntry($this->app, intval($entry['id']), $entry);
-      $returnList[intval($entry['id'])] = $newEntry;
+      $newEntry = new AnimeEntry($this->app, intval($entry['id']));
+      $returnList[intval($entry['id'])] = $newEntry->set($entry);
     }
     return $returnList;
   }
@@ -516,7 +516,22 @@ class Anime extends BaseObject {
           $this->app->display_error(404);
         }
         $title = escape_output($this->title);
-        $output = $this->view("show", ['entries' => $this->entries(Null, Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
+
+        $tagCounts = [];
+        foreach ($this->tags as $tag) {
+          $tagCounts[] = [
+            'tag' => $tag,
+            'count' => $tag->numAnime()
+          ];
+        }
+
+        $output = $this->view("show", [
+          'tagCounts' => $tagCounts,
+          'entries' => $this->entries(Null, Null, 50),
+          'numEntries' => 50,
+          'feedURL' => $this->url('feed'),
+          'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"
+        ]);
         break;
       case 'delete':
         if ($this->id == 0) {

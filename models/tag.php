@@ -302,7 +302,12 @@ class Tag extends BaseObject {
     if (isset($this->anime)) {
       return count($this->anime);
     }
-    return $this->app->dbConn->table(static::$JOINS['anime']['join_table'])->fields('COUNT(*)')->where([static::$JOINS['anime']['join_table_own_col'] => $this->id])->count();
+    return $this->app->dbConn->table(static::$JOINS['anime']['join_table'])
+      ->fields('COUNT(*)')
+      ->where([
+        static::$JOINS['anime']['join_table_own_col'] => $this->id
+      ])
+      ->count();
   }
   public function numAnime() {
     if ($this->numAnime === Null) {

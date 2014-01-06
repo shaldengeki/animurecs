@@ -6,20 +6,19 @@
 
   // maximal number of tags to display under each category heading.
   $params['numTags'] = isset($params['numTags']) ? intval($params['numTags']) : 20;
+  $params['tagCounts'] = isset($params['tagCounts']) ? $params['tagCounts'] : [];
 
   // order the tags in this animeGroup's tags by tagType id
   $tagTypes = TagType::GetList($this->app);
 
   // TODO: put this logic in the controller
   // $tagCounts = $this->tags()->load('info')->tagCounts();
-  $tagCounts = [];
-
   $tagsByTagType = [];
-  foreach ($tagCounts as $tagCount) {
-    if (!isset($tagsByTagType[$tagCount['tag']->type->id])) {
-      $tagsByTagType[$tagCount['tag']->type->id] = [$tagCount['tag']];
+  foreach ($this->tags as $tag) {
+    if (!isset($tagsByTagType[$tag->type->id])) {
+      $tagsByTagType[$tag->type->id] = [$tag];
     } else {
-      $tagsByTagType[$tagCount['tag']->type->id][] = $tagCount['tag'];
+      $tagsByTagType[$tag->type->id][] = $tag;
     }
   }
 ?>
@@ -42,7 +41,7 @@
 <?php
     foreach ($tagsByTagType[$tagType->id] as $tag) {
 ?>
-      <li><?php echo $tag->link("show", $tag->name)." ".intval($tagCounts[$tag->id]['count']); ?></li>
+      <li><?php echo $tag->link("show", $tag->name)." ".intval($tag->numAnime()); ?></li>
 <?php
       if ($tagsDisplayed >= $params['numTags']) {
         break;

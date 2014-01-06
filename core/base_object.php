@@ -358,10 +358,11 @@ abstract class BaseObject {
               }
             }
             if (!isset($this->{$include})) {
-              $this->{$include} = $thisJoin['type'] === 'many' ? [] : Null;
+              $this->{$include} = in_array($thisJoin['type'], ['many', 'habtm']) ? [] : Null;
             }
             $newObj = new $className($this->app, $joinRow[$className::$FIELDS['id']['db']]);
             switch ($thisJoin['type']) {
+              case 'habtm':
               case 'many':
                 $this->{$include}[] = $newObj->set($joinRow);
                 break;
