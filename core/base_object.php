@@ -587,7 +587,20 @@ abstract class BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".rawurlencode(self::MODEL_URL())."/".($action !== "index" ? rawurlencode($id)."/".rawurlencode($action) : "").($format !== Null ? ".".rawurlencode($format) : "").($params !== Null ? "?".$urlParams : "");
+
+    $url = "/".rawurlencode(self::MODEL_URL());
+    switch ($action) {
+      case 'index':
+        break;
+      case 'show':
+        $url .= "/".rawurlencode($id);
+        break;
+      default:
+        $url .= "/".rawurlencode($id)."/".rawurlencode($action);
+        break;
+    }
+    $url .= ($format !== Null ? ".".rawurlencode($format) : "").($params !== Null ? "?".$urlParams : "");
+    return $url;
   }
   public function link($action="show", $text="Show", $format=Null, $raw=False, array $params=Null, array $urlParams=Null, $id=Null) {
     // returns an HTML link to the current object's profile, with text provided.

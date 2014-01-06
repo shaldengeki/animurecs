@@ -94,15 +94,15 @@ if ($this->avatarPath != '') {
           </div>
           <div class='profileTabs'>
             <ul class='nav nav-tabs'>
-              <li class='active ajaxTab' data-url='<?php echo $this->url("feed"); ?>'><a href='#userFeed' data-toggle='tab'>Feed</a></li>
-              <li class='ajaxTab' data-url='<?php echo $this->url("anime_list"); ?>'><a href='#userList' data-toggle='tab'>List</a></li>
-              <li class='ajaxTab' data-url='<?php echo $this->url("stats"); ?>'><a href='#userStats' data-toggle='tab'>Stats</a></li>
-              <!--<li class='ajaxTab' data-url='<?php //echo $this->url("achievements"); ?>'><a href='#userAchievements' data-toggle='tab'>Achievements</a></li>-->
+              <li class='active ajaxTab' data-url='<?php echo $this->url("feed"); ?>'><a href='#feed' data-toggle='tab'>Feed</a></li>
+              <li class='ajaxTab' data-url='<?php echo $this->url("anime_list"); ?>'><a href='#anime' data-toggle='tab'>List</a></li>
+              <li class='ajaxTab' data-url='<?php echo $this->url("stats"); ?>'><a href='#stats' data-toggle='tab'>Stats</a></li>
+              <!--<li class='ajaxTab' data-url='<?php //echo $this->url("achievements"); ?>'><a href='#achievements' data-toggle='tab'>Achievements</a></li>-->
               <li class='ajaxTab' data-url='<?php echo $this->url("friends"); ?>'><a href='#friends' data-toggle='tab'>Friends (<?php echo count($this->friends()); ?>)</a></li>
-              <li class='ajaxTab' data-url='<?php echo $this->url("achievements2"); ?>'><a href='#userAchievements2' data-toggle='tab'>Achievements (beta)</a></li>
+              <li class='ajaxTab' data-url='<?php echo $this->url("achievements2"); ?>'><a href='#achievements2' data-toggle='tab'>Achievements (beta)</a></li>
             </ul>
             <div class='tab-content'>
-              <div class='tab-pane active' id='userFeed'>
+              <div class='tab-pane active' id='feed'>
 <?php
   if ($newEntry->allow($this->app->user, 'edit')) {
     echo $this->view('addEntryInlineForm');
@@ -118,16 +118,16 @@ if ($this->avatarPath != '') {
 ?>
                 <?php echo $this->view('feed', ['entries' => $this->profileFeed(), 'numEntries' => 50, 'feedURL' => $this->url('feed')]); ?>
               </div>
-              <div class='tab-pane' id='userList'>
+              <div class='tab-pane' id='anime'>
                 Loading...
               </div>
-              <div class='tab-pane' id='userStats'>
+              <div class='tab-pane' id='stats'>
                 Loading...
               </div>
               <div class='tab-pane' id='friends'>
                 Loading...
               </div>
-              <div class='tab-pane' id='userAchievements2'>
+              <div class='tab-pane' id='achievements2'>
                 Loading...
               </div>
             </div>
