@@ -448,6 +448,16 @@ class Application {
       $message = ['text' => $message];
     }
     if ($class) {
+      switch ($class) {
+        case 'error':
+          $class = 'danger';
+          break;
+        case 'success':
+        case 'info':
+        case 'warning':
+        default:
+          break;
+      }
       $message['class'] = $class;
     }
     $_SESSION['delayedMessages'][] = $message;
@@ -605,7 +615,7 @@ class Application {
 
       try {
         // kludge to allow model names in URLs.
-        if ($this->id !== "") {
+        if ($this->id !== "" && $this->id !== 0) {
           switch ($this->model) {
             case 'User':
               $this->target = User::Get($this, ['username' => rawurldecode($this->id)]);
@@ -628,13 +638,6 @@ class Application {
         } else {
           $this->target = new $this->model($this, intval($this->id));
         }
-
-
-        // if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag" || $this->model === "Thread") && $this->id !== "") {
-        //   $this->target = new $this->model($this, Null, rawurldecode($this->id));
-        // } else {
-        //   $this->target = new $this->model($this, intval($this->id));
-        // }
       } catch (DbException $e) {
         $this->dbConn->reset();
         $this->statsd->increment("DbException");

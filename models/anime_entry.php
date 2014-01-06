@@ -181,7 +181,7 @@ class AnimeEntry extends BaseEntry {
             $class = "success";
             break;
           } else {
-            $status = "An error occurred while changing your anime list.";
+            $status = "An error occurred while ".$verbProgressive." your anime list.";
             $class = "error";
             break;
           }

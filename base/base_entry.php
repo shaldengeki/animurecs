@@ -139,7 +139,7 @@ abstract class BaseEntry extends BaseObject {
       $validationErrors[] = "Entry score must be numeric and between 0 and 10";
     }
 
-    if (isset($entry[static::$PART_NAME]) && (!is_integral($entry[static::$PART_NAME]) || intval($entry[static::$PART_NAME]) < 0 || ($parentMedia->{static::$PART_NAME."Count"}() > 0 && intval($entry[static::$PART_NAME]) > $parentMedia->{static::$PART_NAME."Count"}()))) {
+    if (isset($entry[static::$PART_NAME]) && (!is_integral($entry[static::$PART_NAME]) || intval($entry[static::$PART_NAME]) < 0 || ($parentMedia->{static::$PART_NAME."Count"} > 0 && intval($entry[static::$PART_NAME]) > $parentMedia->{static::$PART_NAME."Count"}))) {
       $validationErrors[] = static::$PART_NAME." number must be integral and at least 0, less than the ".static::$PART_NAME." count of its parent.";
     }
 
@@ -181,7 +181,7 @@ abstract class BaseEntry extends BaseObject {
       $this->beforeUpdate($entry);
       $this->app->dbConn->where(['id' => $entry['id']])->limit(1)->update();
       $returnValue = intval($entry['id']);
-      $this->afterUpdate();
+      $this->afterUpdate($entry);
     } else {
       $this->beforeCreate($entry);
       if (!isset($entry['time'])) {
