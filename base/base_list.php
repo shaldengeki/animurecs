@@ -117,9 +117,6 @@ abstract class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = [];
-
-    // TODO: figure out why previous query state is leaking into this.
-    $this->app->dbConn->reset();
     $entries = $this->app->dbConn->table(static::$TABLE)
                 ->where(['user_id' => $this->user_id])
                 ->order('time DESC')

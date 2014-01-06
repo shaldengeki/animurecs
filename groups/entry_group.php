@@ -78,9 +78,9 @@ class EntryGroup extends BaseGroup {
     foreach ($this->entries() as $entry) {
       $entryClass = get_class($entry);
       if (method_exists($entry, 'comment')) {
-        $commentDict["(`id` = ".$entry->comment()->id.")"] = 1;
+        $commentDict["(id = ".$entry->comment()->id.")"] = 1;
       }
-      $commentDict["(`type` = '".$entryClass::MODEL_NAME()."' && `parent_id` = ".$entry->id.")"] = 1;
+      $commentDict["(type = '".$entryClass::MODEL_NAME()."' && parent_id = ".$entry->id.")"] = 1;
     }
     if ($commentDict) {
       $getComments = $this->app->dbConn->table(Comment::$TABLE)->where([implode(" || ", array_keys($commentDict))])->assoc();

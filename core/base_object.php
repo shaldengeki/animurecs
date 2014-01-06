@@ -287,6 +287,7 @@ abstract class BaseObject {
   public function load() {
     if ($this->id === Null) {
       // should never reach here!
+      $this->app->dbConn->reset();
       throw new DbException(static::MODEL_NAME().' with null ID not found in database');
     }
     // include all fields.
@@ -314,7 +315,6 @@ abstract class BaseObject {
               $this->app->dbConn->join($thisJoin['table']." ON ".$thisJoin['join_table'].".".$thisJoin['join_table_join_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['join_table_condition']) ? " AND ".$thisJoin['join_table_condition'] : "" ));
               break;
             default:
-              // TODO: figure out why previous query state is leaking into this.
               $this->app->dbConn->reset();
               throw new ModelException($this->app, "Invalid join type: ".$thisJoin['type']);
               break;
@@ -327,6 +327,7 @@ abstract class BaseObject {
       $info = $this->app->cache->get($this->cacheKey(), $foo, $cas);
       if ($this->app->cache->resultCode() !== Memcached::RES_NOTFOUND) {
         $this->set($info);
+        $this->app->dbConn->reset();
         return $this;
       }
     }

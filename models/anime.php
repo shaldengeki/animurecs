@@ -317,7 +317,7 @@ class Anime extends BaseObject {
 
     // now process any taggings.
     if (isset($animeTags)) {
-      // drop any unneeded  tags.
+      // drop any unneeded tags.
       $tagsToDrop = [];
       foreach ($this->tags as $tag) {
         if (!in_array($tag->id, $animeTags)) {
@@ -363,13 +363,14 @@ class Anime extends BaseObject {
   public function getLatestEntries() {
     // retrieves the latest entries for each user for this anime.
     // retrieves a list of typeID, time, status, score, part_name arrays corresponding to the latest list entry for each thing the user has consumed.
-    $entryQuery = $this->app->dbConn->raw("SELECT `anime_lists`.`id`, `user_id`, `time`, `score`, `status`, `episode` FROM (
-                                        SELECT MAX(`id`) AS `id` FROM `anime_lists`
-                                        WHERE `anime_id` = ".intval($this->id)."
-                                        GROUP BY `user_id`
-                                      ) `p` INNER JOIN `anime_lists` ON `anime_lists`.`id` = `p`.`id`
-                                      WHERE `status` != 0
-                                      ORDER BY `status` ASC, `score` DESC");
+    $entryQuery = $this->app->dbConn->raw("SELECT anime_lists.id, anime_lists.user_id, anime_lists.time, anime_lists.score, anime_lists.status, anime_lists.episode FROM anime_lists
+      LEFT OUTER JOIN anime_lists anime_lists2 ON anime_lists.user_id = anime_lists2.user_id
+        AND anime_lists.anime_id = anime_lists2.anime_id
+        AND anime_lists.time < anime_lists2.time
+      WHERE anime_lists.anime_id = ".intval($this->id)."
+        AND anime_lists2.time IS NULL
+        AND anime_lists.status != 0
+      ORDER BY status ASC, score DESC");
     $returnList = [];
     while ($row = $entryQuery->fetch()) {
       $returnList[$row['user_id']] = $row;
@@ -541,7 +542,7 @@ class Anime extends BaseObject {
           // top anime listing.
           $title = "Top Anime";
           $numPages = ceil(Anime::Count($this->app)/$resultsPerPage);
-          $this->app->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) `p`')
+          $this->app->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) p')
             ->fields('anime_lists.anime_id', 'AVG(score) AS avg', 'STDDEV(score) AS stddev', 'COUNT(*) AS count', '((((AVG(score)-1)/9) + ( POW(STDDEV(score), 2) / (2.0 * COUNT(*)) ) - STDDEV(score) * SQRT( ((AVG(score)-1)/9) * (1.0 - ((AVG(score)-1)/9)) / COUNT(*) + ( POW(STDDEV(score), 2) / ( 4.0 * POW(COUNT(*), 2) ) ) )) / (1.0 + (POW(STDDEV(score), 2) / COUNT(*))) * 9) + 1 AS wilson')
             ->join('anime_lists ON anime_lists.user_id=p.user_id && anime_lists.anime_id=p.anime_id && anime_lists.time=p.time');
           if (!$this->app->user->isAdmin()) {

@@ -243,7 +243,7 @@ class DbConn extends PDO {
     // pulls the first row returned from the query.
     $result = $this->query();
     if (!$result || $result->rowCount() < 1) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery);
+      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
     }
     $returnValue = $result->fetch();
     $result->closeCursor();
@@ -253,7 +253,7 @@ class DbConn extends PDO {
     // pulls the first key from the first row returned by the query.
     $result = $this->firstRow();
     if (!$result || count($result) != 1) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery);
+      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
@@ -262,7 +262,7 @@ class DbConn extends PDO {
     // pulls an associative array of columns for the first row returned by the query.
     $result = $this->query();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery);
+      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
     }
     if ($result->rowCount() < 1) {
       return [];
@@ -288,7 +288,7 @@ class DbConn extends PDO {
   public function count($column="*") {
     $result = $this->firstRow();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery);
+      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
     }
     return intval($result['COUNT('.$column.')']);
   }

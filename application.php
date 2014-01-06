@@ -567,7 +567,6 @@ class Application {
     if (isset($_REQUEST['class'])) {
       $this->class = $_REQUEST['class'];
     }
-
     if (isset($_REQUEST['model']) && isset($this->_classes[$_REQUEST['model']])) {
       $this->model = $this->_classes[$_REQUEST['model']];
     }
@@ -606,24 +605,28 @@ class Application {
 
       try {
         // kludge to allow model names in URLs.
-        switch ($this->model) {
-          case 'User':
-            $this->target = User::Get($this, ['username' => rawurldecode($this->id)]);
-            break;
-          case 'Anime':
-            $this->target = Anime::Get($this, ['title' => str_replace("_", " ", rawurldecode($this->id))]);
-            break;
-          case 'Tag':
-            $this->target = Tag::Get($this, ['name' => str_replace("_", " ", rawurldecode($this->id))]);
-            break;
-          case 'Thread':
-            $id = intval(explode("-", rawurldecode($this->id))[0]);
-            $this->target = Thread::FindById($this, $id);
-            break;
-          default:
-            $modelName = $this->model;
-            $this->target = $modelName::FindById($this, intval($this->id));
-            break;
+        if ($this->id !== "") {
+          switch ($this->model) {
+            case 'User':
+              $this->target = User::Get($this, ['username' => rawurldecode($this->id)]);
+              break;
+            case 'Anime':
+              $this->target = Anime::Get($this, ['title' => str_replace("_", " ", rawurldecode($this->id))]);
+              break;
+            case 'Tag':
+              $this->target = Tag::Get($this, ['name' => str_replace("_", " ", rawurldecode($this->id))]);
+              break;
+            case 'Thread':
+              $id = intval(explode("-", rawurldecode($this->id))[0]);
+              $this->target = Thread::FindById($this, $id);
+              break;
+            default:
+              $modelName = $this->model;
+              $this->target = $modelName::FindById($this, intval($this->id));
+              break;
+          }
+        } else {
+          $this->target = new $this->model($this, intval($this->id));
         }
 
 
@@ -633,6 +636,7 @@ class Application {
         //   $this->target = new $this->model($this, intval($this->id));
         // }
       } catch (DbException $e) {
+        $this->dbConn->reset();
         $this->statsd->increment("DbException");
         $this->logger->err($e->__toString());
         $this->display_error(404);
@@ -641,6 +645,7 @@ class Application {
         try {
           $foo = $this->target->load();
         } catch (DbException $e) {
+          $this->dbConn->reset();
           $this->statsd->increment("DbException");
           $blankModel = new $this->model($this);
           $this->delayedMessage("The ".strtolower($this->model)." you specified does not exist.", "error");

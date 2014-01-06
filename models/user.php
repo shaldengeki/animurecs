@@ -169,8 +169,6 @@ class User extends BaseObject {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
     // keyed by not-this-userID.
 
-    // TODO: figure out why previous query state is leaking into this.
-    $this->app->dbConn->reset();
     $friendReqs = $this->app->dbConn->table('users_friends')->fields('user_id_1', 'user_id_2', 'u1.username AS username_1', 'u2.username AS username_2', 'time', 'message')
       ->join('users AS u1 ON u1.id=user_id_1')
       ->join('users AS u2 ON u2.id=user_id_2')
@@ -455,6 +453,7 @@ class User extends BaseObject {
   public function isCurrentlyActive() {
     // return bool reflecting whether or not user has done something recently.
     return $this->lastActive->diff(new DateTime("now", $this->app->serverTimeZone))->i < 5;
+
   }
   public function isModerator() {
     if (!$this->usermask or !(intval($this->usermask) & 2)) {
