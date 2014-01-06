@@ -117,6 +117,8 @@ abstract class BaseList extends BaseObject {
   public function getEntries() {
     // retrieves a list of arrays corresponding to anime list entries belonging to this user.
     $returnList = [];
+
+    // TODO: figure out why previous query state is leaking into this.
     $this->app->dbConn->reset();
     $entries = $this->app->dbConn->table(static::$TABLE)
                 ->where(['user_id' => $this->user_id])
@@ -143,13 +145,14 @@ abstract class BaseList extends BaseObject {
   }
   public function getUniqueList() {
     // retrieves a list of static::$TYPE_ID, time, status, score, static::$PART_NAME arrays corresponding to the latest list entry for each thing the user has consumed.
-    $listQuery = $this->app->dbConn->raw("SELECT `".static::$TABLE."`.`id`, `".static::$TYPE_ID."`, `time`, `score`, `status`, `".static::$PART_NAME."` FROM (
-                                        SELECT MAX(`id`) AS `id` FROM `".static::$TABLE."`
-                                        WHERE `user_id` = ".intval($this->user_id)."
-                                        GROUP BY `".static::$TYPE_ID."`
-                                      ) `p` INNER JOIN `".static::$TABLE."` ON `".static::$TABLE."`.`id` = `p`.`id`
-                                      WHERE `status` != 0
-                                      ORDER BY `status` ASC, `score` DESC");
+    $listQuery = $this->app->dbConn->raw("SELECT ".static::$TABLE.".id, ".static::$TABLE.".".static::$TYPE_ID.", ".static::$TABLE.".time, ".static::$TABLE.".score, ".static::$TABLE.".status, ".static::$TABLE.".".static::$PART_NAME." FROM ".static::$TABLE."
+      LEFT OUTER JOIN ".static::$TABLE." ".static::$TABLE."2 ON ".static::$TABLE.".user_id = ".static::$TABLE."2.user_id
+        AND ".static::$TABLE.".".static::$TYPE_ID." = ".static::$TABLE."2.".static::$TYPE_ID."
+        AND ".static::$TABLE.".time < ".static::$TABLE."2.time
+      WHERE ".static::$TABLE.".user_id = ".intval($this->user_id)."
+        AND ".static::$TABLE."2.time IS NULL
+        AND ".static::$TABLE.".status != 0
+      ORDER BY status ASC, score DESC");
     $this->uniqueListAvg = $this->uniqueListStdDev = $uniqueListSum = $uniqueListCount = $uniqueListStdDev = 0;
     $returnList = [];
     while ($row = $listQuery->fetch()) {

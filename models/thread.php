@@ -60,13 +60,7 @@ class Thread extends BaseObject {
   protected $entries;
   protected $latestEntries;
 
-  public function __construct(Application $app, $id=Null, $title=Null) {
-    if ($title !== Null) {
-      // split the ID off of the title.
-      $splitTitle = explode("-", $title);
-      $id = intval($splitTitle[0]);
-      // $id = intval($app->dbConn->firstValue("SELECT `id` FROM `".static::$TABLE."` WHERE `title` = ".$app->dbConn->escape(str_replace("_", " ", $title))." LIMIT 1"));
-    }
+  public function __construct(Application $app, $id=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
       $this->title = "New Thread";

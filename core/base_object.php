@@ -314,6 +314,7 @@ abstract class BaseObject {
               $this->app->dbConn->join($thisJoin['table']." ON ".$thisJoin['join_table'].".".$thisJoin['join_table_join_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['join_table_condition']) ? " AND ".$thisJoin['join_table_condition'] : "" ));
               break;
             default:
+              // TODO: figure out why previous query state is leaking into this.
               $this->app->dbConn->reset();
               throw new ModelException($this->app, "Invalid join type: ".$thisJoin['type']);
               break;

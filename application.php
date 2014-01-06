@@ -606,11 +606,32 @@ class Application {
 
       try {
         // kludge to allow model names in URLs.
-        if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag" || $this->model === "Thread") && $this->id !== "") {
-          $this->target = new $this->model($this, Null, rawurldecode($this->id));
-        } else {
-          $this->target = new $this->model($this, intval($this->id));
+        switch ($this->model) {
+          case 'User':
+            $this->target = User::Get($this, ['username' => rawurldecode($this->id)]);
+            break;
+          case 'Anime':
+            $this->target = Anime::Get($this, ['title' => str_replace("_", " ", rawurldecode($this->id))]);
+            break;
+          case 'Tag':
+            $this->target = Tag::Get($this, ['name' => str_replace("_", " ", rawurldecode($this->id))]);
+            break;
+          case 'Thread':
+            $id = intval(explode("-", rawurldecode($this->id))[0]);
+            $this->target = Thread::FindById($this, $id);
+            break;
+          default:
+            $modelName = $this->model;
+            $this->target = $modelName::FindById($this, intval($this->id));
+            break;
         }
+
+
+        // if (($this->model === "User" || $this->model === "Anime" || $this->model === "Tag" || $this->model === "Thread") && $this->id !== "") {
+        //   $this->target = new $this->model($this, Null, rawurldecode($this->id));
+        // } else {
+        //   $this->target = new $this->model($this, intval($this->id));
+        // }
       } catch (DbException $e) {
         $this->statsd->increment("DbException");
         $this->logger->err($e->__toString());

@@ -84,11 +84,8 @@ class CommentEntry extends BaseEntry {
   public function type() {
     return $this->comment()->type;
   }
-  public function message() {
-    return $this->comment()->message;
-  }
   public function time() {
-    return $this->comment()->createdAt;
+    return $this->createdAt;
   }
   public function formatFeedEntry() {
     /* TODO: make this work for comments posted on anime etc */

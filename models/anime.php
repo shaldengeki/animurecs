@@ -97,10 +97,7 @@ class Anime extends BaseObject {
   public $ratingAvg;
   public $regularizedAvg;
 
-  public function __construct(Application $app, $id=Null, $title=Null) {
-    if ($title !== Null) {
-      $id = intval($app->dbConn->table(static::$TABLE)->fields('id')->where(['title' => str_replace("_", " ", $title)])->limit(1)->firstValue());
-    }
+  public function __construct(Application $app, $id=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
       $this->title = "New Anime";

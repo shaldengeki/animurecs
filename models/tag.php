@@ -88,10 +88,7 @@ class Tag extends BaseObject {
   // public $numManga;
   // public $manga;
 
-  public function __construct(Application $app, $id=Null, $name=Null) {
-    if ($name !== Null) {
-      $id = intval($app->dbConn->table(static::$TABLE)->fields('id')->where(['name' => str_replace("_", " ", $name)])->limit(1)->firstValue());
-    }
+  public function __construct(Application $app, $id=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
       $this->name = "New Tag";

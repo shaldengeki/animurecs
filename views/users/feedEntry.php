@@ -16,14 +16,13 @@
   $nowTime = new DateTime("now", $this->app->outputTimeZone);
 
   foreach ($params['entries'] as $entry) {
-    // try {
+    try {
       $diffInterval = $nowTime->diff($params['entry']->time());
-    // } catch (ErrorException $e) {
-    //   ob_end_clean();
-    //   unset($params['entry']->app);
-    //   echo "<pre>".print_r($params['entry'], True)."</pre>";
-    //   exit;
-    // }
+    } catch (ErrorException $e) {
+      ob_end_clean();
+      echo "<pre>".print_r($params['entry']->getFields(), True)."</pre>";
+      exit;
+    }
     $feedMessage = $entry->formatFeedEntry();
 
     if ($feedMessage['text']) {

@@ -7,6 +7,7 @@
   $tagRatings = [];
   $tags = [];
   $tagTypes = TagType::GetList($this->app);
+
   foreach ($this->animeList()->uniqueList() as $entry) {
     if (round(floatval($entry['score']), 2) != 0) {
       foreach ($entry['anime']->tags as $tag) {
@@ -22,6 +23,7 @@
       }
     }
   }
+
   $tagAverages = [];
   $ratingCounts = [];
   $tagGlobalAverageSum = 0;

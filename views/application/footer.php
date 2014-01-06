@@ -4,7 +4,7 @@
     exit;
   }
   $params['container'] = isset($params['container']) ? $params['container'] : True;
-  $adminUser = class_exists("User") ? new User($this, Null, 'shaldengeki') : Null;
+  $adminUser = class_exists("User") ? User::Get($this, ['username' => 'shaldengeki']) : Null;
 ?>
       <footer>
         <hr />

@@ -104,11 +104,7 @@ class User extends BaseObject {
   public $friendRequests;
   public $requestedFriends;
 
-  public function __construct(Application $app, $id=Null, $username=Null) {
-    if ($username !== Null) {
-      $user = User::Get($app, ['username' => $username]);
-      $id = $user->id;
-    }
+  public function __construct(Application $app, $id=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
       $this->username = "guest";
@@ -172,6 +168,8 @@ class User extends BaseObject {
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.
     // keyed by not-this-userID.
+
+    // TODO: figure out why previous query state is leaking into this.
     $this->app->dbConn->reset();
     $friendReqs = $this->app->dbConn->table('users_friends')->fields('user_id_1', 'user_id_2', 'u1.username AS username_1', 'u2.username AS username_2', 'time', 'message')
       ->join('users AS u1 ON u1.id=user_id_1')
@@ -744,7 +742,7 @@ class User extends BaseObject {
     }
 
     // sign user in.
-    $newUser = new User($this->app, Null, $findUser->username);
+    $newUser = User::Get($this->app, ['username' => $findUser->username]);
     $newUser->setCurrentSession();
 
     // check for failed logins.
