@@ -157,13 +157,13 @@ class User extends BaseObject {
     return $this->avatarPath ? $this->avatarPath : "img/blank.png";
   }
   public function thumbPath() {
-    return $this->thumbPath ? $this->thumbPath : $this->avatarPath;
+    return $this->thumbPath ? $this->thumbPath : $this->avatarPath();
   }
   public function avatarImage(array $params=Null) {
-    return $this->image($this->avatarPath, $params);
+    return $this->image($this->avatarPath(), $params);
   }
   public function thumbImage(array $params=Null) {
-    return $this->image($this->thumbPath, $params);
+    return $this->image($this->thumbPath(), $params);
   }
   public function getFriends($status=1) {
     // returns a list of user,time,message arrays corresponding to all friends of this user.

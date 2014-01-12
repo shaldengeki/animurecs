@@ -9,7 +9,7 @@
             <li class='col-md-12'>
               <div class='img-thumbnail profileAvatar'>
 <?php
-if ($this->avatarPath != '') {
+if ($this->avatarPath() != '') {
 ?>
                 <?php echo $this->avatarImage(['class' => 'img-rounded', 'alt' => '']); ?>
 <?php

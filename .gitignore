@@ -18,3 +18,4 @@ _plugins
 Vagrantfile
 bootstrap.sh
 vagrant_setup
+.idea
