@@ -79,7 +79,7 @@ if ($this->avatarPath() != '') {
 ?>
               <li class='col-md-4'>
                 <p>Anime compatibility:</p>
-                <?php echo $this->animeList()->compatibilityBar($this->app->user->animeList()); ?>
+                <?php echo $this->animeList()->view('compatibilityBar', ['compatibility' => $this->animeList()->compatibility($this->app->user->animeList())]); ?>
               </li>
 <?php
   }

@@ -3,6 +3,7 @@ abstract class BaseList extends BaseObject {
   // base list from which anime and manga lists inherit methods and properties.
   use Feedable;
 
+  public static $URL = "base_lists";
   public static $TABLE = "";
   public static $PLURAL = "";
   public static $FIELDS = [
@@ -274,23 +275,6 @@ abstract class BaseList extends BaseObject {
   public function compatibility(BaseList $currentList) {
     $similarity = $this->similarity($currentList);
     return $similarity ? 100 * (1 + $this->similarity($currentList)) / 2.0 : False;
-  }
-  public function compatibilityBar(BaseList $currentList) {
-    // returns markup for a compatibility bar between this list and the current user's list.
-    $compatibility = $this->compatibility($currentList);
-    if ($compatibility === False) {
-      return "<div class='progress progress-info'><div class='bar' style='width: 0%'></div>Unknown</div>";
-    }
-    if ($compatibility >= 75) {
-      $barClass = "danger";
-    } elseif ($compatibility >= 50) {
-      $barClass = "warning";
-    } elseif ($compatibility >= 25) {
-      $barClass = "success";
-    } else {
-      $barClass = "info";
-    }
-    return "<div class='progress progress-".$barClass."'><div class='bar' style='width: ".round($compatibility)."%'>".round($compatibility)."%</div></div>";
   }
 }
 ?>
