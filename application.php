@@ -296,10 +296,10 @@ class Application {
     }));
 
     $this->bind(['AnimeList.afterUpdate', 'AnimeList.afterCreate', 'AnimeEntry.afterCreate'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->increment("animelist.entries");
+      $parent->app->statsd->increment("animeList.entries");
     }));
     $this->bind(['AnimeEntry.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->decrement("animelist.entries");
+      $parent->app->statsd->decrement("animeList.entries");
     }));
 
     // user stats metrics.
@@ -307,29 +307,30 @@ class Application {
       $parent->app->statsd->gauge("user.count", User::Count($parent->app));
     }));
     $this->bind(['User.logIn'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->increment("user.login");
+      $parent->app->statsd->increment("user.sessions.started");
     }));
     $this->bind(['User.logOut'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->decrement("user.logOut");
+      $parent->app->statsd->decrement("user.sessions.ended");
     }));
     $this->bind(['User.requestFriend'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->increment("user.friendrequests");
+      $parent->app->statsd->increment("user.friendships.requests");
     }));
     $this->bind(['User.confirmFriend'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->increment("user.friendships");
+      $parent->app->statsd->increment("user.friendships.confirmed");
+      $parent->app->statsd->decrement("user.friendships.requests");
     }));
     $this->bind(['Comment.afterCreate'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->increment("user.comments");
+      $parent->app->statsd->increment("user.comments.posted");
     }));
     $this->bind(['Comment.afterDelete'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->decrement("user.comments");
+      $parent->app->statsd->decrement("user.comments.posted");
     }));
     $this->bind(['User.addAchievement'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->increment("user.achievements");
+      $parent->app->statsd->increment("user.achievements.earned");
       $parent->app->statsd->count("user.points.earned", $updateParams['points']);
     }));
     $this->bind(['User.removeAchievement'], new Observer(function($event, $parent, $updateParams) {
-      $parent->app->statsd->decrement("user.achievements");
+      $parent->app->statsd->decrement("user.achievements.earned");
       $parent->app->statsd->count("user.points.earned", -1 * $updateParams['points']);
     }));
 

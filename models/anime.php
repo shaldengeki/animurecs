@@ -42,7 +42,7 @@ class Anime extends BaseObject {
       'db' => 'updated_at'
     ],
     'imagePath' => [
-      'type' => 'int',
+      'type' => 'str',
       'db' => 'image_path'
     ],
     'approvedOn' => [
