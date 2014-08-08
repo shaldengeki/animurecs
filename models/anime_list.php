@@ -2,6 +2,7 @@
 class AnimeList extends BaseList {
   // anime list.
   public static $TABLE = "anime_lists";
+  public static $URL = "anime_lists";
   public static $PLURAL = "animeLists";
 
   public static $PART_NAME = "episode";

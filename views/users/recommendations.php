@@ -8,12 +8,16 @@
   $recs = [];
   $animeGroup = new AnimeGroup($this->app, []);
   $predictions = [];
-  $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($page - 1), $animePerPage);
+  try {
+    $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($page - 1), $animePerPage);
+  } catch (CurlException $e) {
+    $this->app->logger->err($e->__toString());
+    $recs = False;
+  }
   if ($recs) {
     $animeGroup = new AnimeGroup($this->app, array_map(function($a) {
       return $a['id'];
     }, $recs));
-    $predictions = [];
     foreach ($recs as $rec) {
       $predictions[$rec['id']] = $rec['predicted_score'];
     }

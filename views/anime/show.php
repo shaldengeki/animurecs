@@ -58,7 +58,12 @@
                   <li class='col-md-4'>
 <?php
     if (!isset($this->app->user->animeList()->uniqueList()[$this->id]) || $this->app->user->animeList()->uniqueList()[$this->id]['score'] == 0) {
-      $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
+      try {
+        $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
+      } catch (CurlException $e) {
+        $this->app->logger->err($e->__toString());
+        $userRating = 0;
+      }
 ?>
                     <p class='lead'>Predicted score:</p>
                     <?php echo $this->view('scoreBar', ['score' => $userRating]); ?>

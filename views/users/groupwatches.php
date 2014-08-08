@@ -34,7 +34,12 @@
     $groupwatches[$category] = $catGroupwatches;
   }
   if ($nonZeroGroupwatches) {
-    $predictedRatings = $this->app->recsEngine->predict($this, $anime, 0, count($anime));
+    try {
+      $predictedRatings = $this->app->recsEngine->predict($this, $anime, 0, count($anime));
+    } catch (CurlException $e) {
+      $this->app->logger->err($e->__toString());
+      $predictedRatings = [];
+    }
   }
   foreach ($groupwatches as $category=>$groupwatchList) {
     usort($groupwatchList, function($a, $b) use ($predictedRatings) {

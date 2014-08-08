@@ -6,7 +6,12 @@
   $firstAnime = Anime::Get($this->app);
 
   if ($this->app->user->loggedIn()) {
-    $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
+    try {
+      $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
+    } catch (CurlException $e) {
+      $this->app->logger->err($e->__toString());
+      $predictedRatings = False;
+    }
     if (is_array($predictedRatings)) {
       arsort($predictedRatings);
     } else {
