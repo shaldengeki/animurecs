@@ -4,14 +4,14 @@
   $anime = Anime::Get($this->app);
   $defaultParams['form'] = [
                             'method' => 'get',
-                            'class' => 'form-inline',
+                            'class' => 'searchForm form-inline',
                             'action' => $anime->url('index')
                           ];
   $defaultParams['searchInput'] = [
                                     'name' => 'search',
                                     'id' => 'search',
                                     'type' => 'text',
-                                    'class' => 'autocomplete input-xlarge',
+                                    'class' => 'autocomplete form-control',
                                     'data-labelField' => 'title', 
                                     'data-valueField' => 'title', 
                                     'data-url' => $anime->url("token_search"),
@@ -26,6 +26,9 @@
   $params['searchInput'] = array_merge($defaultParams['searchInput'], is_array($params['searchInput']) ? $params['searchInput'] : []);
 ?>
                 <?php echo $this->app->form($params['form']); ?>
-                  <?php echo $this->app->input($params['searchInput']); ?>
-                  <?php if ($params['submitButton']) { ?><input type='submit' class='btn btn-primary' value='Search' /><?php } ?>
+                  <div class='form-group'>
+                    <label class='sr-only' for='search'>Search</label>
+                    <?php echo $this->app->input($params['searchInput']); ?>
+                  </div>
+                  <?php if ($params['submitButton']) { ?><button type='submit' class='btn btn-primary'>Search</button><?php } ?>
                 </form>

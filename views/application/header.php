@@ -62,7 +62,7 @@
               <li>
                 <?php echo $firstAnime->view('searchForm', [
                 'form' => [
-                    'class' => 'navbar-search'
+                    'class' => 'navbar-search searchForm'
                   ],
                 'searchInput' => [
                     'id' => 'navbar-anime-search',

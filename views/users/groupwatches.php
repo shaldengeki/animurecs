@@ -77,24 +77,26 @@
 ?>
   <ul class='media-list'>
     <li class='media groupwatch-entry'>
-      <div class='pull-left'>
-        <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title)."</h4>", Null, True, ['title' => $groupwatch['anime']->title, 'data-toggle' => 'tooltip', 'data-placement' => 'top']); ?>
-        <?php echo $groupwatch['anime']->link("show", $groupwatch['anime']->imageTag(['class' => 'media-object col-md-3']), Null, True, ['title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
-        <p><em>Predicted rating: <?php echo round($predictedRatings[$groupwatch['anime']->id], 2); ?></em></p>
-      </div>
-      <div class="media-body">
-        <ul class='item-grid'>
-<?php
-          foreach ($groupwatch['users'] as $friend) {
-?>
-          <li>
-            <?php echo $friend->link("show", "<h5>".escape_output($friend->username)."</h5>".$friend->thumbImage(), Null, True); ?>
-            <?php echo "<p><em>".($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'] ? "On episode ".intval($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'])."" : "Hasn't started")."</em></p>"; ?>
-          </li>
-<?php        
-          }
-?>
-        </ul>
+      <div class='row'>
+        <div class='groupwatch-anime col-md-3 center-horizontal'>
+          <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title)."</h4>", Null, True, ['title' => $groupwatch['anime']->title, 'data-toggle' => 'tooltip', 'data-placement' => 'top']); ?>
+          <?php echo $groupwatch['anime']->link("show", $groupwatch['anime']->imageTag(['class' => 'media-object']), Null, True, ['title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
+          <p><em>Predicted rating: <?php echo round($predictedRatings[$groupwatch['anime']->id], 2); ?></em></p>
+        </div>
+        <div class='groupwatch-users media-body col-md-9'>
+          <ul class='item-grid'>
+  <?php
+            foreach ($groupwatch['users'] as $friend) {
+  ?>
+            <li>
+              <?php echo $friend->link("show", "<h5>".escape_output($friend->username)."</h5>".$friend->thumbImage(), Null, True); ?>
+              <?php echo "<p><em>".($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'] ? "On episode ".intval($friend->animeList()->uniqueList()[$groupwatch['anime']->id]['episode'])."" : "Hasn't started")."</em></p>"; ?>
+            </li>
+  <?php        
+            }
+  ?>
+          </ul>
+        </div>
       </div>
     </li>
   </ul>

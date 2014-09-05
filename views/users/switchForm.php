@@ -4,7 +4,7 @@
 ?>
     <?php echo $this->app->form(['action' => $this->url("switch_user"), 'class' => 'form-horizontal']); ?>
       <fieldset>
-        <div class='control-group'>
+        <div class='form-group'>
           <label class='control-label' for='switch_username'>Username</label>
           <div class='controls'>
             <input name='switch_username' type='text' class='input-xlarge' id='switch_username' />

@@ -9,13 +9,13 @@
       <?php echo ($tagType->id === 0) ? "" : $tagType->input('id', ['type' => 'hidden']); ?>
       <?php echo $tagType->input('created_user_id', ['type' => 'hidden', 'value' => ($tagType->id ? $tagType->createdUser->id : $tagType->app->user->id)]); ?>
       <fieldset>
-        <div class='control-group'>
+        <div class='form-group'>
           <label class='control-label' for='tag_types[name]'>Name</label>
           <div class='controls'>
             <?php echo $tagType->input('name', ['type' => 'text', 'class' => 'input-xlarge']); ?>
           </div>
         </div>
-        <div class='control-group'>
+        <div class='form-group'>
           <label class='control-label' for='tag_types[description]'>Description</label>
           <div class='controls'>
             <?php echo $tagType->textArea('description', ['class' => 'field col-md-4', 'rows' => 3], ($tagType->id === 0) ? "" : escape_output($tagType->description)); ?>

@@ -1,0 +1,24 @@
+# Number of seconds between loops.
+loop_interval = 1
+
+[LOG]
+min_level = DEBUG
+
+[MAIL]
+imap_host   = imap.gmail.com
+smtp_host   = smtp.gmail.com
+smtp_port   = 587
+username    = email@domain.com
+password    = password
+destination = destination@domain.com
+ccs         = 
+
+[MAL]
+username    = mal_username
+password    = mal_password
+
+[DB]
+  [[animurecs]]
+    name      = animurecs
+    username  = db_username
+    password  = db_password

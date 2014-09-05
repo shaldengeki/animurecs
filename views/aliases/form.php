@@ -12,7 +12,7 @@
       <?php echo $alias->input('type', ['type' => 'hidden', 'value' => escape_output(($alias->id === 0) ? get_class($params['currentObject']) : $alias->type)]); ?>
       <?php echo $alias->input('parent_id', ['type' => 'hidden', 'value' => intval(($alias->id === 0) ? $params['currentObject']->id : $alias->parent()->id)]); ?>
       <fieldset>
-        <div class='control-group'>
+        <div class='form-group'>
           <label class='control-label' for='alias[name]'>Name</label>
           <div class='controls'>
             <?php echo $alias->input('name', ['type' => 'text']); ?>

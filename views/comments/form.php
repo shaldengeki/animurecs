@@ -10,7 +10,7 @@
       <?php echo $this->input('type', ['type' => 'hidden', 'value' => escape_output(($this->id === 0) ? get_class($params['currentObject']) : $this->type)]); ?>
       <?php echo $this->input('parent_id', ['type' => 'hidden', 'value' => ($this->id ? $params['currentObject']->id : $this->parent()->id)]); ?>
       <fieldset>
-        <div class='control-group'>
+        <div class='form-group'>
           <label class='control-label' for='comments[message]'>Comment</label>
           <div class='controls'>
             <?php echo $this->textArea('message', ['class' => 'field col-md-4', 'rows' => 3], ($this->id === 0) ? "" : escape_output($this->message)); ?>

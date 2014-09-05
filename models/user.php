@@ -53,8 +53,12 @@ class User extends BaseObject {
       'type' => 'str',
       'db' => 'last_ip'
     ],
-    'lastImport' => [
+    'malUsername' => [
       'type' => 'str',
+      'db' => 'mal_username'
+    ],
+    'lastImport' => [
+      'type' => 'date',
       'db' => 'last_import'
     ],
     'createdAt' => [
@@ -110,7 +114,7 @@ class User extends BaseObject {
       $this->username = "guest";
       $this->name = "Guest";
       $this->usermask = $this->points = 0;
-      $this->passwordHash = $this->email = $this->about = $this->createdAt = $this->lastActive = $this->lastImport = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
+      $this->passwordHash = $this->email = $this->about = $this->createdAt = $this->lastActive = $this->malUsername = $this->lastImport = $this->lastIP = $this->avatarPath = $this->thumbPath = "";
       $this->switchedUser = $this->friends = $this->friendRequests = $this->requestedFriends = $this->ownComments = $this->comments = [];
       $this->animeList = new AnimeList($this->app, 0);
     } else {
@@ -530,6 +534,9 @@ class User extends BaseObject {
     if (isset($user['points']) && !is_numeric($user['points'])) {
       $validationErrors[] = "Your points must be numeric";
     }
+    if (isset($user['mal_username']) && (strlen(trim($user['mal_username'])) < 4 || strlen(trim($user['mal_username'])) > 20)) {
+      $validationErrors[] = "Your MAL username must be between 4 and 20 non-empty characters";
+    }
     if ($validationErrors) {
       throw new ValidationException($this->app, $user, $validationErrors);
     } else {
@@ -810,6 +817,9 @@ class User extends BaseObject {
     // otherwise, let this user know to activate their account.
     return ["location" => "/", "status" => "Registration successful! Check your email to activate your account."];
   }
+  /*
+  Deprecated in favour of a delayed job.
+
   public function importMAL($malUsername) {
     // imports a user's MAL lists.
     // takes a MAL username and returns an array of animeID=>boolean pairs indicating import status for each.
@@ -846,6 +856,7 @@ class User extends BaseObject {
 
     return $listIDs;
   }
+  */
   public function addAchievement(BaseAchievement $achievement) {
     $this->fire('addAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
     $updateArray = ['points' => $this->points + $achievement->points, 'achievement_mask' => $this->achievementMask + pow(2, $achievement->id - 1)];
@@ -1010,6 +1021,14 @@ class User extends BaseObject {
           $this->app->delayedMessage('Please enter a MAL username.');
           $this->app->redirect();
         }
+        $update = $this->create_or_update(['mal_username' => $_POST['users']['mal_username']]);
+        if (!$update) {
+          $this->app->delayedMessage("The MAL username you provided is invalid. Please try again.", "error");
+          $this->app->redirect($this->url("edit"));
+        }
+        $this->app->delayedMessage("Your MAL profile has been queued for update. Should take no longer than an hour or two!", "success");
+        $this->app->redirect();
+        /*
         try {
           $importMAL = $this->importMAL($_POST['users']['mal_username']);
         } catch (CurlException $e) {
@@ -1042,6 +1061,7 @@ class User extends BaseObject {
           $this->app->delayedMessage('An error occurred while importing your MAL for the titles: '.implode(", ", $failedTitles).". Please check your MAL for any errors and if necessary, try again.", 'error');
           $this->app->redirect();
         }
+        */
         break;
 
       /* user profile views */

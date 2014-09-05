@@ -19,3 +19,4 @@ Vagrantfile
 bootstrap.sh
 vagrant_setup
 .idea
+scripts/config.txt
