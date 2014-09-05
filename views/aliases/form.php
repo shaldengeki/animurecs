@@ -13,22 +13,24 @@
       <?php echo $alias->input('parent_id', ['type' => 'hidden', 'value' => intval(($alias->id === 0) ? $params['currentObject']->id : $alias->parent()->id)]); ?>
       <fieldset>
         <div class='form-group'>
-          <label class='control-label' for='alias[name]'>Name</label>
-          <div class='controls'>
+          <label class='control-label col-sm-2' for='alias[name]'>Name</label>
+          <div class='col-sm-10'>
             <?php echo $alias->input('name', ['type' => 'text']); ?>
           </div>
         </div>
 
-        <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add Alias" : "Save changes")."</button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
+        <div class='form-group'>
+          <div class='col-sm-offset-2 col-sm-10'>
+            <button type='submit' class='btn btn-primary'>".(($this->id === 0) ? "Add Alias" : "Save changes")."</button>
+            <a href='#' onClick='window.location.replace(document.referrer);' class='btn'>".(($this->id === 0) ? "Go back" : "Discard changes")."</a>
 <?php
   if ($alias->id !== 0) {
 ?>
-          <a class='btn btn-danger' href='<?php echo $alias->url('delete', Null, ['csrf_token' => $this->app->csrfToken]); ?>'>Delete</a>
+            <a class='btn btn-danger' href='<?php echo $alias->url('delete', Null, ['csrf_token' => $this->app->csrfToken]); ?>'>Delete</a>
 <?php
   }
 ?>
+          </div>
         </div>
       </fieldset>
     </form>

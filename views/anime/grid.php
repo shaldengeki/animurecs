@@ -18,7 +18,7 @@
       try {
 ?>
     <?php echo $anime->link("show", "<h4>".escape_output($anime->title)."</h4>", Null, True, ['title' => $anime->title, 'data-toggle' => 'tooltip']); ?>
-    <?php echo $anime->link("show", $anime->imageTag, Null, True, ['title' => $anime->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
+    <?php echo $anime->link("show", $anime->imageTag, Null, True, [/*'title' => $anime->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right'*/]); ?>
     <?php if (isset($params['predictions'][$anime->id])) { ?><p><em>Predicted score: <?php echo round($params['predictions'][$anime->id], 1); ?></em></p><?php } ?>
     <?php if (isset($params['wilsons'][$anime->id])) { ?><p><em>Wilson score: <?php echo round($params['wilsons'][$anime->id], 1); ?></em></p><?php } ?>
 <?php

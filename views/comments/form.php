@@ -11,15 +11,17 @@
       <?php echo $this->input('parent_id', ['type' => 'hidden', 'value' => ($this->id ? $params['currentObject']->id : $this->parent()->id)]); ?>
       <fieldset>
         <div class='form-group'>
-          <label class='control-label' for='comments[message]'>Comment</label>
-          <div class='controls'>
+          <label class='control-label col-sm-2' for='comments[message]'>Comment</label>
+          <div class='col-sm-10'>
             <?php echo $this->textArea('message', ['class' => 'field col-md-4', 'rows' => 3], ($this->id === 0) ? "" : escape_output($this->message)); ?>
           </div>
         </div>
 
-        <div class='form-actions'>
-          <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Add Comment" : "Save changes"; ?></button>
-          <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
+        <div class='form-group'>
+          <div class='col-sm-offset-2 col-sm-10'>
+            <button type='submit' class='btn btn-primary'><?php echo ($this->id === 0) ? "Add Comment" : "Save changes"; ?></button>
+            <a href='#' onClick='window.location.replace(document.referrer);' class='btn btn-default'><?php echo ($this->id === 0) ? "Go back" : "Discard changes"; ?></a>
+          </div>
         </div>
       </fieldset>
     </form>
