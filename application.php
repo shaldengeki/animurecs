@@ -688,6 +688,7 @@ class Application {
   }
 
   public function form(array $params=Null) {
+    $params['role'] = isset($params['role']) ? $params['role'] : "form";
     $params['method'] = isset($params['method']) ? $params['method'] : "post";
     $params['accept-charset'] = isset($params['accept-charset']) ? $params['accept-charset'] : "UTF-8";
     $formAttrs = [];

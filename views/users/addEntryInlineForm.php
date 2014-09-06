@@ -7,38 +7,38 @@
   $animeEntry = ['score' => 0, 'status' => 0, 'episode' => 0];
 
   if (!$this->app->user->loggedIn()) {
-    // display nothing to non-logged-in users.
+    // display nothing to guests.
     return;
   }
 ?>
-                <div class='row-fluid addListEntryForm'>
+                <div class='row addListEntryForm'>
                   <?php echo $this->app->form(['action' => $newEntry->url("new"), 'class' => 'form-inline']); ?>
                     <?php echo $newEntry->input('user_id', ['type' => 'hidden', 'value' => intval($this->id)]); ?>
 <?php
   if ($params['anime'] === Null) {
     $displaySecondColumn = False;
 ?>
-                    <span class='input-group input-group-sm col-md-12'>
+                    <div class='input-group input-group-sm col-md-12'>
                       <input name='anime_entries_anime_title' id='anime_entries_anime_title' type='text' class='autocomplete autocomplete-shrink form-control' data-labelField='title' data-valueField='id' data-url='<?php echo $firstAnime->url("token_search"); ?>' data-tokenLimit='1' data-outputElement='#anime_entries\[anime_id\]' data-status-url='<?php echo $this->url('anime'); ?>' placeholder='Have an anime to update? Type it in!' />
                       <?php echo $newEntry->input('anime_id', ['type' => 'hidden', 'value' => '']); ?>
-                    </span>
+                    </div>
 <?php
   } else {
     $displaySecondColumn = True;
+?>
+                    <?php echo $newEntry->input('anime_id', ['type' => 'hidden', 'value' => $params['anime']->id]); ?>
+<?php
     if (isset($this->app->user->animeList()->uniqueList()[$params['anime']->id])) {
       $animeEntry = $this->app->user->animeList()->uniqueList()[$params['anime']->id];
       $addText = "Update your list: ";
     } else {
       $addText = "Add to your list: ";
     }
-?>
-                      <?php echo $addText; ?>
-                      <?php echo $newEntry->input('anime_id', ['type' => 'hidden', 'value' => $params['anime']->id]); ?>
-<?php
+    echo $addText;
   }
 ?>
-                    <span class="form-group"<?php echo $displaySecondColumn ? "" : " style=\"display: none;\" "; ?>>
-                      <div class='input-group input-group-sm col-md-5'>
+                    <div class='addListEntryFormSecondCol' <?php echo $displaySecondColumn ? "" : " style=\"display: none;\" "; ?>>
+                      <div class='input-group input-group-sm col-md-3'>
                         <?php echo display_status_dropdown("anime_entries[status]", "form-control", $animeEntry['status'] ? $animeEntry['status'] : 1); ?>
                       </div>
                       <div class='input-group input-group-sm col-md-2'>
@@ -50,7 +50,7 @@
                         <?php echo $newEntry->input('episode', ['type' => 'number', 'min' => 0, 'step' => 1, 'value' => $animeEntry['episode'] ? $animeEntry['episode'] : ""]); ?>
                         <span class="input-group-addon"><?php echo $params['anime'] ? "/".$params['anime']->episodeCount : ""; ?></span>
                       </div>
-                      <input type='submit' class='btn btn-sm btn-primary updateEntryButton' value='Update' />
-                    </span>
+                      <button type='submit' class='btn btn-sm btn-primary updateEntryButton'>Update</button>
+                    </div>
                   </form>
                 </div>
