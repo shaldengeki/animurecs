@@ -10,6 +10,12 @@
 
 <div id='related-content'>
   <?php echo paginate($this->url('related', Null, ['page' => '']), $params['page'], Null, '#related-content'); ?>
-  <?php echo $firstAnime->view('grid', ['anime' => $params['anime']]); ?>
+  <?php 
+    if ($params['anime']->length() > 0) {
+      echo $firstAnime->view('grid', ['anime' => $params['anime']]); 
+    } else {
+      echo "<p class='center-horizontal'>No related anime could be found. Maybe there aren't enough ratings yet?</p>";
+    }
+  ?>
   <?php echo paginate($this->url('related', Null, ['page' => '']), $params['page'], Null, '#related-content'); ?>
 </div>
