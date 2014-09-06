@@ -91,7 +91,7 @@ function paginate($baseLink, $currPage=1, $maxPages=Null, $ajaxTarget=Null) {
   $output = "<div class='center-horizontal'><ul class='pagination'>\n";
   $i = 1;
   if ($currPage > 1) {
-    $output .= "    <li>".str_replace("[PAGE]", $currPage-1, $link)."«</a></li>\n";
+    $output .= "    <li>".str_replace("[PAGE]", $currPage-1, $link)."«Previous</a></li>\n";
   }
   if ($maxPages !== Null) {
     while ($i <= $maxPages) {
@@ -116,7 +116,7 @@ function paginate($baseLink, $currPage=1, $maxPages=Null, $ajaxTarget=Null) {
     $output .= "<li class='active'><a href='#'>".$currPage."</a></li>";
   }
   if ($maxPages === Null || $currPage < $maxPages) {
-    $output .= "    <li>".str_replace("[PAGE]", $currPage+1, $link)."»</a></li>\n";
+    $output .= "    <li>".str_replace("[PAGE]", $currPage+1, $link)."Next»</a></li>\n";
   }
   $output .= "</ul></div>\n";
   return $output;
