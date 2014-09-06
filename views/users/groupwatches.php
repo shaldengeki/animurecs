@@ -80,7 +80,7 @@
       <div class='row'>
         <div class='groupwatch-anime col-md-3 center-horizontal'>
           <?php echo $groupwatch['anime']->link("show", "<h4>".escape_output($groupwatch['anime']->title)."</h4>", Null, True, ['title' => $groupwatch['anime']->title, 'data-toggle' => 'tooltip', 'data-placement' => 'top']); ?>
-          <?php echo $groupwatch['anime']->link("show", $groupwatch['anime']->imageTag(['class' => 'media-object']), Null, True, ['title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right']); ?>
+          <?php echo $groupwatch['anime']->link("show", $groupwatch['anime']->imageTag(['class' => 'media-object']), Null, True, [/*'title' => $groupwatch['anime']->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right'*/]); ?>
           <p><em>Predicted rating: <?php echo round($predictedRatings[$groupwatch['anime']->id], 2); ?></em></p>
         </div>
         <div class='groupwatch-users media-body col-md-9'>
