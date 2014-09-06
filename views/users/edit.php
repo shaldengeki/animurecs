@@ -1,6 +1,12 @@
 <?php
   require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
+  if ($this->lastImport === Null) {
+    $lastChecked = "Never";
+  } else {
+    $now = new DateTime("now", $this->app->serverTimeZone);
+    $lastChecked = $this->lastImport->format('G:i n/j/y e')." (".ago($now->diff($this->lastImport)).")";
+  }
 ?>
             <h1><?php echo escape_output($this->username); ?></h1>
             <div class='editUserTabs'>
@@ -19,11 +25,11 @@
                 </div>
                 <div class='tab-pane' id='malImport'>
                   <div class='row'>
-                    <div class='col-xs-12 col-md-6'>
+                    <div class='col-xs-12 col-md-12'>
                       <p>
                         Animurecs can sync changes made to your MAL into your AR feed. If you'll enter your MAL username, we'll check a couple times a day to see if you've updated.
                       </p>
-                      <p><em>Last import time: <?php echo $this->lastImport === Null ? "Never" : $this->lastImport->format('G:i n/j/y e'); ?></em></p>
+                      <p><em>Last checked: <?php echo $lastChecked; ?></em></p>
                       <?php echo $this->app->form(['action' => $this->url("mal_import"), 'class' => 'form form-inline']); ?>
                         <div class='form-group'>
                           <label class='sr-only' for='user[mal_username]'>MAL Username</label>
