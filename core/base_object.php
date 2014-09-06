@@ -265,7 +265,6 @@ abstract class BaseObject {
             break;
           case 'str':
           default:
-            $value = utf8_decode($value);
             break;
         }
 

@@ -23,7 +23,7 @@ class DbConn extends PDO {
     $this->password = $password;
     $this->database = $database;
     try {
-      parent::__construct('mysql:host='.$this->host.';port='.$this->port.';dbname='.$this->database.';charset=utf8', $this->username, $this->password, [
+      parent::__construct('mysql:host='.$this->host.';port='.$this->port.';dbname='.$this->database.';charset=utf8mb4', $this->username, $this->password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => $fetchMode
       ]);

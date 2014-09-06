@@ -609,7 +609,7 @@ class Anime extends BaseObject {
     if (is_array($params)) {
       $urlParams = http_build_query($params);
     }
-    return "/".escape_output(self::MODEL_URL())."/".($action !== "index" ? rawurlencode(rawurlencode($title))."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
+    return "/".escape_output(self::MODEL_URL())."/".($action !== "index" ? rawurlencode($title)."/".escape_output($action)."/" : "").($format !== Null ? ".".escape_output($format) : "").($params !== Null ? "?".$urlParams : "");
   }
 }
 ?>

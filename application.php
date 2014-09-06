@@ -424,13 +424,17 @@ class Application {
   }
 
   public function display_error($code) {
+    ob_clean();
     http_response_code(intval($code));
     echo $this->view('header').$this->view(intval($code)).$this->view('footer');
+    ob_end_flush();
     exit;
   }
   public function display_exception($e) {
     // formats a (potentially subclassed) instance of AppException for display to the end user.
+    ob_clean();
     echo $this->view('header').$this->view('exception', ['exception' => $e]).$this->view('footer');
+    ob_end_flush();
     exit;
   }
   public function check_partial_include($filename) {
@@ -532,6 +536,7 @@ class Application {
     while (ob_get_level()) {
       ob_end_clean();
     }
+    ob_start();
   }
 
   public function init() {
@@ -539,8 +544,11 @@ class Application {
     // loads dependencies, binds events, sets request variables, then attempts to render the current request.
 
     $this->startRender = microtime(true);
+    ob_start();
     set_error_handler('ErrorHandler', E_ALL & ~E_NOTICE);
     mb_internal_encoding('UTF-8');
+    mb_http_output('UTF-8');
+    mb_regex_encoding('UTF-8');
     $this->_loadDependencies();
     $this->_bindEvents();
 
@@ -666,7 +674,7 @@ class Application {
       } else {
         header('X-Frame-Options: SAMEORIGIN');
         try {
-          ob_start();
+          ob_clean();
           echo $this->target->render();
           echo ob_get_clean();
           $this->statsd->timing("pageload", microtime(True) - $this->startRender);
