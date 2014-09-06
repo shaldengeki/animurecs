@@ -479,8 +479,8 @@ class Anime extends BaseObject {
         $blankAlias = new Alias($this->app, 0, $this);
         $searchResults = $blankAlias->search($_REQUEST['term']);
         $animus = [];
-        foreach ($searchResults as $anime) {
-          $animus[] = ['id' => $anime->id, 'title' => $anime->title];
+        foreach ($searchResults as $result) {
+          $animus[] = ['id' => $result['anime']->id, 'title' => $result['alias']];
         }
         echo json_encode($animus);
         exit;
@@ -585,9 +585,14 @@ class Anime extends BaseObject {
           $blankAlias = new Alias($this->app, 0, $this);
           $searchResults = $blankAlias->search($_REQUEST['search']);
           $anime = array_slice($searchResults, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage));
+          $aliases = [];
+          foreach ($anime as $a) {
+            $aliases[$a['anime']->id] = $a['alias'];
+          }
+          $anime = array_map(function($a) { return $a['anime']; }, $anime);
           $numPages = ceil(count($searchResults)/$resultsPerPage);
         }
-        $output = $this->view("index", ['title' => $title, 'anime' => $anime, 'wilsons' => $wilsons, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
+        $output = $this->view("index", ['title' => $title, 'anime' => $anime, 'aliases' => $aliases, 'wilsons' => $wilsons, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);

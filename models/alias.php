@@ -105,7 +105,7 @@ class Alias extends BaseObject {
       $terms[$key] = "+".$term;
     }
     $text = implode(" ", $terms);
-    $search = $this->app->dbConn->table(static::$TABLE)->fields('type', 'parent_id')->match('name', $text)->order('name ASC')->query();
+    $search = $this->app->dbConn->table(static::$TABLE)->fields('name', 'type', 'parent_id')->match('name', $text)->order('name ASC')->query();
     $objects = [];
     if ($this->id === 0) {
       $parentClass = get_class($this->parent());
@@ -117,7 +117,7 @@ class Alias extends BaseObject {
       try {
         $tempObject = new $objType($this->app, intval($result['parent_id']));
         $tempObject->load();
-        $objects[intval($result['parent_id'])] = $tempObject;
+        $objects[intval($result['parent_id'])] = ['anime' => $tempObject, 'alias' => $result['name']];
       } catch (DbException $e) {
         // ignore dangling aliases.
       }
