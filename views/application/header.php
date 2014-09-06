@@ -15,6 +15,7 @@
     <meta charset="utf-8" />
     <meta name='description' content="Animurecs is an anime-centric social network that gives you personalized recommendations by learning your tastes. Discover new anime you'll love today!" />
     <meta name='keywords' content='anime, recommendations, anime list, recommend, top anime' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title><?php echo escape_output($params['title'])." - ".escape_output($params['subtitle']); ?></title>
     <link href='/favicon.ico' rel='shortcut icon' />
