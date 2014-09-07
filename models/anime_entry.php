@@ -91,7 +91,7 @@ class AnimeEntry extends BaseEntry {
     } catch (ModelException $e) {
       // this anime doesn't exist in the database.
       $this->app->logger->err($e->__toString());
-      $feedEntry['text'] = 'This entry could not be retrieved.';
+      $feedEntry['text'] = "This entry couldn't be retrieved, since its anime doesn't exist.";
       return $feedEntry;
     }
       
