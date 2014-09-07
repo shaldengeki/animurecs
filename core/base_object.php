@@ -421,12 +421,18 @@ abstract class BaseObject {
     } else {
       if (isset(static::$FIELDS[$property])) {
         // this is a property in the model's table.
-        return $this->load()
-          ->{$property};
+        $this->load();
+        if (!isset($this->{$property})) {
+          throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());          
+        }
+        return $this->{$property};
       } elseif (isset(static::$JOINS[$property])) {
         // this is a join on the model.
-        return $this->load($property)
-          ->{$property};
+        $this->load($property);
+        if (!isset($this->{$property})) {
+          throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());
+        }
+        return $this->{$property};
       } else {
         throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());
       }
