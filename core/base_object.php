@@ -267,7 +267,6 @@ abstract class BaseObject {
           default:
             break;
         }
-
         $this->{$DB_FIELDS[$key]['attr']} = $value;
       }
     }
@@ -305,11 +304,16 @@ abstract class BaseObject {
           }
 
           switch ($thisJoin['type']) {
-            case 'one':
             case 'many':
+              $this->{$include} = [];
+              $this->app->dbConn->join($thisJoin['table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
+              break;
+            case 'one':
+              $this->{$include} = Null;
               $this->app->dbConn->join($thisJoin['table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
               break;
             case 'habtm':
+              $this->{$include} = [];
               $this->app->dbConn->join($thisJoin['join_table']." ON ".static::$TABLE.".".$thisJoin['own_col']."=".$thisJoin['join_table'].".".$thisJoin['join_table_own_col'].( isset($thisJoin['condition']) ? " AND ".$thisJoin['condition'] : "" ));
               $this->app->dbConn->join($thisJoin['table']." ON ".$thisJoin['join_table'].".".$thisJoin['join_table_join_col']."=".$thisJoin['table'].".".$thisJoin['join_col'].( isset($thisJoin['join_table_condition']) ? " AND ".$thisJoin['join_table_condition'] : "" ));
               break;
@@ -345,7 +349,6 @@ abstract class BaseObject {
         }
         foreach ($includes as $include) {
           if (isset(static::$JOINS[$include])) {
-
             // filter out just the columns belonging to this joined model so we can set them properly.
             $thisJoin = static::$JOINS[$include];
             $className = $thisJoin['obj'];
@@ -355,9 +358,6 @@ abstract class BaseObject {
               if (isset($joinFields[$key])) {
                 $joinRow[$joinFields[$key]] = $row[$key];
               }
-            }
-            if (!isset($this->{$include})) {
-              $this->{$include} = in_array($thisJoin['type'], ['many', 'habtm']) ? [] : Null;
             }
             $newObj = new $className($this->app, $joinRow[$className::$FIELDS['id']['db']]);
             switch ($thisJoin['type']) {

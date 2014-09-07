@@ -82,14 +82,23 @@ class AnimeEntry extends BaseEntry {
     // fetch the previous feed entry and compare values against current entry.
 
     $nowTime = new DateTime("now", $this->app->outputTimeZone);
-
     $diffInterval = $nowTime->diff($this->time);
 
-    $prevEntry = $this->animeList()->prevEntry($this->anime->id, $this->time);
+    $feedEntry = ['title' => $this->user->link("show", $this->user->username), 'text' => 'Empty feed entry'];
 
+    try {
+      $prevEntry = $this->animeList()->prevEntry($this->anime->id, $this->time);
+    } catch (ModelException $e) {
+      // this anime doesn't exist in the database.
+      $this->app->logger->err($e->__toString());
+      $feedEntry['text'] = 'This entry could not be retrieved.';
+      return $feedEntry;
+    }
+      
     $statusChanged = (bool) ($this->status != $prevEntry->status);
     $scoreChanged = (bool) ($this->score != $prevEntry->score);
     $partChanged = (bool) ($this->{AnimeList::$PART_NAME} != $prevEntry->{AnimeList::$PART_NAME});
+
     
     // concatenate appropriate parts of this status text.
     $statusTexts = [];
@@ -115,8 +124,10 @@ class AnimeEntry extends BaseEntry {
       $statusText = str_replace("[PART]", $this->{AnimeList::$PART_NAME}, $statusText);
       $statusText = str_replace("/[TOTAL_PARTS]", $this->anime->{AnimeList::$PART_NAME."Count"} ? "/".$this->anime->{AnimeList::$PART_NAME."Count"} : "", $statusText);
       $statusText = ucfirst($statusText).".";
+
+      $feedEntry['text'] = $statusText;
     }
-    return ['title' => $this->user->link("show", $this->user->username), 'text' => $statusText];
+    return $feedEntry;
   }
   public function render() {
     $status = "";
