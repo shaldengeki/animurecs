@@ -2,6 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $params['status'] = isset($params['status']) ? $params['status'] : 1;
+  $params['dates'] = isset($params['dates']) ? $params['dates'] : [];
   // returns markup for one status section of a user's anime list.
   $statusStrings = [1 => ['id' => 'currentlyWatching', 'title' => 'Currently Watching'],
                         2 => ['id' => 'completed', 'title' => 'Completed'],
@@ -20,6 +21,7 @@
               <th>Title</th>
               <th class='dataTable-default-sort' data-sort-order='desc'>Score</th>
               <th>Episodes</th>
+              <?php echo $params['dates'] ? "<th>".escape_output($params['dates']['title'])."</th>" : ""; ?>
 <?php
   if ($this->app->user->id == $this->user()->id) {
 ?>              <th></th>
@@ -40,6 +42,17 @@
               <td class='listEntryScore'><?php echo round(floatval($entry['score']), 2) > 0 ? round(floatval($entry['score']), 2) : ""; ?></td>
               <td class='listEntryEpisode'><?php echo intval($entry['episode'])."/".(intval($entry['anime']->episodeCount) == 0 ? "?" : intval($entry['anime']->episodeCount)); ?></td>
 <?php
+      if ($params['dates']) {
+?>
+              <td>
+<?php
+        if (isset($params['dates']['anime'][$entry['anime']->id])) {
+          echo $params['dates']['anime'][$entry['anime']->id]->format("Y/m/d");
+        }
+?>
+              </td>
+<?php
+      }
       if ($this->app->user->id == $this->user()->id) {
 ?>              <td><a href='#' class='listEdit' data-url='<?php echo $newEntry->url("new"); ?>'><i class='glyphicon glyphicon-pencil'></i></td>
 <?php

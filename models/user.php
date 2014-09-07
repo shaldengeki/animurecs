@@ -1097,7 +1097,81 @@ class User extends BaseObject {
         echo $output;
         exit;
       case 'anime_list':
-        echo $this->animeList()->view("show");
+        /* TODO: replace with dynamic names */
+        $startedAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
+          LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
+            AND al.anime_id = al2.anime_id
+            AND al.time < al2.time
+            AND al2.status != 1
+          WHERE al.user_id = ".intval($this->id)."
+          AND al.status = 1
+          AND al2.time IS NULL
+          ORDER BY anime_id ASC;");
+        $startedAnime = [];
+        while ($row = $startedAnimeQuery->fetch()) {
+          $startedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
+        }
+        $completedAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
+          LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
+            AND al.anime_id = al2.anime_id
+            AND al.time < al2.time
+            AND al2.status != 2
+          WHERE al.user_id = ".intval($this->id)."
+          AND al.status = 2
+          AND al2.time IS NULL
+          ORDER BY anime_id ASC;");
+        $completedAnime = [];
+        while ($row = $completedAnimeQuery->fetch()) {
+          $completedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
+        }
+        $heldAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
+          LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
+            AND al.anime_id = al2.anime_id
+            AND al.time < al2.time
+            AND al2.status != 3
+          WHERE al.user_id = ".intval($this->id)."
+          AND al.status = 3
+          AND al2.time IS NULL
+          ORDER BY anime_id ASC;");
+        $heldAnime = [];
+        while ($row = $heldAnimeQuery->fetch()) {
+          $heldAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
+        }
+        $droppedAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
+          LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
+            AND al.anime_id = al2.anime_id
+            AND al.time < al2.time
+            AND al2.status != 4
+          WHERE al.user_id = ".intval($this->id)."
+          AND al.status = 4
+          AND al2.time IS NULL
+          ORDER BY anime_id ASC;");
+        $droppedAnime = [];
+        while ($row = $droppedAnimeQuery->fetch()) {
+          $droppedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
+        }
+        $planAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
+          LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
+            AND al.anime_id = al2.anime_id
+            AND al.time < al2.time
+            AND al2.status != 6
+          WHERE al.user_id = ".intval($this->id)."
+          AND al.status = 6
+          AND al2.time IS NULL
+          ORDER BY anime_id ASC;");
+        $plannedAnime = [];
+        while ($row = $planAnimeQuery->fetch()) {
+          $plannedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
+        }
+        $sectionDates = [
+          1 => ['title' => 'Started', 'anime' => $startedAnime],
+          2 => ['title' => 'Finished', 'anime' => $completedAnime],
+          3 => ['title' => 'Since', 'anime' => $heldAnime],
+          4 => ['title' => 'On', 'anime' => $droppedAnime],
+          6 => ['title' => 'Since', 'anime' => $plannedAnime],
+        ];
+
+        echo $this->animeList()->view("show", ['dates' => $sectionDates]);
         exit;
       case 'anime':
         if (!isset($_REQUEST['anime_id']) || !is_numeric($_REQUEST['anime_id'])) {
