@@ -11,7 +11,7 @@
   try {
     $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($page - 1), $animePerPage);
   } catch (CurlException $e) {
-    $this->app->logger->err($e->__toString());
+    $this->app->log_exception($e);
     $recs = False;
   }
   if ($recs) {

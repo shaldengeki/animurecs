@@ -26,7 +26,7 @@ class RecsEngine {
     $url = "http://".$this->host.":".intval($this->port)."/".rawurlencode($model)."/".intval($id)."/".rawurlencode($action)."?".$requestFields;
     $curl = new Curl($url);
     if ($this->canLog()) {
-      $this->logger->err("Getting recs URL: ".$url);
+      $this->logger->debug("Getting recs URL: ".$url);
       $curl->log($this->logger);
     }
     $page = $curl->timeout(4000)->get();

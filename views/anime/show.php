@@ -61,7 +61,7 @@
       try {
         $userRating = $this->app->recsEngine->predict($this->app->user, $this)[$this->id];
       } catch (CurlException $e) {
-        $this->app->logger->err($e->__toString());
+        $this->app->log_exception($e);
         $userRating = 0;
       }
 ?>

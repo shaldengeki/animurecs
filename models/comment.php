@@ -193,7 +193,7 @@ class Comment extends BaseObject {
       try {
         $this->load();
       } catch (DbException $e) {
-        $this->app->logger->err($e->__toString());
+        $this->app->log_exception($e);
         $this->app->delayedMessage('This comment does not exist.', 'error');
         $this->app->redirect($this->parent()->url());
       }
@@ -207,7 +207,7 @@ class Comment extends BaseObject {
           $targetParent->load();
         }
       } catch (DbException $e) {
-        $this->app->logger->err($e->__toString());
+        $this->app->log_exception($e);
         $this->app->delayedMessage("The thing you're commenting on no longer exists.", 'error');
         $this->app->redirect($this->app->user->url());
       }
@@ -219,7 +219,7 @@ class Comment extends BaseObject {
           $targetUser = new User($this->app, isset($_POST['comments']['user_id']) ? intval($_POST['comments']['user_id']) : intval($_REQUEST['user_id']));
           $targetUser->load();
         } catch (DbException $e) {
-          $this->app->logger->err($e->__toString());
+          $this->app->log_exception($e);
           $this->app->delayedMessage("This user ID doesn't exist.", 'error');
           $this->app->redirect($this->app->user->url());
         }

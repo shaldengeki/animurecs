@@ -437,6 +437,11 @@ class Application {
     ob_end_flush();
     exit;
   }
+  public function log_exception($e) {
+    // log an exception.
+    $this->logger->err($e->__toString());
+    $this->logger->err("Requested URL: ".$this->currentUrl());
+  }
   public function check_partial_include($filename) {
     // displays the standard 404 page if the user is requesting a partial directly.
     if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
@@ -650,7 +655,7 @@ class Application {
       } catch (DbException $e) {
         $this->dbConn->reset();
         $this->statsd->increment("DbException");
-        $this->logger->err($e->__toString());
+        $this->log_exception($e);
         $this->display_error(404);
       }
       if ($this->target->id !== 0) {
@@ -682,12 +687,12 @@ class Application {
           $this->setPreviousUrl();
           exit;
         } catch (AppException $e) {
-          $this->logger->err($e->__toString());
+          $this->log_exception($e);
           $this->clearOutput();
           $this->display_exception($e);
         } catch (Exception $e) {
           $this->statsd->increment("Exception");
-          $this->logger->err($e->__toString());
+          $this->log_exception($e);
           $this->clearOutput();
           $this->display_error(500);
         }

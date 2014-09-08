@@ -9,7 +9,7 @@
     try {
       $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
     } catch (CurlException $e) {
-      $this->app->logger->err($e->__toString());
+      $this->app->log_exception($e);
       $predictedRatings = False;
     }
     if (is_array($predictedRatings)) {

@@ -37,7 +37,7 @@
     try {
       $predictedRatings = $this->app->recsEngine->predict($this, $anime, 0, count($anime));
     } catch (CurlException $e) {
-      $this->app->logger->err($e->__toString());
+      $this->app->log_exception($e);
       $predictedRatings = [];
     }
   }

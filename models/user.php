@@ -622,7 +622,7 @@ class User extends BaseObject {
         }
       } catch (ImagickException $e) {
         $this->app->statsd->increment("ImagickException");
-        $this->app->logger->err($e->__toString());
+        $this->app->log_exception($e);
         throw new ValidationException($this->app, $file_array, 'An error occurred while resizing your avatar');
       }
 
@@ -845,7 +845,7 @@ class User extends BaseObject {
           $listIDs[$entry['anime_id']] = $newEntry->create_or_update($entry);
         } catch (DbException $e) {
           $this->app->statsd->increment('DbException');
-          $this->app->logger->err($e->__toString());
+          $this->app->log_exception($e);
           $listIDs[$entry['anime_id']] = False;
         }
       }
@@ -1033,7 +1033,7 @@ class User extends BaseObject {
           $importMAL = $this->importMAL($_POST['users']['mal_username']);
         } catch (CurlException $e) {
           $this->app->statsd->increment('CurlException');
-          $this->app->logger->err($e->__toString());
+          $this->app->log_exception($e);
           $this->app->delayedMessage("We encountered an error while trying to grab the MAL for ".escape_output($_POST['users']['mal_username']).". Please try again in a few minutes!");
           $this->app->redirect();
         }

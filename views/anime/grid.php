@@ -29,7 +29,7 @@
     <?php if (isset($params['wilsons'][$anime->id])) { ?><p><em>Wilson score: <?php echo round($params['wilsons'][$anime->id], 1); ?></em></p><?php } ?>
 <?php
       } catch (DbException $e) {
-        $this->app->logger->err($e->__toString());
+        $this->app->log_exception($e);
 ?>
         There's an invalid anime reference here; please notify an administrator to get this fixed!
 <?php
@@ -39,7 +39,7 @@
 <?php
     }
   } catch (DbException $e) {
-    $this->app->logger->err($e->__toString());
+    $this->app->log_exception($e);
 ?>
   There's an invalid anime reference on this page; please notify an administrator to get this fixed!
 <?php

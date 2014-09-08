@@ -133,7 +133,7 @@ class AnimeEntry extends BaseEntry {
       $prevEntry = $this->animeList()->prevEntry($this->anime->id, $this->time);
     } catch (ModelException $e) {
       // this anime doesn't exist in the database.
-      $this->app->logger->err($e->__toString());
+      $this->app->log_exception($e);
       $feedEntry['text'] = "This entry couldn't be retrieved, since its anime doesn't exist.";
       return $feedEntry;
     }
