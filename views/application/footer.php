@@ -68,7 +68,7 @@
     <!--<script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/js/bootstrap.min.js' type='text/javascript'></script>-->
     <script src='<?php echo Config::ROOT_URL; ?>/js/vendor/bootstrap.min.js' type='text/javascript'></script>
     <!--<script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-tour/0.2.0/bootstrap-tour.js' type='text/javascript'></script>-->
-    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=<?php echo $assetsVersion; ?>' type='text/javascript'></script>
+    <script src='<?php echo Config::ROOT_URL; ?>/js/animurecs.js?v=<?php echo $this->assetsVersion; ?>' type='text/javascript'></script>
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-37523517-1']);

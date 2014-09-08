@@ -90,6 +90,9 @@ class Application {
   public $page=1;
   public $csrfField="csrf_token";
 
+  // increment this when CSS/JS changes.
+  public $assetsVersion = 0.79;
+
   private function _generateCSRFToken() {
     // generates a CSRF token, if one has not already been created for this Application object.
     if ($this->csrfToken === Null) {

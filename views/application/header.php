@@ -3,7 +3,6 @@
     echo "This partial cannot be rendered by itself.";
     exit;
   }
-  $assetsVersion = 0.78;
   $firstAnime = class_exists("Anime") ? Anime::Get($this) : Null;
   $params['container'] = isset($params['container']) ? $params['container'] : True;
   $params['title'] = isset($params['title']) ? $params['title'] : "Animurecs";
@@ -23,7 +22,7 @@
     <link href='//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/jquery.dataTables.css' rel='stylesheet' />
     <link href='<?php echo Config::ROOT_URL; ?>/css/token-input.css' rel='stylesheet' />
-    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=<?php echo $assetsVersion; ?>' rel='stylesheet' />
+    <link href='<?php echo Config::ROOT_URL; ?>/css/animurecs.css?v=<?php echo $this->assetsVersion; ?>' rel='stylesheet' />
     <script src='//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js' type='text/javascript'></script>
   </head>
   <body>
