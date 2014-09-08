@@ -9,6 +9,10 @@ class DbException extends Exception {
   }
 }
 
+class DatabaseNotAvailableExeception extends DbException {};
+class NoDatabaseRowsRetrievedException extends DbException {};
+class NoDatabaseColumnsRetrievedException extends DbException {};
+
 class DbConn extends PDO {
   //basic database connection class that provides input-escaping and standardized query error output.
   use Loggable;
@@ -28,7 +32,7 @@ class DbConn extends PDO {
         PDO::ATTR_DEFAULT_FETCH_MODE => $fetchMode
       ]);
     } catch (PDOException $e) {
-      throw new DbException('Could not connect to the database', 0, $e);
+      throw new DatabaseNotAvailableException('Could not connect to the database', 0, $e);
     }
 
     $this->queryLog = [];
@@ -193,27 +197,29 @@ class DbConn extends PDO {
     return implode(" ", $queryList);
   }
 
-  public function query($query=Null) {
+  public function query($query=Null, $params=Null) {
     // executes a query with standardized error message.
     $query = $query === Null ? $this->queryString() : $query;
+    $params = $params === Null ? $this->params : $params;
     $this->prevQuery = $query;
+    $this->prevParams = $params;
 
     if (Config::DEBUG_ON) {
-      $this->queryLog[] = $query." | ".print_r($this->params, True);
+      $this->queryLog[] = $query." | ".print_r($params, True);
     }
     try {
       $prepQuery = parent::prepare($query);
       if ($this->canLog()) {
-        $this->logger->err($query."\nParams: ".print_r($this->params, True));
+        $this->logger->err($query."\nParams: ".print_r($params, True));
       }
-      $result = $prepQuery->execute($this->params);
+      $result = $prepQuery->execute($params);
     } catch (Exception $e) {
-      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
+      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($params, True);
       $this->reset();
       throw new DbException($exceptionText, 0, $e);
     }
     if (!$result) {
-      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($this->params, True);
+      $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($params, True);
       $this->reset();
       throw new DbException($exceptionText, 0, $e);
     }
@@ -243,7 +249,7 @@ class DbConn extends PDO {
     // pulls the first row returned from the query.
     $result = $this->query();
     if (!$result || $result->rowCount() < 1) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
+      throw new NoDatabaseRowsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
     }
     $returnValue = $result->fetch();
     $result->closeCursor();
@@ -253,7 +259,7 @@ class DbConn extends PDO {
     // pulls the first key from the first row returned by the query.
     $result = $this->firstRow();
     if (!$result || count($result) != 1) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
+      throw new NoDatabaseColumnsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
@@ -262,7 +268,7 @@ class DbConn extends PDO {
     // pulls an associative array of columns for the first row returned by the query.
     $result = $this->query();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
+      throw new NoDatabaseRowsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
     }
     if ($result->rowCount() < 1) {
       return [];
@@ -288,7 +294,7 @@ class DbConn extends PDO {
   public function count($column="*") {
     $result = $this->firstRow();
     if (!$result) {
-      throw new DbException("No rows were found matching query: ".$this->prevQuery." | params: ".print_r($this->params, True));
+      throw new NoDatabaseColumnsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
     }
     return intval($result['COUNT('.$column.')']);
   }
