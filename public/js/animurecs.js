@@ -769,6 +769,29 @@ function initInterface(elt) {
     });
   });
 
+  /* recommendation menu initialization */
+  $(elt).find('.recommendations li').each(function() {
+    var recNode = this;
+    $(this).hover(function() {
+      $(this).find('.recommendationMenu').removeClass('hidden');
+    }, function() {
+      $(this).find('.recommendationMenu').addClass('hidden');
+    });
+    $(this).find('.recommendationMenu a').click(function(event) {
+      $(recNode).fadeTo("fast", 0.2);
+      $.ajax({
+        url: $(this).attr('data-url'),
+        data: {},
+        success: function(data) {
+          $(recNode).remove();
+        },
+        error: function(data) {
+          $(recNode).fadeTo("fast", 1);
+        }
+      });
+    });
+  });
+
   // fills episode count automatically when user marks anime as completed in dropdown AND the total episode count has already been loaded as an input add-on.
   $('select[name=anime_list\\[status\\]]').each(function() {
     $(this).change(function() {

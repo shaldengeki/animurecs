@@ -5,6 +5,7 @@
   $params['aliases'] = isset($params['aliases']) ? $params['aliases'] : [];
   $params['predictions'] = isset($params['predictions']) ? $params['predictions'] : [];
   $params['wilsons'] = isset($params['wilsons']) ? $params['wilsons'] : [];
+  $params['dismiss-url'] = isset($params['dismiss-url']) ? $params['dismiss-url'] : False;
 ?>
 <ul class='item-grid recommendations'>
 <?php
@@ -27,6 +28,7 @@
     <?php echo $anime->link("show", $anime->imageTag, Null, True, [/*'title' => $anime->description, 'data-toggle' => 'tooltip', 'data-placement' => 'right'*/]); ?>
     <?php if (isset($params['predictions'][$anime->id])) { ?><p><em>Predicted score: <?php echo round($params['predictions'][$anime->id], 1); ?></em></p><?php } ?>
     <?php if (isset($params['wilsons'][$anime->id])) { ?><p><em>Wilson score: <?php echo round($params['wilsons'][$anime->id], 1); ?></em></p><?php } ?>
+    <?php echo $params['dismiss-url'] ? "<div class='recommendationMenu hidden'><a data-url='".$params['dismiss-url']."?anime_id=".intval($anime->id)."'>Dismiss</a></div>" : ""; ?>
 <?php
       } catch (DbException $e) {
         $this->app->log_exception($e);
