@@ -45,7 +45,6 @@ abstract class BaseEntry extends BaseObject {
     ]
   ];
 
-
   public static $ENTRY_TYPE, $TYPE_ID, $PART_NAME = "";
 
   // this is the parent object to which the entry belongs.
@@ -155,7 +154,6 @@ abstract class BaseEntry extends BaseObject {
     }
     parent::delete();
   }
-
   public function create_or_update(array $entry, array $whereConditions=Null) {
     /*
       Creates or updates an existing list entry for the current user.
@@ -195,6 +193,64 @@ abstract class BaseEntry extends BaseObject {
     return $returnValue;
   }
 
+  public function statusSince() {
+    /*
+      Returns the time of the earliest entry that set the status to the status of the current entry, for the current entry's user and anime.
+      Only scans the subset of entries surrounding this one that have this status set.
+      e.g. if the statuses are:
+      <--- earlier                                    recent ----->
+      1111111122222222222222222244444444444444222222222222222222222
+      and you call statusSince on -------------------^ this one
+      you'll get the time of -----------------^ this one.
+              ^----------------^
+      returned time          statusSince() called
+    */
+
+    // get the latest entry that a) had a different status and b) happened before this one
+    try {
+      $minTime = $this->app->dbConn->table(static::$TABLE)
+        ->fields('MAX('.static::$FIELDS['time']['db'].') AS '.static::$FIELDS['time']['db'])
+        ->where([
+                [static::$FIELDS['time']['db'].' <=  ?', $this->time->format('Y-m-d H:i:s')],
+                [static::$FIELDS['status']['db'].' != ?', intval($this->status)]
+                ])
+        ->firstValue();
+      $minTime = new \DateTime($minTime, $this->app->serverTimeZone);
+    } catch (NoDatabaseRowsRetrievedException $e) {
+      // there are no other statuses prior to this.
+      $minTime = Null;
+    }
+
+    // get the earliest entry that a) has the current status and b) happened after minTime
+    $startTime = $this->app->dbConn->table(static::$TABLE)
+      ->fields('MIN('.static::$FIELDS['time']['db'].') AS '.static::$FIELDS['time']['db'])
+      ->where([
+              [static::$FIELDS['time']['db'].' >=  ?', $minTime->format('Y-m-d H:i:s')],
+              [static::$FIELDS['status']['db'].' = ?', intval($this->status)]
+              ])
+      ->firstValue();
+    $startTime = new \DateTime($startTime, $this->app->serverTimeZone);
+
+    /*
+    $sinceQuery = $this->app->dbConn->query("SELECT list_table.".static::$TYPE_ID.", list_table.time FROM ".static::$TABLE." list_table
+      LEFT OUTER JOIN ".static::$TABLE." list_table2 ON list_table.".static::$FIELDS['userId']['db']." = list_table2.".static::$FIELDS['userId']['db']."
+        AND list_table.".static::$TYPE_ID." = list_table2.".static::$TYPE_ID."
+        AND list_table.".static::$FIELDS['time']['db']." < list_table2.".static::$FIELDS['time']['db']."
+        AND list_table2.".static::$FIELDS['status']['db']." != :status
+      WHERE list_table.".static::$FIELDS['userId']['db']." = ".intval($this->id)."
+      AND list_table.".static::$TYPE_ID." = :anime_id
+      AND list_table.".static::$FIELDS['status']['db']." = :status
+      AND list_table2.".static::$FIELDS['time']['db']." IS NULL
+      ORDER BY ".static::$TYPE_ID." ASC;",
+      [':anime_id' => $this->]);
+    $startedAnime = [];
+    while ($row = $sinceQuery->fetch()) {
+      $startedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
+    }
+    */
+    return $startTime;
+  }
+  
   // all feed entry classes must implement a way to format said feed entries into markup.
   abstract public function formatFeedEntry();
 
