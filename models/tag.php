@@ -352,8 +352,32 @@ class Tag extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
+        $resultsPerPage = 25;
         $title = "Tag: ".escape_output($this->name);
-        $output = $this->view('show', ['recsEngine' => $this->app->recsEngine]);
+        if ($this->app->user->loggedIn()) {
+          try {
+            $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
+          } catch (CurlException $e) {
+            $this->app->log_exception($e);
+            $predictedRatings = False;
+          }
+          if (is_array($predictedRatings)) {
+            arsort($predictedRatings);
+          } else {
+            $predictedRatings = $this->anime;
+          }    
+          $predictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True);
+          $group = new AnimeGroup($this->app, array_keys($predictions));
+        } else {
+          $group = new AnimeGroup($this->app, array_keys(array_slice($this->anime, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
+          $predictions = [];
+        }
+        $output = $this->view('show', [
+          'object' => Anime::Get($this->app),
+          'group' => $group,
+          'predictions' => $predictions,
+          'perPage' => $resultsPerPage
+        ]);
         break;
       case 'delete':
         if ($this->id == 0) {

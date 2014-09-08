@@ -2,40 +2,23 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
-  $resultsPerPage = 24;
-  $firstAnime = Anime::Get($this->app);
+  $params['object'] = isset($params['object']) ? $params['object'] : Null;
+  $params['group'] = isset($params['group']) ? $params['group'] : [];
+  $params['predictions'] = isset($params['predictions']) ? $params['predictions'] : [];
+  $params['perPage'] = isset($params['perPage']) ? $params['perPage'] : 25;
 
-  if ($this->app->user->loggedIn()) {
-    try {
-      $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
-    } catch (CurlException $e) {
-      $this->app->log_exception($e);
-      $predictedRatings = False;
-    }
-    if (is_array($predictedRatings)) {
-      arsort($predictedRatings);
-    } else {
-      $predictedRatings = $this->anime;
-    }    
-    $animePredictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True);
-    $animeGroup = new AnimeGroup($this->app, array_keys($animePredictions));
-  } else {
-    $animeGroup = new AnimeGroup($this->app, array_keys(array_slice($this->anime, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
-    $animePredictions = [];
-  }
-
-  $animePages = ceil(count($predictedRatings)/$resultsPerPage);
+  $pages = ceil(count($params['group'])/$params['perPage']);
 ?>
 <h1><?php echo $this->link('show', ($this->type->id != 1 ? $this->type->name.":" : "").$this->name).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
 <?php echo $this->description ? "<p class='lead'>".escape_output($this->description)."</p>" : "" ?>
 <div class='row'>
   <div class='col-md-2'>
     <h2>Tags:</h2>
-    <?php echo $animeGroup->view('tagList', ['numAnime' => 20]); ?>
+    <?php echo $params['group']->view('tagList', ['numAnime' => 20]); ?>
   </div>
   <div class='col-md-10'>
-    <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $animePages); ?>
-    <?php echo $firstAnime->view('grid', ['anime' => $animeGroup, 'predictions' => $animePredictions]); ?>
-    <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $animePages); ?>
+    <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $pages); ?>
+    <?php echo $params['object']->view('grid', ['group' => $params['group'], 'predictions' => $params['predictions']]); ?>
+    <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $pages); ?>
   </div>
 </div>

@@ -25,7 +25,7 @@
 <?php echo $params['numPages'] > 1 ? paginate($firstAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>
 
 <div class='row'>
-  <?php echo $this->view('grid', ['anime' => $animeGroup, 'wilsons' => $params['wilsons'], 'aliases' => $params['aliases']]); ?>
+  <?php echo $this->view('grid', ['group' => $animeGroup, 'wilsons' => $params['wilsons'], 'aliases' => $params['aliases']]); ?>
 </div>
 
 <?php echo $params['numPages'] > 1 ? paginate($firstAnime->url("index", Null, $paginationArray), intval($this->app->page), $params['numPages']) : ""; ?>

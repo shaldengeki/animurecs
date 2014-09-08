@@ -37,7 +37,7 @@
   } else {
     echo paginate($this->url('recommendations', Null, ['page' => '']), $page, Null, '#recommendation-content');
     echo $firstAnime->view('grid', [
-      'anime' => $animeGroup, 
+      'group' => $animeGroup, 
       'predictions' => $predictions, 
       'dismiss-url' => $this->url('dismiss_recommendation')
     ]);
