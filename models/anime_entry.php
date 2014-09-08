@@ -28,6 +28,10 @@ class AnimeEntry extends BaseEntry {
       'type' => 'float',
       'db' => 'score'
     ],
+    'predictedScore' => [
+      'type' => 'float',
+      'db' => 'predicted_score'
+    ],
     'episode' => [
       'type' => 'int',
       'db' => 'episode'
@@ -71,6 +75,45 @@ class AnimeEntry extends BaseEntry {
       $this->episode = 0;
     }
   }
+  public function validate(array $entry) {
+    // validates a pending base_entry creation or update.
+    $validationErrors = [];
+
+    try {
+      parent::validate($entry);
+    } catch (ValidationException $e) {
+      $validationErrors = array_merge($validationErrors, $e->messages);
+    }
+
+    if (!isset($entry['anime_id']) || !is_integral($entry['anime_id']) || intval($entry['anime_id']) < 1) {
+      $validationErrors[] = "Anime ID must be valid";
+    }
+
+    if (isset($entry['predicted_score']) && (!is_numeric($entry['predicted_score']) || round(floatval($entry['predicted_score']), 2) < 0 || round(floatval($entry['predicted_score']), 2) > 10)) {
+      $validationErrors[] = "Predicted score must be numeric and between 0 and 10";
+    }
+
+    if (!isset($entry['episode']) || !is_integral($entry['episode']) || intval($entry['episode']) < 0) {
+      $validationErrors[] = "Episode must be valid";
+    }
+
+    if ($validationErrors) {
+      throw new ValidationException($this->app, $entry, $validationErrors);
+    }
+    return True;
+  }
+
+  public function create_or_update(array $entry, array $whereConditions=Null) {
+    // if this is an insertion, insert the currently-predicted score.
+    if ($this->id === 0) {
+      $user = User::FindById($this->app, (int) $entry['user_id']);
+      $anime = Anime::FindById($this->app, (int) $entry['anime_id']);
+      $entry['predicted_score'] = round($this->app->recsEngine->predict($user, $anime)[$anime->id], 2);
+    }
+    $this->validate($entry);
+    return parent::create_or_update($entry, $whereConditions);
+  }
+
   public function animeList() {
     return $this->user->animeList();
   }

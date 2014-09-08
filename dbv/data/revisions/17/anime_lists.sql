@@ -1,0 +1,1 @@
+ALTER TABLE anime_lists ADD `predicted_score` DECIMAL(4, 2) UNSIGNED NOT NULL DEFAULT '0.00' AFTER `score`;
