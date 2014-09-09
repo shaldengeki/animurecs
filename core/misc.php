@@ -32,7 +32,7 @@ function array_mean(array $array) {
   if ($count === 0) {
     return False;
   }
-  return float($sum) / $count;
+  return floatval($sum) / $count;
 }
 function array_variance(array $array, $sample=False) {
   $mean = array_mean($array);
@@ -64,12 +64,12 @@ function array_statistics(array $array, $sample=False) {
     $variance += pow($i - $mean, 2);
     $length++;
   }
-  $variance /= ($sample ? $length - 1) : $length;
+  $variance /= ($sample ? $length - 1 : $length);
   return [
     'length' => $length,
     'mean' => $mean,
     'variance' => $variance,
-    'standard_deviation' => sqrt($variance);
+    'standard_deviation' => sqrt($variance)
   ];
 }
 function correlation($arr1, $arr2) {

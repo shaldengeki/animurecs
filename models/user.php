@@ -1229,11 +1229,11 @@ class User extends BaseObject {
               $sum += $rating;
               $length++;
             }
-            $mean = float($sum) / $length;
+            $mean = floatval($sum) / $length;
             $tagMeans[] = $mean;
-            $tags[$typeID][$tag->id]['rating_sum'] = $sum;
-            $tags[$typeID][$tag->id]['rating_count'] = $length;
-            $tags[$typeID][$tag->id]['rating_mean'] = $mean;
+            $tags[$typeID][$tag['tag']->id]['rating_sum'] = $sum;
+            $tags[$typeID][$tag['tag']->id]['rating_count'] = $length;
+            $tags[$typeID][$tag['tag']->id]['rating_mean'] = $mean;
           }
         }
         $tagMeansStats = array_statistics($tagMeans);
@@ -1243,21 +1243,21 @@ class User extends BaseObject {
           if ($a['rating'] === $b['rating']) {
             return 0;
           }
-          return ($a['rating'] < $b['rating']) ? -1 : 1;
-        }
+          return ($a['rating'] < $b['rating']) ? 1 : -1;
+        };
 
         $favoriteTags = [];
         foreach ($tags as $typeID => $typeTags) {
           $flatTags = [];
           $numTags = 0;
           foreach ($typeTags as $tag) {
-            $flatTags[] = ['tag' => $tag, 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
+            $flatTags[] = ['tag' => $tag['tag'], 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
             $numTags++;
           }
-          $sortedTags = usort($flatTags, $sortFunction);
+          usort($flatTags, $sortFunction);
           $favoriteTags[$typeID] = [
-            'liked' => array_slice($sortedTags, 0, $numTags >= 10 ? 10 : floor($numTags/2), True),
-            'hated' => array_slice($sortedTags, $numTags >= 10 ? -10 : -1 * floor($numTags/2), Null, True)
+            'liked' => array_slice($flatTags, 0, $numTags >= 10 ? 10 : floor($numTags/2), True),
+            'hated' => array_slice($flatTags, $numTags >= 10 ? -10 : -1 * floor($numTags/2), Null, True)
           ];
         }
 
