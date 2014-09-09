@@ -548,9 +548,10 @@ class Anime extends BaseObject {
           }
         }
 
+        $entries = array_sort_by_method($this->entries(Null, Null, 50)->load('comments')->entries(), 'time', [], 'desc');
         $output = $this->view("show", [
           'tagCounts' => $tagCounts,
-          'entries' => $this->entries(Null, Null, 50),
+          'entries' => $entries,
           'numEntries' => 50,
           'feedURL' => $this->url('feed'),
           'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>",

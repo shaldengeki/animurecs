@@ -1239,12 +1239,19 @@ class User extends BaseObject {
         $tagMeansStats = array_statistics($tagMeans);
         $priorWeight = $userRatingVariance / $tagMeansStats['variance'];
 
-        $sortFunction = function($a, $b) {
+        $sortDescFunction = function($a, $b) {
           if ($a['rating'] === $b['rating']) {
             return 0;
           }
           return ($a['rating'] < $b['rating']) ? 1 : -1;
         };
+        $sortAscFunction = function($a, $b) {
+          if ($a['rating'] === $b['rating']) {
+            return 0;
+          }
+          return ($a['rating'] < $b['rating']) ? -1 : 1;
+        };
+
 
         $favoriteTags = [];
         foreach ($tags as $typeID => $typeTags) {
@@ -1254,11 +1261,12 @@ class User extends BaseObject {
             $flatTags[] = ['tag' => $tag['tag'], 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
             $numTags++;
           }
-          usort($flatTags, $sortFunction);
+          usort($flatTags, $sortDescFunction);
           $favoriteTags[$typeID] = [
             'liked' => array_slice($flatTags, 0, $numTags >= 10 ? 10 : floor($numTags/2), True),
             'hated' => array_slice($flatTags, $numTags >= 10 ? -10 : -1 * floor($numTags/2), Null, True)
           ];
+          usort($favoriteTags[$typeID]['hated'], $sortAscFunction);
         }
 
         echo $this->view('stats', [
@@ -1296,8 +1304,9 @@ class User extends BaseObject {
       /* feed views */
       case 'globalFeed':
         $title = escape_output("Global Feed");
+        $entries = array_sort_by_method($this->globalFeed()->load('comments')->entries(), 'time', [], 'desc');
         $globalFeedView = [ 'numEntries' => 50,
-          'entries' => $this->globalFeed(),
+          'entries' => $entries,
           'feedURL' => $this->url('globalFeedEntries'),
           'emptyFeedText' => ''
         ];

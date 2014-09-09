@@ -46,7 +46,7 @@ function array_variance(array $array, $sample=False) {
   }
   return $variance / ($sample ? $length - 1 : $length);
 }
-function standard_deviation(array $array, $sample=False) {
+function array_standard_deviation(array $array, $sample=False) {
   $variance = array_variance($array, $sample);
   if ($variance === False) {
     return False;
