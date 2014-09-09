@@ -363,7 +363,7 @@ abstract class BaseObject {
             switch ($thisJoin['type']) {
               case 'habtm':
               case 'many':
-                $this->{$include}[] = $newObj->set($joinRow);
+                $this->{$include}[$newObj->id] = $newObj->set($joinRow);
                 break;
               case 'one':
               default:

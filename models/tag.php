@@ -365,7 +365,7 @@ class Tag extends BaseObject {
             arsort($predictedRatings);
           } else {
             $predictedRatings = $this->anime;
-          }    
+          }
           $predictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$perPage, intval($perPage), True);
           $group = new AnimeGroup($this->app, array_keys($predictions));
         } else {
