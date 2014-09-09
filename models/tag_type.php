@@ -178,8 +178,22 @@ class TagType extends BaseObject {
         break;
       default:
       case 'index':
-        $title = "All Tag Types";
-        $output = $this->view('index');
+        $title = "Tag Types";
+        $perPage = 25;
+
+        if ($this->app->user->isAdmin()) {
+          $pages = ceil(TagType::Count($this->app)/$perPage);
+          $tagTypes = $this->app->dbConn->table(TagType::$TABLE)->fields('id')->order('name')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+        } else {
+          $pages = ceil(TagType::Count($this->app, ['approved_on != ""'])/$perPage);
+          $tagTypes = $this->app->dbConn->table(TagType::$TABLE)->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+        }
+
+        $output = $this->view('index',[
+          'perPage' => $perPage,
+          'pages' => $pages,
+          'tagTypes' => $tagTypes
+        ]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);

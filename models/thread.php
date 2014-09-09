@@ -240,7 +240,7 @@ class Thread extends BaseObject {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
-        $entries = $this->entries($minTime, $maxTime, 50);
+        $entries = array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
         echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         exit;
         break;
@@ -313,14 +313,14 @@ class Thread extends BaseObject {
       default:
       case 'index':
         $title = "Browse Anime";
-        $resultsPerPage = 25;
+        $perPage = 25;
         if (!isset($_REQUEST['search'])) {
           if ($this->app->user->isAdmin()) {
-            $numPages = ceil($this->app->dbConn->table(Anime::$TABLE)->fields('COUNT(*)')->count()/$resultsPerPage);
-            $animeIDs = $this->app->dbConn->table(Anime::$TABLE)->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+            $numPages = ceil($this->app->dbConn->table(Anime::$TABLE)->fields('COUNT(*)')->count()/$perPage);
+            $animeIDs = $this->app->dbConn->table(Anime::$TABLE)->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
           } else {
-            $numPages = ceil($this->app->dbConn->table(Anime::$TABLE)->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$resultsPerPage);
-            $animeIDs = $this->app->dbConn->table(Anime::$TABLE)->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
+            $numPages = ceil($this->app->dbConn->table(Anime::$TABLE)->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$perPage);
+            $animeIDs = $this->app->dbConn->table(Anime::$TABLE)->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
           }
           $anime = [];
           while ($animeID = $animeIDs->fetch()) {
@@ -329,10 +329,10 @@ class Thread extends BaseObject {
         } else {
           $blankAlias = new Alias($this->app, 0, $this);
           $searchResults = $blankAlias->search($_REQUEST['search']);
-          $anime = array_slice($searchResults, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage));
-          $numPages = ceil(count($searchResults)/$resultsPerPage);
+          $anime = array_slice($searchResults, (intval($this->app->page)-1)*$perPage, intval($perPage));
+          $numPages = ceil(count($searchResults)/$perPage);
         }
-        $output = $this->view("index", ['anime' => $anime, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
+        $output = $this->view("index", ['anime' => $anime, 'numPages' => $numPages, 'perPage' => $perPage]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);

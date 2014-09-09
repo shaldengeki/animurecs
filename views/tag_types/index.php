@@ -3,18 +3,14 @@
   $this->app->check_partial_include(__FILE__);
 
   // lists all tags.
-  $resultsPerPage = 25;
+  $params['perPage'] = isset($params['perPage']) ? $params['perPage'] : 25;
+  $params['tagTypes'] = isset($params['tagTypes']) ? $params['tagTypes'] : [];
+  $params['pages'] = isset($params['pages']) ? $params['pages'] : ceil(count($params['tagTypes'])/$params['perPage']);
   $firstTagType = TagType::Get($this->app);
-  if ($this->app->user->isAdmin()) {
-    $tagTypePages = ceil(TagType::Count($this->app)/$resultsPerPage);
-    $tagType = $this->app->dbConn->table(TagType::$TABLE)->fields('id')->order('name')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
-  } else {
-    $tagTypePages = ceil(TagType::Count($this->app, ['approved_on != ""'])/$resultsPerPage);
-    $tagType = $this->app->dbConn->table(TagType::$TABLE)->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$resultsPerPage)->limit($resultsPerPage)->query();
-  }
+
 ?>
-<h1>All Tag Types</h1>
-<?php echo paginate($firstTagType->url("index", Null, ["page" => ""]), intval($this->app->page), $tagTypePages); ?>
+<h1>Tag Types</h1>
+<?php echo paginate($firstTagType->url("index", Null, ["page" => ""]), intval($this->app->page), $params['pages']); ?>
 <table class='table table-striped table-bordered dataTable'>
   <thead>
     <tr>
@@ -26,7 +22,7 @@
   </thead>
   <tbody>
 <?php
-  while ($thisID = $tagType->fetch()) {
+  while ($thisID = $params['tagTypes']->fetch()) {
     $thisTagType = new TagType($this->app, intval($thisID['id']));
 ?>
     <tr>
@@ -40,5 +36,5 @@
 ?>
   </tbody>
 </table>
-<?php echo paginate($firstTagType->url("index", Null, ["page" => ""]), intval($this->app->page), $tagTypePages); ?>
+<?php echo paginate($firstTagType->url("index", Null, ["page" => ""]), intval($this->app->page), $params['pages']); ?>
 <?php echo $firstTagType->link("new", "Add a tag type"); ?>

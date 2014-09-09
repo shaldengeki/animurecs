@@ -4,7 +4,7 @@
   $firstAnime = Anime::Get($this->app);
 
   $params['anime'] = isset($params['anime']) ? $params['anime'] : [];
-  $params['numPerPage'] = isset($params['numPerPage']) ? intval($params['numPerPage']) : 8;
+  $params['perPage'] = isset($params['perPage']) ? intval($params['perPage']) : 8;
   $params['page'] = isset($params['page']) && intval($params['page']) > 0 ? intval($params['page']) : 1;
 ?>
 
@@ -12,7 +12,7 @@
   <?php echo paginate($this->url('related', Null, ['page' => '']), $params['page'], Null, '#related-content'); ?>
   <?php 
     if ($params['anime']->length() > 0) {
-      echo $firstAnime->view('grid', ['anime' => $params['anime']]); 
+      echo $firstAnime->view('grid', ['group' => $params['group']]); 
     } else {
       echo "<p class='center-horizontal'>No related anime could be found. Maybe there aren't enough ratings yet?</p>";
     }

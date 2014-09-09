@@ -14,11 +14,11 @@
 <div class='row'>
   <div class='col-md-2'>
     <h2>Tags:</h2>
-    <?php echo $params['group']->view('tagList', ['numAnime' => 20]); ?>
+    <?php echo $params['group']->view('tagList', $params); ?>
   </div>
   <div class='col-md-10'>
     <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $pages); ?>
-    <?php echo $params['object']->view('grid', ['group' => $params['group'], 'predictions' => $params['predictions']]); ?>
+    <?php echo $params['object']->view('grid', $params); ?>
     <?php echo paginate($this->url("show", Null, ["page" => ""]), intval($this->app->page), $pages); ?>
   </div>
 </div>

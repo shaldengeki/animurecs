@@ -4,14 +4,8 @@
 
   $params['chartDivID'] = isset($params['chartDivID']) ? $params['chartDivID'] : "averageRatingChart_div";
   $params['intervals'] = (intval($params['intervals']) > 0) ? intval($params['intervals']) : 12;
-
-  // first, get time range of this anime's ratings.
-  $times = $this->app->dbConn->table(AnimeList::$TABLE)->fields("UNIX_TIMESTAMP(MIN(time)) AS start", "UNIX_TIMESTAMP(MAX(time)) AS end")->where(['anime_id' => $this->id, 'score != 0', 'status != 0'])->firstRow();
-  if ($startTime === False) {
-    exit;
-  }
-  $startTime = intval($times['start']);
-  $endTime = intval($times['end']);
+  $params['start'] = isset($params['start']) ? $params['start'] : 0;
+  $params['end'] = isset($params['end']) ? $params['end'] : time();
 
   echo $this->app->view('ratingTimeline', [
     'id' => $this->id,
@@ -19,7 +13,7 @@
     'uniqueIDField' => 'user_id',
     'chartDivID' => $params['chartDivID'],
     'intervals' => $params['intervals'],
-    'start' => $startTime,
-    'end' => $endTime
+    'start' => $params['start'],
+    'end' => $params['end']
   ]);
 ?>

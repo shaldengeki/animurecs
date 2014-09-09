@@ -12,14 +12,14 @@
 </div>
 <div class='row'>
   <div class='col-md-12'>
-    <?php echo $this->view('favouriteTags'); ?>
+    <?php echo $this->view('favouriteTags', $params); ?>
   </div>
 </div>
 <div class='row'>
   <div class='col-md-6'>
-    <?php echo $this->view('animeCompletionTimeline'); ?>
+    <?php echo $this->view('animeCompletionTimeline', $params); ?>
   </div>
   <div class='col-md-6'>
-    <?php echo $this->view('averageRatingTimeline'); ?>
+    <?php echo $this->view('averageRatingTimeline', $params); ?>
   </div>
 </div>

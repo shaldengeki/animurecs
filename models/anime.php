@@ -471,7 +471,7 @@ class Anime extends BaseObject {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
-        $entries = $this->entries($minTime, $maxTime, 50);
+        $entries = array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
         echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         exit;
         break;
@@ -487,17 +487,28 @@ class Anime extends BaseObject {
         break;
       case 'related':
         $page = isset($_REQUEST['page']) && is_numeric($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
-        $numPerPage = 10;
+        $perPage = 10;
         try {
-          $anime = $this->similar(($page - 1) * $numPerPage, $numPerPage);
-          echo $this->view('related', ['page' => $page, 'numPerPage' => $numPerPage, 'anime' => $anime]);
+          $anime = $this->similar(($page - 1) * $perPage, $perPage);
+          echo $this->view('related', ['page' => $page, 'perPage' => $perPage, 'anime' => $anime]);
         } catch (CurlException $e) {
           echo "We ran into an error while fetching anime similar to this one. Please try again later!";
         }
         exit;
         break;
       case 'stats':
-        echo $this->view('stats');
+        $times = $this->app->dbConn->table(AnimeList::$TABLE)
+          ->fields("UNIX_TIMESTAMP(MIN(time)) AS start", "UNIX_TIMESTAMP(MAX(time)) AS end")
+          ->where([
+            'anime_id' => $this->id,
+            'score != 0',
+            'status != 0'
+          ])
+          ->firstRow();
+        echo $this->view('stats', [
+          'start' => $times['start'],
+          'end' => $times['end']
+        ]);
         exit;
         break;
       case 'new':
@@ -525,12 +536,25 @@ class Anime extends BaseObject {
           ];
         }
 
+        // order the tags in this animeGroup's tags by tagType id
+        $tagTypes = TagType::GetList($this->app);
+
+        $tagsByType = [];
+        foreach ($this->tags as $tag) {
+          if (!isset($tagsByType[$tag->type->id])) {
+            $tagsByType[$tag->type->id] = [$tag];
+          } else {
+            $tagsByType[$tag->type->id][] = $tag;
+          }
+        }
+
         $output = $this->view("show", [
           'tagCounts' => $tagCounts,
           'entries' => $this->entries(Null, Null, 50),
           'numEntries' => 50,
           'feedURL' => $this->url('feed'),
-          'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"
+          'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>",
+          'tagsByType' => $tagsByType
         ]);
         break;
       case 'delete':
@@ -552,11 +576,11 @@ class Anime extends BaseObject {
         break;
       default:
       case 'index':
-        $resultsPerPage = 24;
+        $perPage = 25;
         if (!isset($_REQUEST['search'])) {
           // top anime listing.
           $title = "Top Anime";
-          $numPages = ceil(Anime::Count($this->app)/$resultsPerPage);
+          $numPages = ceil(Anime::Count($this->app)/$perPage);
           $this->app->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) p')
             ->fields('anime_lists.anime_id', 'AVG(score) AS avg', 'STDDEV(score) AS stddev', 'COUNT(*) AS count', '((((AVG(score)-1)/9) + ( POW(STDDEV(score), 2) / (2.0 * COUNT(*)) ) - STDDEV(score) * SQRT( ((AVG(score)-1)/9) * (1.0 - ((AVG(score)-1)/9)) / COUNT(*) + ( POW(STDDEV(score), 2) / ( 4.0 * POW(COUNT(*), 2) ) ) )) / (1.0 + (POW(STDDEV(score), 2) / COUNT(*))) * 9) + 1 AS wilson')
             ->join('anime_lists ON anime_lists.user_id=p.user_id && anime_lists.anime_id=p.anime_id && anime_lists.time=p.time');
@@ -568,8 +592,8 @@ class Anime extends BaseObject {
               ->group('p.anime_id')
               ->having('COUNT(*) > 9')
               ->order('wilson DESC')
-              ->offset(($this->app->page-1)*$resultsPerPage)
-              ->limit($resultsPerPage)
+              ->offset(($this->app->page-1)*$perPage)
+              ->limit($perPage)
               ->query();
           $anime = [];
           $wilsons = [];
@@ -584,15 +608,16 @@ class Anime extends BaseObject {
           $title = "Search for Anime";
           $blankAlias = new Alias($this->app, 0, $this);
           $searchResults = $blankAlias->search($_REQUEST['search']);
-          $anime = array_slice($searchResults, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage));
+          $anime = array_slice($searchResults, (intval($this->app->page)-1)*$perPage, intval($perPage));
           $aliases = [];
           foreach ($anime as $a) {
             $aliases[$a['anime']->id] = $a['alias'];
           }
           $anime = array_map(function($a) { return $a['anime']; }, $anime);
-          $numPages = ceil(count($searchResults)/$resultsPerPage);
+          $numPages = ceil(count($searchResults)/$perPage);
         }
-        $output = $this->view("index", ['title' => $title, 'anime' => $anime, 'aliases' => $aliases, 'wilsons' => $wilsons, 'numPages' => $numPages, 'resultsPerPage' => $resultsPerPage]);
+        $group = new AnimeGroup($this->app, $anime);
+        $output = $this->view("index", ['title' => $title, 'group' => $group, 'aliases' => $aliases, 'wilsons' => $wilsons, 'numPages' => $numPages, 'perPage' => $perPage]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);

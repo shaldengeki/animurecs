@@ -21,7 +21,7 @@
           </ul>
           <div>
             <h2>Tags:</h2>
-            <?php echo $this->view('tagList'); ?>
+            <?php echo $this->view('tagList', $params); ?>
           </div>
         </div>
         <div class='col-md-9 userProfileColumn rightColumn'>

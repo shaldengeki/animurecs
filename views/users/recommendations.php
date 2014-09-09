@@ -2,6 +2,9 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
+  /*
+    TODO: Refactor this logic into the controller.
+  */
   $animePerPage = 20;
   $page = (intval($params['page']) > 0) ? intval($params['page']) : 1;
 

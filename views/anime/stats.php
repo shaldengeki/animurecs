@@ -9,9 +9,9 @@
 </div>
 <div class='row'>
   <div class='col-md-6'>
-    <?php echo $this->view('averageRatingTimeline'); ?>
+    <?php echo $this->view('averageRatingTimeline', $params); ?>
   </div>
   <div class='col-md-6'>
-    <?php echo $this->view('wilsonScoreTimeline'); ?>
+    <?php echo $this->view('wilsonScoreTimeline', $params); ?>
   </div>
 </div>

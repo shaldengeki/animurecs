@@ -23,23 +23,54 @@ function dot(array $a, array $b) {
   return $sum;
 }
 function array_mean(array $array) {
-  if (count($array) == 0) {
+  $sum = 0;
+  $count = 0;
+  foreach ($array as $i) {
+    $sum += $i;
+    $count++;
+  }
+  if ($count === 0) {
     return False;
   }
-  return array_sum($array)/count($array);
+  return float($sum) / $count;
 }
-function standard_deviation(array $array, $sample=False) {
-  $arrayLength = count($array);
-  if ($arrayLength < 1) {
-    return 0;
-  }
+function array_variance(array $array, $sample=False) {
   $mean = array_mean($array);
+  if ($mean === False) {
+    return False;
+  }
+  $length = count($array);
   $variance = 0.0;
   foreach ($array as $i) {
     $variance += pow($i - $mean, 2);
   }
-  $variance /= ($sample ? $arrayLength - 1 : $arrayLength);
+  return $variance / ($sample ? $length - 1 : $length);
+}
+function standard_deviation(array $array, $sample=False) {
+  $variance = array_variance($array, $sample);
+  if ($variance === False) {
+    return False;
+  }
   return (float) sqrt($variance);
+}
+function array_statistics(array $array, $sample=False) {
+  $mean = array_mean($array);
+  if ($mean === False) {
+    return False;
+  }
+  $variance = 0;
+  $length = 0;
+  foreach ($array as $i) {
+    $variance += pow($i - $mean, 2);
+    $length++;
+  }
+  $variance /= ($sample ? $length - 1) : $length;
+  return [
+    'length' => $length,
+    'mean' => $mean,
+    'variance' => $variance,
+    'standard_deviation' => sqrt($variance);
+  ];
 }
 function correlation($arr1, $arr2) {
   //calculates pearson's r.
@@ -48,8 +79,8 @@ function correlation($arr1, $arr2) {
     return FALSE;
   }
   $correlation = 0;
-  $arr1_stddev = standard_deviation($arr1);
-  $arr2_stddev = standard_deviation($arr2);
+  $arr1_stddev = array_standard_deviation($arr1);
+  $arr2_stddev = array_standard_deviation($arr2);
   if ($arr1_stddev == 0 && $arr2_stddev == 0) {
     return 1;
   }
@@ -74,7 +105,7 @@ function wilson_score(array $array, $min=1, $max=10) {
   if ($length < 1) {
     return 0;
   }
-  $stddev = standard_deviation($array);
+  $stddev = array_standard_deviation($array);
 
   $numerator = $scaledMean + ( pow($stddev, 2) / (2 * $length) ) - $stddev * pow($scaledMean * (1 - $scaledMean) / $length + pow($stddev, 2) / (4 * pow($length, 2)) , 0.5);
   $denominator = (1 + pow($stddev, 2) / $length);

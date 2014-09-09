@@ -11,10 +11,9 @@
 
   $params['numEntries'] = (isset($params['numEntries']) && is_numeric($params['numEntries'])) ? intval($params['numEntries']) : 50;
   $params['bunchInterval'] = isset($params['bunchInterval']) ? $params['bunchInterval'] : new DateInterval("P10M");
+  $params['entries'] = isset($params['entries']) ? $params['entries'] : [];
 
   // sort by comment time and grab only the latest numEntries.
-  $params['entries'] = array_sort_by_method($params['entries']->load('comments')->entries(), 'time', [], 'desc');
-  $params['entries'] = array_slice($params['entries'], 0, $params['numEntries']);
   if (!$params['entries']) {
     echo (isset($params['emptyFeedText']) ? $params['emptyFeedText'] : "<blockquote><p>No entries yet. Be the first!</p></blockquote>");
   } else {

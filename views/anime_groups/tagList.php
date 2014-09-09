@@ -6,31 +6,11 @@
 
   // maximal number of tags to display under each category heading.
   $params['numTags'] = isset($params['numTags']) ? intval($params['numTags']) : 20;
-
-  $this->tags()->load('info');
+  $params['tagCounts'] = isset($params['tagCounts']) ? $params['tagCounts'] : [];
+  $params['tagCountsByType'] = isset($params['tagCountsByType']) ? $params['tagCountsByType'] : [];
 
   // order the tags in this animeGroup's tags by tagType id.
   $tagTypes = TagType::GetList($this->app);
-  $tagCounts = [];
-  foreach ($this->tagCounts() as $id=>$countArray) {
-    $tagCounts[$id] = $countArray['count'];
-  }
-
-  $tagsByTagType = [];
-  $tagCountsByType = [];
-
-  foreach ($this->tags() as $tag) {
-    if (!isset($tagCountsByType[$tag->type->id])) {
-      $tagCountsByType[$tag->type->id] = [$tag->id => $tagCounts[$tag->id]];
-    } else {
-      $tagCountsByType[$tag->type->id][$tag->id] = $tagCounts[$tag->id];
-    }
-  }
-
-  // go back and sort by count.
-  foreach ($tagCountsByType as $tagTypeID => $tags) {
-    arsort($tagCountsByType[$tagTypeID]);
-  }
 ?>
 <ul class='tagList'>
 <?php
@@ -40,7 +20,7 @@
   <li class='tagType-heading'><?php echo escape_output($tagType->name).":"; ?></li>
   <li>
 <?php
-    if (!isset($tagCountsByType[$tagType->id])) {
+    if (!isset($params['tagCountsByType'][$tagType->id])) {
 ?>
     <em>No tags under this category.</em>
 <?php
@@ -49,7 +29,7 @@
 ?>
     <ul class='tagTypeTags'>
 <?php
-    foreach ($tagCountsByType[$tagType->id] as $tagID => $count) {
+    foreach ($params['tagCountsByType'][$tagType->id] as $tagID => $count) {
 ?>
       <li><?php echo $this->tags()[$tagID]->link("show", $this->tags()[$tagID]->name)." ".intval($count); ?></li>
 <?php

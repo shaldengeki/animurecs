@@ -1070,7 +1070,8 @@ class User extends BaseObject {
           $this->app->display_error(404);
         }
         $title = escape_output($this->username)."'s Profile";
-        $output = $this->view("show");
+        $entries = array_sort_by_method($this->profileFeed()->load('comments')->entries(), 'time', [], 'desc');
+        $output = $this->view("show", ['entries' => $entries]);
         break;
       case 'feed':
         $output = "";
@@ -1093,7 +1094,8 @@ class User extends BaseObject {
         }
         $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime']) , $this->app->serverTimeZone) : Null;
-        $output .= $this->view('feed', ['entries' => $this->profileFeed($minTime, $maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
+        $entries = array_sort_by_method($this->profileFeed($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
+        $output .= $this->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
         echo $output;
         exit;
       case 'anime_list':
@@ -1189,7 +1191,81 @@ class User extends BaseObject {
         echo json_encode($latestEntry);
         exit;
       case 'stats':
-        echo $this->view('stats');
+        // first, get time range of this user's anime ratings.
+        $interval = $this->app->dbConn->table(AnimeList::$TABLE)
+          ->fields("UNIX_TIMESTAMP(MIN(time)) AS start", "UNIX_TIMESTAMP(MAX(time)) AS end")
+          ->where(['user_id' => $this->id])
+          ->firstRow();
+
+        // get list of user's favourite tags, ordered by regularized average
+        // regularize by mean tag mean, weighted by mean number of ratings per tag.
+        $tags = [];
+        $tagRatings = [];
+
+        foreach ($this->animeList()->uniqueList() as $entry) {
+          if (round(floatval($entry['score']), 2) != 0) {
+            foreach ($entry['anime']->tags as $tag) {
+              if (!isset($tags[$tag->type->id])) {
+                $tags[$tag->type->id] = [];
+              }
+              $rating = round(floatval($entry['score']), 2);
+              $tagRatings[] = $rating;
+              if (isset($tags[$tag->type->id][$tag->id])) {
+                $tags[$tag->type->id][$tag->id]['ratings'][] = $rating;
+              } else {
+                $tags[$tag->type->id][$tag->id] = ['tag' => $tag, 'ratings' => [$rating]];
+              }
+            }
+          }
+        }
+
+        $userRatingVariance = array_variance($tagRatings);
+        $tagMeans = [];
+        foreach ($tags as $typeID => $typeTags) {
+          foreach ($typeTags as $tag) {
+            $sum = 0;
+            $length = 0;
+            foreach ($tag['ratings'] as $rating) {
+              $sum += $rating;
+              $length++;
+            }
+            $mean = float($sum) / $length;
+            $tagMeans[] = $mean;
+            $tags[$typeID][$tag->id]['rating_sum'] = $sum;
+            $tags[$typeID][$tag->id]['rating_count'] = $length;
+            $tags[$typeID][$tag->id]['rating_mean'] = $mean;
+          }
+        }
+        $tagMeansStats = array_statistics($tagMeans);
+        $priorWeight = $userRatingVariance / $tagMeansStats['variance'];
+
+        $sortFunction = function($a, $b) {
+          if ($a['rating'] === $b['rating']) {
+            return 0;
+          }
+          return ($a['rating'] < $b['rating']) ? -1 : 1;
+        }
+
+        $favoriteTags = [];
+        foreach ($tags as $typeID => $typeTags) {
+          $flatTags = [];
+          $numTags = 0;
+          foreach ($typeTags as $tag) {
+            $flatTags[] = ['tag' => $tag, 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
+            $numTags++;
+          }
+          $sortedTags = usort($flatTags, $sortFunction);
+          $favoriteTags[$typeID] = [
+            'liked' => array_slice($sortedTags, 0, $numTags >= 10 ? 10 : floor($numTags/2), True),
+            'hated' => array_slice($sortedTags, $numTags >= 10 ? -10 : -1 * floor($numTags/2), Null, True)
+          ];
+        }
+
+        echo $this->view('stats', [
+          'start' => $interval['start'],
+          'end' => $interval['end'],
+          'favoriteTags' => $favoriteTags
+        ]);
         exit;
       case 'friends':
         echo $this->view('friends');
@@ -1244,7 +1320,8 @@ class User extends BaseObject {
         } else {
           $minTime = Null;
         }
-        $output .= $this->view('feed', ['entries' => $this->globalFeed($minTime, $maxTime, 50), 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => '']);
+        $entries = array_sort_by_method($this->globalFeed($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
+        $output .= $this->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => '']);
         echo $output;
         exit;
 

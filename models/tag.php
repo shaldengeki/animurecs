@@ -352,7 +352,7 @@ class Tag extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404);
         }
-        $resultsPerPage = 25;
+        $perPage = 25;
         $title = "Tag: ".escape_output($this->name);
         if ($this->app->user->loggedIn()) {
           try {
@@ -366,17 +366,40 @@ class Tag extends BaseObject {
           } else {
             $predictedRatings = $this->anime;
           }    
-          $predictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True);
+          $predictions = array_slice($predictedRatings, (intval($this->app->page)-1)*$perPage, intval($perPage), True);
           $group = new AnimeGroup($this->app, array_keys($predictions));
         } else {
-          $group = new AnimeGroup($this->app, array_keys(array_slice($this->anime, (intval($this->app->page)-1)*$resultsPerPage, intval($resultsPerPage), True)));
+          $group = new AnimeGroup($this->app, array_keys(array_slice($this->anime, (intval($this->app->page)-1)*$perPage, intval($perPage), True)));
           $predictions = [];
         }
+
+        $group->tags()->load('info');
+        $tagCounts = [];
+        foreach ($group->tagCounts() as $id=>$countArray) {
+          $tagCounts[$id] = $countArray['count'];
+        }
+
+        $tagCountsByType = [];
+        foreach ($group->tags() as $tag) {
+          if (!isset($tagCountsByType[$tag->type->id])) {
+            $tagCountsByType[$tag->type->id] = [$tag->id => $tagCounts[$tag->id]];
+          } else {
+            $tagCountsByType[$tag->type->id][$tag->id] = $tagCounts[$tag->id];
+          }
+        }
+
+        // go back and sort by count.
+        foreach ($tagCountsByType as $tagTypeID => $tags) {
+          arsort($tagCountsByType[$tagTypeID]);
+        }
+
         $output = $this->view('show', [
           'object' => Anime::Get($this->app),
           'group' => $group,
           'predictions' => $predictions,
-          'perPage' => $resultsPerPage
+          'perPage' => $perPage,
+          'tagCounts' => $tagCounts,
+          'tagCountsByType' => $tagCountsByType
         ]);
         break;
       case 'delete':
@@ -398,8 +421,22 @@ class Tag extends BaseObject {
         break;
       default:
       case 'index':
-        $title = "All Tags";
-        $output = $this->view('index');
+        $title = "Tags";
+
+        $perPage = 25;
+        if ($this->app->user->isAdmin()) {
+          $pages = ceil(Tag::Count($this->app)/$perPage);
+          $tags = $this->app->dbConn->table(Tag::$TABLE)->fields('id')->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+        } else {
+          $pages = ceil(Tag::Count($this->app, ['approved_on != ""'])/$perPage);
+          $tags = $this->app->dbConn->table(Tag::$TABLE)->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+        }
+
+        $output = $this->view('index',[
+          'perPage' => $perPage,
+          'pages' => $pages,
+          'tags' => $tags
+        ]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);

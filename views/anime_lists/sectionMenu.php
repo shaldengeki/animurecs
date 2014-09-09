@@ -3,12 +3,12 @@
   $this->app->check_partial_include(__FILE__);
 
   $flippedStatuses = array_flip(statusArray());
-  $sections = array_flip(isset($params['sections']) ? $params['sections'] : array_filter($flippedStatuses, function ($a) {
+  $params['sections'] = array_flip(isset($params['sections']) ? $params['sections'] : array_filter($flippedStatuses, function ($a) {
     return $a != 0;
   }));
 
-  $statuses = array_filter($flippedStatuses, function ($a) use ($sections) {
-    return isset($sections[$a]);
+  $statuses = array_filter($flippedStatuses, function ($a) use ($params['sections']) {
+    return isset($params['sections'][$a]);
   });
 ?>
 <ul id="sectionMenu" class="nav nav-pills">

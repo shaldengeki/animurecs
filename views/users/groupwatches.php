@@ -2,6 +2,9 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
 
+  /*
+    TODO: refactor this logic into the controller.
+  */
   // get list of anime that this user and at least one other friend have on their list in the same category.
   $groupwatchCategories = [1, 6];
   $groupwatches = [];

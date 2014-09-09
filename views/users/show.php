@@ -2,6 +2,7 @@
   require_once($_SERVER['DOCUMENT_ROOT']."/../includes.php");
   $this->app->check_partial_include(__FILE__);
   $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
+  $params['entries'] = isset($params['entries']) ? $params['entries'] : [];
 ?>
      <div class='row'>
         <div class='col-md-3 userProfileColumn leftColumn'>
@@ -26,6 +27,9 @@ if ($this->avatarPath() != '') {
             <h3>Friends<?php echo $this->friends() ? " (".count($this->friends()).") " : ""; ?></h3>
             <ul class='friendGrid'>
 <?php
+  /*
+    TODO: refactor this logic into the controller.
+  */
   $friendSlice = $this->friends();
   shuffle($friendSlice);
   $friendSlice = array_slice($friendSlice, 0, 4);
@@ -116,7 +120,7 @@ if ($this->avatarPath() != '') {
 <?php
   }
 ?>
-                <?php echo $this->view('feed', ['entries' => $this->profileFeed(), 'numEntries' => 50, 'feedURL' => $this->url('feed')]); ?>
+                <?php echo $this->view('feed', ['entries' => $params['entries'], 'numEntries' => 50, 'feedURL' => $this->url('feed')]); ?>
               </div>
               <div class='tab-pane' id='anime'>
                 Loading...
