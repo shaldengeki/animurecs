@@ -544,7 +544,7 @@ class User extends BaseObject {
     if (isset($user['last_import'])) {
       $validationErrors[] = "You cannot set the last_import field.";
     }
-    if (isset($user['last_import_failed']) && (!is_integral($user['last_import_failed']) || int($user['last_import_failed']) < 0 || int($user['last_import_failed']) > 1)) {
+    if (isset($user['last_import_failed']) && (!is_integral($user['last_import_failed']) || intval($user['last_import_failed']) < 0 || intval($user['last_import_failed']) > 1)) {
       $validationErrors[] = "The last_import_failed field must be a boolean.";
     }
     if ($validationErrors) {
