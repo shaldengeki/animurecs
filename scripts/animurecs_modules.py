@@ -64,6 +64,8 @@ class Modules(update_daemon.Modules):
         continue
       curr_time = datetime.datetime.now(tz=pytz.timezone(self.daemon.config['timezone'])).strftime('%Y-%m-%d %H:%M:%S')
       for anime in anime_list.list:
+        if anime_list.list[anime]['score'] is None:
+          anime_list.list[anime]['score'] = 0
         entry_insert_queue.queue({
           'user_id': request['id'],
           'anime_id': int(anime.id),
