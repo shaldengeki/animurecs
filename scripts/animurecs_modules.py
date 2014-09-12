@@ -4,6 +4,7 @@
   animurecs_modules - Provides functions for animurecs_bot.
   Author - Shal Dengeki <shaldengeki@gmail.com>
 '''
+import calendar
 import datetime
 import pytz
 
