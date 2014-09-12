@@ -62,7 +62,7 @@ class Modules(update_daemon.Modules):
         self.daemon.log.error("Invalid MAL username provided: " + request['mal_username'] + ". Marking as broken and skipping.")
         broken_ids.append(int(request['id']))
         continue
-      curr_time = datetime.datetime.now(tz=pytz.timezone(bot.config['timezone'])).strftime('%Y-%m-%d %H:%M:%S')
+      curr_time = datetime.datetime.now(tz=pytz.timezone(self.daemon.config['timezone'])).strftime('%Y-%m-%d %H:%M:%S')
       for anime in anime_list.list:
         entry_insert_queue.queue({
           'user_id': request['id'],
@@ -77,7 +77,7 @@ class Modules(update_daemon.Modules):
 
     # update last-import time and broken usernames.
     if requested_ids:
-      self.dbs['animurecs'].table('users').set(last_import=datetime.datetime.now(tz=pytz.timezone(bot.config['timezone'])).strftime('%Y-%m-%d %H:%M:%S')).where(id=requested_ids).update()
+      self.dbs['animurecs'].table('users').set(last_import=datetime.datetime.now(tz=pytz.timezone(self.daemon.config['timezone'])).strftime('%Y-%m-%d %H:%M:%S')).where(id=requested_ids).update()
     if broken_ids:
       self.dbs['animurecs'].table('users').set(last_import_failed=1).where(id=broken_ids).update()
     self.daemon.log.info("Inserted entries for " + str(len(requested_ids)) + " users.")
