@@ -22,6 +22,13 @@ class Modules(update_daemon.Modules):
     self.update_functions = [
                               self.import_mal_profiles
                             ]
+    self.mal_statuses_to_int = {
+      'Currently Watching': 1,
+      'Completed': 2,
+      'On-Hold': 3,
+      'Dropped': 4,
+      'Plan to Watch': 6
+    }
   def import_mal_profiles(self):
     '''
     Processes the MAL profile scraping queue.
@@ -61,7 +68,7 @@ class Modules(update_daemon.Modules):
           'user_id': request['id'],
           'anime_id': int(anime.id),
           'time': curr_time,
-          'status': anime_list.list[anime]['status'],
+          'status': self.mal_statuses_to_int[anime_list.list[anime]['status']],
           'score': anime_list.list[anime]['score'],
           'episode': anime_list.list[anime]['episodes_watched']
         })
