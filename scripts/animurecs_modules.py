@@ -58,7 +58,7 @@ class Modules(update_daemon.Modules):
       for anime in anime_list.list:
         entry_insert_queue.queue({
           'user_id': request['id'],
-          'anime_id': int(anime.id)
+          'anime_id': int(anime.id),
           'time': curr_time,
           'status': anime_list.list[anime]['status'],
           'score': anime_list.list[anime]['score'],
