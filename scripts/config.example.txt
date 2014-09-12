@@ -1,6 +1,17 @@
 # Number of seconds between loops.
 loop_interval = 1
 
+# server timezone, for pytz
+timezone = Your/Timezone
+
+# absolute path to the scripts/ directory.
+path        = /path/to/scripts
+
+# recommendation engine location.
+[RECS]
+host      = animurecs.com
+port      = port
+
 [LOG]
 min_level = DEBUG
 

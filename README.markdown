@@ -9,6 +9,7 @@ To get started (after installing the above dependencies), you should do the foll
 2. Modify `global/config.php.example` to work with your setup and rename it to `global/config.php`
 3. Modify `dbv/config.php.sample` with the authentication setup of your choice and rename it to `dbv/config.php`
 4. Open up `dbv/index.php` in your browser and push all the disk schema to your database
+5. Open up `scripts/config.example.txt`, copy it to `scripts/config.txt` and change the parameters to fit your installation
 
 After that, you'll want to set up your webserver. Point your server's document root to the public folder, and then create a rewrite rule to route all requests to index.php inside the public folder. For nginx it'd look like this:
 
