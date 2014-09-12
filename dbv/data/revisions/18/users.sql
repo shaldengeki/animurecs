@@ -1,0 +1,1 @@
+ALTER TABLE  `users` ADD  `last_import_failed` TINYINT(1) UNSIGNED DEFAULT '0' NOT NULL AFTER  `last_import`;

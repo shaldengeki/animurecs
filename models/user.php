@@ -61,6 +61,10 @@ class User extends BaseObject {
       'type' => 'date',
       'db' => 'last_import'
     ],
+    'lastImportFailed' => [
+      'type' => 'bool',
+      'db' => 'last_import_failed'
+    ],
     'createdAt' => [
       'type' => 'date',
       'db' => 'created_at'
@@ -536,6 +540,12 @@ class User extends BaseObject {
     }
     if (isset($user['mal_username']) && (strlen(trim($user['mal_username'])) < 4 || strlen(trim($user['mal_username'])) > 20)) {
       $validationErrors[] = "Your MAL username must be between 4 and 20 non-empty characters";
+    }
+    if (isset($user['last_import'])) {
+      $validationErrors[] = "You cannot set the last_import field.";
+    }
+    if (isset($user['last_import_failed']) && (!is_integral($user['last_import_failed']) || int($user['last_import_failed']) < 0 || int($user['last_import_failed']) > 1) {
+      $validationErrors[] = "The last_import_failed field must be a boolean.";
     }
     if ($validationErrors) {
       throw new ValidationException($this->app, $user, $validationErrors);
@@ -1021,7 +1031,10 @@ class User extends BaseObject {
           $this->app->delayedMessage('Please enter a MAL username.');
           $this->app->redirect();
         }
-        $update = $this->create_or_update(['mal_username' => $_POST['users']['mal_username']]);
+        $update = $this->create_or_update([
+          'mal_username' => $_POST['users']['mal_username'],
+          'last_import_failed' => 0
+        ]);
         if (!$update) {
           $this->app->delayedMessage("The MAL username you provided is invalid. Please try again.", "error");
           $this->app->redirect($this->url("edit"));
