@@ -69,6 +69,8 @@ class Modules(update_daemon.Modules):
     entry_insert_queue.flush()
 
     # update last-import time and broken usernames.
-    self.dbs['animurecs'].table('users').set(last_import=datetime.datetime.now(tz=pytz.timezone('Europe/Paris')).strftime('%Y-%m-%d %H:%M:%S')).where(id=requested_ids).update()
-    self.dbs['animurecs'].table('users').set(last_import_failed=1).where(id=broken_ids).update()
+    if requested_ids:
+      self.dbs['animurecs'].table('users').set(last_import=datetime.datetime.now(tz=pytz.timezone('Europe/Paris')).strftime('%Y-%m-%d %H:%M:%S')).where(id=requested_ids).update()
+    if broken_ids:
+      self.dbs['animurecs'].table('users').set(last_import_failed=1).where(id=broken_ids).update()
     self.daemon.log.info("Inserted entries for " + str(len(requested_ids)) + " users.")
