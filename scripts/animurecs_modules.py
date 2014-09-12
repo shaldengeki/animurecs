@@ -33,7 +33,7 @@ class Modules(update_daemon.Modules):
     mal_session = myanimelist.session.Session()
     import_requests = self.dbs['animurecs'].table('users').fields('id', 'mal_username', 'last_import').where('mal_username IS NOT NULL').where('last_import_failed = 0').order('last_import ASC').list()
     entries_to_add = []
-    entry_insert_queue = DbConn.DbInsertQueue('anime_lists', [
+    entry_insert_queue = DbConn.DbInsertQueue(self.dbs['animurecs'], 'anime_lists', [
       'user_id',
       'anime_id',
       'time',
