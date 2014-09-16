@@ -4,7 +4,9 @@
 """
 
 import argparse
+import pytz
 import sys
+import time
 
 import DbConn
 
@@ -53,7 +55,7 @@ if __name__ == '__main__':
       'Plan to Watch': 6
   }
   # loop over every user_id in this range, fetching their lists.
-  for user_id in range(start_id, end_id+1):
+  for user_id in xrange(start_id, end_id+1):
     try:
       username = myanimelist.user.User.find_username_from_user_id(mal_session, user_id)
     except myanimelist.user.InvalidUserError as e:
@@ -66,17 +68,17 @@ if __name__ == '__main__':
           user_list[anime]['score'] = 0
 
         if user_list[anime]['started'] is not None:
-          started = pytz.utc.localize(user_list[anime]['started']).strftime('%Y-%m-%d %H:%M:%S')
+          started = user_list[anime]['started'].strftime('%Y-%m-%d')
         else:
           started = None
 
-        if user_list[anime]['time'] is not None:
-          time = pytz.utc.localize(user_list[anime]['time']).strftime('%Y-%m-%d %H:%M:%S')
+        if user_list[anime]['last_updated'] is not None:
+          entry_time = pytz.utc.localize(user_list[anime]['last_updated']).strftime('%Y-%m-%d %H:%M:%S')
         else:
-          time = None
+          entry_time = None
 
         if user_list[anime]['finished'] is not None:
-          finished = pytz.utc.localize(user_list[anime]['finished']).strftime('%Y-%m-%d %H:%M:%S')
+          finished = user_list[anime]['finished'].strftime('%Y-%m-%d')
         else:
           finished = None
 
@@ -84,12 +86,13 @@ if __name__ == '__main__':
           'user_id': int(user_id),
           'anime_id': int(anime.id),
           'started': started,
-          'time': time,
+          'time': entry_time,
           'finished': finished,
           'status': int(mal_statuses_to_int[user_list[anime]['status']]),
           'score': int(user_list[anime]['score']),
           'episode': int(user_list[anime]['score'])
         })
       print u"Finished with " + username + u". (" + unicode(len(user_list)) + u" entries, " + unicode(user_id) + u"/" + unicode(end_id) + u")"
+    time.sleep(1)
   list_insert_queue.flush()
   print "Done!"
