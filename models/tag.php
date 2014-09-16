@@ -398,8 +398,9 @@ class Tag extends BaseObject {
           'group' => $group,
           'predictions' => $predictions,
           'perPage' => $perPage,
+          'totalObjects' => count($predictedRatings),
           'tagCounts' => $tagCounts,
-          'tagCountsByType' => $tagCountsByType
+          'tagCountsByType' => $tagCountsByType,
         ]);
         break;
       case 'delete':

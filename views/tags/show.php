@@ -5,9 +5,10 @@
   $params['object'] = isset($params['object']) ? $params['object'] : Null;
   $params['group'] = isset($params['group']) ? $params['group'] : [];
   $params['predictions'] = isset($params['predictions']) ? $params['predictions'] : [];
+  $params['totalObjects'] = isset($params['totalObjects']) ? $params['totalObjects'] : 0;
   $params['perPage'] = isset($params['perPage']) ? $params['perPage'] : 25;
 
-  $pages = ceil(count($params['group'])/$params['perPage']);
+  $pages = ceil($params['totalObjects']/$params['perPage']);
 ?>
 <h1><?php echo $this->link('show', ($this->type->id != 1 ? $this->type->name.":" : "").$this->name).($this->allow($this->app->user, "edit") ? " <small>(".$this->link("edit", "edit").")</small>" : ""); ?></h1>
 <?php echo $this->description ? "<p class='lead'>".escape_output($this->description)."</p>" : "" ?>
