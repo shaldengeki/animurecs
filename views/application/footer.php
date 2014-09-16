@@ -21,17 +21,7 @@
   if (Config::DEBUG_ON) {
 ?>
         <div class='row'>
-          <pre><?php echo escape_output(print_r($this->dbConn->queryLog, True)); ?></pre>
-        </div>
-        <div class='row'>
-          <pre>Rendering took <?php echo round((microtime(true) - $this->startRender)*1000, 2); ?>ms</pre>
-        </div>
-        <div class='row'>
-          <pre><?php echo escape_output(print_r($_SESSION, True)); ?></pre>
-          <pre><?php echo escape_output(print_r($_REQUEST, True)); ?></pre>
-          <pre><?php echo escape_output(print_r($_POST, True)); ?></pre>
-          <pre><?php echo escape_output(print_r($this->timingInfo(), True)); ?></pre>
-          <!--<pre><?php //echo escape_output(print_r($GLOBALS, True)); ?></pre>-->
+          <pre><?php echo escape_output(print_r($this->debugOutput, True)); ?></pre>
         </div>
 <?php
   }

@@ -79,8 +79,11 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_classes,$_observers,$messages=[],$timings=[], $_statsdConn;
+  private $_classes,$_observers,$messages,$timings,$debugOutput=[];
+  private $_statsdConn=Null;
+
   protected $totalPoints=Null;
+
   public $achievements=[];
   public $statsd, $logger, $cache, $dbConn, $recsEngine, $mailer, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
