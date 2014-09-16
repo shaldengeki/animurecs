@@ -1,10 +1,10 @@
 <?php
 class Config {
-  const MYSQL_HOST = 'localhost';
-  const MYSQL_PORT = 3306;
-  const MYSQL_USERNAME = 'MYSQL_USERNAME';
-  const MYSQL_PASSWORD = 'MYSQL_PASSWORD';
-  const MYSQL_DATABASE = 'MYSQL_DATABASE';
+  const DB_HOST = 'localhost';
+  const DB_PORT = 3306;
+  const DB_USERNAME = 'DB_USERNAME';
+  const DB_PASSWORD = 'DB_PASSWORD';
+  const DB_NAME = 'DB_DATABASE_NAME';
 
   const MEMCACHED_HOST = 'localhost';
   const MEMCACHED_PORT = 11211;
