@@ -19,6 +19,7 @@ class Config {
   const SMTP_PASSWORD = 'SMTP_PASSWORD';
 
   const APP_ROOT = '/var/www';         // no trailing backslash!
+  const DOMAIN_NAME = 'your.domain.here';
   const ROOT_URL = 'http://your.domain.here';  // no trailing backslashes!
 
   const SERVER_TIMEZONE = 'Your/timezone';
