@@ -1,9 +1,9 @@
 CREATE TABLE `mal_anime_lists` (
   `user_id` int(10) unsigned NOT NULL,
   `anime_id` int(10) unsigned NOT NULL,
-  `started` datetime NOT NULL,
-  `time` datetime NOT NULL,
-  `finished` datetime NOT NULL,
+  `started` datetime NULL,
+  `time` datetime NULL,
+  `finished` datetime NULL,
   `status` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `score` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `episode` smallint(5) unsigned NOT NULL DEFAULT '0',
