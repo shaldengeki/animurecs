@@ -876,28 +876,31 @@ class User extends BaseObject {
     $this->fire('removeAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
     return $this->create_or_update(['points' => $this->points + $achievement->points, 'achievement_mask' => $this->achievementMask - pow(2, $achievement->id - 1)]);
   }
-  public function switchUser($username, $switch_back=True) {
+  public function switchUser($userID, $switch_back=True) {
     /*
-      Switches the current user's session out for another user (provided by $username) in the animurecs db.
-      If $switch_back is True, packs the current session into $_SESSION['switched_user'] before switching.
+      Switches the current user's session out for another user (provided by $userID) in the animurecs db.
+      If $switch_back is True, puts the original userID into $_SESSION['switched_user'] before switching.
       If not, then retrieves the packed session and overrides current session with that info.
       Returns a redirect_to array.
     */
     if ($switch_back) {
       // get user entry in database.
       try {
-        $findUser = User::GetList($this->app, ['username' => $username, ['id != ?', $this->id]]);
-      } catch (DbException $e) {
-        return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to doesn't exist in the database.", 'class' => 'error'];
+        $findUser = User::Get($this->app, ['id' => $userID]);
+      } catch (NoDatabaseRowsRetrievedException $e) {
+        return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to (".$userID.") doesn't exist in the database.", 'class' => 'error'];
       }
-      $newUser = new User($this->app, $findUser->id);
-      $newUser->switchedUser = $_SESSION['id'];
-      $newUser->setCurrentSession();
+      $findUser->switchedUser = $this->app->user->id;
+      $findUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
-      $_SESSION['switched_user'] = $newUser->switchedUser;
-      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched to ".escape_output($newUser->username).".", 'class' => 'success'];
+      $_SESSION['switched_user'] = $findUser->switchedUser;
+      return ["location" => $findUser->url('globalFeed'), "status" => "You've switched to ".escape_output($findUser->username).".", 'class' => 'success'];
     } else {
-      $newUser = new User($this->app, $username);
+      try {
+        $newUser = User::Get($this->app, ['id' => $_SESSION['switched_user']]);
+      } catch (NoDatabaseRowsRetrievedException $e) {
+        return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to (".$_SESSION['switched_user'].") doesn't exist in the database.", 'class' => 'error'];
+      }
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
@@ -960,7 +963,13 @@ class User extends BaseObject {
         break;
       case 'switch_user':
         if (isset($_POST['switch_username'])) {
-          $switchUser = $this->app->user->switchUser($_POST['switch_username']);
+          try {
+            $desiredUser = User::Get($this->app, ['username' => $_POST['switch_username']]);
+          } catch (NoDatabaseRowsRetrievedException $e) {
+            $this->app->delayedMessage("The desired user (".$_POST['switch_username'].") doesn't exist.", 'error');
+            $this->app->redirect();
+          }
+          $switchUser = $this->app->user->switchUser($desiredUser->id);
           $this->app->delayedMessage($switchUser['status'], $switchUser['class']);
           $this->app->redirect($switchUser['location']);
         }
@@ -1265,6 +1274,10 @@ class User extends BaseObject {
           return ($a['rating'] < $b['rating']) ? -1 : 1;
         };
 
+        $this->app->debugOutput['tagMeansStats'] = $tagMeansStats;
+        $this->app->debugOutput['userRatingVariance'] = $userRatingVariance;
+        $this->app->debugOutput['priorWeight'] = $priorWeight;
+        $this->app->debugOutput['flatTags'] = $flatTags;
 
         $favoriteTags = [];
         foreach ($tags as $typeID => $typeTags) {
@@ -1287,6 +1300,7 @@ class User extends BaseObject {
           'end' => $interval['end'],
           'favoriteTags' => $favoriteTags
         ]);
+        echo "<pre>".print_r($this->app->debugOutput, True)."</pre>";
         exit;
       case 'friends':
         echo $this->view('friends');
