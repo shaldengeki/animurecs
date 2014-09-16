@@ -328,7 +328,7 @@ abstract class BaseObject {
       // attempt to retrieve ths object from the cache.
       $cas = "";
       $info = $this->app->cache->get($this->cacheKey(), $foo, $cas);
-      if ($this->app->cache->resultCode() !== Memcached::RES_NOTFOUND) {
+      if ($this->app->cache->resultCode() && $this->app->cache->resultCode() !== Memcached::RES_NOTFOUND) {
         $this->set($info);
         $this->app->dbConn->reset();
         return $this;

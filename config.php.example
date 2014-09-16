@@ -29,6 +29,7 @@ class Config {
   const LOG_FILE = '/var/log/animurecs.log';
 
   // settings for debugging in development environments.
+  const ENVIRONMENT = "production";
   const DEBUG_ON = False;
 
   // avatar maximum width and height, in pixels.
