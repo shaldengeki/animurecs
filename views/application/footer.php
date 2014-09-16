@@ -18,7 +18,7 @@
           <?php echo $adminUser ? "<p>Created and maintained by ".$adminUser->link('show', $adminUser->username).".</p>" : ""; ?>
         </div>
 <?php
-  if (Config::DEBUG_ON) {
+  if (Config::DEBUG_ON && $this->debugOutput) {
 ?>
         <div class='row'>
           <pre><?php echo escape_output(print_r($this->debugOutput, True)); ?></pre>
