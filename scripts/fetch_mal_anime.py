@@ -134,9 +134,9 @@ if __name__ == '__main__':
           large_image_url = anime.picture
         else:
           large_image_url = file_name + "l" + file_extension
-        dest_path = os.path.join(bot.config['path'], "/public/img/anime",str(anime_id), os.path.basename(large_image_url))
+        dest_path = os.path.join(bot.config['path'], "public/img/anime",str(anime_id), os.path.basename(large_image_url))
         if not download_anime_image(large_image_url, dest_path, anime_id, db):
-          dest_path = os.path.join(bot.config['path'], "/public/img/anime",str(anime_id), os.path.basename(anime.picture))
+          dest_path = os.path.join(bot.config['path'], "public/img/anime",str(anime_id), os.path.basename(anime.picture))
           if download_anime_image(anime.picture, dest_path, anime_id, db):
             img_path = unicode(os.path.join("img", "anime", str(anime_id), os.path.basename(dest_path)))
         else:
@@ -196,7 +196,7 @@ if __name__ == '__main__':
 
       episode_length = unicode(anime.duration.total_seconds())
 
-      for tag in anime.tags:
+      for tag in anime.popular_tags:
         tag = tag.name.lower()
         if tag not in TAGS:
           insert_tag = db.table('tags').set(name=tag.encode('utf-8'), description='', tag_type_id=int(TAG_TYPES['general']), created_user_id=1, created_at=curr_time_stamp, updated_at=curr_time_stamp).insert(ignore=True)
