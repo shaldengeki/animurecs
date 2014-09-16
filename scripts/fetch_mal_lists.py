@@ -15,6 +15,20 @@ import myanimelist.user
 import animurecs_bot
 import animurecs_modules
 
+def zero_pad(number, length):
+  """Returns string of the input number, zero-padded to total length length.
+  """
+  return ("0"*(length - len(unicode(number)))) + unicode(number)
+
+def mysql_date(dt):
+  """Returns a mysql date-formatted string for the given datetime object.
+  """
+  return "-".join([
+    zero_pad(dt.year, 4),
+    zero_pad(dt.month, 2),
+    zero_pad(dt.day, 2)
+  ])
+
 if __name__ == '__main__':
   mal_session = myanimelist.session.Session()
   bot = animurecs_bot.animurecs('fetch_mal_lists', animurecs_modules, config_file='config.txt')
@@ -69,7 +83,7 @@ if __name__ == '__main__':
           user_list[anime]['score'] = 0
 
         if user_list[anime]['started'] is not None:
-          started = user_list[anime]['started'].strftime('%Y-%m-%d')
+          started = mysql_date(user_list[anime]['started'])
         else:
           started = None
 
@@ -79,7 +93,7 @@ if __name__ == '__main__':
           entry_time = None
 
         if user_list[anime]['finished'] is not None:
-          finished = user_list[anime]['finished'].strftime('%Y-%m-%d')
+          finished = mysql_date(user_list[anime]['finished'])
         else:
           finished = None
 
