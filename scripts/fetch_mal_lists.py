@@ -29,6 +29,14 @@ def mysql_date(dt):
     zero_pad(dt.day, 2)
   ])
 
+def get_max_user_id(queue):
+  """Returns the highest user ID in the given queue.
+  """
+  # get the idx of the user_id field.
+  user_id_idx = queue._fields.index('user_id')
+  print ""
+  print "Exception detected, flushing queue. Highest user ID: " + str(max(queue, key=lambda x: x[user_id_idx])[user_id_idx])
+
 if __name__ == '__main__':
   mal_session = myanimelist.session.Session()
   bot = animurecs_bot.animurecs('fetch_mal_lists', animurecs_modules, config_file='config.txt')
@@ -59,7 +67,7 @@ if __name__ == '__main__':
     'status',
     'score',
     'episode'
-  ]).ignore(True)
+  ]).update('started=VALUES(started), time=VALUES(time), finished=VALUES(finished), status=VALUES(status), score=VALUES(score), episode=VALUES(episode)')
 
   mal_statuses_to_int = {
       'Watching': 1,
@@ -111,8 +119,7 @@ if __name__ == '__main__':
         print u"Finished with " + username + u". (" + unicode(len(user_list)) + u" entries, " + unicode(user_id) + u"/" + unicode(end_id) + u")"
       time.sleep(1)
     list_insert_queue.flush()
-  except Exception as e:
-    print "Exception detected, flushing queue."
-    list_insert_queue.flush()
+  except:
+    list_insert_queue.beforeFlush(get_max_user_id).flush()
     raise
   print "Done!"
