@@ -68,46 +68,51 @@ if __name__ == '__main__':
       'Dropped': 4,
       'Plan to Watch': 6
   }
-  # loop over every user_id in this range, fetching their lists.
-  for user_id in xrange(start_id, end_id+1):
-    try:
-      username = myanimelist.user.User.find_username_from_user_id(mal_session, user_id)
-    except myanimelist.user.InvalidUserError as e:
-      print "Invalid user ID: " + str(user_id) + ". Skipping."
+  try:
+    # loop over every user_id in this range, fetching their lists.
+    for user_id in xrange(start_id, end_id+1):
+      try:
+        username = myanimelist.user.User.find_username_from_user_id(mal_session, user_id)
+      except myanimelist.user.InvalidUserError as e:
+        print "Invalid user ID: " + str(user_id) + ". Skipping."
+        time.sleep(1)
+        continue
+      user_list = mal_session.anime_list(username)
+      if len(user_list) > 0:
+        for anime in user_list:
+          if user_list[anime]['score'] is None:
+            user_list[anime]['score'] = 0
+
+          if user_list[anime]['started'] is not None:
+            started = mysql_date(user_list[anime]['started'])
+          else:
+            started = None
+
+          if user_list[anime]['last_updated'] is not None:
+            entry_time = pytz.utc.localize(user_list[anime]['last_updated']).strftime('%Y-%m-%d %H:%M:%S')
+          else:
+            entry_time = None
+
+          if user_list[anime]['finished'] is not None:
+            finished = mysql_date(user_list[anime]['finished'])
+          else:
+            finished = None
+
+          list_insert_queue.queue({
+            'user_id': int(user_id),
+            'anime_id': int(anime.id),
+            'started': started,
+            'time': entry_time,
+            'finished': finished,
+            'status': int(mal_statuses_to_int[user_list[anime]['status']]),
+            'score': int(user_list[anime]['score']),
+            'episode': int(user_list[anime]['score'])
+          })
+        print u"Finished with " + username + u". (" + unicode(len(user_list)) + u" entries, " + unicode(user_id) + u"/" + unicode(end_id) + u")"
       time.sleep(1)
-      continue
-    user_list = mal_session.anime_list(username)
-    if len(user_list) > 0:
-      for anime in user_list:
-        if user_list[anime]['score'] is None:
-          user_list[anime]['score'] = 0
-
-        if user_list[anime]['started'] is not None:
-          started = mysql_date(user_list[anime]['started'])
-        else:
-          started = None
-
-        if user_list[anime]['last_updated'] is not None:
-          entry_time = pytz.utc.localize(user_list[anime]['last_updated']).strftime('%Y-%m-%d %H:%M:%S')
-        else:
-          entry_time = None
-
-        if user_list[anime]['finished'] is not None:
-          finished = mysql_date(user_list[anime]['finished'])
-        else:
-          finished = None
-
-        list_insert_queue.queue({
-          'user_id': int(user_id),
-          'anime_id': int(anime.id),
-          'started': started,
-          'time': entry_time,
-          'finished': finished,
-          'status': int(mal_statuses_to_int[user_list[anime]['status']]),
-          'score': int(user_list[anime]['score']),
-          'episode': int(user_list[anime]['score'])
-        })
-      print u"Finished with " + username + u". (" + unicode(len(user_list)) + u" entries, " + unicode(user_id) + u"/" + unicode(end_id) + u")"
-    time.sleep(1)
-  list_insert_queue.flush()
+    list_insert_queue.flush()
+  except Exception as e:
+    print "Exception detected, flushing queue."
+    list_insert_queue.flush()
+    raise
   print "Done!"
