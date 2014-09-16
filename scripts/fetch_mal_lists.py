@@ -60,6 +60,7 @@ if __name__ == '__main__':
       username = myanimelist.user.User.find_username_from_user_id(mal_session, user_id)
     except myanimelist.user.InvalidUserError as e:
       print "Invalid user ID: " + str(user_id) + ". Skipping."
+      time.sleep(1)
       continue
     user_list = mal_session.anime_list(username)
     if len(user_list) > 0:

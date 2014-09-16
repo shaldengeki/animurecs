@@ -151,16 +151,17 @@ if __name__ == '__main__':
           ALIASES[synonym].append(anime_id)
 
       # process information.
-      if anime.type not in TAGS:
-        insert_tag = db.table('tags').set(name=anime.type.encode('utf-8'), description='', tag_type_id=int(TAG_TYPES['type']), created_user_id=1, created_at=curr_time_stamp, updated_at=curr_time_stamp).insert(ignore=True)
-        TAGS[anime.type] = int(insert_tag.lastrowid)
-      if TAGS[anime.type] not in tags:
+      anime_type = anime.type.lower()
+      if anime_type not in TAGS:
+        insert_tag = db.table('tags').set(name=anime_type.encode('utf-8'), description='', tag_type_id=int(TAG_TYPES['type']), created_user_id=1, created_at=curr_time_stamp, updated_at=curr_time_stamp).insert(ignore=True)
+        TAGS[anime_type] = int(insert_tag.lastrowid)
+      if TAGS[anime_type] not in tags:
         if anime_id not in TAGGINGS:
-          TAGGINGS[anime_id] = {int(TAGS[anime.type]):1}
-          tagging_queue.queue({'tag_id': int(TAGS[anime.type]), 'anime_id': int(anime_id), 'created_user_id': 1, 'created_at': curr_time_stamp})
-        elif TAGS[anime.type] not in TAGGINGS[anime_id]:
-          tagging_queue.queue({'tag_id': int(TAGS[anime.type]), 'anime_id': int(anime_id), 'created_user_id': 1, 'created_at': curr_time_stamp})
-        tags[TAGS[anime.type]] = 1
+          TAGGINGS[anime_id] = {int(TAGS[anime_type]):1}
+          tagging_queue.queue({'tag_id': int(TAGS[anime_type]), 'anime_id': int(anime_id), 'created_user_id': 1, 'created_at': curr_time_stamp})
+        elif TAGS[anime_type] not in TAGGINGS[anime_id]:
+          tagging_queue.queue({'tag_id': int(TAGS[anime_type]), 'anime_id': int(anime_id), 'created_user_id': 1, 'created_at': curr_time_stamp})
+        tags[TAGS[anime_type]] = 1
 
       try:
         start_date = unicode(anime.aired[0].strftime('%Y-%m-%d %H-%M-%S'))
