@@ -1241,12 +1241,17 @@ class User extends BaseObject {
 
         $tagMeans = [];
         foreach ($tags as $typeID => $typeTags) {
-          foreach ($typeTags as $tag) {
+          foreach ($typeTags as $tagKey=>$tag) {
             $sum = 0;
             $length = 0;
             foreach ($tag['ratings'] as $rating) {
               $sum += $rating;
               $length++;
+            }
+            if ($length < 3) {
+              // we must be able to calculate variances.
+              unset($tags[$typeID][$tagKey]);
+              continue;
             }
             $mean = floatval($sum) / $length;
             $tagMeans[] = $mean;
@@ -1276,10 +1281,6 @@ class User extends BaseObject {
           $numTags = 0;
           foreach ($typeTags as $tag) {
             $tagRatingVariance = array_variance($tag['ratings']);
-            if ($tagRatingVariance == 0) {
-              // don't include single-rating tags.
-              continue;
-            }
             $priorWeight = $tagRatingVariance / $tagMeansStats['variance'];
             $flatTags[] = ['tag' => $tag['tag'], 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
             $numTags++;
