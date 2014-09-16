@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Fetches MAL anime within a specified interval and inserts them into the database.
+If anime already exists, updates its attributes.
+Inserts any taggings/roles/etc associated with each anime.
+"""
 
 import datetime
 import pytz

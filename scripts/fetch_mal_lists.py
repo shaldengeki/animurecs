@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Fetches MAL anime lists within a specified interval of user IDs and inserts them into the database.
+"""
 
 import argparse
 import sys
