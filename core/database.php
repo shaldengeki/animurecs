@@ -9,7 +9,7 @@ class DbException extends Exception {
   }
 }
 
-class DatabaseNotAvailableExeception extends DbException {};
+class DatabaseNotAvailableException extends DbException {};
 class NoDatabaseRowsRetrievedException extends DbException {};
 class NoDatabaseColumnsRetrievedException extends DbException {};
 

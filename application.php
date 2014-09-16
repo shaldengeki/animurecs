@@ -204,7 +204,7 @@ class Application {
       }
       try {
         $this->_connectDB();
-      } catch (DbException $e) {
+      } catch (DatabaseNotAvailableException $e) {
         $this->statsd->increment("DbException");
         $this->logger->alert($e->__toString());
         $this->display_exception($e);
