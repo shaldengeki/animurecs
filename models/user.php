@@ -1222,7 +1222,6 @@ class User extends BaseObject {
         // get list of user's favourite tags, ordered by regularized average
         // regularize by mean tag mean, weighted by mean number of ratings per tag.
         $tags = [];
-        $tagRatings = [];
 
         foreach ($this->animeList()->uniqueList() as $entry) {
           if (round(floatval($entry['score']), 2) != 0) {
@@ -1231,7 +1230,6 @@ class User extends BaseObject {
                 $tags[$tag->type->id] = [];
               }
               $rating = round(floatval($entry['score']), 2);
-              $tagRatings[] = $rating;
               if (isset($tags[$tag->type->id][$tag->id])) {
                 $tags[$tag->type->id][$tag->id]['ratings'][] = $rating;
               } else {
@@ -1241,7 +1239,6 @@ class User extends BaseObject {
           }
         }
 
-        $userRatingVariance = array_variance($tagRatings);
         $tagMeans = [];
         foreach ($tags as $typeID => $typeTags) {
           foreach ($typeTags as $tag) {
@@ -1259,7 +1256,6 @@ class User extends BaseObject {
           }
         }
         $tagMeansStats = array_statistics($tagMeans);
-        $priorWeight = $userRatingVariance / $tagMeansStats['variance'];
 
         $sortDescFunction = function($a, $b) {
           if ($a['rating'] === $b['rating']) {
@@ -1274,16 +1270,17 @@ class User extends BaseObject {
           return ($a['rating'] < $b['rating']) ? -1 : 1;
         };
 
-        $this->app->debugOutput['tagMeansStats'] = $tagMeansStats;
-        $this->app->debugOutput['userRatingVariance'] = $userRatingVariance;
-        $this->app->debugOutput['priorWeight'] = $priorWeight;
-        $this->app->debugOutput['flatTags'] = $flatTags;
-
         $favoriteTags = [];
         foreach ($tags as $typeID => $typeTags) {
           $flatTags = [];
           $numTags = 0;
           foreach ($typeTags as $tag) {
+            $tagRatingVariance = array_variance($tag['ratings']);
+            if ($tagRatingVariance == 0) {
+              // don't include single-rating tags.
+              continue;
+            }
+            $priorWeight = $tagRatingVariance / $tagMeansStats['variance'];
             $flatTags[] = ['tag' => $tag['tag'], 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
             $numTags++;
           }
@@ -1300,7 +1297,6 @@ class User extends BaseObject {
           'end' => $interval['end'],
           'favoriteTags' => $favoriteTags
         ]);
-        echo "<pre>".print_r($this->app->debugOutput, True)."</pre>";
         exit;
       case 'friends':
         echo $this->view('friends');
