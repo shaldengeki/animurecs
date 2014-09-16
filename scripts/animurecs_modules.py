@@ -69,7 +69,7 @@ class Modules(update_daemon.Modules):
         entry_insert_queue.queue({
           'user_id': request['id'],
           'anime_id': int(anime.id),
-          'time': curr_time,
+          'time': pytz.timezone(self.daemon.config['timezone']).localize(anime_list.list[anime]['last_updated']).strftime('%Y-%m-%d %H:%M:%S'),
           'status': self.mal_statuses_to_int[anime_list.list[anime]['status']],
           'score': anime_list.list[anime]['score'],
           'episode': anime_list.list[anime]['episodes_watched']
