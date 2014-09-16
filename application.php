@@ -236,9 +236,7 @@ class Application {
       $this->display_error(500);
     }
 
-    if (Config::DOMAIN_NAME != 'localhost') {
-      session_set_cookie_params(0, '/', '.'.Config::DOMAIN_NAME, True, True);
-    }
+    session_set_cookie_params(0, '/', Config::COOKIE_DOMAIN, True, True);
     session_start();
 
     date_default_timezone_set(Config::SERVER_TIMEZONE);

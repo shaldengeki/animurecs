@@ -18,9 +18,9 @@ class Config {
   const SMTP_USERNAME = 'SMTP_USERNAME';
   const SMTP_PASSWORD = 'SMTP_PASSWORD';
 
-  const APP_ROOT = '/var/www';         // no trailing backslash!
-  const DOMAIN_NAME = 'your.domain.here';
-  const ROOT_URL = 'http://your.domain.here';  // no trailing backslashes!
+  const APP_ROOT = '/var/www';                  // no trailing backslash!
+  const COOKIE_DOMAIN = 'your.domain.here';     // domain name, with a period in front if cookies should be visible on subdomains too.
+  const ROOT_URL = 'http://your.domain.here';   // no trailing backslashes!
 
   const SERVER_TIMEZONE = 'Your/timezone';
   const OUTPUT_TIMEZONE = 'Timezone/to/output';
