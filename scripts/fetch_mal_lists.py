@@ -7,6 +7,7 @@ import argparse
 import pytz
 import sys
 import time
+import pickle
 
 import DbConn
 
@@ -49,9 +50,12 @@ if __name__ == '__main__':
                       help="end user ID for range fetch")
   parser.add_argument("--per_minute", default=6,
                       help="number of users per minute to fetch, between 1 and 60 inclusive")
+  parser.add_argument("--save_ids", default=False,
+                      help="filename in which to save user ID : username mapping")
   args = parser.parse_args()
 
   print "Calculating ID range..."
+
   if args.start:
     start_id = int(args.start)
   end_id = int(args.end)
@@ -84,6 +88,7 @@ if __name__ == '__main__':
   }
 
   sleep_time = 60 / int(args.per_minute)
+  user_names = []
 
   try:
     # loop over every user_id in this range, fetching their lists.
@@ -94,6 +99,7 @@ if __name__ == '__main__':
         print "Invalid user ID: " + str(user_id) + ". Skipping."
         time.sleep(sleep_time)
         continue
+      user_names.append(username)
       user_list = mal_session.anime_list(username)
       if len(user_list) > 0:
         for anime in user_list:
@@ -131,4 +137,8 @@ if __name__ == '__main__':
   except:
     list_insert_queue.beforeFlush(get_max_user_id).flush()
     raise
+  if args.save_ids:
+    with open(args.save_ids, 'w') as id_file:
+      id_file.write(str(start_id) + "\n")
+      pickle.dump(user_names, id_file)
   print "Done!"
