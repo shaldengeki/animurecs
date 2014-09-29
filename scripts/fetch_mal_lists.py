@@ -80,11 +80,12 @@ if __name__ == '__main__':
   ]).update('started=VALUES(started), time=VALUES(time), finished=VALUES(finished), status=VALUES(status), score=VALUES(score), episode=VALUES(episode)')
 
   mal_statuses_to_int = {
-      'Watching': 1,
-      'Completed': 2,
-      'On-Hold': 3,
-      'Dropped': 4,
-      'Plan to Watch': 6
+    'Unknown': 0,
+    'Watching': 1,
+    'Completed': 2,
+    'On-Hold': 3,
+    'Dropped': 4,
+    'Plan to Watch': 6
   }
 
   sleep_time = 60 / int(args.per_minute)
