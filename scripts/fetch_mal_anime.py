@@ -9,6 +9,7 @@ import datetime
 import pytz
 import os
 import sys
+import time
 import urllib2
 import argparse
 import animurecs_bot
@@ -46,6 +47,8 @@ if __name__ == '__main__':
                       help="end anime ID for range fetch")
   parser.add_argument("--only_new", action='store_true',
                       help="only update with new anime")
+  parser.add_argument("--per_minute", default=6,
+                      help="number of anime per minute to fetch, between 1 and 60 inclusive")
   args = parser.parse_args()
 
   print "Calculating ID range..."
@@ -63,6 +66,12 @@ if __name__ == '__main__':
   if start_id >= end_id:
     print "ID range is empty, halting."
     sys.exit(0)
+
+  if int(args.per_minute) < 1 or int(args.per_minute) > 60:
+    print "Users per minute must be between 1 and 60, inclusive"
+    sys.exit(0)
+
+  sleep_time = 60 / int(args.per_minute)
 
   TAG_TYPES = { 'general': 1, 'studio': 2, 'type': 4, 'va': 3 }
 
@@ -124,6 +133,7 @@ if __name__ == '__main__':
         anime = mal_session.anime(anime_id).load()
       except myanimelist.anime.InvalidAnimeError as e:
         print "AnimeID " + str(anime_id) + " invalid. Moving on."
+        time.sleep(sleep_time)
         continue
 
       # get image.
@@ -230,6 +240,7 @@ if __name__ == '__main__':
         print u"Finished with " + anime.title.decode('utf-8') + u" (" + unicode(anime_id) + u")"
       except UnicodeEncodeError:
         print u"Finished with anime_id " + unicode(anime_id) + u" (" + unicode(anime_id) + u")"
+      time.sleep(sleep_time)
   except Exception as e:
     print "Exception detected, flushing queues."
     alias_queue.flush()
