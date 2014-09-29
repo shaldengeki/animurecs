@@ -47,6 +47,8 @@ if __name__ == '__main__':
                       help="start user ID for range fetch")
   parser.add_argument("--end", required=True,
                       help="end user ID for range fetch")
+  parser.add_argument("--per_minute", default=6,
+                      help="number of users per minute to fetch, between 1 and 60 inclusive")
   args = parser.parse_args()
 
   print "Calculating ID range..."
@@ -56,6 +58,10 @@ if __name__ == '__main__':
   print "ID range: " + str(start_id) + " to " + str(end_id)
   if start_id >= end_id:
     print "ID range is empty, halting."
+    sys.exit(0)
+
+  if int(args.per_minute) < 1 or int(args.per_minute) > 60:
+    print "Users per minute must be between 1 and 60, inclusive"
     sys.exit(0)
 
   list_insert_queue = DbConn.DbInsertQueue(db, table='mal_anime_lists', fields=[
@@ -76,6 +82,9 @@ if __name__ == '__main__':
       'Dropped': 4,
       'Plan to Watch': 6
   }
+
+  sleep_time = 60 / int(args.per_minute)
+
   try:
     # loop over every user_id in this range, fetching their lists.
     for user_id in xrange(start_id, end_id+1):
@@ -83,7 +92,7 @@ if __name__ == '__main__':
         username = myanimelist.user.User.find_username_from_user_id(mal_session, user_id)
       except myanimelist.user.InvalidUserError as e:
         print "Invalid user ID: " + str(user_id) + ". Skipping."
-        time.sleep(1)
+        time.sleep(sleep_time)
         continue
       user_list = mal_session.anime_list(username)
       if len(user_list) > 0:
@@ -117,7 +126,7 @@ if __name__ == '__main__':
             'episode': int(user_list[anime]['score'])
           })
         print u"Finished with " + username + u". (" + unicode(len(user_list)) + u" entries, " + unicode(user_id) + u"/" + unicode(end_id) + u")"
-      time.sleep(1)
+      time.sleep(sleep_time)
     list_insert_queue.flush()
   except:
     list_insert_queue.beforeFlush(get_max_user_id).flush()
