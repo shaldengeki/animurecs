@@ -924,7 +924,7 @@ class User extends BaseObject {
         }
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
-          $this->app->display_status(200, ['id' => $this->id, 'username' => $this->username]);
+          $this->app->display_response(200, ['id' => $this->id, 'username' => $this->username]);
         } else {
           $this->app->display_error(500, "An error occurred while requesting this friend. Please try again.");
         }
@@ -935,7 +935,7 @@ class User extends BaseObject {
         }
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
-          $this->app->display_status(200, ['id' => $this->id, 'username' => $this->username]);
+          $this->app->display_response(200, ['id' => $this->id, 'username' => $this->username]);
         } else {
           $this->app->display_error(500, "An error occurred while confirming this friend. Please try again.");
         }
@@ -946,7 +946,7 @@ class User extends BaseObject {
         }
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
-          $this->app->display_status(200, ['id' => $this->id, 'username' => $this->username]);
+          $this->app->display_response(200, ['id' => $this->id, 'username' => $this->username]);
         } else {
           $this->app->display_error(500, "An error occurred while ignoring this friend request. Please try again.");
         }
@@ -954,7 +954,7 @@ class User extends BaseObject {
       case 'switch_back':
         $switchUser = $this->app->user->switchUser($_SESSION['switched_user'], False);
         if ($switchUser) {
-          $this->app->display_status(200, [
+          $this->app->display_response(200, [
             'id' => $this->app->user->id,
             'username' => $this->app->user->username,
             'from_id' => $this->id,
@@ -973,7 +973,7 @@ class User extends BaseObject {
           }
           $switchUser = $this->app->user->switchUser($desiredUser->id);
           if ($switchUser) {
-            $this->app->display_status(200, [
+            $this->app->display_response(200, [
               'id' => $this->app->user->id,
               'username' => $this->app->user->username,
               'from_id' => $this->id,
@@ -1004,7 +1004,7 @@ class User extends BaseObject {
         if ($this->id === 0) {
           $this->app->display_error(404, "No such user found.");
         }
-        $this->app->display_status(200, $this->serialize());
+        $this->app->display_response(200, $this->serialize());
         break;
 
       case 'activate':
@@ -1023,7 +1023,7 @@ class User extends BaseObject {
           ];
           $this->create_or_update($updateUser);
 
-          $this->app->display_status(200, [
+          $this->app->display_response(200, [
             'id' => $this->id,
             'username' => $username
           ]);
@@ -1050,7 +1050,7 @@ class User extends BaseObject {
         if ($this->id === 0) {
           $this->app->display_error(404, "No such user found.");
         }
-        $this->app->display_status(200, $this->serialize());
+        $this->app->display_response(200, $this->serialize());
         break;
       case 'feed':
         $output = "";

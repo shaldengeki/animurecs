@@ -471,7 +471,7 @@ abstract class BaseObject {
     // returns an associative array with keys the fields of this object contained in $FIELDS, and values the values on this object.
     $serialized = [];
     foreach (static::$FIELDS as $attr => $info) {
-      if ($info['serialize']) {
+      if (!isset($info['serialize']) || $info['serialize']) {
         $serialized[$attr] = $this->{$attr};
       }
     }

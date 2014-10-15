@@ -437,11 +437,11 @@ class Application {
     exit;
   }
   public function display_success($code, $message) {
-    // alias for display_status.
+    // alias for display_response.
     $this->display_response($code, ['code' => $code, 'message' => $message]);
   }
   public function display_error($code, $message) {
-    // alias for display_status.
+    // alias for display_response.
     $this->display_response($code, ['code' => $code, 'message' => $message]);
   }
   public function display_exception($e) {
