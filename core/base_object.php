@@ -41,6 +41,7 @@ abstract class BaseObject {
             [ 
               'object_attribute_name' => [
                 'type' => 'attribute_type',
+                'serialize' => True,
                 'db' => 'db_column_name'
               ], ...
             ]
@@ -48,9 +49,11 @@ abstract class BaseObject {
             [ 
               'db_column_name' => [
                 'type' => 'attribute_type',
+                'serialize' => True,
                 'attr' => 'object_attribute_name'
               ], ...
             ]
+            'serialize' determines whether or not the field is exposed in the serialize() method. No value is interpreted as True.
     JOINS: [
       'join_name' => [
         'obj' => '\\full\\namespace\\path\\to\\object OR {polymorphic_db_field_name}',
@@ -61,7 +64,7 @@ abstract class BaseObject {
         // optional
         'condition' => 'additional condition e.g. type="Anime"'
 
-        // ONLY IF HABTM:
+        // Only if HABTM:
         'join_table' => 'join_table_name',
         'join_table_own_col' => 'name_of_own_col_in_join_table',
         'join_table_join_col' => 'name_of_join_col_in_join_table',
@@ -93,6 +96,7 @@ abstract class BaseObject {
     foreach (static::$FIELDS as $attr_name => $attr_props) {
       $invertedFields[$attr_props['db']] = [
         'type' => $attr_props['type'],
+        'serialize' => isset($attr_props['serialize']) ? bool($attr_props['serialize']) : True,
         'attr' => $attr_name
       ];
     }
@@ -461,6 +465,17 @@ abstract class BaseObject {
     } else {
       return True;
     }
+  }
+
+  public function serialize() {
+    // returns an associative array with keys the fields of this object contained in $FIELDS, and values the values on this object.
+    $serialized = [];
+    foreach (static::$FIELDS as $attr => $info) {
+      if ($info['serialize']) {
+        $serialized[$attr] = $this->{$attr};
+      }
+    }
+    return $serialized;
   }
 
   protected function fireParentEvents($eventName, $params=Null) {

@@ -23,10 +23,12 @@ class User extends BaseObject {
     ],
     'passwordHash' => [
       'type' => 'str',
+      'serialize' => False,
       'db' => 'password_hash'
     ],
     'activationCode' => [
       'type' => 'str',
+      'serialize' => False,
       'db' => 'activation_code'
     ],
     'about' => [
@@ -881,30 +883,30 @@ class User extends BaseObject {
       Switches the current user's session out for another user (provided by $userID) in the animurecs db.
       If $switch_back is True, puts the original userID into $_SESSION['switched_user'] before switching.
       If not, then retrieves the packed session and overrides current session with that info.
-      Returns a redirect_to array.
+      Returns a bool reflecting operation status.
     */
     if ($switch_back) {
       // get user entry in database.
       try {
         $findUser = User::Get($this->app, ['id' => $userID]);
       } catch (NoDatabaseRowsRetrievedException $e) {
-        return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to (".$userID.") doesn't exist in the database.", 'class' => 'error'];
+        return False;
       }
       $findUser->switchedUser = $this->app->user->id;
       $findUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       $_SESSION['switched_user'] = $findUser->switchedUser;
-      return ["location" => $findUser->url('globalFeed'), "status" => "You've switched to ".escape_output($findUser->username).".", 'class' => 'success'];
+      return True;
     } else {
       try {
         $newUser = User::Get($this->app, ['id' => $_SESSION['switched_user']]);
       } catch (NoDatabaseRowsRetrievedException $e) {
-        return ["location" => $this->url('globalFeed'), "status" => "The given user to switch to (".$_SESSION['switched_user'].") doesn't exist in the database.", 'class' => 'error'];
+        return False;
       }
       $newUser->setCurrentSession();
       $_SESSION['lastLoginCheckTime'] = microtime(True);
       unset($_SESSION['switched_user']);
-      return ["location" => $newUser->url('globalFeed'), "status" => "You've switched back to ".escape_output($newUser->username).".", 'class' => 'success'];
+      return True;
     }
   }
   public function render() {
@@ -912,188 +914,143 @@ class User extends BaseObject {
       /* Topbar views */
       case 'request_friend':
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "Sorry, you don't appear to have privileges to do that.");
         }
         if ($this->id === $this->app->user->id) {
-          $this->app->delayedMessage("You can't befriend yourself, silly!");
-          $this->app->redirect();
+          $this->app->display_error(409, "You can't befriend yourself, silly!");
         }
         if (!isset($_POST['friend_request'])) {
           $_POST['friend_request'] = [];
         }
         $requestFriend = $this->app->user->requestFriend($this, $_POST['friend_request']);
         if ($requestFriend) {
-          $this->app->delayedMessage("Your friend request has been sent to ".escape_output($this->username).".", "success");
-          $this->app->redirect();
+          $this->app->display_status(200, ['id' => $this->id, 'username' => $this->username]);
         } else {
-          $this->app->delayedMessage('An error occurred while requesting this friend. Please try again.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, "An error occurred while requesting this friend. Please try again.");
         }
         break;
       case 'confirm_friend':
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         $confirmFriend = $this->app->user->confirmFriend($this);
         if ($confirmFriend) {
-          $this->app->delayedMessage("Hooray! You're now friends with ".escape_output($this->username).".", 'success');
-          $this->app->redirect();
+          $this->app->display_status(200, ['id' => $this->id, 'username' => $this->username]);
         } else {
-          $this->app->delayedMessage('An error occurred while confirming this friend. Please try again.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, "An error occurred while confirming this friend. Please try again.");
         }
         break;
       case 'ignore_friend':
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         $ignoreFriend = $this->app->user->ignoreFriend($this);
         if ($ignoreFriend) {
-          $this->app->delayedMessage("You ignored a friend request from ".escape_output($this->username).".", 'success');
-          $this->app->redirect();
+          $this->app->display_status(200, ['id' => $this->id, 'username' => $this->username]);
         } else {
-          $this->app->delayedMessage('An error occurred while ignoring this friend. Please try again.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, "An error occurred while ignoring this friend request. Please try again.");
         }
         break;
       case 'switch_back':
         $switchUser = $this->app->user->switchUser($_SESSION['switched_user'], False);
-        $this->app->delayedMessage($switchUser['status'], $switchUser['class']);
-        $this->app->redirect($switchUser['location']);
+        if ($switchUser) {
+          $this->app->display_status(200, [
+            'id' => $this->app->user->id,
+            'username' => $this->app->user->username,
+            'from_id' => $this->id,
+            'from_username' => $this->username
+          ]);
+        } else {
+          $this->app->display_error(500, "An error occurred while switching you back. Please try again.");
+        }
         break;
       case 'switch_user':
         if (isset($_POST['switch_username'])) {
           try {
             $desiredUser = User::Get($this->app, ['username' => $_POST['switch_username']]);
           } catch (NoDatabaseRowsRetrievedException $e) {
-            $this->app->delayedMessage("The desired user (".$_POST['switch_username'].") doesn't exist.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(404, "The desired user (".$_POST['switch_username'].") doesn't exist.");
           }
           $switchUser = $this->app->user->switchUser($desiredUser->id);
-          $this->app->delayedMessage($switchUser['status'], $switchUser['class']);
-          $this->app->redirect($switchUser['location']);
+          if ($switchUser) {
+            $this->app->display_status(200, [
+              'id' => $this->app->user->id,
+              'username' => $this->app->user->username,
+              'from_id' => $this->id,
+              'from_username' => $this->username
+            ]);
+          } else {
+            $this->app->display_error(500, "An error occurred while switching your user session. Please try again.");
+          }
+        } else {
+          $this->app->display_error(400, "Please provide a username to switch to.");          
         }
-        $title = "Switch Users";
-        $output = "<h1>Switch Users</h1>\n".$this->app->user->view("switchForm");
         break;
-      case 'register_conversion':
-        $title = "Redirecting...";
-        $output = $this->app->user->view("postRegisterConversion");
-        break;
-      case 'new':
-        $title = "Sign Up";
-        $output = $this->view('new');
-        break;
-
       /* user setting views */
+      case 'new':
       case 'edit':
         if (isset($_POST['users']) && is_array($_POST['users'])) {
           // check to ensure userlevels aren't being elevated beyond this user's abilities.
           if (isset($_POST['users']['usermask']) && array_sum($_POST['users']['usermask']) > 1 && (($this->app->user->id != intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) >= $this->app->user->usermask) || $this->app->user->id == intval($_POST['users']['id']) && array_sum($_POST['users']['usermask']) > $this->usermask)) {
-            $this->app->delayedMessage("You can't set permissions beyond your own userlevel: ".array_sum($_POST['users']['usermask']), 'error');
-            $this->app->redirect();
+            $this->app->display_error(403, "You can't set permissions beyond your own userlevel: ".array_sum($_POST['users']['usermask']));
           }
-          $updateErrors = False;
-          try {
-            $updateUser = $this->create_or_update($_POST['users']);
-          } catch (ValidationException $e) {
-            // validation exceptions don't need to be logged.
-            $this->app->delayedMessage($e->formatMessages(), 'error');
-            $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
-          }
+          $updateUser = $this->create_or_update($_POST['users']);
           if ($updateUser) {
-            $this->app->delayedMessage(isset($_POST['users']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!", 'success');
-            $this->app->redirect($this->url("show"));
+            $this->app->display_success(200, isset($_POST['users']['id']) ? "Your user settings have been saved." : "Congratulations, you're now signed in!");
           } else {
-            $this->app->delayedMessage("An error occurred while creating or updating this user.", 'error');
-            $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+            $this->app->display_error(500, "An error occurred while creating or updating this user.");
           }
         }
         if ($this->id === 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such user found.");
         }
-        $title = "Editing ".escape_output($this->username);
-        $output = $this->view("edit");
+        $this->app->display_status(200, $this->serialize());
         break;
 
       case 'activate':
         if (!$this->activationCode || !isset($_REQUEST['code']) || $_REQUEST['code'] != $this->activationCode) {
-          $this->app->delayedMessage('The activation code you provided was incorrect. Please check your email and try again.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(403, 'The activation code you provided was incorrect. Please check your email and try again.');
         } else {
-          $this->app->dbConn->table(static::$TABLE)->set(['activation_code' => Null])->where(['id' => $this->id])->update();
+          // $this->app->dbConn->table(static::$TABLE)->set(['activation_code' => Null])->where(['id' => $this->id])->update();
           $this->setCurrentSession();
 
           //update last IP address and last active.
           $currTime = new DateTime("now", $this->app->serverTmeZone);
-          $updateUser = ['last_ip' => $_SERVER['REMOTE_ADDR'], 'last_active' => $currTime->format("Y-m-d H:i:s")];
+          $updateUser = [
+            'activation_code' => Null,
+            'last_ip' => $_SERVER['REMOTE_ADDR'], 
+            'last_active' => $currTime->format("Y-m-d H:i:s")
+          ];
           $this->create_or_update($updateUser);
 
-          $this->app->delayedMessage("Congrats! You're now signed in as ".escape_output($username).". Why not start out by adding some anime to your list?", 'success');
-          $this->app->redirect($this->url("register_conversion"));
+          $this->app->display_status(200, [
+            'id' => $this->id,
+            'username' => $username
+          ]);
         }
         break;
 
       case 'mal_import':
         // import a MAL list for this user.
         if (!isset($_POST['users']) || !is_array($_POST['users']) || !isset($_POST['users']['mal_username'])) {
-          $this->app->delayedMessage('Please enter a MAL username.');
-          $this->app->redirect();
+          $this->app->display_error(400, 'Please enter a MAL username.');          
         }
         $update = $this->create_or_update([
           'mal_username' => $_POST['users']['mal_username'],
           'last_import_failed' => 0
         ]);
         if (!$update) {
-          $this->app->delayedMessage("The MAL username you provided is invalid. Please try again.", "error");
-          $this->app->redirect($this->url("edit"));
+          $this->app->display_error(400, "The MAL username you provided is invalid. Please try again.");          
         }
-        $this->app->delayedMessage("Your MAL profile has been queued for update. Should take no longer than an hour or two!", "success");
-        $this->app->redirect();
-        /*
-        try {
-          $importMAL = $this->importMAL($_POST['users']['mal_username']);
-        } catch (CurlException $e) {
-          $this->app->statsd->increment('CurlException');
-          $this->app->log_exception($e);
-          $this->app->delayedMessage("We encountered an error while trying to grab the MAL for ".escape_output($_POST['users']['mal_username']).". Please try again in a few minutes!");
-          $this->app->redirect();
-        }
-        if (!$importMAL) {
-          $this->app->delayedMessage("No new entries were found while updating your MAL.");
-          $this->app->redirect();
-        }
-        if (!in_array(False, $importMAL, True)) {
-          $this->app->delayedMessage('Hooray! Your MAL was successfully imported.', 'success');
-          $this->app->redirect($this->url("show"));
-        } else {
-          // some titles failed to import. fetch the title names for each failed ID so we can display them.
-          $failedTitles = [];
-          foreach ($importMAL as $id=>$status) {
-            if ($status === False) {
-              try {
-                $thisAnime = new Anime($this->app, intval($id));
-                $title = $thisAnime->title;
-              } catch (DbException $e) {
-                $title = "(Unknown anime ID: ".intval($id).")";
-              }
-              $failedTitles[] = $title;
-            }
-          }
-          $this->app->delayedMessage('An error occurred while importing your MAL for the titles: '.implode(", ", $failedTitles).". Please check your MAL for any errors and if necessary, try again.", 'error');
-          $this->app->redirect();
-        }
-        */
+        $this->app->display_success(200, "Your MAL profile has been queued for update. Should take no longer than an hour or two!");
         break;
 
       /* user profile views */
       case 'show':
         if ($this->id === 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such user found.");
         }
-        $title = escape_output($this->username)."'s Profile";
-        $entries = array_sort_by_method($this->profileFeed()->load('comments')->entries(), 'time', [], 'desc');
-        $output = $this->view("show", ['entries' => $entries]);
+        $this->app->display_status(200, $this->serialize());
         break;
       case 'feed':
         $output = "";

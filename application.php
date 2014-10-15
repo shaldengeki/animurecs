@@ -39,7 +39,7 @@ class AppException extends Exception {
   public function messages() {
     return $this->messages;
   }
-  public function formatMessages($separator="<br />\n") {
+  public function formatMessages($separator=" ") {
     // displays a list of this exception's messages.
     if (count($this->messages) > 0) {
       return implode($separator, $this->messages);
@@ -429,19 +429,24 @@ class Application {
     }
   }
 
-  public function display_error($code) {
+  public function display_response($code, $response) {
     ob_clean();
     http_response_code(intval($code));
-    echo $this->view('header').$this->view(intval($code)).$this->view('footer');
+    echo json_encode($response);
     ob_end_flush();
     exit;
   }
+  public function display_success($code, $message) {
+    // alias for display_status.
+    $this->display_response($code, ['code' => $code, 'message' => $message]);
+  }
+  public function display_error($code, $message) {
+    // alias for display_status.
+    $this->display_response($code, ['code' => $code, 'message' => $message]);
+  }
   public function display_exception($e) {
     // formats a (potentially subclassed) instance of AppException for display to the end user.
-    ob_clean();
-    echo $this->view('header').$this->view('exception', ['exception' => $e]).$this->view('footer');
-    ob_end_flush();
-    exit;
+    $this->display_response($e->code, , ['code' => $e->code, 'message' => $e->formatMessages()]);
   }
   public function log_exception($e) {
     // log an exception.
@@ -451,7 +456,7 @@ class Application {
   public function check_partial_include($filename) {
     // displays the standard 404 page if the user is requesting a partial directly.
     if (str_replace("\\", "/", $filename) === $_SERVER['SCRIPT_FILENAME']) {
-      $this->display_error(404);
+      $this->display_error(404, "A required partial could not be found.");
     }
   }
 
