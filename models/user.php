@@ -1362,6 +1362,7 @@ class User extends BaseObject {
           $groupwatches[$groupwatchCategories[$category]] = $catGroupwatches;
         }
         if ($nonZeroGroupwatches) {
+          // try to fetch predicted ratings for each anime.
           try {
             $predictedRatings = $this->app->recsEngine->predict($this, $anime, 0, count($anime));
           } catch (CurlException $e) {
@@ -1370,6 +1371,7 @@ class User extends BaseObject {
           }
         }
         foreach ($groupwatches as $category=>$groupwatchList) {
+          // sort each category's anime by the user's predicted rating (if it exists).
           usort($groupwatchList, function($a, $b) use ($predictedRatings) {
             if (!isset($predictedRatings[$a['anime']->id])) {
               if (!isset($predictedRatings[$b['anime']->id])) {
@@ -1396,14 +1398,18 @@ class User extends BaseObject {
           $groupwatches[$category] = $groupwatchList;
         }
         $this->app->display_response(200, $groupwatches);
-        exit;
+        break;
       default:
       case 'index':
-        $title = "All Users";
-        $output = $this->app->user->view('index');
+        $userGroup = new UserGroup($this->app, array_keys(User::GetList($this->app)));
+        $users = [];
+        foreach ($userGroup->load('info') as $thisUser) {
+          $users[] = $thisUser->serialize();
+        }
+        $this->app->display_response(200, $users);
         break;
     }
-    return $this->app->render($output, ['subtitle' => $title]);
+    return;
   }
   public function profileFeed(DateTime $minTime=Null, DateTime $maxTime=Null, $numEntries=50) {
     // returns an EntryGroup consisting of entries for this user's profile feed.
