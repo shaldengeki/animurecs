@@ -915,7 +915,7 @@ class User extends BaseObject {
       /* Topbar views */
       case 'request_friend':
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403, "Sorry, you don't appear to have privileges to do that.");
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         if ($this->id === $this->app->user->id) {
           $this->app->display_error(409, "You can't befriend yourself, silly!");
@@ -1058,19 +1058,7 @@ class User extends BaseObject {
         if (isset($_REQUEST['maxTime']) && is_numeric($_REQUEST['maxTime'])) {
           $maxTime = '@'.intval($_REQUEST['maxTime']);
         } else {
-          // if this isn't a non-current slice of the user's feed, append the usual forms at the top.
           $maxTime = "now";
-          $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
-          if ($newEntry->allow($this->app->user, 'edit')) {
-            $output .= $this->view('addEntryInlineForm');
-          }
-          if ($this->allow($this->app->user, 'comment')) {
-            $blankComment = new Comment($this->app, 0, $this->app->user, $this);
-            $output .= "                <div class='addListEntryForm'>
-                        ".$blankComment->view('inlineForm', ['currentObject' => $this])."
-                      </div>\n";
-
-          }
         }
         $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime']) , $this->app->serverTimeZone) : Null;
@@ -1268,45 +1256,31 @@ class User extends BaseObject {
         $this->app->display_response(200, $friends);
         break;
       case 'achievements':
-        echo $this->view('achievements');
-        exit;
-      case 'achievements2':
-        echo $this->view('achievements2');
-        exit;
+        $achieves = array_map(function ($a) {
+          return $a->serialize();
+        }, array_values(array_filter($this->app->achievements, function($a) {
+            return $a->alreadyAwarded($this);
+          }))
+        );
+        $this->app->display_response(200, $achieves);
+        break;
       case 'delete':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such user found.");
         } elseif (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         $username = $this->username;
         $deleteUser = $this->delete();
         if ($deleteUser) {
-          $this->app->delayedMessage('Successfully deleted '.$username.'.', 'success');
-          $this->app->redirect();
+          $this->app->display_success(200, 'Successfully deleted '.$username.'.', 'success');
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$username.'.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, 'An error occurred while deleting '.$username.'.', 'error');
         }
         break;
 
       /* feed views */
       case 'globalFeed':
-        $title = escape_output("Global Feed");
-        $entries = array_sort_by_method($this->globalFeed()->load('comments')->entries(), 'time', [], 'desc');
-        $globalFeedView = [ 'numEntries' => 50,
-          'entries' => $entries,
-          'feedURL' => $this->url('globalFeedEntries'),
-          'emptyFeedText' => ''
-        ];
-        // $convoFeedView = [ 'numEntries' => 50,
-        //   'entries' => $this->conversationFeed(),
-        //   'feedURL' => $this->url('conversationFeedEntries'),
-        //   'emptyFeedText' => ''
-        // ];
-        $output = $this->view("globalFeed", ['global' => $globalFeedView/*, 'conversations' => $convoFeedView*/]);
-        break;
-      case 'globalFeedEntries':
         if (isset($_REQUEST['maxTime']) && is_numeric($_REQUEST['maxTime'])) {
           $maxTime = '@'.intval($_REQUEST['maxTime']);
         } else {
@@ -1318,21 +1292,38 @@ class User extends BaseObject {
         } else {
           $minTime = Null;
         }
-        $entries = array_sort_by_method($this->globalFeed($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
-        $output .= $this->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('globalFeedEntries'), 'emptyFeedText' => '']);
-        echo $output;
-        exit;
+        $entries = array_map(function ($e) {
+          return $e->serialize();
+        }, array_sort_by_method($this->globalFeed($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc'));
+
+        $this->app->display_response(200, $entries);
+        break;
 
       /* Discover views */
-      case 'discover':
-        $_REQUEST['page'] = isset($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
-        $title = escape_output("Discover Anime");
-        $output = $this->view("discover", ['page' => intval($_REQUEST['page'])]);
-        break;
       case 'recommendations':
-        $_REQUEST['page'] = isset($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
-        echo $this->view('recommendations', ['page' => intval($_REQUEST['page'])]);
-        exit;
+        $animePerPage = 20;
+        $recommendations = [];
+        try {
+          $recs = $this->app->recsEngine->recommend($this, $animePerPage * ($this->app->page - 1), $animePerPage);
+        } catch (CurlException $e) {
+          $this->app->log_exception($e);
+          $recs = [];
+        }
+        $animeGroup = new AnimeGroup($this->app, array_map(function($a) {
+          return $a['id'];
+        }, $recs));
+        // we need to be able to access this by anime ID.
+        $recs_by_id = [];
+        foreach ($recs as $rec) {
+          $recs_by_id[$rec['id']] = $rec['predicted_score'];
+        }
+        foreach ($animeGroup as $anime) {
+          $recommendations[] = [
+            'anime' => $anime->serialize(),
+            'predictedScore' => $recs_by_id[$anime->id]
+          ];
+        }
+        $this->app->display_response(200, $recommendations);
         break;
       case 'friendRecs':
         echo $this->view('friendRecs');

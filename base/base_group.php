@@ -191,8 +191,8 @@ class BaseGroup implements Iterator, ArrayAccess {
   }
   public function info() {
     if (!$this->_pulledInfo) {
-      $this->_pulledInfo = True;
       $this->_getInfo();
+      $this->_pulledInfo = True;
     }
     return $this->_objects;
   }
