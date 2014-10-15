@@ -1326,10 +1326,76 @@ class User extends BaseObject {
         $this->app->display_response(200, $recommendations);
         break;
       case 'friendRecs':
-        echo $this->view('friendRecs');
-        exit;
+        /* TODO */
+        $this->app->display_response(200, []);
+        break;
       case 'groupwatches':
-        echo $this->view('groupwatches');
+        // get list of anime that this user and at least one other friend have on their list in the same category.
+        $groupwatchCategories = [1 => "currently_watching", 6 => "plan_to_watch"];
+        $groupwatches = [];
+        $nonZeroGroupwatches = False;
+        $anime = [];
+        foreach ($groupwatchCategories as $category => $text) {
+          $catGroupwatches = [];
+          $ourSeries = array_keys($this->animeList()->listSection($category));
+          foreach ($this->friends() as $friend) {
+            $friendSeries = array_keys($friend['user']->animeList()->listSection($category));
+            $intersect = array_intersect($ourSeries, $friendSeries);
+            if ($intersect) {
+              foreach ($intersect as $animeID) {
+                if (!isset($catGroupwatches[$animeID])) {
+                  $anime[$animeID] = new Anime($this->app, $animeID);
+                  $catGroupwatches[$animeID] = ['anime' => $anime[$animeID], 'users' => [$friend['user']]];
+                } else {
+                  $catGroupwatches[$animeID]['users'][] = $friend['user'];
+                }
+              }
+            }
+          }
+          $nonZeroGroupwatches = $nonZeroGroupwatches || $catGroupwatches;
+          foreach ($catGroupwatches as $animeID => $groupwatch) {
+            usort($groupwatch['users'], function($a, $b) use ($animeID) {
+              return ($a->animeList()->uniqueList()[$animeID]['episode'] < $b->animeList()->uniqueList()[$animeID]['episode']) ? 1 : -1;
+            });
+            $catGroupwatches[$animeID] = $groupwatch; 
+          }
+          $groupwatches[$groupwatchCategories[$category]] = $catGroupwatches;
+        }
+        if ($nonZeroGroupwatches) {
+          try {
+            $predictedRatings = $this->app->recsEngine->predict($this, $anime, 0, count($anime));
+          } catch (CurlException $e) {
+            $this->app->log_exception($e);
+            $predictedRatings = [];
+          }
+        }
+        foreach ($groupwatches as $category=>$groupwatchList) {
+          usort($groupwatchList, function($a, $b) use ($predictedRatings) {
+            if (!isset($predictedRatings[$a['anime']->id])) {
+              if (!isset($predictedRatings[$b['anime']->id])) {
+                return 0;
+              } else {
+                return 1;
+              }
+            } elseif (!isset($predictedRatings[$b['anime']->id])) {
+              return -1;
+            } else {
+              return ($predictedRatings[$a['anime']->id] < $predictedRatings[$b['anime']->id]) ? 1 : -1;
+            }
+          });
+          // go through and serialize all the anime and users for output.
+          foreach ($groupwatchList as $animeID=>$info) {
+            if (isset($predictedRatings[$animeID])) {
+              $groupwatchList[$animeID]['predicted_rating'] = $predictedRatings[$animeID];
+            }
+            $groupwatchList[$animeID]['anime'] = $groupwatchList[$animeID]['anime']->serialize();
+            foreach ($groupwatchList[$animeID]['users'] as $i=>$val) {
+              $groupwatchList[$animeID]['users'][$i] = $groupwatchList[$animeID]['users'][$i]->serialize();
+            }
+          }
+          $groupwatches[$category] = $groupwatchList;
+        }
+        $this->app->display_response(200, $groupwatches);
         exit;
       default:
       case 'index':
