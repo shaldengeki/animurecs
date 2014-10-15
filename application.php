@@ -287,7 +287,6 @@ class Application {
       $parent->app->cache->delete(AnimeEntry::GenerateCacheKeyFromID(intval($updateParams['id'])));
     }));
 
-
     // statsd metrics.
     $this->bind(['Anime.afterCreate'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->statsd->increment("anime.count");
@@ -678,12 +677,14 @@ class Application {
       } elseif ($this->action === "edit") {
         $this->action = "new";
       }
+      // display error page if user is not allowed to perform this action.
       if (!$this->target->allow($this->user, $this->action)) {
         $targetClass = get_class($this->target);
         $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
         $this->logger->warning($error->__toString());
         $this->display_error(403);
       } else {
+        // render page.
         header('X-Frame-Options: SAMEORIGIN');
         try {
           ob_clean();
@@ -764,7 +765,7 @@ class Application {
     throw new AppException($this, "Could not find application view: ".$file);
   }
   public function render($text, $params=Null) {
-    // renders the given HTML text surrounded by the standard application header and footer.
+    // renders the given text surrounded by the standard application header and footer.
     // passes $params into the header and footer views.
     $appVars = get_object_vars($this);
     if ($params !== Null && is_array($params)) {
