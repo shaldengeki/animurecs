@@ -53,6 +53,7 @@ class User extends BaseObject {
     ],
     'lastIP' => [
       'type' => 'str',
+      'serialize' => False,
       'db' => 'last_ip'
     ],
     'malUsername' => [
@@ -1053,7 +1054,7 @@ class User extends BaseObject {
         $this->app->display_response(200, $this->serialize());
         break;
       case 'feed':
-        $output = "";
+        $entries = [];
         if (isset($_REQUEST['maxTime']) && is_numeric($_REQUEST['maxTime'])) {
           $maxTime = '@'.intval($_REQUEST['maxTime']);
         } else {
@@ -1073,11 +1074,14 @@ class User extends BaseObject {
         }
         $maxTime = new DateTime($maxTime, $this->app->serverTimeZone);
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime']) , $this->app->serverTimeZone) : Null;
-        $entries = array_sort_by_method($this->profileFeed($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
-        $output .= $this->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
-        echo $output;
-        exit;
+        foreach (array_sort_by_method($this->profileFeed($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc') as $entry) {
+          $entries[] = $entry->serialize();
+        }
+        $this->app->display_response(200, $entries);
+        break;
+
       case 'anime_list':
+        /* TODO: api */
         /* TODO: replace with dynamic names */
         $startedAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
           LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
@@ -1144,6 +1148,7 @@ class User extends BaseObject {
         while ($row = $planAnimeQuery->fetch()) {
           $plannedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
         }
+
         $sectionDates = [
           1 => ['title' => 'Started', 'anime' => $startedAnime],
           2 => ['title' => 'Finished', 'anime' => $completedAnime],
@@ -1156,19 +1161,17 @@ class User extends BaseObject {
         exit;
       case 'anime':
         if (!isset($_REQUEST['anime_id']) || !is_numeric($_REQUEST['anime_id'])) {
-          echo "Please specify a valid anime ID.";
-          exit;
+          $this->app->display_error(400, "Please specify a valid anime ID.");
         }
         if (!isset($this->animeList()->uniqueList[intval($_REQUEST['anime_id'])])) {
-          echo json_encode([]);
-          exit;
+          $this->app->display_response(200, []);
         }
         $latestEntry = $this->animeList()->uniqueList[intval($_REQUEST['anime_id'])];
         $latestEntry['anime_id'] = $latestEntry['anime']->id;
         $latestEntry['episode_count'] = $latestEntry['anime']->episodeCount;
         unset($latestEntry['anime']);
-        echo json_encode($latestEntry);
-        exit;
+        $this->app->display_response(200, $latestEntry);
+        break;
       case 'stats':
         // first, get time range of this user's anime ratings.
         $interval = $this->app->dbConn->table(AnimeList::$TABLE)
@@ -1239,7 +1242,7 @@ class User extends BaseObject {
           foreach ($typeTags as $tag) {
             $tagRatingVariance = array_variance($tag['ratings']);
             $priorWeight = $tagRatingVariance / $tagMeansStats['variance'];
-            $flatTags[] = ['tag' => $tag['tag'], 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
+            $flatTags[] = ['tag' => $tag['tag']->serialize(), 'count' => $tag['rating_count'], 'rating' => ($tagMeansStats['mean'] * $priorWeight + $tag['rating_sum']) / ($priorWeight + $tag['rating_count'])];
             $numTags++;
           }
           usort($flatTags, $sortDescFunction);
@@ -1249,16 +1252,21 @@ class User extends BaseObject {
           ];
           usort($favoriteTags[$typeID]['hated'], $sortAscFunction);
         }
-
-        echo $this->view('stats', [
+        $this->app->display_response(200, [
           'start' => $interval['start'],
           'end' => $interval['end'],
           'favoriteTags' => $favoriteTags
         ]);
-        exit;
+        break;
       case 'friends':
-        echo $this->view('friends');
-        exit;
+        $friends = array_map(function ($f) {
+          return [
+            'friend' => $f['user']->serialize(),
+            'compatibility' => round($this->animeList()->compatibility($f['user']->animeList()), 2)
+          ];
+        }, $this->friends());
+        $this->app->display_response(200, $friends);
+        break;
       case 'achievements':
         echo $this->view('achievements');
         exit;
