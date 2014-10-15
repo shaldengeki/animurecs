@@ -472,7 +472,12 @@ abstract class BaseObject {
     $serialized = [];
     foreach (static::$FIELDS as $attr => $info) {
       if (!isset($info['serialize']) || $info['serialize']) {
-        $serialized[$attr] = $this->{$attr};
+        if ($this->{$attr} instanceof BaseObject) {
+          // recursively-serialize attributes if necessary.
+          $serialized[$attr] = $this->{$attr}->serialize();
+        } else {
+          $serialized[$attr] = $this->{$attr};
+        }
       }
     }
     return $serialized;
