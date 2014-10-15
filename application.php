@@ -446,7 +446,7 @@ class Application {
   }
   public function display_exception($e) {
     // formats a (potentially subclassed) instance of AppException for display to the end user.
-    $this->display_response($e->code, , ['code' => $e->code, 'message' => $e->formatMessages()]);
+    $this->display_response($e->code, ['code' => $e->code, 'message' => $e->formatMessages()]);
   }
   public function log_exception($e) {
     // log an exception.
@@ -567,6 +567,7 @@ class Application {
     mb_regex_encoding('UTF-8');
     $this->_loadDependencies();
     $this->_bindEvents();
+
 
     $this->statsd->increment("hits");
 

@@ -96,7 +96,7 @@ abstract class BaseObject {
     foreach (static::$FIELDS as $attr_name => $attr_props) {
       $invertedFields[$attr_props['db']] = [
         'type' => $attr_props['type'],
-        'serialize' => isset($attr_props['serialize']) ? bool($attr_props['serialize']) : True,
+        'serialize' => isset($attr_props['serialize']) ? boolval($attr_props['serialize']) : True,
         'attr' => $attr_name
       ];
     }
