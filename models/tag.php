@@ -335,8 +335,6 @@ class Tag extends BaseObject {
     }
     switch($this->app->action) {
       case 'token_search':
-        echo "A";
-        exit;
         $tags = [];
         if (isset($_REQUEST['term'])) {
           $tags = $this->app->dbConn->table(static::$TABLE)->fields('id', 'name')->match('name', $_REQUEST['term'])->order('name ASC')->assoc();
