@@ -99,7 +99,7 @@ class Tag extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
-      // case 'approve':
+      /* Only for staff members. */
       case 'new':
       case 'edit':
       case 'delete':
@@ -108,12 +108,16 @@ class Tag extends BaseObject {
         }
         return False;
         break;
+
+      /* Only for logged-in members. */
       case 'token_search':
         if ($authingUser->loggedIn()) {
           return True;
         }
         return False;
         break;
+
+      /* Public views. */
       case 'show':
       case 'index':
         return True;
@@ -318,42 +322,29 @@ class Tag extends BaseObject {
   public function render() {
     if ($this->app->action === 'new' || $this->app->action === 'edit') {
       if (isset($_POST['tag']) && is_array($_POST['tag'])) {
+        $verbProgressive = $this->id === 0 ? "creating" : "updating";
+        $verbPast = $this->id === 0 ? "created" : "updated";
         $updateTag = $this->create_or_update($_POST['tag']);
         if ($updateTag) {
-          $this->app->delayedMessage("Successfully updated.", "success");
-          $this->app->redirect($this->url("show"));
+          $this->app->display_success(200, "Successfully ".$verbPast." ".$this->name.".", "success");
         } else {
-          $this->app->delayedMessage("An error occurred while creating or updating this tag.", "error");
-          $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+          $this->app->display_error(500, "An error occurred while ".$verbProgressive." ".$this->name.".");
         }
       }
+      $this->app->display_error(400, "You must provide tag info to create or update.");
     }
-      switch($this->app->action) {
+    switch($this->app->action) {
       case 'token_search':
+        echo "A";
+        exit;
         $tags = [];
         if (isset($_REQUEST['term'])) {
           $tags = $this->app->dbConn->table(static::$TABLE)->fields('id', 'name')->match('name', $_REQUEST['term'])->order('name ASC')->assoc();
         }
-        echo json_encode($tags);
-        exit;
+        $this->app->display_success(200, $tags);
         break;
-      case 'new':
-        $title = "Create a Tag";
-        $output = $this->view('new');
-        break;
-      case 'edit':
-        if ($this->id == 0) {
-          $this->app->display_error(404);
-        }
-        $title = "Editing ".escape_output($this->name);
-        $output = $this->view('edit');
-        break;
-      case 'show':
-        if ($this->id == 0) {
-          $this->app->display_error(404);
-        }
+      case 'related_tags':
         $perPage = 25;
-        $title = "Tag: ".escape_output($this->name);
         if ($this->app->user->loggedIn()) {
           try {
             $predictedRatings = $this->app->recsEngine->predict($this->app->user, $this->anime, 0, count($this->anime));
@@ -392,7 +383,6 @@ class Tag extends BaseObject {
         foreach ($tagCountsByType as $tagTypeID => $tags) {
           arsort($tagCountsByType[$tagTypeID]);
         }
-
         $output = $this->view('show', [
           'object' => Anime::Get($this->app),
           'group' => $group,
@@ -403,44 +393,51 @@ class Tag extends BaseObject {
           'tagCountsByType' => $tagCountsByType,
         ]);
         break;
+      case 'show':
+        if ($this->id == 0) {
+          $this->app->display_error(404, "This tag could not be found.");
+        }
+        $this->app->display_response(200, $this->serialize());
+        break;
       case 'delete':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "This tag could not be found.");
         }
         if (!$this->app->checkCSRF()) {
-          $this->app->display(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         $tagName = $this->name;
         $deleteTag = $this->delete();
         if ($deleteTag) {
-          $this->app->delayedMessage('Successfully deleted '.$tagName.'.', "success");
-          $this->app->redirect();
+          $this->app->display_success(200, 'Successfully deleted '.$tagName.'.');
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$tagName.'.', "error");
-          $this->app->redirect();
+          $this->app->display_error(500, 'An error occurred while deleting '.$tagName.'.');
         }
         break;
       default:
       case 'index':
-        $title = "Tags";
-
         $perPage = 25;
         if ($this->app->user->isAdmin()) {
           $pages = ceil(Tag::Count($this->app)/$perPage);
-          $tags = $this->app->dbConn->table(Tag::$TABLE)->fields('id')->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+          $tagQuery = $this->app->dbConn->table(Tag::$TABLE)->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
         } else {
           $pages = ceil(Tag::Count($this->app, ['approved_on != ""'])/$perPage);
-          $tags = $this->app->dbConn->table(Tag::$TABLE)->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+          $tagQuery = $this->app->dbConn->table(Tag::$TABLE)->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
         }
-
-        $output = $this->view('index',[
-          'perPage' => $perPage,
+        $tags = [];
+        while ($tag = $tagQuery->fetch()) {
+          $tagObj = new Tag($this->app, intval($tag['id']));
+          $tagObj->set($tag);
+          $tags[] = $tagObj->serialize();
+        }
+        $this->app->display_response(200, [
+          'page' => $this->app->page,
           'pages' => $pages,
           'tags' => $tags
         ]);
         break;
     }
-    return $this->app->render($output, ['subtitle' => $title]);
+    return;
   }
   public function url($action="show", $format=Null, array $params=Null, $name=Null) {
     // returns the url that maps to this object and the given action.
