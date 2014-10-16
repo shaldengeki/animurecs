@@ -52,24 +52,6 @@ class Alias extends Model {
     }
     return $this->parent;
   }
-  public function allow(User $authingUser, $action, array $params=Null) {
-    // takes a user object and an action and returns a bool.
-    switch($action) {
-      case 'index':
-      case 'new':
-      case 'edit':
-      case 'delete':
-        // if this user is staff, allow them to edit this alias.
-        if ($authingUser->isStaff()) {
-          return True;
-        }
-        return False;
-        break;
-      default:
-        return False;
-        break;
-    }
-  }
   public function validate(array $alias) {
     $validationErrors = [];
     try {
