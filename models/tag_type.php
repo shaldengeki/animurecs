@@ -168,7 +168,7 @@ class TagType extends BaseObject {
         $perPage = 25;
         if ($this->app->user->isAdmin()) {
           $pages = ceil(TagType::Count($this->app)/$perPage);
-          $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->order('name')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+          $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
         } else {
           $pages = ceil(TagType::Count($this->app, ['approved_on != ""'])/$perPage);
           $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
