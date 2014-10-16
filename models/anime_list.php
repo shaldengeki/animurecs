@@ -1,5 +1,5 @@
 <?php
-class AnimeList extends BaseList {
+class AnimeList extends EntryList {
   // anime list.
   public static $TABLE = "anime_lists";
   public static $URL = "anime_lists";

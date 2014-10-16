@@ -1,8 +1,8 @@
 <?php
 require_once("../core/model.php");
 
-abstract class BaseList extends Model {
-  // base list from which anime and manga lists inherit methods and properties.
+abstract class EntryList extends Model {
+  // list of entries from which anime and manga lists inherit methods and properties.
   use Feedable;
 
   public static $URL = "base_lists";
@@ -245,7 +245,7 @@ abstract class BaseList extends Model {
     $text = ($text === Null) ? "List" : $text;
     return parent::link($action, $text, $format, $raw, $params, $urlParams, $id);
   }
-  public function similarity(BaseList $currentList, $minAnime=10) {
+  public function similarity(EntryList $currentList, $minAnime=10) {
     // calculates pearson's r between this list and the current user's list.
     // returns False if there is no similarity computed.
     if ($this->uniqueListStdDev() == 0 || $currentList->uniqueListStdDev() == 0) {
@@ -274,7 +274,7 @@ abstract class BaseList extends Model {
     }
     return correlation($thisScores, $currentScores);
   }
-  public function compatibility(BaseList $currentList) {
+  public function compatibility(EntryList $currentList) {
     $similarity = $this->similarity($currentList);
     return $similarity ? 100 * (1 + $this->similarity($currentList)) / 2.0 : False;
   }
