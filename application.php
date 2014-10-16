@@ -233,7 +233,7 @@ class Application {
 
     } catch (AppException $e) {
       $this->logger->alert($e);
-      $this->display_error(500);
+      $this->display_error(500, "Could not load dependencies properly! Oh dear.");
     }
 
     // forbid cookies to be sent over plain HTTP, unless we're on development.
@@ -260,7 +260,7 @@ class Application {
       $this->_loadDependencyDirectory(Config::APP_ROOT."/achievements");
     } catch (AppException $e) {
       $this->logger->alert($e);
-      $this->display_error(500);
+      $this->display_error(500, "Could not load achievements properly! Oh dear.");
     }
     $achievementSlice = array_slice(get_declared_classes(), $nonAchievementClasses);
     foreach ($achievementSlice as $achievementName) {
@@ -592,7 +592,7 @@ class Application {
       $this->csrfToken = $this->_generateCSRFToken();
       // if request came in through AJAX, or there isn't a POST, don't run CSRF filter.
       if (!$this->ajax && !empty($_POST) && !$this->checkCSRF()) {
-        $this->display_error(403);
+        $this->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
       }
     }
 
@@ -668,7 +668,7 @@ class Application {
         $this->dbConn->reset();
         $this->statsd->increment("DbException");
         $this->log_exception($e);
-        $this->display_error(404);
+        $this->display_error(404, "Database error: Requested object ID not found.");
       }
       if ($this->target->id !== 0) {
         try {
@@ -688,7 +688,7 @@ class Application {
         $targetClass = get_class($this->target);
         $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
         $this->logger->warning($error->__toString());
-        $this->display_error(403);
+        $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
       } else {
         // render page.
         header('X-Frame-Options: SAMEORIGIN');
@@ -708,7 +708,7 @@ class Application {
           $this->statsd->increment("Exception");
           $this->log_exception($e);
           $this->clearOutput();
-          $this->display_error(500);
+          $this->display_error(500, "Unspecified server error. Oh dear.");
         }
       }
     }
