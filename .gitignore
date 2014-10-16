@@ -3,7 +3,6 @@
 dbv/data/meta/revision
 config.php
 Thumbs.db
-less
 /public/img/users/*/*
 /public/img/anime/*/*
 *.psd
