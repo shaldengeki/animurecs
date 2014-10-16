@@ -79,7 +79,7 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_classes=[],$_observers=[],$messages=[],$timings=[];
+  private $_controllers=[],$_observers=[],$messages=[],$timings=[];
   private $_statsdConn=Null;
 
   protected $totalPoints=Null;
@@ -87,7 +87,7 @@ class Application {
   public $achievements=[],$debugOutput=[];
   public $statsd, $logger, $cache, $dbConn, $recsEngine, $mailer, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
 
-  public $model,$action,$status,$class="";
+  public $controller,$action,$status,$class="";
   public $id=0;
   public $ajax=False;
   public $page=1;
@@ -162,6 +162,39 @@ class Application {
     }
     return $this->mailer;
   }
+  private function _connectServices() {
+    // Connects to external services.
+    try {
+      $this->_connectDB();
+    } catch (DatabaseNotAvailableException $e) {
+      $this->statsd->increment("DatabaseException");
+      $this->logger->alert($e->__toString());
+      $this->display_exception($e);
+    }
+    try {
+      $this->mailer = $this->_connectMailer();
+    } catch (AppException $e) {
+      $this->statsd->increment("MailerException");
+      $this->logger->alert($e->__toString());
+      $this->display_exception($e);
+    }
+    try {
+      $this->cache = $this->_connectCache();
+    } catch (CacheException $e) {
+      // we don't ~technically~ need memcached to run the site. Log an exception.
+      $this->cache = new EmptyDependency();
+      $this->statsd->increment("CacheException");
+      $this->logger->alert($e->__toString());
+    }
+    try {
+      $this->recsEngine = $this->_connectRecsEngine();
+    } catch (AppException $e) {
+      // we don't ~technically~ need the recommendations engine to run the site. Log an exception.
+      $this->recsEngine = new EmptyDependency();
+      $this->statsd->increment("RecsException");
+      $this->logger->alert($e->__toString());
+    }
+  }
   private function _loadDependencies() {
     // Loads configuration and all application objects from library files.
     // Connects database, logger, recommendation engine.
@@ -194,42 +227,16 @@ class Application {
       // group models.
       $this->_loadDependencyDirectory(Config::APP_ROOT."/groups");
 
-      try {
-        $this->cache = $this->_connectCache();
-      } catch (CacheException $e) {
-        // we don't ~technically~ need memcached to run the site. Log an exception.
-        $this->cache = new EmptyDependency();
-        $this->statsd->increment("CacheException");
-        $this->logger->alert($e->__toString());
-      }
-      try {
-        $this->_connectDB();
-      } catch (DatabaseNotAvailableException $e) {
-        $this->statsd->increment("DatabaseException");
-        $this->logger->alert($e->__toString());
-        $this->display_exception($e);
-      }
-      try {
-        $this->mailer = $this->_connectMailer();
-      } catch (AppException $e) {
-        $this->statsd->increment("MailerException");
-        $this->logger->alert($e->__toString());
-        $this->display_exception($e);
-      }
+      // external services.
+      $this->_connectServices();
 
-      try {
-        $this->recsEngine = $this->_connectRecsEngine();
-      } catch (AppException $e) {
-        // we don't ~technically~ need the recommendations engine to run the site. Log an exception.
-        $this->recsEngine = new EmptyDependency();
-        $this->statsd->increment("RecsException");
-        $this->logger->alert($e->__toString());
-      }
+      // models.
+      $this->_loadDependencyDirectory(Config::APP_ROOT."/models");
 
       $nonLinkedClasses = count(get_declared_classes());
 
-      // models that have URLs.
-      $this->_loadDependencyDirectory(Config::APP_ROOT."/models");
+      // controllers.
+      $this->_loadDependencyDirectory(Config::APP_ROOT."/controllers");
 
     } catch (AppException $e) {
       $this->logger->alert($e);
@@ -246,10 +253,11 @@ class Application {
     $this->serverTimeZone = new DateTimeZone(Config::SERVER_TIMEZONE);
     $this->outputTimeZone = new DateTimeZone(Config::OUTPUT_TIMEZONE);
 
-    // _classes is a modelUrl:modelName mapping for classes that are to be linked.
-    foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $className) {
-      if (!isset($this->_classes[$className::MODEL_URL()])) {
-        $this->_classes[$className::MODEL_URL()] = $className;
+    // _controllers is a modelUrl:controller mapping for controllers that are bound to a URL.
+    // e.g. "tag_types" => TagTypesController()
+    foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $controllerName) {
+      if (!isset($this->_controllers[$controllerName::$URL_BASE])) {
+        $this->_controllers[$controllerName::$URL_BASE] = new $controllerName($this);
       }
     }
 
@@ -429,12 +437,27 @@ class Application {
     }
   }
 
+  public function clearOutput() {
+    // clears all content in the output buffer(s).
+    while (ob_get_level()) {
+      ob_end_clean();
+    }
+    ob_start();
+  }
+  public function endOutput() {
+    // performs tasks after output.
+    ob_end_flush();
+    $this->statsd->timing("pageload", microtime(True) - $this->startRender);
+    $this->statsd->memory('memory.peakusage');
+    $this->setPreviousUrl();
+    exit;
+  }
+
   public function display_response($code, $response) {
-    ob_clean();
+    $this->clearOutput();
     http_response_code(intval($code));
     echo json_encode($response);
-    ob_end_flush();
-    exit;
+    $this->endOutput();
   }
   public function display_success($code, $message) {
     // alias for display_response.
@@ -541,18 +564,10 @@ class Application {
       $location = $this->previousUrl();
     }
     header("Location: ".$location);
-    exit;
+    $this->endOutput();
   }
   public function jsRedirect($location) {
     echo "window.location.replace(\"".Config::ROOT_URL."/".$location."\");";
-  }
-
-  public function clearOutput() {
-    // clears all content in the output buffer(s).
-    while (ob_get_level()) {
-      ob_end_clean();
-    }
-    ob_start();
   }
 
   public function init() {
@@ -596,15 +611,15 @@ class Application {
       }
     }
 
-    // set model, action, ID, status, class from request parameters.
+    // set controller, action, ID, status, class from request parameters.
     if (isset($_REQUEST['status'])) {
       $this->status = $_REQUEST['status'];
     }
     if (isset($_REQUEST['class'])) {
       $this->class = $_REQUEST['class'];
     }
-    if (isset($_REQUEST['model']) && isset($this->_classes[$_REQUEST['model']])) {
-      $this->model = $this->_classes[$_REQUEST['model']];
+    if (isset($_REQUEST['controller']) && isset($this->_controllers[$_REQUEST['controller']])) {
+      $this->controller = $this->_controllers[$_REQUEST['controller']];
     }
     if (isset($_REQUEST['id'])) {
       if (is_numeric($_REQUEST['id'])) {
@@ -634,83 +649,42 @@ class Application {
       $this->format = escape_output($_REQUEST['format']);
     }
 
-    if (isset($this->model) && $this->model !== "") {
-      if (!class_exists($this->model)) {
-        $this->display_response(404, "The resource you requested does not exist.");
-      }
+    if (!isset($this->controller) || $this->controller === "") {
+      $this->display_response(404, "The resource you requested does not exist.");
+    }
 
-      try {
-        // kludge to allow model names in URLs.
-        if ($this->id !== "" && $this->id !== 0) {
-          switch ($this->model) {
-            case 'User':
-              $this->target = User::Get($this, ['username' => rawurldecode($this->id)]);
-              break;
-            case 'Anime':
-              $this->target = Anime::Get($this, ['title' => str_replace("_", " ", rawurldecode($this->id))]);
-              break;
-            case 'Tag':
-              $this->target = Tag::Get($this, ['name' => str_replace("_", " ", rawurldecode($this->id))]);
-              break;
-            case 'Thread':
-              $id = intval(explode("-", rawurldecode($this->id))[0]);
-              $this->target = Thread::FindById($this, $id);
-              break;
-            default:
-              $modelName = $this->model;
-              $this->target = $modelName::FindById($this, intval($this->id));
-              break;
-          }
-        } else {
-          $this->target = new $this->model($this, intval($this->id));
-        }
-      } catch (DatabaseException $e) {
-        $this->dbConn->reset();
-        $this->statsd->increment("DatabaseException");
-        $this->log_exception($e);
-        $this->display_error(404, "Database error: Requested object ID not found.");
-      }
-      if ($this->target->id !== 0) {
-        try {
-          $foo = $this->target->load();
-        } catch (DatabaseException $e) {
-          $this->dbConn->reset();
-          $this->statsd->increment("DatabaseException");
-          $blankModel = new $this->model($this);
-          $this->delayedMessage("The ".strtolower($this->model)." you specified does not exist.", "error");
-          $this->redirect($blankModel->url("index"));
-        }
-      } elseif ($this->action === "edit") {
-        $this->action = "new";
-      }
+    try {
+      // render page.
+      header('X-Frame-Options: SAMEORIGIN');
+      ob_clean();
+      $this->controller->_beforeAction();
+      $this->controller->_performAction($this->action);
+      echo ob_get_clean();
+      $this->endOutput();
+    } catch (UndefinedActionException $e) {
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(404, "There is no endpoint on this resource at: ".$this->action);
+    } catch (UnauthorizedException $e) {
       // display error page if user is not allowed to perform this action.
-      if (!$this->target->allow($this->user, $this->action)) {
-        $targetClass = get_class($this->target);
-        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
-        $this->logger->warning($error->__toString());
-        $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
-      } else {
-        // render page.
-        header('X-Frame-Options: SAMEORIGIN');
-        try {
-          ob_clean();
-          echo $this->target->render();
-          echo ob_get_clean();
-          $this->statsd->timing("pageload", microtime(True) - $this->startRender);
-          $this->statsd->memory('memory.peakusage');
-          $this->setPreviousUrl();
-          exit;
-        } catch (AppException $e) {
-          $this->log_exception($e);
-          $this->clearOutput();
-          $this->display_exception($e);
-        } catch (Exception $e) {
-          $this->statsd->increment("Exception");
-          $this->log_exception($e);
-          $this->clearOutput();
-          $this->display_error(500, "Unspecified server error. Oh dear.");
-        }
-      }
+      $targetClass = get_class($this->target);
+      $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
+      $this->logger->warning($error->__toString());
+      $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
+    } catch (AppException $e) {
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->clearOutput();
+      $this->display_exception($e);
+    } catch (DatabaseException $e) {
+      $this->dbConn->reset();
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(404, "Database error: Requested object ID not found.");
+    } catch (Exception $e) {
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(500, "Unspecified server error. Oh dear.");
     }
   }
 
