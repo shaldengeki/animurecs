@@ -1,12 +1,14 @@
 <?php
 
 class ControllerException extends AppException {
+  public $controller;
   public function __construct($controller, $messages=Null, $code=0, AppException $previous=Null) {
-    parent::__construct($controller->app, $messages, $code, $previous);
+    parent::__construct($controller->_app, $messages, $code, $previous);
     $this->controller = $controller;
   }
 }
 class UndefinedActionException extends ControllerException {
+  public $action;
   public function __construct($controller, $action, $messages=Null, $code=0, AppException $previous=Null) {
     parent::__construct($controller, $messages, $code, $previous);
     $this->action = $action;
@@ -18,7 +20,7 @@ class UndefinedActionException extends ControllerException {
       "Action: ".$this->action,
       "Controller: ".get_class($this->controller),
       "Controller actions:",
-      print_r($this->controller->actions, True),
+      print_r($this->controller->_actions, True),
       "Messages: ".$this->formatMessages(),
       "Stack trace:",
       $this->getTraceAsString()
@@ -29,12 +31,13 @@ class UndefinedActionException extends ControllerException {
   }
 }
 class UnauthorizedException extends ControllerException {
+  public $action;
   public function __construct($controller, $action, $messages=Null, $code=0, AppException $previous=Null) {
     parent::__construct($controller, $messages, $code, $previous);
     $this->action = $action;
   }
   public function __toString() {
-    return implode("\n",[
+    return implode("\n", [
       "UnauthorizedException:",
       $this->getFile().":".$this->getLine(),
       "Action: ".$this->action,
@@ -58,9 +61,6 @@ abstract class Controller {
   // target model name. for, say, UserController, it'd be "User".
   public static $MODEL;
 
-  public $_app, $_target = Null;
-  public $_actions = [];
-
   public function __construct($app) {
     $this->_app = $app;
     $this->_target = Null;
@@ -83,7 +83,8 @@ abstract class Controller {
   }
   public function _performAction($action) {
     // performs a given action, after checking for authorization.
-    if (!isset($this->_actions, $action)) {
+
+    if (!in_array($action, $this->_actions, True)) {
       throw new UndefinedActionException($this, $action);
     }
     if (!$this->_isAuthorized($action)) {

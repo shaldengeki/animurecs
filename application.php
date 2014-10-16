@@ -237,7 +237,6 @@ class Application {
 
       // controllers.
       $this->_loadDependencyDirectory(Config::APP_ROOT."/controllers");
-
     } catch (AppException $e) {
       $this->logger->alert($e);
       $this->display_error(500, "Could not load dependencies properly! Oh dear.");
@@ -667,7 +666,7 @@ class Application {
       $this->display_error(404, "There is no endpoint on this resource at: ".$this->action);
     } catch (UnauthorizedException $e) {
       // display error page if user is not allowed to perform this action.
-      $targetClass = get_class($this->target);
+      $targetClass = get_class($e->controller->_target);
       $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
       $this->logger->warning($error->__toString());
       $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
