@@ -534,53 +534,21 @@ class Anime extends BaseObject {
         if ($this->id == 0) {
           $this->app->display_error(404, "No such anime found.");
         }
-        $title = escape_output($this->title);
-
-        $tagCounts = [];
-        foreach ($this->tags as $tag) {
-          $tagCounts[] = [
-            'tag' => $tag,
-            'count' => $tag->numAnime()
-          ];
-        }
-
-        // order the tags in this animeGroup's tags by tagType id
-        $tagTypes = TagType::GetList($this->app);
-
-        $tagsByType = [];
-        foreach ($this->tags as $tag) {
-          if (!isset($tagsByType[$tag->type->id])) {
-            $tagsByType[$tag->type->id] = [$tag];
-          } else {
-            $tagsByType[$tag->type->id][] = $tag;
-          }
-        }
-
-        $entries = array_sort_by_method($this->entries(Null, Null, 50)->load('comments')->entries(), 'time', [], 'desc');
-        $output = $this->view("show", [
-          'tagCounts' => $tagCounts,
-          'entries' => $entries,
-          'numEntries' => 50,
-          'feedURL' => $this->url('feed'),
-          'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>",
-          'tagsByType' => $tagsByType
-        ]);
+        $this->app->display_response(200, $this->serialize());
         break;
       case 'delete':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such anime found.");
         }
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         $cachedTitle = $this->title;
         $deleteAnime = $this->delete();
         if ($deleteAnime) {
-          $this->app->delayedMessage('Successfully deleted '.$cachedTitle.'.', 'success');
-          $this->app->redirect();
+          $this->app->display_success(200, 'Successfully deleted '.$cachedTitle.'.');
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$cachedTitle.'.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, 'An error occurred while deleting '.$cachedTitle.'.');
         }
         break;
       default:
@@ -626,7 +594,18 @@ class Anime extends BaseObject {
           $numPages = ceil(count($searchResults)/$perPage);
         }
         $group = new AnimeGroup($this->app, $anime);
-        $output = $this->view("index", ['title' => $title, 'group' => $group, 'aliases' => $aliases, 'wilsons' => $wilsons, 'numPages' => $numPages, 'perPage' => $perPage]);
+        $resultAnime = array_map(function ($a) use ($wilsons) {
+          $serial = $a->serialize();
+          if (isset($wilsons[$a->id])) {
+            $serial['wilson_score'] = round(floatval($wilsons[$a->id]), 2);
+          }
+          return $serial;
+        }, $group->load('info')->anime());
+        $this->app->display_response(200, [
+          'page' => $this->app->page,
+          'pages' => $numPages,
+          'anime' => $resultAnime,
+        ]);
         break;
     }
     return $this->app->render($output, ['subtitle' => $title]);

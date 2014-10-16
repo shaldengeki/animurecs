@@ -1335,9 +1335,9 @@ class User extends BaseObject {
         $username = $this->username;
         $deleteUser = $this->delete();
         if ($deleteUser) {
-          $this->app->display_success(200, 'Successfully deleted '.$username.'.', 'success');
+          $this->app->display_success(200, 'Successfully deleted '.$username.'.');
         } else {
-          $this->app->display_error(500, 'An error occurred while deleting '.$username.'.', 'error');
+          $this->app->display_error(500, 'An error occurred while deleting '.$username.'.');
         }
         break;
 
