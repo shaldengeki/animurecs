@@ -131,72 +131,62 @@ class TagType extends BaseObject {
   public function render() {
     if ($this->app->action == 'new' || $this->app->action == 'edit') {
       if (isset($_POST['tag_types']) && is_array($_POST['tag_types'])) {
+        $verbProgressive = $this->id === 0 ? "creating" : "updating";
+        $verbPast = $this->id === 0 ? "created" : "updated";
         $updateTagType = $this->create_or_update($_POST['tag_types']);
         if ($updateTagType) {
-          $this->app->delayedMessage("Successfully updated.", "success");
-          $this->app->redirect($this->url("show"));
+          $this->app->display_success(200, "Successfully ".$verbPast." ".$this->name.".", "success");
         } else {
-           $this->app->delayedMessage("An error occurred while creating or updating this tag type.", "error");
-          $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
+          $this->app->display_error(500, "An error occurred while ".$verbProgressive." ".$this->name.".");
         }
       }
     }
     switch($this->app->action) {
-      case 'new':
-        $title = "Create a Tag Type";
-        $output = $this->view('new');
-        break;
-      case 'edit':
-        if ($this->id == 0) {
-          $this->app->display_error(404);
-        }
-        $title = "Editing ".escape_output($this->name);
-        $output = $this->view('edit');
-        break;
       case 'show':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "This tag type could not be found.");
         }
-        $title = escape_output($this->name);
-        $output = $this->view('show');
+        $this->app->display_response(200, $this->serialize());
         break;
       case 'delete':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "This tag type could not be found.");
         }
         if (!$this->app->checkCSRF()) {
-          $this->app->display(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
+        $tagTypeName = $this->name;
         $deleteTagType = $this->delete();
         if ($deleteTagType) {
-          $this->app->delayedMessage('Successfully deleted '.$this->name.'.', "success");
-          $this->app->redirect();
+          $this->app->display_success(200, 'Successfully deleted '.$tagTypeName.'.');
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$this->name.'.', 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, 'An error occurred while deleting '.$tagTypeName.'.');
         }
         break;
       default:
       case 'index':
-        $title = "Tag Types";
         $perPage = 25;
-
         if ($this->app->user->isAdmin()) {
           $pages = ceil(TagType::Count($this->app)/$perPage);
-          $tagTypes = $this->app->dbConn->table(TagType::$TABLE)->fields('id')->order('name')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+          $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->order('name')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
         } else {
           $pages = ceil(TagType::Count($this->app, ['approved_on != ""'])/$perPage);
-          $tagTypes = $this->app->dbConn->table(TagType::$TABLE)->fields('id')->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+          $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
         }
-
-        $output = $this->view('index',[
-          'perPage' => $perPage,
+        $tagTypes = [];
+        while ($tagType = $tagTypesQuery->fetch()) {
+          $tagTypeObj = new Tag($this->app, intval($tagType['id']));
+          $tagTypeObj->set($tagType);
+          $tagTypes[] = $tagTypeObj->serialize();
+        }
+        $this->app->display_response(200, [
+          'page' => $this->app->page,
           'pages' => $pages,
           'tagTypes' => $tagTypes
         ]);
         break;
     }
-    return $this->app->render($output, ['subtitle' => $title]);
+    return;
   }
 }
 ?>
