@@ -321,7 +321,7 @@ class Tag extends BaseObject {
   }
   public function render() {
     if ($this->app->action === 'new' || $this->app->action === 'edit') {
-      if (isset($_POST['tag']) && is_array($_POST['tag'])) {
+      if (isset($_POST['tags']) && is_array($_POST['tags'])) {
         $verbProgressive = $this->id === 0 ? "creating" : "updating";
         $verbPast = $this->id === 0 ? "created" : "updated";
         $updateTag = $this->create_or_update($_POST['tag']);
