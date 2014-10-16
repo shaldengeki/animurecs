@@ -194,8 +194,7 @@ class Comment extends BaseObject {
         $this->load();
       } catch (DbException $e) {
         $this->app->log_exception($e);
-        $this->app->delayedMessage('This comment does not exist.', 'error');
-        $this->app->redirect($this->parent()->url());
+        $this->app->display_error(404, "No such comment found.");
       }
       $targetParent = $this->parent();
       $targetUser = $this->user;
@@ -208,8 +207,7 @@ class Comment extends BaseObject {
         }
       } catch (DbException $e) {
         $this->app->log_exception($e);
-        $this->app->delayedMessage("The thing you're commenting on no longer exists.", 'error');
-        $this->app->redirect($this->app->user->url());
+        $this->app->display_error(404, "The thing you're commenting on no longer exists.");
       }
 
       if (intval($_REQUEST['user_id']) === $this->app->user->id || intval($_POST['user_id']) === $this->app->user->id) {
@@ -220,8 +218,7 @@ class Comment extends BaseObject {
           $targetUser->load();
         } catch (DbException $e) {
           $this->app->log_exception($e);
-          $this->app->delayedMessage("This user ID doesn't exist.", 'error');
-          $this->app->redirect($this->app->user->url());
+          $this->app->display_error(404, "This user ID doesn't exist.");
         }
       }
     }
@@ -238,35 +235,25 @@ class Comment extends BaseObject {
         if (isset($_POST['comments']) && is_array($_POST['comments']) && isset($_POST['comments']['type']) && isset($_POST['comments']['parent_id']) && is_numeric($_POST['comments']['parent_id'])) {
           // ensure that the thing to which this comment is going to belong exists.
           if ($targetParent === Null) {
-            $this->app->delayedMessage("The thing you're commenting on no longer exists.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(404, "The thing you're commenting on no longer exists.");
           }
 
           // ensure that the user has perms to create a comment for this user under this object.
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'new')) {
-            $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
-            $this->app->redirect($targetParent->url());
+            $this->app->display_error(403, "You're not allowed to comment on this.");
           }
-          try {
-            $createComment = $targetComment->create_or_update($_POST['comments']);
-          } catch (ValidationException $e) {
-            $this->app->delayedMessage("Some problems were found with your comment:\n".$e->listMessages());
-            $this->app->redirect();
-          }
+          $createComment = $targetComment->create_or_update($_POST['comments']);
           if ($createComment) {
-            $this->app->delayedMessage("Succesfully commented.", 'success');
-            $this->app->redirect($targetParent->url());
+            $this->app->display_success(200, "Succesfully commented.");
           } else {
-            $this->app->delayedMessage("An error occurred while commenting on this.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(500, "An error occurred while commenting on this.");
           }
         }
-        $title = "Add a comment";
-        $output .= $targetComment->view('new', ['currentObject' => $targetParent]);
+        $this->app->display_error(400, "You must submit a comment to post.");
         break;
       case 'edit':
         if ($targetComment->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such comment found.");
         }
         if (isset($_POST['comments']) && is_array($_POST['comments'])) {
           // ensure that the thing to which this comment belongs exists.
@@ -275,12 +262,10 @@ class Comment extends BaseObject {
           try {
             $targetParent = new $commentType($this->app, intval($commentParentID));
           } catch (Exception $e) {
-            $this->app->delayedMessage("The thing you're trying to comment on doesn't exist anymore.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(404, "The thing you're commenting on no longer exists.");
           }
           if ($targetParent->id === 0) {
-            $this->app->delayedMessage("Please provide something to comment on.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(400, "Please provide something to comment on.");
           }
 
           // ensure that the user has perms to update a comment.
@@ -288,57 +273,45 @@ class Comment extends BaseObject {
             $targetComment = new Comment($this->app, $this->app->id);
           } catch (Exception $e) {
             // this non-zero commentID does not exist.
-            $this->app->delayedMessage('This comment does not exist.', 'error');
-            $this->app->redirect();
+            $this->app->display_error(404, "No such comment found.");
           }
           if (($targetUser->id != $this->app->user->id && !$this->app->user->isModerator() && !$this->app->user->isAdmin()) || !$targetComment->allow($this->app->user, 'edit')) {
-            $this->app->delayedMessage("You're not allowed to comment on this.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(403, "You're not allowed to comment on this.");
           }
-          try {
-            $updateComment = $targetComment->create_or_update($_POST['comments']);
-          } catch (ValidationException $e) {
-            $this->app->delayedMessage("Some problems were found with your comment:\n".$e->listMessages());
-            $this->app->redirect();
-          }
+          $updateComment = $targetComment->create_or_update($_POST['comments']);
           if ($updateComment) {
-            $this->app->delayedMessage("Comment successfully updated.", 'success');
-            $this->app->redirect();
+            $this->app->display_success(200, "Comment successfully updated.");
           } else {
-            $this->app->delayedMessage("An error occurred while updating this comment.", 'error');
-            $this->app->redirect();
+            $this->app->display_error(500, "An error occurred while updating this comment.");
           }
         }
-        $title = "Editing comment";
-        $output = $targetComment->view('edit', ['currentObject' => $targetParent]);
+        $this->app->display_error(400, "You must submit a comment to edit.");
         break;
       case 'show':
         if ($targetComment->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such comment found.");
         }
-        $title = "Showing comment";
-        $output = $targetComment->view('show');
+        $this->app->display_response(200, $targetComment->serialize());
         break;
       case 'delete':
         if ($targetComment->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(403, "You're not allowed to comment on this.");
         }
         $deleteComment = $targetComment->delete();
         if ($deleteComment) {
-          $this->app->delayedMessage('Successfully deleted a comment.', 'success');
-          $this->app->redirect();
+          $this->app->display_success(200, "Comment successfully deleted.");
         } else {
-          $this->app->delayedMessage("An error occurred while creating or updating this comment.", 'error');
-          $this->app->redirect();
+          $this->app->display_error(500, "An error occurred while deleting this comment.");
         }
         break;
       default:
       case 'index':
-        $title = "All Comments";
-        $output = $this->view('index');
+        $this->app->display_response(200, array_map(function ($c) {
+          return $c->serialize();
+        }, Comment::GetList($this->app)));
         break;
     }
-    return $this->app->render($output, ['subtitle' => $title]);
+    return;
   }
 }
 ?>
