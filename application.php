@@ -650,7 +650,7 @@ class Application {
     }
 
     if (!isset($this->controller) || $this->controller === "") {
-      $this->display_response(404, "The resource you requested does not exist.");
+      $this->display_error(404, "The resource you requested does not exist.");
     }
 
     try {
