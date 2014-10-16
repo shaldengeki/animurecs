@@ -150,7 +150,7 @@ class Comment extends BaseObject {
     }else {
       try {
         $createdUser = new User($this->app, intval($comment['user_id']));
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $validationErrors[] = "User must exist";
       }
     }
@@ -160,7 +160,7 @@ class Comment extends BaseObject {
       try {
         $parent = new $comment['type']($this->app, intval($comment['parent_id']));
         $parent->load();
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $validationErrors[] = "Parent must be valid";
       }
     }
@@ -192,7 +192,7 @@ class Comment extends BaseObject {
     if ($this->app->id != 0) {
       try {
         $this->load();
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $this->app->log_exception($e);
         $this->app->display_error(404, "No such comment found.");
       }
@@ -205,7 +205,7 @@ class Comment extends BaseObject {
         if ($targetParent !== Null) {
           $targetParent->load();
         }
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $this->app->log_exception($e);
         $this->app->display_error(404, "The thing you're commenting on no longer exists.");
       }
@@ -216,7 +216,7 @@ class Comment extends BaseObject {
         try {
           $targetUser = new User($this->app, isset($_POST['comments']['user_id']) ? intval($_POST['comments']['user_id']) : intval($_REQUEST['user_id']));
           $targetUser->load();
-        } catch (DbException $e) {
+        } catch (DatabaseException $e) {
           $this->app->log_exception($e);
           $this->app->display_error(404, "This user ID doesn't exist.");
         }
@@ -227,7 +227,7 @@ class Comment extends BaseObject {
       if ($targetComment->id !== 0) {
         $targetComment->load();
       }
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       $targetComment = new Comment($this->app, 0, $targetUser, $targetParent);
     }
     switch($this->app->action) {

@@ -1,6 +1,6 @@
 <?php
-class DbException extends Exception {
-  public function __construct($message = null, $code = 0, Exception $previous = null) {
+class DatabaseException extends Exception {
+  public function __construct($message=Null, $code=0, Exception $previous=Null) {
     parent::__construct($message, $code, $previous);
   }
   public function display() {
@@ -8,12 +8,19 @@ class DbException extends Exception {
     echo "A database error occurred: ".$this->message.". The staff has been notified; sorry for the inconvenience!";
   }
 }
+class DatabaseNotAvailableException extends DatabaseException {};
 
-class DatabaseNotAvailableException extends DbException {};
-class NoDatabaseRowsRetrievedException extends DbException {};
-class NoDatabaseColumnsRetrievedException extends DbException {};
+class DatabaseQueryException extends DatabaseException {
+  public function __construct($query, $params=Null, $code=0, Exception $previous=Null) {
+    parent::__construct("Query: ".$query."\nParams: ".print_r($params, True), $code, $previous);
+    $this->query = $query;
+    $this->params = $params;
+  }
+}
+class NoDatabaseRowsRetrievedException extends DatabaseQueryException {};
+class NoDatabaseColumnsRetrievedException extends DatabaseQueryException {};
 
-class DbConn extends PDO {
+class DatabaseConnection extends PDO {
   //basic database connection class that provides input-escaping and standardized query error output.
   use Loggable;
 
@@ -216,12 +223,12 @@ class DbConn extends PDO {
     } catch (Exception $e) {
       $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($params, True);
       $this->reset();
-      throw new DbException($exceptionText, 0, $e);
+      throw new DatabaseException($exceptionText, 0, $e);
     }
     if (!$result) {
       $exceptionText = "Could not query MySQL database in ".$_SERVER['PHP_SELF'].".\nError: ".print_r($prepQuery->errorInfo(), True)."\nQuery: ".$query."\nParameters: ".print_r($params, True);
       $this->reset();
-      throw new DbException($exceptionText, 0, $e);
+      throw new DatabaseException($exceptionText, 0, $e);
     }
     $this->reset();
     return $prepQuery;
@@ -249,7 +256,7 @@ class DbConn extends PDO {
     // pulls the first row returned from the query.
     $result = $this->query();
     if (!$result || $result->rowCount() < 1) {
-      throw new NoDatabaseRowsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
+      throw new NoDatabaseRowsRetrievedException($this->prevQuery, $this->prevParams);
     }
     $returnValue = $result->fetch();
     $result->closeCursor();
@@ -259,7 +266,7 @@ class DbConn extends PDO {
     // pulls the first key from the first row returned by the query.
     $result = $this->firstRow();
     if (!$result || count($result) != 1) {
-      throw new NoDatabaseColumnsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
+      throw new NoDatabaseColumnsRetrievedException($this->prevQuery, $this->prevParams);
     }
     $resultKeys = array_keys($result);
     return $result[$resultKeys[0]];
@@ -268,7 +275,7 @@ class DbConn extends PDO {
     // pulls an associative array of columns for the first row returned by the query.
     $result = $this->query();
     if (!$result) {
-      throw new NoDatabaseRowsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
+      throw new NoDatabaseRowsRetrievedException($this->prevQuery, $this->prevParams);
     }
     if ($result->rowCount() < 1) {
       return [];
@@ -294,7 +301,7 @@ class DbConn extends PDO {
   public function count($column="*") {
     $result = $this->firstRow();
     if (!$result) {
-      throw new NoDatabaseColumnsRetrievedException("Query: ".$this->prevQuery." | params: ".print_r($this->prevParams, True));
+      throw new NoDatabaseColumnsRetrievedException($this->prevQuery, $this->prevParams);
     }
     return intval($result['COUNT('.$column.')']);
   }

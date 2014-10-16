@@ -142,7 +142,7 @@ class Application {
   }
   private function _connectDB() {
     if ($this->dbConn === Null) {
-      $this->dbConn = new DbConn();
+      $this->dbConn = new DatabaseConnection();
     }
     return $this->dbConn;
   }
@@ -205,7 +205,7 @@ class Application {
       try {
         $this->_connectDB();
       } catch (DatabaseNotAvailableException $e) {
-        $this->statsd->increment("DbException");
+        $this->statsd->increment("DatabaseException");
         $this->logger->alert($e->__toString());
         $this->display_exception($e);
       }
@@ -664,18 +664,18 @@ class Application {
         } else {
           $this->target = new $this->model($this, intval($this->id));
         }
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $this->dbConn->reset();
-        $this->statsd->increment("DbException");
+        $this->statsd->increment("DatabaseException");
         $this->log_exception($e);
         $this->display_error(404, "Database error: Requested object ID not found.");
       }
       if ($this->target->id !== 0) {
         try {
           $foo = $this->target->load();
-        } catch (DbException $e) {
+        } catch (DatabaseException $e) {
           $this->dbConn->reset();
-          $this->statsd->increment("DbException");
+          $this->statsd->increment("DatabaseException");
           $blankModel = new $this->model($this);
           $this->delayedMessage("The ".strtolower($this->model)." you specified does not exist.", "error");
           $this->redirect($blankModel->url("index"));

@@ -85,7 +85,7 @@ class Alias extends BaseObject {
       try {
         $parent = new $alias['type']($this->app, intval($alias['parent_id']));
         $parent->load();
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $validationErrors[] = "Parent must exist";
       }
     }
@@ -118,7 +118,7 @@ class Alias extends BaseObject {
         $tempObject = new $objType($this->app, intval($result['parent_id']));
         $tempObject->load();
         $objects[intval($result['parent_id'])] = ['anime' => $tempObject, 'alias' => $result['name']];
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         // ignore dangling aliases.
       }
     }

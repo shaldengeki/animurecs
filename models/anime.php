@@ -181,7 +181,7 @@ class Anime extends BaseObject {
     }
     try {
       $tag = new Tag($this->app, intval($tag_id));
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       return False;
     }
     $datetime = new DateTime('now', $this->app->serverTimeZone);
@@ -340,7 +340,7 @@ class Anime extends BaseObject {
           try {
             $thisTag = Tag::findById($this->app, $tagToAdd);
             $this->create_or_update_tagging($thisTag->id, $this->app->user);
-          } catch (DbException $e) {
+          } catch (DatabaseException $e) {
             // don't create a tagging for a non-existent tag.
           }
         }
@@ -497,6 +497,9 @@ class Anime extends BaseObject {
           return $a->serialize();
         }, $anime->anime());
         $this->app->display_response(200, $anime);
+        break;
+      case 'average_rating_timeline':
+        
         break;
       case 'stats':
         /* TODO: api */

@@ -208,7 +208,7 @@ class Tag extends BaseObject {
       try {
         $createdUser = new User($this->app, intval($tag['created_user_id']));
         $createdUser->load();
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $validationErrors[] = "Created user must exist";
       }
     }
@@ -218,7 +218,7 @@ class Tag extends BaseObject {
       try {
         $parent = new TagType($this->app, intval($tag['tag_type_id']));
         $parent->load();
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $validationErrors[] = "Tag type must exist";
       }
     }
@@ -260,7 +260,7 @@ class Tag extends BaseObject {
           try {
             $thisAnime = Anime::findById($this->app, $animeToAdd);
             $this->create_or_update_tagging($thisAnime->id, $currentUser);
-          } catch (DbException $e) {
+          } catch (DatabaseException $e) {
             // don't add a tagging for a non-existent anime ID.
           }
         }

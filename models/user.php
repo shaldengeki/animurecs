@@ -707,7 +707,7 @@ class User extends BaseObject {
     }
     $updateLastActive = $this->create_or_update($params);
     if (!$updateLastActive) {
-      throw new DbException("Could not update UserID ".$this->id."'s last-active: ".print_r($params['last_active'], True));
+      throw new DatabaseException("Could not update UserID ".$this->id."'s last-active: ".print_r($params['last_active'], True));
     }
     return True;
   }
@@ -751,7 +751,7 @@ class User extends BaseObject {
     $bcrypt = new Bcrypt();
     try {
       $findUser = User::Get($this->app, ['username' => $username]);
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       $this->logFailedLogin($username);
       return False;
     }
@@ -857,8 +857,8 @@ class User extends BaseObject {
         try {
           $newEntry = new AnimeEntry($this->app, Null, ['user' => $this]);
           $listIDs[$entry['anime_id']] = $newEntry->create_or_update($entry);
-        } catch (DbException $e) {
-          $this->app->statsd->increment('DbException');
+        } catch (DatabaseException $e) {
+          $this->app->statsd->increment('DatabaseException');
           $this->app->log_exception($e);
           $listIDs[$entry['anime_id']] = False;
         }

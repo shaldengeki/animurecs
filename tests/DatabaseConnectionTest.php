@@ -1,7 +1,7 @@
 <?php
 
 /*
-  DbConnTest.php
+  DatabaseConnectionTest.php
   Tests for database connection and querying object.
 */
 
@@ -9,23 +9,23 @@ require_once('config.php');
 require_once('core/database.php');
 require_once('model/anime.php');
 
-class DbConnTest extends PHPUnit_Framework_TestCase {
+class DatabaseConnectionTest extends PHPUnit_Framework_TestCase {
   private $dbConn;
 
   public function __construct() {
-    $this->dbConn = new DbConn();
+    $this->dbConn = new DatabaseConnection();
   }
 
   /**
-   * @expectedException DbException
+   * @expectedException DatabaseException
    */
-  public function testInvalidDatabaseConnectionThrowsDbException() {
-    $newConn = new DbConn("this", "throws", "an", "exception", "please");
+  public function testInvalidDatabaseConnectionThrowsDatabaseException() {
+    $newConn = new DatabaseConnection("this", "throws", "an", "exception", "please");
   }
   /**
-   * @expectedException DbException
+   * @expectedException DatabaseException
    */
-  public function testInvalidQueryThrowsDbException() {
+  public function testInvalidQueryThrowsDatabaseException() {
     $this->dbConn->query("FAKE-QUERY");    
   }
   public function testSimpleQuery() {

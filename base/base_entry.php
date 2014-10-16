@@ -119,7 +119,7 @@ abstract class BaseEntry extends BaseObject {
     try {
       $user = new User($this->app, intval($entry['user_id']));
       $user->load();
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       $validationErrors[] = "User ID must exist";
     }
 
@@ -129,7 +129,7 @@ abstract class BaseEntry extends BaseObject {
     try {
       $parentMedia = new static::$ENTRY_TYPE($this->app, intval($entry[static::$TYPE_ID]));
       $parentMedia->load();
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       $validationErrors[] = static::$ENTRY_TYPE." ID must exist";
     }
 

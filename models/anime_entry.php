@@ -192,7 +192,7 @@ class AnimeEntry extends BaseEntry {
           try {
             $targetUser = new User($this->app, intval($_POST['anime_entries']['user_id']));
             $targetUser->load();
-          } catch (DbException $e) {
+          } catch (DatabaseException $e) {
             // this non-zero userID does not exist.
             $this->app->display_error(404, "No such user found.");
           }
@@ -203,7 +203,7 @@ class AnimeEntry extends BaseEntry {
           try {
             $targetAnime = new Anime($this->app, intval($_POST['anime_entries']['anime_id']));
             $targetAnime->load();
-          } catch (DbException $e) {
+          } catch (DatabaseException $e) {
             $this->app->display_error(404, "No such anime found.");
           }
           if (!isset($_POST['anime_entries']['id'])) {

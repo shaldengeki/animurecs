@@ -213,7 +213,7 @@ abstract class BaseList extends BaseObject {
         ['time < ?', $beforeTime->format("Y-m-d H:i:s")]
       ]);
       return $prevEntry;
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       return new $entryType($this->app, 0);
     }
     // $prevEntry = new $entryType($this->app, 0);

@@ -158,7 +158,7 @@ function display_month_year_dropdown($select_id="", $select_name_prefix="form_en
   echo "</select>\n";
 }
 
-function display_history_json(DbConn $database, User $user, array $fields = array(), array $machines=array()) {
+function display_history_json(DatabaseConnection $database, User $user, array $fields = array(), array $machines=array()) {
   header('Content-type: application/json');
   $return_array = [];
   
@@ -189,7 +189,7 @@ function display_history_json(DbConn $database, User $user, array $fields = arra
   echo json_encode($return_array);
 }
 
-function display_history_plot(DbConn $database, User $user, $form_id) {
+function display_history_plot(DatabaseConnection $database, User $user, $form_id) {
   //displays plot for a particular form.
   $formObject = $database->firstRow("SELECT * FROM `forms` WHERE `id` = ".intval($form_id)." LIMIT 1");
   if (!$formObject) {

@@ -114,7 +114,7 @@ class Thread extends BaseObject {
     }
     try {
       $tag = new Tag($this->app, intval($tag_id));
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       return False;
     }
     $dateTime = new DateTime('now', $this->app->serverTimeZone);

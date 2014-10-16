@@ -186,7 +186,7 @@ abstract class BaseObject {
     while ($dbObj = $objQuery->fetch()) {
       try {
         $newObj = new $className($app, $dbObj[static::$FIELDS['id']['db']]);
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         continue;
       }
       $objs[$dbObj[static::$FIELDS['id']['db']]] = $newObj->set($dbObj);
@@ -296,7 +296,7 @@ abstract class BaseObject {
     if ($this->id === Null) {
       // should never reach here!
       $this->app->dbConn->reset();
-      throw new DbException(static::MODEL_NAME().' with null ID not found in database');
+      throw new DatabaseException(static::MODEL_NAME().' with null ID not found in database');
     }
     // include all fields.
     foreach (array_keys(static::$FIELDS) as $field) {
@@ -546,7 +546,7 @@ abstract class BaseObject {
       $this->beforeUpdate($object);
       $this->app->dbConn->set($object)->where($whereConditions === Null ? [] : $whereConditions)->limit(1);
       if (!$this->app->dbConn->update()) {
-        throw new DbException("Could not update ".static::$TABLE.": ".$this->app->dbConn->queryString());
+        throw new DatabaseException("Could not update ".static::$TABLE.": ".$this->app->dbConn->queryString());
       }
       $this->set($object);
       $modelName = static::MODEL_NAME();
@@ -557,7 +557,7 @@ abstract class BaseObject {
       $this->app->dbConn->set(['created_at=NOW()']);
       $this->beforeCreate([$object]);
       if (!$this->app->dbConn->set($object)->insert()) {
-        throw new DbException("Could not insert into ".static::$TABLE.": ".$this->app->dbConn->queryString());
+        throw new DatabaseException("Could not insert into ".static::$TABLE.": ".$this->app->dbConn->queryString());
       } else {
         $this->id = intval($this->app->dbConn->lastInsertId);
       }
@@ -591,7 +591,7 @@ abstract class BaseObject {
     $this->beforeDelete();
     if ($entryIDs) {
       if (!$this->app->dbConn->table(static::$TABLE)->where(['id' => $entryIDs])->limit(count($entryIDs))->delete()) {
-        throw new DbException("Could not delete from ".static::$TABLE.": ".$deleteQuery);
+        throw new DatabaseException("Could not delete from ".static::$TABLE.": ".$deleteQuery);
       }
     }
     $this->afterDelete();
@@ -672,7 +672,7 @@ abstract class BaseObject {
       } elseif (property_exists($this, $humanizedAttr) && $this->$humanizedAttr) {
         $defaultVals['value'] = $this->$humanizedAttr;
       }
-    } catch (DbException $e) {
+    } catch (DatabaseException $e) {
       $defaultVals['value'] = '';
     }
     $params = array_merge($defaultVals, $params);

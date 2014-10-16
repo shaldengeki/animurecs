@@ -30,7 +30,7 @@
     <?php if (isset($params['wilsons'][$anime->id])) { ?><p><em>Wilson score: <?php echo round($params['wilsons'][$anime->id], 1); ?></em></p><?php } ?>
     <?php echo $params['dismiss-url'] ? "<div class='recommendationMenu hidden'><a data-url='".$params['dismiss-url']."?anime_id=".intval($anime->id)."'>Dismiss</a></div>" : ""; ?>
 <?php
-      } catch (DbException $e) {
+      } catch (DatabaseException $e) {
         $this->app->log_exception($e);
 ?>
         There's an invalid anime reference here; please notify an administrator to get this fixed!
@@ -40,7 +40,7 @@
   </li>
 <?php
     }
-  } catch (DbException $e) {
+  } catch (DatabaseException $e) {
     $this->app->log_exception($e);
 ?>
   There's an invalid anime reference on this page; please notify an administrator to get this fixed!
