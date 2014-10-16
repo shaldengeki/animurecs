@@ -1069,7 +1069,13 @@ class User extends BaseObject {
         break;
 
       case 'anime_list':
-        /* TODO: api */
+        $animeList = [
+          'currently_watching' => [],
+          'completed' => [],
+          'on_hold' => [],
+          'dropped' => [],
+          'plan_to_watch' => []
+        ];
         /* TODO: replace with dynamic names */
         $startedAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
           LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
@@ -1084,6 +1090,7 @@ class User extends BaseObject {
         while ($row = $startedAnimeQuery->fetch()) {
           $startedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
         }
+
         $completedAnimeQuery = $this->app->dbConn->query("SELECT al.anime_id, al.time FROM anime_lists al
           LEFT OUTER JOIN anime_lists al2 ON al.user_id = al2.user_id
             AND al.anime_id = al2.anime_id
@@ -1137,16 +1144,43 @@ class User extends BaseObject {
           $plannedAnime[intval($row['anime_id'])] = new \DateTime($row['time'], $this->app->serverTimeZone);
         }
 
-        $sectionDates = [
-          1 => ['title' => 'Started', 'anime' => $startedAnime],
-          2 => ['title' => 'Finished', 'anime' => $completedAnime],
-          3 => ['title' => 'Since', 'anime' => $heldAnime],
-          4 => ['title' => 'On', 'anime' => $droppedAnime],
-          6 => ['title' => 'Since', 'anime' => $plannedAnime],
-        ];
-
-        echo $this->animeList()->view("show", ['dates' => $sectionDates]);
-        exit;
+        // now build up each section with serialized anime.
+        foreach ($this->animeList()->uniqueList() as $animeID => $entry) {
+          switch (intval($entry['status'])) {
+            case 1:
+              $animeList['currently_watching'][] = [
+                'anime' => Anime::FindById($this->app, $animeID)->serialize(),
+                'last_time' => $startedAnime[$animeID]
+              ];
+              break;
+            case 2:
+              $animeList['completed'][] = [
+                'anime' => Anime::FindById($this->app, $animeID)->serialize(),
+                'last_time' => $completedAnime[$animeID]
+              ];
+              break;
+            case 3:
+              $animeList['on_hold'][] = [
+                'anime' => Anime::FindById($this->app, $animeID)->serialize(),
+                'last_time' => $heldAnime[$animeID]
+              ];
+              break;
+            case 4:
+              $animeList['dropped'][] = [
+                'anime' => Anime::FindById($this->app, $animeID)->serialize(),
+                'last_time' => $droppedAnime[$animeID]
+              ];
+              break;
+            case 6:
+              $animeList['plan_to_watch'][] = [
+                'anime' => Anime::FindById($this->app, $animeID)->serialize(),
+                'last_time' => $plannedAnime[$animeID]
+              ];
+              break;
+          }
+        }
+        $this->app->display_response(200, $animeList);
+        break;
       case 'anime':
         if (!isset($_REQUEST['anime_id']) || !is_numeric($_REQUEST['anime_id'])) {
           $this->app->display_error(400, "Please specify a valid anime ID.");
