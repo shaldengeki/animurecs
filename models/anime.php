@@ -556,7 +556,6 @@ class Anime extends BaseObject {
         $perPage = 25;
         if (!isset($_REQUEST['search'])) {
           // top anime listing.
-          $title = "Top Anime";
           $numPages = ceil(Anime::Count($this->app)/$perPage);
           $this->app->dbConn->table('( SELECT user_id, anime_id, MAX(time) AS time FROM anime_lists GROUP BY user_id, anime_id) p')
             ->fields('anime_lists.anime_id', 'AVG(score) AS avg', 'STDDEV(score) AS stddev', 'COUNT(*) AS count', '((((AVG(score)-1)/9) + ( POW(STDDEV(score), 2) / (2.0 * COUNT(*)) ) - STDDEV(score) * SQRT( ((AVG(score)-1)/9) * (1.0 - ((AVG(score)-1)/9)) / COUNT(*) + ( POW(STDDEV(score), 2) / ( 4.0 * POW(COUNT(*), 2) ) ) )) / (1.0 + (POW(STDDEV(score), 2) / COUNT(*))) * 9) + 1 AS wilson')
@@ -582,7 +581,6 @@ class Anime extends BaseObject {
           }
         } else {
           // user is searching for an anime.
-          $title = "Search for Anime";
           $blankAlias = new Alias($this->app, 0, $this);
           $searchResults = $blankAlias->search($_REQUEST['search']);
           $anime = array_slice($searchResults, (intval($this->app->page)-1)*$perPage, intval($perPage));
