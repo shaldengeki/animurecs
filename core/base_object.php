@@ -239,6 +239,32 @@ abstract class BaseObject {
     }
     return $newName;
   }
+  public function cast($value, $type) {
+    /*
+      casts a given value to a type specified by $type.
+    */
+    switch ($type) {
+      case 'int':
+        return (int) $value;
+        break;
+      case 'float':
+        return (float) $value;
+        break;
+      case 'bool':
+        return (boolean) $value;
+        break;
+      case 'timestamp':
+        return new \DateTime('@'.intval($value));
+        break;
+      case 'date':
+        return new \DateTime($value, $this->app->serverTimeZone);
+        break;
+      case 'str':
+      default:
+        return $value;
+        break;
+    }
+  }
   public function set(array $params) {
     /* 
       generic setter. Takes an array of params like:
@@ -251,27 +277,7 @@ abstract class BaseObject {
     $DB_FIELDS = static::DB_FIELDS();
     foreach ($params as $key => $value) {
       if (isset($DB_FIELDS[$key])) {
-        switch ($DB_FIELDS[$key]['type']) {
-          case 'int':
-            $value = (int) $value;
-            break;
-          case 'float':
-            $value = (float) $value;
-            break;
-          case 'bool':
-            $value = (boolean) $value;
-            break;
-          case 'timestamp':
-            $value = new \DateTime('@'.intval($value));
-            break;
-          case 'date':
-            $value = new \DateTime($value, $this->app->serverTimeZone);
-            break;
-          case 'str':
-          default:
-            break;
-        }
-        $this->{$DB_FIELDS[$key]['attr']} = $value;
+        $this->{$DB_FIELDS[$key]['attr']} = $this->cast($value, $DB_FIELDS[$key]['type']);
       }
     }
     return $this;
