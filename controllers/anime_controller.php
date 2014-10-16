@@ -24,14 +24,6 @@ class AnimeController extends Controller {
         return False;
         break;
 
-      /* cases where user must be logged in. */
-      case 'new':
-        if ($this->_app->user->loggedIn()) {
-          return True;
-        }
-        return False;
-        break;
-
       /* cases where this tag must be approved or user must be staff. */
       case 'feed':
       case 'show':
@@ -44,9 +36,18 @@ class AnimeController extends Controller {
         return False;
         break;
 
+      case 'index':
+        if (isset($_POST['anime']) && is_array($_POST['anime'])) {
+          if ($this->_app->user->isStaff()) {
+            return True;
+          }
+          return False;
+        }
+        return True;
+        break;
+
       /* public views. */
       case 'token_search':
-      case 'index':
         return True;
         break;
       default:
