@@ -128,6 +128,7 @@ class Anime extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      /* cases where user must be staff. */
       case 'remove_tag':
       case 'approve':
       case 'edit':
@@ -137,21 +138,28 @@ class Anime extends BaseObject {
         }
         return False;
         break;
+
+      /* cases where user must be logged in. */
       case 'new':
         if ($authingUser->loggedIn()) {
           return True;
         }
         return False;
         break;
+
+      /* cases where this tag must be approved or user must be staff. */
       case 'feed':
       case 'show':
       case 'related':
       case 'stats':
+      case 'tags':
         if ($this->isApproved() || $authingUser->isStaff()) {
           return True;
         }
         return False;
         break;
+
+      /* public views. */
       case 'token_search':
       case 'index':
         return True;
@@ -450,20 +458,13 @@ class Anime extends BaseObject {
       if (isset($_POST['anime']) && is_array($_POST['anime'])) {
         $verbProgressive = $this->id === 0 ? "creating" : "updating";
         $verbPast = $this->id === 0 ? "created" : "updated";
-        try {
-          $updateAnime = $this->create_or_update($_POST['anime']);
-        } catch (ValidationException $e) {
-          $this->app->delayedMessage("Some problems were found with your input while ".$verbProgressive." ".$this->title.":\n".$e->listMessages());
-          $this->app->redirect();
-        }
+        $updateAnime = $this->create_or_update($_POST['anime']);
         if ($updateAnime) {
           // fetch the new ID.
           $newAnime = new Anime($this->app, $updateAnime);
-          $this->app->delayedMessage("Successfully ".$verbPast." ".$newAnime->title.".", "success");
-          $this->app->redirect($newAnime->url("show"));
+          $this->app->display_success(200, "Successfully ".$verbPast." ".$newAnime->title.".", "success");
         } else {
-          $this->app->delayedMessage("An error occurred while ".$verbProgressive." ".$this->title.".", "error");
-          $this->app->redirect(($this->id === 0 ? $this->url("new") : $this->url("edit")));
+          $this->app->display_error(500, "An error occurred while ".$verbProgressive." ".$this->title.".");
         }
       }
     }
@@ -471,9 +472,10 @@ class Anime extends BaseObject {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
-        $entries = array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
-        echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
-        exit;
+        foreach (array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc') as $entry) {
+          $entries[] = $entry->serialize();
+        }
+        $this->app->display_response(200, $entries);
         break;
       case 'token_search':
         $blankAlias = new Alias($this->app, 0, $this);
@@ -482,21 +484,22 @@ class Anime extends BaseObject {
         foreach ($searchResults as $result) {
           $animus[] = ['id' => $result['anime']->id, 'title' => $result['alias']];
         }
-        echo json_encode($animus);
-        exit;
+        $this->app->display_response(200, $animus);
         break;
       case 'related':
-        $page = isset($_REQUEST['page']) && is_numeric($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
         $perPage = 10;
         try {
-          $anime = $this->similar(($page - 1) * $perPage, $perPage);
-          echo $this->view('related', ['page' => $page, 'perPage' => $perPage, 'anime' => $anime]);
+          $anime = $this->similar(($this->app->page - 1) * $perPage, $perPage);
         } catch (CurlException $e) {
-          echo "We ran into an error while fetching anime similar to this one. Please try again later!";
+          $this->app->display_error(503, "We couldn't fetch related anime for this show. Please try again later!");
         }
-        exit;
+        $anime = array_map(function ($a) {
+          return $a->serialize();
+        }, $anime->anime());
+        $this->app->display_response(200, $anime);
         break;
       case 'stats':
+        /* TODO: api */
         $times = $this->app->dbConn->table(AnimeList::$TABLE)
           ->fields("UNIX_TIMESTAMP(MIN(time)) AS start", "UNIX_TIMESTAMP(MAX(time)) AS end")
           ->where([
@@ -511,20 +514,25 @@ class Anime extends BaseObject {
         ]);
         exit;
         break;
-      case 'new':
-        $title = "Add an anime";
-        $output = $this->view('new');
-        break;
-      case 'edit':
-        if ($this->id == 0) {
-          $this->app->display_error(404);
+      case 'tags':
+        // order the tags in this animeGroup's tags by tagType id
+        $tagTypes = TagType::GetList($this->app);
+        $tagsByType = [];
+        foreach ($tagTypes as $tagType) {
+          $tagsByType[$tagType->name] = [];
         }
-        $title = "Editing ".escape_output($this->title);
-        $output .= $this->view('edit');
+
+        foreach ($this->tags as $tag) {
+          $tagsByType[$tagTypes[$tag->type->id]->name][] = [
+            'tag' => $tag->serialize(),
+            'count' => $tag->numAnime()
+          ];
+        }
+        $this->app->display_response(200, $tagsByType);
         break;
       case 'show':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "No such anime found.");
         }
         $title = escape_output($this->title);
 
