@@ -448,9 +448,7 @@ abstract class Model {
     }
   }
 
-  // all classes must implement allow(), which defines user permissions.
-  abstract public function allow(User $authingUser, $action, array $params=Null);
-  // also should implement validate(), which takes an array of parameters and ensures that they are valid. returns a bool.
+  // all classes must implement validate(), which takes an array of parameters and ensures that they are valid. returns a bool.
   public function validate(array $object) {
     $validationErrors = [];
     if (!$object) {
@@ -605,9 +603,6 @@ abstract class Model {
     }
     // Should never get here!
     throw new AppException($this->app, "Requested view not found: ".$file);
-  }
-  public function render() {
-    return $this->app->render($this->view($this->app->action));
   }
   public function url($action="show", $format=Null, array $params=Null, $id=Null) {
     // returns the url that maps to this object and the given action.
