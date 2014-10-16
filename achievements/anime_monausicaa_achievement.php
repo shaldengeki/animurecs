@@ -1,5 +1,5 @@
 <?php
-class SomeKindOfMonausicaaAchievement extends BaseAchievement {
+class SomeKindOfMonausicaaAchievement extends Achievement {
   public $id=9;
   public $name="Some Kind of Monausicaa";
   public $points=500;

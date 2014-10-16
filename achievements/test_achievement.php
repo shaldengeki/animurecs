@@ -1,5 +1,5 @@
 <?php
-class TestAchievement extends BaseAchievement {
+class TestAchievement extends Achievement {
   // toy example of an achievement.
   public $id=1;
   public $name="13/f/cali";

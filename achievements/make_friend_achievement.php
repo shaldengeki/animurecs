@@ -1,5 +1,5 @@
 <?php
-class MakeFriendAchievement extends BaseAchievement {
+class MakeFriendAchievement extends Achievement {
   public $id=4;
   public $name="Haganai!";
   public $points=50;

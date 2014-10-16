@@ -1,6 +1,6 @@
 <?php
 return;
-class SenpaiNoticedMeAchievement extends BaseAchievement {
+class SenpaiNoticedMeAchievement extends Achievement {
   public $id=11;
   public $name="Senpai Noticed Me!";
   public $points=10;

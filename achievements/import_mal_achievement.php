@@ -1,5 +1,5 @@
 <?php
-class ImportMALAchievement extends BaseAchievement {
+class ImportMALAchievement extends Achievement {
   public $id=3;
   public $name="Moving In";
   public $points=25;

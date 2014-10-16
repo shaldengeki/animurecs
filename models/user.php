@@ -871,12 +871,12 @@ class User extends Model {
     return $listIDs;
   }
   */
-  public function addAchievement(BaseAchievement $achievement) {
+  public function addAchievement(Achievement $achievement) {
     $this->fire('addAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
     $updateArray = ['points' => $this->points + $achievement->points, 'achievement_mask' => $this->achievementMask + pow(2, $achievement->id - 1)];
     return $this->create_or_update($updateArray);
   }
-  public function removeAchievement(BaseAchievement $achievement) {
+  public function removeAchievement(Achievement $achievement) {
     $this->fire('removeAchievement', ['id' => $achievement->id, 'points' => $achievement->points]);
     return $this->create_or_update(['points' => $this->points + $achievement->points, 'achievement_mask' => $this->achievementMask - pow(2, $achievement->id - 1)]);
   }

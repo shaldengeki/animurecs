@@ -1,5 +1,5 @@
 <?php
-class AnimeKouhaiAchievement extends BaseAchievement {
+class AnimeKouhaiAchievement extends Achievement {
   public $id=5;
   public $name="Kouhai";
   public $points=30;
