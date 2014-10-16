@@ -236,106 +236,69 @@ class Thread extends BaseObject {
     }, $result));
   }
   public function render() {
+    if ($this->app->action === 'new' || $this->app->action === 'edit') {
+      if (isset($_POST['threads']) && is_array($_POST['threads'])) {
+        $verbProgressive = $this->id === 0 ? "creating" : "updating";
+        $verbPast = $this->id === 0 ? "created" : "updated";
+        $updateThread = $this->create_or_update($_POST['thread']);
+        if ($updateThread) {
+          $this->app->display_success(200, "Successfully ".$verbPast." ".$this->title.".", "success");
+        } else {
+          $this->app->display_error(500, "An error occurred while ".$verbProgressive." ".$this->title.".");
+        }
+      }
+      $this->app->display_error(400, "You must provide thread info to create or update.");
+    }
     switch($this->app->action) {
       case 'feed':
         $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
         $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
-        $entries = array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc');
-        echo $this->app->user->view('feed', ['entries' => $entries, 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => '']);
-        exit;
-        break;
-      case 'token_search':
-        $blankAlias = new Alias($this->app, 0, $this);
-        $searchResults = $blankAlias->search($_REQUEST['term']);
-        $animus = [];
-        foreach ($searchResults as $anime) {
-          $animus[] = ['id' => $anime->id, 'title' => $anime->title];
+        $entries = [];
+        foreach (array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc') as $entry) {
+          $entries[] = $entry->serialize();
         }
-        echo json_encode($animus);
-        exit;
-        break;
-      case 'related':
-        $page = isset($_REQUEST['page']) && is_numeric($_REQUEST['page']) && intval($_REQUEST['page']) > 0 ? intval($_REQUEST['page']) : 1;
-        echo $this->view('related', ['page' => $page]);
-        exit;
-        break;
-      case 'stats':
-        echo $this->view('stats');
-        exit;
-        break;
-      case 'new':
-        $title = "Add an anime";
-        $output = $this->view('new');
-        break;
-      case 'edit':
-        if (isset($_POST['anime']) && is_array($_POST['anime'])) {
-          $updateAnime = $this->create_or_update($_POST['anime']);
-          if ($updateAnime) {
-            // fetch the new ID.
-            $newAnime = new Anime($this->app, $updateAnime);
-            $this->app->delayedMessage("Successfully created or updated ".$newAnime->title.".", "success");
-            $this->app->redirect($newAnime->url("show"));
-          } else {
-            $this->app->delayedMessage("An error occurred while creating or updating ".$this->title.".", "error");
-            $this->app->redirect($this->id === 0 ? $this->url("new") : $this->url("edit"));
-          }
-        }
-        if ($this->id == 0) {
-          $this->app->display_error(404);
-        }
-        $title = "Editing ".escape_output($this->title);
-        $output .= $this->view('edit');
+        $this->app->display_response(200, $entries);
         break;
       case 'show':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "This thread could not be found.");
         }
-        $title = escape_output($this->title);
-        $output = $this->view("show", ['entries' => $this->entries(Null, Null, 50), 'numEntries' => 50, 'feedURL' => $this->url('feed'), 'emptyFeedText' => "<blockquote><p>No entries yet - ".$this->app->user->link("show", "be the first!")."</p></blockquote>"]);
+        $this->app->display_response(200, $this->serialize());
         break;
       case 'delete':
         if ($this->id == 0) {
-          $this->app->display_error(404);
+          $this->app->display_error(404, "This thread could not be found.");
         }
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
-        $animeTitle = $this->title;
-        $deleteAnime = $this->delete();
-        if ($deleteAnime) {
-          $this->app->delayedMessage('Successfully deleted '.$animeTitle.'.', "success");
-          $this->app->redirect();
+        $threadTitle = $this->title;
+        $deleteThread = $this->delete();
+        if ($deleteThread) {
+          $this->app->display_success(200, 'Successfully deleted '.$threadTitle.'.');
         } else {
-          $this->app->delayedMessage('An error occurred while deleting '.$animeTitle.'.', "error");
-          $this->app->redirect();
+          $this->app->display_error(500, 'An error occurred while deleting '.$threadTitle.'.');
         }
         break;
       default:
       case 'index':
-        $title = "Browse Anime";
         $perPage = 25;
-        if (!isset($_REQUEST['search'])) {
-          if ($this->app->user->isAdmin()) {
-            $numPages = ceil($this->app->dbConn->table(Anime::$TABLE)->fields('COUNT(*)')->count()/$perPage);
-            $animeIDs = $this->app->dbConn->table(Anime::$TABLE)->fields('anime.id')->order('anime.title ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
-          } else {
-            $numPages = ceil($this->app->dbConn->table(Anime::$TABLE)->fields('COUNT(*)')->where(['approved_on != ""'])->count()/$perPage);
-            $animeIDs = $this->app->dbConn->table(Anime::$TABLE)->fields('anime.id')->where(['approved_on != ""'])->order('anime.title ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
-          }
-          $anime = [];
-          while ($animeID = $animeIDs->fetch()) {
-            $anime[] = new Anime($this->app, intval($animeID['id']));
-          }
-        } else {
-          $blankAlias = new Alias($this->app, 0, $this);
-          $searchResults = $blankAlias->search($_REQUEST['search']);
-          $anime = array_slice($searchResults, (intval($this->app->page)-1)*$perPage, intval($perPage));
-          $numPages = ceil(count($searchResults)/$perPage);
+        $pages = ceil(Thread::Count($this->app)/$perPage);
+        $threadsQuery = $this->app->dbConn->table(Thread::$TABLE)->order('updated_at DESC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
+        $threads = [];
+        while ($thread = $threadsQuery->fetch()) {
+          $threadObj = new Thread($this->app, intval($thread['id']));
+          $threadObj->set($thread);
+          $threads[] = $tagTypeObj->serialize();
         }
-        $output = $this->view("index", ['anime' => $anime, 'numPages' => $numPages, 'perPage' => $perPage]);
+        $this->app->display_response(200, [
+          'page' => $this->app->page,
+          'pages' => $pages,
+          'threads' => $threads
+        ]);
         break;
     }
-    return $this->app->render($output, ['subtitle' => $title]);
+    return;
   }
   public function formatFeedEntry(BaseEntry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);
