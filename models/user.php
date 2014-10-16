@@ -357,13 +357,15 @@ class User extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
-      /* post-register conversions - must be logged in */
+      /* cases where user must be logged in */
+      case 'log_out':
       case 'register_conversion':
         if ($this->loggedIn()) {
           return True;
         }
         return False;
         break;
+
       /* cases where we want only user+staff capable, keeping the first user public */
       case 'discover':
       case 'friendRecs':
@@ -374,6 +376,7 @@ class User extends BaseObject {
         }
         return False;
         break;
+
       /* cases where we want only this user + staff capable */
       case 'anime':
       case 'globalFeedEntries':
@@ -385,15 +388,9 @@ class User extends BaseObject {
         }
         return False;
         break;
-      case 'request_friend':
-      case 'confirm_friend':
-      case 'ignore_friend':
-        if ($authingUser->id !== 0 && $authingUser->loggedIn() && $this->id !== 0) {
-          return True;
-        }
-        return False;
-        break;
+
       /* cases where we only want non-logged-in users */
+      case 'log_in':
       case 'new':
       case 'activate':
         if (!$authingUser->loggedIn()) {
@@ -401,6 +398,7 @@ class User extends BaseObject {
         }
         return False;
         break;
+
       /* cases where we only want admins, and only target non-admins */
       case 'delete':
         if ($authingUser->isAdmin() && !$this->isAdmin()) {
@@ -408,6 +406,7 @@ class User extends BaseObject {
         }
         return False;
         break;
+
       /* cases where we only want admins */
       case 'switch_user':
         if ($authingUser->isAdmin()) {
@@ -415,13 +414,19 @@ class User extends BaseObject {
         }
         return False;
         break;
+
       /* cases where we want only logged-in users who are not this user */
+      case 'request_friend':
+      case 'confirm_friend':
+      case 'ignore_friend':
       case 'comment':
-        if ($authingUser->loggedIn() && $authingUser->id != $this->id) {
+        if ($this->id !== 0 && $authingUser->loggedIn() && $authingUser->id != $this->id) {
           return True;
         }
         return False;
         break;
+
+      /* public views */
       case 'switch_back':
       case 'show':
       case 'index':
@@ -433,6 +438,8 @@ class User extends BaseObject {
       case 'achievements2':
         return True;
         break;
+
+      /* everything else is blacklisted by default */
       default:
         return False;
         break;
@@ -737,7 +744,6 @@ class User extends BaseObject {
       ])
       ->count();
     if ($failedLoginCount > self::$maxFailedLogins) {
-      $this->app->delayedMessage("You have had too many unsuccessful login attempts. Please wait awhile and try again.", "error");
       return False;
     }
   
@@ -747,16 +753,13 @@ class User extends BaseObject {
       $findUser = User::Get($this->app, ['username' => $username]);
     } catch (DbException $e) {
       $this->logFailedLogin($username);
-      $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
     if ($findUser->activationCode) {
-      $this->app->delayedMessage("Please check your email (including your spam folder) to activate your account. If one hasn't been sent and it's been awhile, let shaldengeki (twitter at bottom of page) know.");
       return False;
     }
     if (!$findUser || !$bcrypt->verify($password, $findUser->passwordHash)) {
       $this->logFailedLogin($username);
-      $this->app->delayedMessage("Could not log in with the supplied credentials.", "error");
       return False;
     }
 
@@ -788,8 +791,6 @@ class User extends BaseObject {
     $newUser->create_or_update($updateUser);
 
     $newUser->fire('logIn');
-    $this->app->delayedMessage("Successfully logged in.", "success");
-
     return True;
   }
   public function logOut() {
@@ -952,6 +953,32 @@ class User extends BaseObject {
           $this->app->display_error(500, "An error occurred while ignoring this friend request. Please try again.");
         }
         break;
+      case 'log_in':
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
+        }
+        if (!isset($_POST['username']) || !isset($_POST['password'])) {
+          $this->app->display_error(400, "Please provide a username and password to log in.");          
+        }
+        $username = rawurldecode($_POST['username']);
+        $password = rawurldecode($_POST['password']);
+
+        if ($app->user->logIn($username, $password)) {
+          $this->app->display_response(200, ['id' => $this->id, 'username' => $this->username]);
+        } else {
+          $this->app->display_error(403, "The username/password combination you specified is not correct. Please try again.");
+        }
+        break;
+      case 'log_out':
+        if (!$this->app->checkCSRF()) {
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
+        }
+        if ($app->user->logOut()) {
+          $this->app->display_response(200, ['id' => $this->id, 'username' => $this->username]);
+        } else {
+          $this->app->display_error(500, "An error occurred while logging you out. Please try again.");
+        }
+        break;
       case 'switch_back':
         $switchUser = $this->app->user->switchUser($_SESSION['switched_user'], False);
         if ($switchUser) {
@@ -987,6 +1014,7 @@ class User extends BaseObject {
           $this->app->display_error(400, "Please provide a username to switch to.");          
         }
         break;
+
       /* user setting views */
       case 'new':
       case 'edit':
