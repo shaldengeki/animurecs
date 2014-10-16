@@ -1,5 +1,5 @@
 <?php
-class User extends BaseObject {
+class User extends Model {
   use Commentable;
 
   public static $TABLE = "users";

@@ -28,7 +28,7 @@ class ValidationException extends AppException {
   }
 }
 
-abstract class BaseObject {
+abstract class Model {
   // base class for database objects.
 
   public $app, $id=Null;
@@ -478,7 +478,7 @@ abstract class BaseObject {
     $serialized = [];
     foreach (static::$FIELDS as $attr => $info) {
       if (!isset($info['serialize']) || $info['serialize']) {
-        if ($this->{$attr} instanceof BaseObject) {
+        if ($this->{$attr} instanceof Model) {
           // recursively-serialize attributes if necessary.
           $serialized[$attr] = $this->{$attr}->serialize();
         } else {

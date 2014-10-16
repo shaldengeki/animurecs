@@ -9,17 +9,17 @@ class SenpaiNoticedMeAchievement extends BaseAchievement {
   public $events=['User.viewProfile'];
   public $dependencies=[];
 
-  public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
+  public function validateUser($event, Model $parent, array $updateParams=Null) {
     // not implemented yet ;_;
     if ($this->alreadyAwarded($this->user($parent))) {
       return True;
     }
     return False;
   }
-  public function progress(BaseObject $parent) {
+  public function progress(Model $parent) {
     return $this->validateUser(Null, $parent) ? 1.0 : 0.0;
   }
-  public function progressString(BaseObject $parent) {
+  public function progressString(Model $parent) {
     return intval($this->validateUser(Null, $parent))."/1";
   }
 }

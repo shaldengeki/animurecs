@@ -1,5 +1,5 @@
 <?php
-class Tag extends BaseObject {
+class Tag extends Model {
   public static $TABLE = "tags";
   public static $PLURAL = "tags";
   public static $FIELDS = [

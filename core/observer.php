@@ -8,7 +8,7 @@ class Observer {
     $this->updateFunction = $updateFunction;
   }
   // function called upon event firing.
-  public function update($event, BaseObject $parent, array $updateParams=Null) {
+  public function update($event, Model $parent, array $updateParams=Null) {
     call_user_func($this->updateFunction, $event, $parent, $updateParams);
   }
 }

@@ -1,6 +1,6 @@
 <?php
 
-class Alias extends BaseObject {
+class Alias extends Model {
   public static $TABLE = "aliases";
   public static $PLURAL = "aliases";
   public static $FIELDS = [
@@ -31,7 +31,7 @@ class Alias extends BaseObject {
   ];
   public static $JOINS = [
   ];
-  public function __construct(Application $app, $id=Null, BaseObject $parent=Null) {
+  public function __construct(Application $app, $id=Null, Model $parent=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
       $this->name = "";
@@ -55,6 +55,7 @@ class Alias extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      case 'index':
       case 'new':
       case 'edit':
       case 'delete':

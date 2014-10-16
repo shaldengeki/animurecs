@@ -8,7 +8,7 @@ class ImportMALAchievement extends BaseAchievement {
   public $events=['User.importMAL'];
   public $dependencies=[];
 
-  public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
+  public function validateUser($event, Model $parent, array $updateParams=Null) {
     if ($this->alreadyAwarded($this->user($parent))) {
       return True;
     }
@@ -20,10 +20,10 @@ class ImportMALAchievement extends BaseAchievement {
     }
     return False;
   }
-  public function progress(BaseObject $parent) {
+  public function progress(Model $parent) {
     return $this->validateUser(Null, $parent) ? 1.0 : 0.0;
   }
-  public function progressString(BaseObject $parent) {
+  public function progressString(Model $parent) {
     return intval($this->validateUser(Null, $parent))."/1";
   }
 }

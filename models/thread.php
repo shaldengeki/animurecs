@@ -1,5 +1,5 @@
 <?php
-class Thread extends BaseObject {
+class Thread extends Model {
   use Feedable, Commentable;
 
   public static $TABLE = "threads";

@@ -273,7 +273,7 @@ class Application {
     // binds all event observers.
 
     // clear cache for a database object every time it's updated or deleted.
-    $this->bind(['BaseObject.afterUpdate', 'BaseObject.afterDelete'], new Observer(function($event, $parent, $updateParams) {
+    $this->bind(['Model.afterUpdate', 'Model.afterDelete'], new Observer(function($event, $parent, $updateParams) {
       $parent->app->cache->delete($parent->cacheKey());
     }));
     $this->bind(['Anime.afterUpdate', 'Anime.afterDelete'], new Observer(function($event, $parent, $updateParams) {
@@ -625,6 +625,7 @@ class Application {
     if (!isset($_REQUEST['page'])) {
       $this->page = 1;
     } else {
+      // page must be at least 1.
       $this->page = max(1, intval($_REQUEST['page']));
     }
     if (!isset($_REQUEST['format']) || $_REQUEST['format'] === "") {
@@ -635,8 +636,7 @@ class Application {
 
     if (isset($this->model) && $this->model !== "") {
       if (!class_exists($this->model)) {
-        $this->delayedMessage("This thing doesn't exist!", "error");
-        $this->redirect($this->user->url());
+        $this->display_response(404, "The resource you requested does not exist.");
       }
 
       try {

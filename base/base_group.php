@@ -1,4 +1,5 @@
 <?php
+require_once("../core/model.php");
 
 class BaseGroup implements Iterator, ArrayAccess {
   // class to provide mass-querying functions for groups of object IDs or objects.

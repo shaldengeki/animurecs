@@ -9,7 +9,7 @@ class TestAchievement extends BaseAchievement {
   public $events=['User.afterUpdate'];
   public $dependencies=[];
 
-  public function validateUser($event, BaseObject $parent, array $updateParams=Null) {
+  public function validateUser($event, Model $parent, array $updateParams=Null) {
     if ($this->alreadyAwarded($this->user($parent)) || (isset($updateParams['about']) && $updateParams['about'] != $parent->about && mb_strlen($updateParams['about']) > 0)) {
       return True;
     }
@@ -18,10 +18,10 @@ class TestAchievement extends BaseAchievement {
   public function level() {
     return 1;
   }
-  public function progress(BaseObject $parent) {
+  public function progress(Model $parent) {
     return $this->user($parent)->about ? 1.0 : 0.0;
   }
-  public function progressString(BaseObject $parent) {
+  public function progressString(Model $parent) {
     return intval((bool) $this->user($parent)->about)."/1";
   }
 }

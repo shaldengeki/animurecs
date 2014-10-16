@@ -1,5 +1,7 @@
 <?php
-abstract class BaseAchievement extends BaseObject {
+require_once("../core/model.php");
+
+abstract class BaseAchievement extends Model {
   public $name, $description, $imagePath="";
   public $points=0;
   public $dependencies=[];
@@ -44,7 +46,7 @@ abstract class BaseAchievement extends BaseObject {
   public function imageTag(array $params=Null) {
     return $this->image($this->imagePath(), $params);
   }
-  public function user(BaseObject $parent) {
+  public function user(Model $parent) {
     if (method_exists($parent, 'user') && $parent->user() instanceof User) {
       return $parent->user();
     } elseif ($parent instanceof User) {
@@ -87,7 +89,7 @@ abstract class BaseAchievement extends BaseObject {
   }
 
   // function called upon event firing. awards user achievement if they are a valid candidate and removes user achievement if they aren't.
-  public function update($event, BaseObject $parent, array $updateParams=Null) {
+  public function update($event, Model $parent, array $updateParams=Null) {
     if (!$this->alreadyAwarded($this->user($parent)) && $this->dependenciesPresent($this->user($parent)) && $this->validateUser($event, $parent, $updateParams)) {
       // award achievement and notify user.
       $parent->app->logger->debug("Awarding achievement ".$this->id." to ".$this->user($parent)->id);
@@ -121,11 +123,11 @@ abstract class BaseAchievement extends BaseObject {
   }
 
   // returns bool indicating whether user is able to recieve this achievement.
-  abstract public function validateUser($event, BaseObject $parent, array $updateParams=Null);
+  abstract public function validateUser($event, Model $parent, array $updateParams=Null);
 
   // returns float indicating current progress towards this achievement.
-  abstract public function progress(BaseObject $parent);
+  abstract public function progress(Model $parent);
 
-  abstract public function progressString(BaseObject $parent);
+  abstract public function progressString(Model $parent);
 }
 ?>

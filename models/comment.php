@@ -1,5 +1,5 @@
 <?php
-class Comment extends BaseObject {
+class Comment extends Model {
   use Feedable;
 
   public static $TABLE = "comments";
@@ -57,7 +57,7 @@ class Comment extends BaseObject {
 
   public $entries;
 
-  public function __construct(Application $app, $id=Null, User $user=Null, BaseObject $parent=Null) {
+  public function __construct(Application $app, $id=Null, User $user=Null, Model $parent=Null) {
     parent::__construct($app, $id);
     if ($id === 0) {
       $this->message = "";

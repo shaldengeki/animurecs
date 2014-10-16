@@ -1,5 +1,7 @@
 <?php
-abstract class BaseList extends BaseObject {
+require_once("../core/model.php");
+
+abstract class BaseList extends Model {
   // base list from which anime and manga lists inherit methods and properties.
   use Feedable;
 

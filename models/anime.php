@@ -1,5 +1,5 @@
 <?php
-class Anime extends BaseObject {
+class Anime extends Model {
   use Aliasable, Feedable, Commentable;
 
   public static $TABLE = "anime";
