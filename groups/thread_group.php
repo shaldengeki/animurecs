@@ -1,6 +1,6 @@
 <?php
 
-class ThreadGroup extends BaseGroup {
+class ThreadGroup extends ModelGroup {
   // class to provide mass-querying functions for groups of threadIDs or thread objects.
   protected $_groupTable = "threads";
   protected $_groupTableSingular = "thread";

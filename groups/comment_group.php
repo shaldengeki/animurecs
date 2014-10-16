@@ -1,6 +1,6 @@
 <?php
 
-class CommentGroup extends BaseGroup {
+class CommentGroup extends ModelGroup {
   // class to provide mass-querying functions for groups of commentIDs or comment objects.
   protected $_groupTable = "comments";
   protected $_groupTableSingular = "comment";

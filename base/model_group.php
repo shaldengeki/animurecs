@@ -1,7 +1,7 @@
 <?php
 require_once("../core/model.php");
 
-class BaseGroup implements Iterator, ArrayAccess {
+class ModelGroup implements Iterator, ArrayAccess {
   // class to provide mass-querying functions for groups of object IDs or objects.
   // you can treat this as if it were an array of objects
   // e.g. foreach($group->load('info') as $object) or $group->load('info')[1]
@@ -217,7 +217,7 @@ class BaseGroup implements Iterator, ArrayAccess {
     }
     return $this->_tagCounts;
   }
-  public function append(BaseGroup $group, $override=False) {
+  public function append(ModelGroup $group, $override=False) {
     // appends another basegroup's objects to this one.
     // overrides keys if any non-numeric.
     foreach ($group->objects() as $key=>$object) {

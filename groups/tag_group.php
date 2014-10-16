@@ -1,6 +1,6 @@
 <?php
 
-class TagGroup extends BaseGroup {
+class TagGroup extends ModelGroup {
   // class to provide mass-querying functions for groups of tagIDs or tag objects.
   protected $_groupTable = "tags";
   protected $_groupTableSingular = "tag";

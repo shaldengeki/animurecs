@@ -1,6 +1,6 @@
 <?php
 
-class EntryGroup extends BaseGroup {
+class EntryGroup extends ModelGroup {
   // class to provide mass-querying functions for groups of entry objects.
   protected $_groupTable = "users";
   protected $_groupTableSingular = "user";

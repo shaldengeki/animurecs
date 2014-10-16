@@ -1,6 +1,6 @@
 <?php
 
-class AnimeGroup extends BaseGroup {
+class AnimeGroup extends ModelGroup {
   // class to provide mass-querying functions for groups of animeIDs or anime objects.
   public static $URL = "anime_groups";
 
