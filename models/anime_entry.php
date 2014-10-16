@@ -1,6 +1,6 @@
 <?php
 
-class AnimeEntry extends BaseEntry {
+class AnimeEntry extends Entry {
   public static $TABLE = "anime_lists";
   public static $PLURAL = "animeLists";
   public static $FIELDS = [

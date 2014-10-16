@@ -1,7 +1,7 @@
 <?php
 require_once("../core/model.php");
 
-abstract class BaseEntry extends Model {
+abstract class Entry extends Model {
   // feed entry class.
   use Commentable;
 

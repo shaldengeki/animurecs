@@ -300,7 +300,7 @@ class Thread extends Model {
     }
     return;
   }
-  public function formatFeedEntry(BaseEntry $entry) {
+  public function formatFeedEntry(Entry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);
   }
   // public function tagList(User $currentUser) {

@@ -1,6 +1,6 @@
 <?php
 
-class CommentEntry extends BaseEntry {
+class CommentEntry extends Entry {
   public static $TABLE = "comments";
   public static $PLURAL = "comments";
   public static $FIELDS = [

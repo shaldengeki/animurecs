@@ -611,7 +611,7 @@ class Anime extends Model {
     }
     return $this->app->render($output, ['subtitle' => $title]);
   }
-  public function formatFeedEntry(BaseEntry $entry) {
+  public function formatFeedEntry(Entry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);
   }
   public function url($action="show", $format=Null, array $params=Null, $title=Null) {
