@@ -22,7 +22,7 @@ class UndefinedActionException extends ControllerException {
       "Messages: ".$this->formatMessages(),
       "Stack trace:",
       $this->getTraceAsString()
-    ])
+    ]);
   }
   public function display() {
     return "Undefined action: ".$this->action." on resource: ".get_class($this->controller);
@@ -43,7 +43,7 @@ class UnauthorizedException extends ControllerException {
       "Messages: ".$this->formatMessages(),
       "Stack trace:",
       $this->getTraceAsString()
-    ])
+    ]);
   }
   public function display() {
     return "You're not allowed to do: ".$this->action." on resource: ".get_class($this->controller).".";
