@@ -173,8 +173,6 @@ class AnimeEntry extends BaseEntry {
     return $feedEntry;
   }
   public function render() {
-    $status = "";
-    $class = "";
     switch($this->app->action) {
       case 'new':
       case 'edit':
@@ -196,23 +194,17 @@ class AnimeEntry extends BaseEntry {
             $targetUser->load();
           } catch (DbException $e) {
             // this non-zero userID does not exist.
-            $status = "This user doesn't exist.";
-            $class = "error";
-            break;
+            $this->app->display_error(404, "No such user found.");
           }
           $targetEntry = new AnimeEntry($this->app, intval($this->app->id), ['user' => $targetUser]);
           if (!$targetEntry->allow($this->app->user, $this->app->action)) {
-            $status = "You can't update someone else's anime list.";
-            $class = "error";
-            break;
+            $this->app->display_error(403, "You can't update someone else's anime list.");
           }
           try {
             $targetAnime = new Anime($this->app, intval($_POST['anime_entries']['anime_id']));
             $targetAnime->load();
           } catch (DbException $e) {
-            $status = "This anime ID doesn't exist.";
-            $class = "error";
-            break;
+            $this->app->display_error(404, "No such anime found.");
           }
           if (!isset($_POST['anime_entries']['id'])) {
             // fill default values from the last entry for this anime.
@@ -224,47 +216,32 @@ class AnimeEntry extends BaseEntry {
             }
             $_POST['anime_entries'] = array_merge($lastEntry, $_POST['anime_entries']);
           }
-          try {
-            $updateList = $targetEntry->create_or_update($_POST['anime_entries']);
-          } catch (ValidationException $e) {
-            $this->app->delayedMessage("Some problems were found with your input while ".$verbProgressive." an anime list entry:\n".$e->listMessages());
-            $this->app->redirect();
-          }
+          $updateList = $targetEntry->create_or_update($_POST['anime_entries']);
           if ($updateList) {
-            $status = "Successfully updated your anime list.";
-            $class = "success";
-            break;
+            $this->app->display_success(200, "Successfully updated your anime list.");
           } else {
-            $status = "An error occurred while ".$verbProgressive." your anime list.";
-            $class = "error";
-            break;
+            $this->app->display_error(500, "An error occurred while updating your anime list. Please try again!");
           }
         }
         break;
       case 'show':
+        $this->app->display_response(200, $this->serialize());
         break;
       case 'delete':
         if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403);
+          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
         }
         $deleteEntry = $this->delete();
         if ($deleteEntry) {
-          $status = "Successfully removed an entry from your anime list.";
-          $class = "success";
-          break;
+          $this->app->display_success(200, "Successfully removed an entry from your anime list.");
         } else {
-          $status = "An error occurred while removing an entry from your anime list.";
-          $class = "error";
-          break;
+          $this->app->display_error(500, "An error occurred while removing an entry from your anime list.");
         }
         break;
       default:
         break;
     }
-    if ($status) {
-      $this->app->delayedMessage($status, $class);
-    }
-    $this->app->redirect();
+    return;
   }
 }
 

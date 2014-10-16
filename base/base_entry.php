@@ -68,6 +68,7 @@ abstract class BaseEntry extends BaseObject {
   public function allow(User $authingUser, $action, array $params=Null) {
     // takes a user object and an action and returns a bool.
     switch($action) {
+      /* Require the authing user to be logged in. */
       case 'new':
       case 'comment':
         if ($authingUser->loggedIn()) {
@@ -75,6 +76,8 @@ abstract class BaseEntry extends BaseObject {
         }
         return False;
         break;
+
+      /* Require the current user to be the requested user, or be staff. */
       case 'edit':
       case 'delete':
         if ($authingUser->id == $this->user->id || $authingUser->isStaff()) {
@@ -82,12 +85,16 @@ abstract class BaseEntry extends BaseObject {
         }
         return False;
         break;
+
+      /* Require the authing user to be staff. */
       case 'index':
         if ($authingUser->isAdmin()) {
           return True;
         }
         return False;
         break;
+
+      /* Public views. */
       case 'show':
         return True;
         break;
