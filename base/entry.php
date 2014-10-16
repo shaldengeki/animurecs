@@ -1,6 +1,4 @@
 <?php
-require_once("../core/model.php");
-
 abstract class Entry extends Model {
   // feed entry class.
   use Commentable;

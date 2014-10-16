@@ -1,6 +1,4 @@
 <?php
-require_once("../core/model.php");
-
 abstract class Achievement extends Model {
   public $name, $description, $imagePath="";
   public $points=0;

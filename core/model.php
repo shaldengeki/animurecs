@@ -1,5 +1,4 @@
 <?php
-
 class ModelException extends AppException { }
 
 class InvalidParameterException extends AppException {

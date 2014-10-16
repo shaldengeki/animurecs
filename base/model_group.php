@@ -1,6 +1,4 @@
 <?php
-require_once("../core/model.php");
-
 class ModelGroup implements Iterator, ArrayAccess {
   // class to provide mass-querying functions for groups of object IDs or objects.
   // you can treat this as if it were an array of objects

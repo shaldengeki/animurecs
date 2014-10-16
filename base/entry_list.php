@@ -1,6 +1,4 @@
 <?php
-require_once("../core/model.php");
-
 abstract class EntryList extends Model {
   // list of entries from which anime and manga lists inherit methods and properties.
   use Feedable;
