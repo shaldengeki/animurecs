@@ -100,6 +100,9 @@ class TagsController extends Controller {
     ]);
   }
   public function related_tags() {
+    /* Given a current page of anime that the user is viewing that are all tagged with a particular tag,
+      return a list of tags, sorted by tag type, with the number of anime on the page that have that tag.
+    */
     /* TODO: work predictions into tagCountsByType */
     $perPage = 25;
     if ($this->_app->user->loggedIn()) {
@@ -127,19 +130,22 @@ class TagsController extends Controller {
       $tagCounts[$id] = $countArray['count'];
     }
 
+    $numTypes = 0;
+    $tagTypes = [];
     $tagCountsByType = [];
     foreach ($group->tags() as $tag) {
-      if (!isset($tagCountsByType[$tag->type->name])) {
-        $tagCountsByType[$tag->type->name] = [$tag->name => $tagCounts[$tag->id]];
+      if (!isset($tagTypes[$tag->type->id])) {
+        $tagTypes[$tag->type->id] = $numTypes;
+        $tagCountsByType[] = [
+          'type' => ['id' => $tag->type->id, 'name' => $tag->type->name],
+          'tags' => [['id' => $tag->id, 'name' => $tag->name, 'count' => $tagCounts[$tag->id]]]
+        ];
+        $numTypes++;
       } else {
-        $tagCountsByType[$tag->type->name][$tag->name] = $tagCounts[$tag->id];
+        $tagCountsByType[$tagTypes[$tag->type->id]]['tags'][] = ['id' => $tag->id, 'name' => $tag->name, 'count' => $tagCounts[$tag->id]];
       }
     }
 
-    // go back and sort by count.
-    foreach ($tagCountsByType as $tagTypeID => $tags) {
-      arsort($tagCountsByType[$tagTypeID]);
-    }
     $this->_app->display_response(200, $tagCountsByType);
   }
   public function show() {
