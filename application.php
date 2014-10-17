@@ -680,47 +680,46 @@ class Application {
       $this->format = escape_output($_REQUEST['format']);
     }
 
-    if (!isset($this->controller) || $this->controller === "") {
-      $this->display_error(404, "The resource you requested (".$_REQUEST['controller'].") does not exist.");
-    }
-
-    try {
-      // render page.
-      header('X-Frame-Options: SAMEORIGIN');
-      ob_clean();
-      $this->controller->_beforeAction();
-      $this->controller->_performAction($this->action);
-      echo ob_get_clean();
-      $this->endOutput();
-    } catch (UndefinedActionException $e) {
-      $this->statsd->increment(get_class($e));
-      $this->log_exception($e);
-      $this->display_error(404, "There is no endpoint on this resource at: ".$e->action);
-    } catch (UnauthorizedException $e) {
-      // display error page if user is not allowed to perform this action.
-      $targetClass = get_class($e->controller->_target);
-      $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
-      $this->logger->warning($error->__toString());
-      $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
-    } catch (AppException $e) {
-      $this->statsd->increment(get_class($e));
-      $this->log_exception($e);
-      $this->clearOutput();
-      $this->display_exception($e);
-    } catch (NoDatabaseRowsRetrievedException $e) {
-      $this->dbConn->reset();
-      $this->statsd->increment(get_class($e));
-      $this->log_exception($e);
-      $this->display_error(404, "Database error: Requested object ID not found.");
-    } catch (DatabaseException $e) {
-      $this->dbConn->reset();
-      $this->statsd->increment(get_class($e));
-      $this->log_exception($e);
-      $this->display_error(404, "Database error. Oh dear.");
-    } catch (Exception $e) {
-      $this->statsd->increment(get_class($e));
-      $this->log_exception($e);
-      $this->display_error(500, "Unspecified server error. Oh dear.");
+    if (isset($this->controller) && $this->controller !== "") {
+      try {
+        // render page.
+        header('X-Frame-Options: SAMEORIGIN');
+        header('Access-Control-Allow-Origin: '.Config::ROOT_URL);
+        ob_clean();
+        $this->controller->_beforeAction();
+        $this->controller->_performAction($this->action);
+        echo ob_get_clean();
+        $this->endOutput();
+      } catch (UndefinedActionException $e) {
+        $this->statsd->increment(get_class($e));
+        $this->log_exception($e);
+        $this->display_error(404, "There is no endpoint on this resource at: ".$e->action);
+      } catch (UnauthorizedException $e) {
+        // display error page if user is not allowed to perform this action.
+        $targetClass = get_class($e->controller->_target);
+        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
+        $this->logger->warning($error->__toString());
+        $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
+      } catch (AppException $e) {
+        $this->statsd->increment(get_class($e));
+        $this->log_exception($e);
+        $this->clearOutput();
+        $this->display_exception($e);
+      } catch (NoDatabaseRowsRetrievedException $e) {
+        $this->dbConn->reset();
+        $this->statsd->increment(get_class($e));
+        $this->log_exception($e);
+        $this->display_error(404, "Database error: Requested object ID not found.");
+      } catch (DatabaseException $e) {
+        $this->dbConn->reset();
+        $this->statsd->increment(get_class($e));
+        $this->log_exception($e);
+        $this->display_error(404, "Database error. Oh dear.");
+      } catch (Exception $e) {
+        $this->statsd->increment(get_class($e));
+        $this->log_exception($e);
+        $this->display_error(500, "Unspecified server error. Oh dear.");
+      }
     }
   }
 
