@@ -17,7 +17,7 @@ class AnimeEntriesController extends Controller {
       /* Require the current user to be the requested user, or be staff. */
       case 'edit':
       case 'delete':
-        if ($this->_app->user->id === $this->_target->user->id || $this->_app->user->isStaff()) {
+        if (($this->_app->user->id === $this->_target->user->id && $this->_app->user->id === intval($_POST['anime_entries']['user_id'])) || $this->_app->user->isStaff()) {
           return True;
         }
         return False;
@@ -26,7 +26,7 @@ class AnimeEntriesController extends Controller {
       case 'index':
         if (isset($_POST['anime_entries']) && is_array($_POST['anime_entries'])) {
           // if the user isn't submitting an entry for themselves, they must be staff.
-          if ($this->_app->user->loggedIn() && ($this->_app->user->id === $_POST['anime_entries']['user_id'] || $this->_app->user->isStaff())) {
+          if ($this->_app->user->loggedIn() && ($this->_app->user->id === intval($_POST['anime_entries']['user_id']) || $this->_app->user->isStaff())) {
             return True;
           }
           return False;
