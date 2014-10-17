@@ -636,8 +636,8 @@ class Application {
     // only generate CSRF token if the user is logged in.
     if ($this->user->id !== 0) {
       $this->csrfToken = $this->_generateCSRFToken();
-      // if request came in through AJAX, or there isn't a POST, don't run CSRF filter.
-      if (!$this->ajax && !empty($_POST) && !$this->checkCSRF()) {
+      // if there isn't a POST, don't run CSRF filter.
+      if (!empty($_POST) && !$this->checkCSRF()) {
         $this->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
       }
     }

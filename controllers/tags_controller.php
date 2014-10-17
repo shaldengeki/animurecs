@@ -67,7 +67,7 @@ class TagsController extends Controller {
         $this->_app->display_error(500, "An error occurred while updating ".$this->_target->name.".");
       }
     }
-    $this->_app->display_error(400, "You must provide tag info to create or update.");
+    $this->_app->display_error(400, "You must provide tag info to update.");
   }
   public function index() {
     if (isset($_POST['tags']) && is_array($_POST['tags'])) {
