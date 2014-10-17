@@ -15,13 +15,5 @@ class AnimeList extends EntryList {
   public function __construct(Application $app, $user_id=Null) {
     parent::__construct($app, $user_id);
   }
-  public function allow(User $authingUser, $action, array $params=Null) {
-    // takes a user object and an action and returns a bool.
-    switch($action) {
-      default:
-        return False;
-        break;
-    }
-  }
 }
 ?>
