@@ -52,7 +52,7 @@ class TagTypesController extends Controller {
     if (isset($_POST['tag_types']) && is_array($_POST['tag_types'])) {
       $updateTagType = $this->_target->create_or_update($_POST['tag_types']);
       if ($updateTagType) {
-        $this->_app->display_success(200, "Successfully updated ".$this->_target->name.".");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while updating ".$this->_target->name.".");
       }
@@ -63,7 +63,7 @@ class TagTypesController extends Controller {
     if (isset($_POST['tag_types']) && is_array($_POST['tag_types'])) {
       $createTagType = $this->_target->create_or_update($_POST['tag_types']);
       if ($createTagType) {
-        $this->_app->display_success(200, "Successfully created ".$this->_target->name.".");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while creating ".$_POST['tag_types']['name'].".");
       }

@@ -63,7 +63,7 @@ class TagsController extends Controller {
     if (isset($_POST['tags']) && is_array($_POST['tags'])) {
       $updateTag = $this->_target->create_or_update($_POST['tag']);
       if ($updateTag) {
-        $this->_app->display_success(200, "Successfully updated ".$this->_target->name.".");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while updating ".$this->_target->name.".");
       }
@@ -74,7 +74,7 @@ class TagsController extends Controller {
     if (isset($_POST['tags']) && is_array($_POST['tags'])) {
       $updateTag = $this->_target->create_or_update($_POST['tag']);
       if ($updateTag) {
-        $this->_app->display_success(200, "Successfully created tag: ".$this->_target->name.".");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while creating tag: ".$_POST['tags']['name'].".");
       }

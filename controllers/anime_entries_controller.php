@@ -96,7 +96,7 @@ class AnimeEntriesController extends Controller {
 
     $updateList = $this->_target->create_or_update($_POST['anime_entries']);
     if ($updateList) {
-      $this->_app->display_success(200, "Successfully updated your anime list.");
+      $this->_app->display_success(200, $this->_target->serialize());
     } else {
       $this->_app->display_error(500, "An error occurred while updating your anime list. Please try again!");
     }
@@ -145,7 +145,7 @@ class AnimeEntriesController extends Controller {
       $_POST['anime_entries'] = array_merge($lastEntry, $_POST['anime_entries']);
       $updateList = $this->_target->create_or_update($_POST['anime_entries']);
       if ($updateList) {
-        $this->_app->display_success(200, "Successfully updated your anime list.");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while updating your anime list. Please try again!");
       }

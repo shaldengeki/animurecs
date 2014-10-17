@@ -96,7 +96,7 @@ class CommentsController extends Controller {
       }
       $updateComment = $this->_target->create_or_update($_POST['comments']);
       if ($updateComment) {
-        $this->_app->display_success(200, "Comment successfully updated.");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while updating this comment.");
       }
@@ -122,7 +122,7 @@ class CommentsController extends Controller {
 
         $createComment = $this->_target->create_or_update($_POST['comments']);
         if ($createComment) {
-          $this->_app->display_success(200, "Succesfully commented.");
+          $this->_app->display_success(200, $this->_target->serialize());
         } else {
           $this->_app->display_error(500, "An error occurred while commenting on this.");
         }

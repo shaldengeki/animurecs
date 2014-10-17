@@ -66,7 +66,7 @@ class ThreadsController extends Controller {
     if (isset($_POST['threads']) && is_array($_POST['threads'])) {
       $updateThread = $this->_target->create_or_update($_POST['thread']);
       if ($updateThread) {
-        $this->_app->display_success(200, "Successfully updated ".$this->_target->title.".");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while updating ".$this->_target->title.".");
       }
@@ -86,7 +86,7 @@ class ThreadsController extends Controller {
     if (isset($_POST['threads']) && is_array($_POST['threads'])) {
       $createThread = $this->_target->create_or_update($_POST['thread']);
       if ($createThread) {
-        $this->_app->display_success(200, "Successfully created ".$this->_target->title.".");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while creating ".$this->_target->title.".");
       }

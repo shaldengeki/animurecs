@@ -81,7 +81,7 @@ class AnimeController extends Controller {
     if ($updateAnime) {
       // fetch the new ID.
       $newAnime = new Anime($this->_app, $updateAnime);
-      $this->_app->display_success(200, "Successfully updated ".$newAnime->title.".", "success");
+      $this->_app->display_success(200, $this->_target->serialize());
     } else {
       $this->_app->display_error(500, "An error occurred while updating ".$this->_target->title.".");
     }
@@ -101,7 +101,7 @@ class AnimeController extends Controller {
       if ($updateAnime) {
         // fetch the new ID.
         $newAnime = new Anime($this->_app, $updateAnime);
-        $this->_app->display_success(200, "Successfully created ".$newAnime->title.".", "success");
+        $this->_app->display_success(200, $this->_target->serialize());
       } else {
         $this->_app->display_error(500, "An error occurred while creating ".$this->_target->title.".");
       }
