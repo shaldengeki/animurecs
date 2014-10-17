@@ -79,7 +79,7 @@ class InvalidModelException extends AppException {
     return implode("\n", [
       "Model: ".$this->model,
       parent::__toString()
-    ])
+    ]);
   }
 }
 
