@@ -33,6 +33,7 @@ class TagsController extends Controller {
         break;
 
       /* Public views. */
+      case 'related_tags':
       case 'show':
       case 'index':
         return True;
@@ -128,10 +129,10 @@ class TagsController extends Controller {
 
     $tagCountsByType = [];
     foreach ($group->tags() as $tag) {
-      if (!isset($tagCountsByType[$tag->type->id])) {
-        $tagCountsByType[$tag->type->id] = [$tag->id => $tagCounts[$tag->id]];
+      if (!isset($tagCountsByType[$tag->type->name])) {
+        $tagCountsByType[$tag->type->name] = [$tag->name => $tagCounts[$tag->id]];
       } else {
-        $tagCountsByType[$tag->type->id][$tag->id] = $tagCounts[$tag->id];
+        $tagCountsByType[$tag->type->name][$tag->name] = $tagCounts[$tag->id];
       }
     }
 
