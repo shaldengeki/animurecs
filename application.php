@@ -56,11 +56,30 @@ class AppException extends Exception {
     }
   }
   public function __toString() {
-    return get_class($this).":\n".$this->getFile().":".$this->getLine()."\nMessages: ".$this->formatMessages()."\nStack trace:\n".$this->getTraceAsString()."\n";
+    return implode("\n", [
+      get_class($this).":",
+      $this->getFile().":".$this->getLine(),
+      "Messages: ".$this->formatMessages(),
+      "Stack trace:\n".$this->getTraceAsString()
+    ]);
   }
   public function display() {
     // displays end user-friendly output explaining the exception that occurred.
     echo "A server error occurred, and I wasn't able to complete your request. I've let the staff know something's wrong - apologies for the problems!";
+  }
+}
+
+class InvalidModelException extends AppException {
+  private $model;
+  public function __construct($app, $model, $messages=Null, $code=0, Exception $previous=Null) {
+    parent::__construct($app, $messages, $code, $previous);
+    $this->model = $model;
+  }
+  public function __toString() {
+    return implode("\n", [
+      "Model: ".$this->model,
+      parent::__toString()
+    ])
   }
 }
 
@@ -79,7 +98,7 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_controllers=[],$_observers=[],$messages=[],$timings=[];
+  private $_controllers=[],$_modelControllers = [],$_observers=[],$messages=[],$timings=[];
   private $_statsdConn=Null;
 
   protected $totalPoints=Null;
@@ -255,8 +274,14 @@ class Application {
     // _controllers is a modelUrl:controller mapping for controllers that are bound to a URL.
     // e.g. "tag_types" => TagTypesController()
     foreach (array_slice(get_declared_classes(), $nonLinkedClasses) as $controllerName) {
+      $controller = new $controllerName($this);
       if (!isset($this->_controllers[$controllerName::$URL_BASE])) {
-        $this->_controllers[$controllerName::$URL_BASE] = new $controllerName($this);
+        $this->_controllers[$controllerName::$URL_BASE] = $controller;
+      }
+      if (!isset($this->_modelControllers[$controllerName::$MODEL])) {
+        $this->_modelControllers[$controllerName::$MODEL] = [$controller];
+      } else {
+        $this->_modelControllers[$controllerName::$MODEL][] = $controller;
       }
     }
 
@@ -353,6 +378,13 @@ class Application {
         $this->bind($event, $achievement);
       }
     }
+  }
+
+  public function modelControllers($model) {
+    if (!isset($this->_modelControllers[$model])) {
+      throw new InvalidModelException($this, $model);
+    }
+    return $this->_modelControllers[$model];
   }
 
   public function checkCSRF() {
