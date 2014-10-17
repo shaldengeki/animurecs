@@ -68,40 +68,6 @@ class Thread extends Model {
       $this->tags = $this->comments = $this->entries = $this->entries = [];
     }
   }
-  public function allow(User $authingUser, $action, array $params=Null) {
-    // takes a user object and an action and returns a bool.
-    switch($action) {
-      case 'remove_tag':
-      case 'edit':
-      case 'delete':
-        if ($this->user->id == $authingUser->id || $authingUser->isStaff()) {
-          return True;
-        }
-        return False;
-        break;
-      case 'new':
-        if ($authingUser->loggedIn()) {
-          return True;
-        }
-        return False;
-        break;
-      case 'token_search':
-      case 'feed':
-      case 'show':
-      case 'related':
-        return True;
-        break;
-      case 'index':
-        if ($authingUser->isStaff()) {
-          return True;
-        }
-        return False;
-        break;
-      default:
-        return False;
-        break;
-    }
-  }
   public function create_or_update_tagging($tag_id, User $currentUser) {
     /*
       Creates or updates an existing tagging for the current thread.
@@ -234,71 +200,6 @@ class Thread extends Model {
     return new AnimeGroup($this->app, array_map(function($a) {
       return $a['id'];
     }, $result));
-  }
-  public function render() {
-    if ($this->app->action === 'new' || $this->app->action === 'edit') {
-      if (isset($_POST['threads']) && is_array($_POST['threads'])) {
-        $verbProgressive = $this->id === 0 ? "creating" : "updating";
-        $verbPast = $this->id === 0 ? "created" : "updated";
-        $updateThread = $this->create_or_update($_POST['thread']);
-        if ($updateThread) {
-          $this->app->display_success(200, "Successfully ".$verbPast." ".$this->title.".", "success");
-        } else {
-          $this->app->display_error(500, "An error occurred while ".$verbProgressive." ".$this->title.".");
-        }
-      }
-      $this->app->display_error(400, "You must provide thread info to create or update.");
-    }
-    switch($this->app->action) {
-      case 'feed':
-        $maxTime = isset($_REQUEST['maxTime']) ? new DateTime('@'.intval($_REQUEST['maxTime'])) : Null;
-        $minTime = isset($_REQUEST['minTime']) ? new DateTime('@'.intval($_REQUEST['minTime'])) : Null;
-        $entries = [];
-        foreach (array_sort_by_method($this->entries($minTime, $maxTime, 50)->load('comments')->entries(), 'time', [], 'desc') as $entry) {
-          $entries[] = $entry->serialize();
-        }
-        $this->app->display_response(200, $entries);
-        break;
-      case 'show':
-        if ($this->id == 0) {
-          $this->app->display_error(404, "This thread could not be found.");
-        }
-        $this->app->display_response(200, $this->serialize());
-        break;
-      case 'delete':
-        if ($this->id == 0) {
-          $this->app->display_error(404, "This thread could not be found.");
-        }
-        if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
-        }
-        $threadTitle = $this->title;
-        $deleteThread = $this->delete();
-        if ($deleteThread) {
-          $this->app->display_success(200, 'Successfully deleted '.$threadTitle.'.');
-        } else {
-          $this->app->display_error(500, 'An error occurred while deleting '.$threadTitle.'.');
-        }
-        break;
-      default:
-      case 'index':
-        $perPage = 25;
-        $pages = ceil(Thread::Count($this->app)/$perPage);
-        $threadsQuery = $this->app->dbConn->table(Thread::$TABLE)->order('updated_at DESC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
-        $threads = [];
-        while ($thread = $threadsQuery->fetch()) {
-          $threadObj = new Thread($this->app, intval($thread['id']));
-          $threadObj->set($thread);
-          $threads[] = $tagTypeObj->serialize();
-        }
-        $this->app->display_response(200, [
-          'page' => $this->app->page,
-          'pages' => $pages,
-          'threads' => $threads
-        ]);
-        break;
-    }
-    return;
   }
   public function formatFeedEntry(Entry $entry) {
     return $entry->user->animeList->formatFeedEntry($entry);
