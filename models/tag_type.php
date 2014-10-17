@@ -56,27 +56,6 @@ class TagType extends Model {
   public function pluralName() {
     return $this->name."s";
   }
-  public function allow(User $authingUser, $action, array $params=Null) {
-    // takes a user object and an action and returns a bool.
-    switch($action) {
-      // case 'approve':
-      case 'new':
-      case 'edit':
-      case 'delete':
-        if ($authingUser->isAdmin()) {
-          return True;
-        }
-        return False;
-        break;
-      case 'show':
-      case 'index':
-        return True;
-        break;
-      default:
-        return False;
-        break;
-    }
-  }
   public function validate(array $tag_type) {
     $validationErrors = [];
     try {
@@ -126,67 +105,6 @@ class TagType extends Model {
   public function getApprovedUser() {
     // retrieves an id,name array corresponding to the user who approved this anime.
     // return $this->app->dbConn->firstRow("SELECT `users`.`id`, `users`.`name` FROM `anime` LEFT OUTER JOIN `users` ON `users`.`id` = `anime`.`approved_user_id` WHERE `anime`.`id` = ".intval($this->id));
-  }
-
-  public function render() {
-    if ($this->app->action == 'new' || $this->app->action == 'edit') {
-      if (isset($_POST['tag_types']) && is_array($_POST['tag_types'])) {
-        $verbProgressive = $this->id === 0 ? "creating" : "updating";
-        $verbPast = $this->id === 0 ? "created" : "updated";
-        $updateTagType = $this->create_or_update($_POST['tag_types']);
-        if ($updateTagType) {
-          $this->app->display_success(200, "Successfully ".$verbPast." ".$this->name.".", "success");
-        } else {
-          $this->app->display_error(500, "An error occurred while ".$verbProgressive." ".$this->name.".");
-        }
-      }
-    }
-    switch($this->app->action) {
-      case 'show':
-        if ($this->id == 0) {
-          $this->app->display_error(404, "This tag type could not be found.");
-        }
-        $this->app->display_response(200, $this->serialize());
-        break;
-      case 'delete':
-        if ($this->id == 0) {
-          $this->app->display_error(404, "This tag type could not be found.");
-        }
-        if (!$this->app->checkCSRF()) {
-          $this->app->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
-        }
-        $tagTypeName = $this->name;
-        $deleteTagType = $this->delete();
-        if ($deleteTagType) {
-          $this->app->display_success(200, 'Successfully deleted '.$tagTypeName.'.');
-        } else {
-          $this->app->display_error(500, 'An error occurred while deleting '.$tagTypeName.'.');
-        }
-        break;
-      default:
-      case 'index':
-        $perPage = 25;
-        if ($this->app->user->isAdmin()) {
-          $pages = ceil(TagType::Count($this->app)/$perPage);
-          $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
-        } else {
-          $pages = ceil(TagType::Count($this->app, ['approved_on != ""'])/$perPage);
-          $tagTypesQuery = $this->app->dbConn->table(TagType::$TABLE)->where(['approved_on != ""'])->order('name ASC')->offset((intval($this->app->page)-1)*$perPage)->limit($perPage)->query();
-        }
-        $tagTypes = [];
-        while ($tagType = $tagTypesQuery->fetch()) {
-          $tagTypeObj = new Tag($this->app, intval($tagType['id']));
-          $tagTypeObj->set($tagType);
-          $tagTypes[] = $tagTypeObj->serialize();
-        }
-        $this->app->display_response(200, [
-          'page' => $this->app->page,
-          'pages' => $pages,
-          'tagTypes' => $tagTypes
-        ]);
-        break;
-    }
-    return;
   }
 }
 ?>
