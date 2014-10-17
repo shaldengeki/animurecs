@@ -6,8 +6,10 @@ class CommentsController extends Controller {
 
   public function _isAuthorized($action) {
     // takes a user object and an action and returns a bool.
-    $parentClass = get_class($this->_target->parent());
-    $parentController = $this->_app->modelControllers($parentClass)[0];
+    if ($this->_target->id !== 0) {
+      $parentClass = get_class($this->_target->parent());
+      $parentController = $this->_app->modelControllers($parentClass)[0];
+    }
     switch($action) {
       case 'edit':
         // if this user is the owner of the comment, allow them to edit this comment.
