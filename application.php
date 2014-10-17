@@ -695,7 +695,7 @@ class Application {
     } catch (UndefinedActionException $e) {
       $this->statsd->increment(get_class($e));
       $this->log_exception($e);
-      $this->display_error(404, "There is no endpoint on this resource at: ".$this->action);
+      $this->display_error(404, "There is no endpoint on this resource at: ".$e->action);
     } catch (UnauthorizedException $e) {
       // display error page if user is not allowed to perform this action.
       $targetClass = get_class($e->controller->_target);
@@ -707,11 +707,16 @@ class Application {
       $this->log_exception($e);
       $this->clearOutput();
       $this->display_exception($e);
-    } catch (DatabaseException $e) {
+    } catch (NoDatabaseRowsRetrievedException $e) {
       $this->dbConn->reset();
       $this->statsd->increment(get_class($e));
       $this->log_exception($e);
       $this->display_error(404, "Database error: Requested object ID not found.");
+    } catch (DatabaseException $e) {
+      $this->dbConn->reset();
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(404, "Database error. Oh dear.");
     } catch (Exception $e) {
       $this->statsd->increment(get_class($e));
       $this->log_exception($e);
