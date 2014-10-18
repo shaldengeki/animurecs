@@ -122,6 +122,11 @@ class Application {
     }
     return $this->csrfToken;
   }
+  private function _setCSRFToken() {
+    // sets a CSRF token in the session object, and in the cookie.
+    $_SESSION['csrfToken'] = $this->csrfToken;
+    setcookie('XSRF-TOKEN', $this->csrfToken, 0, '/', Config::COOKIE_DOMAIN, True, False);
+  }
   private function _loadDependency($absPath) {
     // requires an application dependency from its absolute path
     // e.g. /ABSOLUTE_PATH/config.php
@@ -393,8 +398,13 @@ class Application {
     if (!isset($this->csrfField) || !isset($this->csrfToken) || $this->csrfField === Null || $this->csrfToken === Null) {
       return False;
     }
-    if (empty($_POST[$this->csrfField]) && isset($_REQUEST[$this->csrfField])) {
-      $_POST[$this->csrfField] = $_REQUEST[$this->csrfField];
+    if (empty($_POST[$this->csrfField])) {
+      $httpHeaders = getallheaders();
+      if (isset($_REQUEST[$this->csrfField])) {
+        $_POST[$this->csrfField] = $_REQUEST[$this->csrfField];
+      } elseif (isset($httpHeaders['X-XSRF-TOKEN'])) {
+        $_POST[$this->csrfField] = $httpHeaders['X-XSRF-TOKEN'];
+      }
     }
     if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
       return False;
@@ -636,6 +646,7 @@ class Application {
     // only generate CSRF token if the user is logged in.
     if ($this->user->id !== 0) {
       $this->csrfToken = $this->_generateCSRFToken();
+      $this->_setCSRFToken();
       // if there isn't a POST, don't run CSRF filter.
       if (!empty($_POST) && !$this->checkCSRF()) {
         $this->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
