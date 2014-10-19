@@ -18,15 +18,15 @@ After that, you'll want to set up your webserver. Point your server's document r
 
 For nginx it'd look like this:
 
-  # Rewrite all API traffic to api.php
-  location /api {
-    rewrite  ^/api/?([a-zA-Z0-9\_]+)?(/(.+?))?(/([0-9A-Za-z\_]+))?/?$ /api.php?controller=$1&id=$3&action=$5 last;
-  }
+    # Rewrite all API traffic to api.php
+    location /api {
+      rewrite  ^/api/?([a-zA-Z0-9\_]+)?(/(.+?))?(/([0-9A-Za-z\_]+))?/?$ /api.php?controller=$1&id=$3&action=$5 last;
+    }
 
-  # Rewrite all other traffic to its destination, or index.html
-  location / {
-    try_files $uri $uri/ /index.html;
-  }
+    # Rewrite all other traffic to its destination, or index.html
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
 
 You should be all set up to go after that!
 
