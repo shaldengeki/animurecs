@@ -4,7 +4,7 @@
   app.controller('LandingPageController', ['$scope', '$http', function($scope, $http) {
     var page = $scope;
     page.user = {};
-    $http.get('https://test.animurecs.com/api/users/shaldengeki').success(function(data) {
+    $http.get('/api/users/shaldengeki').success(function(data) {
       page.user = data;
     });
   }]);
@@ -14,7 +14,7 @@
     $scope.password = "";
 
     this.login = function() {
-      $http.post('https://test.animurecs.com/api/users/' + $scope.username + '/log_in', {username: $scope.username, password: $scope.password})
+      $http.post('/api/users/' + $scope.username + '/log_in', {username: $scope.username, password: $scope.password})
         .success(function(data) {
           console.log("Sucessfully logged in!");
         })
