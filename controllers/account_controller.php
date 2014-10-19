@@ -11,8 +11,9 @@ class AccountController extends Controller {
   public function _isAuthorized($action) {
     switch ($action) {
       case 'index':
-      default:
         return True;
+      default:
+        return False;
         break;
     }
   }
