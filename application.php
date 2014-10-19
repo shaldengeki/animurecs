@@ -98,15 +98,15 @@ class Application {
     And configuration parameters
     Also serves as DI container (stores database, logger, recommendation engine objects)
   */
-  private $_controllers=[],$_modelControllers = [],$_observers=[],$messages=[],$timings=[];
+  private $_controllers=[], $_modelControllers=[], $_observers=[], $messages=[], $timings=[];
   private $_statsdConn=Null;
 
   protected $totalPoints=Null;
 
   public $achievements=[],$debugOutput=[];
-  public $statsd, $logger, $cache, $dbConn, $recsEngine, $mailer, $serverTimeZone, $outputTimeZone, $user, $target, $startRender, $csrfToken=Null;
+  public $controller=Null, $statsd=Null, $logger=Null, $cache=Null, $dbConn=Null, $recsEngine=Null, $mailer=Null, $serverTimeZone=Null, $outputTimeZone=Null, $user=Null, $target=Null, $startRender=Null, $csrfToken=Null;
 
-  public $controller,$action,$status,$class="";
+  public $action="", $status="", $class="";
   public $id=0;
   public $ajax=False;
   public $page=1;
@@ -124,9 +124,43 @@ class Application {
   }
   private function _setCSRFToken() {
     // sets a CSRF token in the session object, and in the cookie.
-    $_SESSION['csrfToken'] = $this->csrfToken;
-    setcookie('XSRF-TOKEN', $this->csrfToken, 0, '/', Config::COOKIE_DOMAIN, True, False);
+    if (!isset($_SESSION['csrfCookieSet'])) {
+      $_SESSION['csrfToken'] = $this->csrfToken;
+      setcookie('XSRF-TOKEN', $this->csrfToken, 0, '/', Config::COOKIE_DOMAIN, True, False);
+      $_SESSION['csrfCookieSet'] = True;
+    }
   }
+  public function checkCSRF() {
+    // compare the POSTed CSRF token to this app's CSRF token.
+    // if either is not set, returns False.
+    if (!isset($this->csrfField) || !isset($this->csrfToken) || $this->csrfField === Null || $this->csrfToken === Null) {
+      return False;
+    }
+    if (empty($_POST[$this->csrfField])) {
+      $httpHeaders = getallheaders();
+
+      $this->logger->err(print_r($httpHeaders, True));
+      $this->logger->err(print_r($_SERVER, True));
+
+      if (isset($_REQUEST[$this->csrfField])) {
+        $_POST[$this->csrfField] = $_REQUEST[$this->csrfField];
+      } elseif (isset($httpHeaders['X-XSRF-TOKEN'])) {
+        $_POST[$this->csrfField] = $httpHeaders['X-XSRF-TOKEN'];
+      }
+    }
+    if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
+      return False;
+    }
+    return True;
+  }
+
+  public function modelControllers($model) {
+    if (!isset($this->_modelControllers[$model])) {
+      throw new InvalidModelException($this, $model);
+    }
+    return $this->_modelControllers[$model];
+  }
+
   private function _loadDependency($absPath) {
     // requires an application dependency from its absolute path
     // e.g. /ABSOLUTE_PATH/config.php
@@ -144,6 +178,7 @@ class Application {
       $this->_loadDependency($filename);
     }
   }
+
   private function _connectStatsD() {
     if ($this->statsd == Null) {
       $this->_statsdConn = new \Domnikl\Statsd\Connection\Socket('localhost', 8125);
@@ -186,6 +221,7 @@ class Application {
     }
     return $this->mailer;
   }
+
   private function _connectServices() {
     // Connects to external services.
     try {
@@ -385,32 +421,6 @@ class Application {
     }
   }
 
-  public function modelControllers($model) {
-    if (!isset($this->_modelControllers[$model])) {
-      throw new InvalidModelException($this, $model);
-    }
-    return $this->_modelControllers[$model];
-  }
-
-  public function checkCSRF() {
-    // compare the POSTed CSRF token to this app's CSRF token.
-    // if either is not set, returns False.
-    if (!isset($this->csrfField) || !isset($this->csrfToken) || $this->csrfField === Null || $this->csrfToken === Null) {
-      return False;
-    }
-    if (empty($_POST[$this->csrfField])) {
-      $httpHeaders = getallheaders();
-      if (isset($_REQUEST[$this->csrfField])) {
-        $_POST[$this->csrfField] = $_REQUEST[$this->csrfField];
-      } elseif (isset($httpHeaders['X-XSRF-TOKEN'])) {
-        $_POST[$this->csrfField] = $httpHeaders['X-XSRF-TOKEN'];
-      }
-    }
-    if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
-      return False;
-    }
-    return True;
-  }
   // bind/unbind/fire event handlers for objects.
   // event names are of the form modelName.eventName
   // e.g. User.afterCreate
@@ -497,7 +507,7 @@ class Application {
   public function display_response($code, $response) {
     $this->clearOutput();
     http_response_code(intval($code));
-    echo json_encode($response);
+    echo ")]}',\n".json_encode($response);
     $this->endOutput();
   }
   public function display_success($code, $message) {
@@ -643,14 +653,11 @@ class Application {
     }
 
     // protect against CSRF attacks.
-    // only generate CSRF token if the user is logged in.
-    if ($this->user->id !== 0) {
-      $this->csrfToken = $this->_generateCSRFToken();
-      $this->_setCSRFToken();
-      // if there isn't a POST, don't run CSRF filter.
-      if (!empty($_POST) && !$this->checkCSRF()) {
-        $this->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
-      }
+    $this->csrfToken = $this->_generateCSRFToken();
+    $this->_setCSRFToken();
+    // if there isn't a POST, don't run CSRF filter.
+    if (!empty($_POST) && !$this->checkCSRF()) {
+      $this->display_error(403, "The CSRF token you presented wasn't right. Please try again.");
     }
 
     // set controller, action, ID, status, class from request parameters.
@@ -691,46 +698,57 @@ class Application {
       $this->format = escape_output($_REQUEST['format']);
     }
 
-    if (isset($this->controller) && $this->controller !== "") {
-      try {
-        // render page.
-        header('X-Frame-Options: SAMEORIGIN');
-        header('Access-Control-Allow-Origin: '.Config::ROOT_URL);
-        ob_clean();
-        $this->controller->_beforeAction();
-        $this->controller->_performAction($this->action);
-        echo ob_get_clean();
-        $this->endOutput();
-      } catch (UndefinedActionException $e) {
-        $this->statsd->increment(get_class($e));
-        $this->log_exception($e);
-        $this->display_error(404, "There is no endpoint on this resource at: ".$e->action);
-      } catch (UnauthorizedException $e) {
-        // display error page if user is not allowed to perform this action.
-        $targetClass = get_class($e->controller->_target);
-        $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
-        $this->logger->warning($error->__toString());
-        $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
-      } catch (AppException $e) {
-        $this->statsd->increment(get_class($e));
-        $this->log_exception($e);
-        $this->clearOutput();
-        $this->display_exception($e);
-      } catch (NoDatabaseRowsRetrievedException $e) {
-        $this->dbConn->reset();
-        $this->statsd->increment(get_class($e));
-        $this->log_exception($e);
-        $this->display_error(404, "Database error: Requested object ID not found.");
-      } catch (DatabaseException $e) {
-        $this->dbConn->reset();
-        $this->statsd->increment(get_class($e));
-        $this->log_exception($e);
-        $this->display_error(404, "Database error. Oh dear.");
-      } catch (Exception $e) {
-        $this->statsd->increment(get_class($e));
-        $this->log_exception($e);
-        $this->display_error(500, "Unspecified server error. Oh dear.");
+    if ($this->controller === Null) {
+      $this->display_error(404, "There is no endpoint at: ".$_REQUEST['controller']);
+    }
+
+    try {
+      // render page.
+      header('X-Frame-Options: SAMEORIGIN');
+      header('Access-Control-Allow-Origin: '.Config::ROOT_URL);
+      // Respond to OPTIONS preflight requests.
+      // TODO: work this into controllers.
+      if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        header('Allow: GET,POST');
+        header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept');
+        header('Access-Control-Allow-Credentials: true');
+        exit;
       }
+      ob_clean();
+      $this->controller->_beforeAction();
+      $this->controller->_performAction($this->action);
+      echo ob_get_clean();
+      $this->endOutput();
+    } catch (UndefinedActionException $e) {
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(404, "There is no endpoint on this resource at: ".$e->action);
+    } catch (UnauthorizedException $e) {
+      // display error page if user is not allowed to perform this action.
+      $targetClass = get_class($e->controller->_target);
+      $error = new AppException($this, $this->user->username." attempted to ".$this->action." ".$targetClass::MODEL_NAME()." ID#".$this->target->id);
+      $this->logger->warning($error->__toString());
+      $this->display_error(403, "You're not allowed to perform this action. Try logging in?");
+    } catch (AppException $e) {
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->clearOutput();
+      $this->display_exception($e);
+    } catch (NoDatabaseRowsRetrievedException $e) {
+      $this->dbConn->reset();
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(404, "Database error: Requested object ID not found.");
+    } catch (DatabaseException $e) {
+      $this->dbConn->reset();
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(404, "Database error. Oh dear.");
+    } catch (Exception $e) {
+      $this->statsd->increment(get_class($e));
+      $this->log_exception($e);
+      $this->display_error(500, "Unspecified server error. Oh dear.");
     }
   }
 
