@@ -459,7 +459,7 @@ class UserController extends Controller {
     $password = rawurldecode($_POST['password']);
 
     if ($this->_app->user->logIn($username, $password)) {
-      $this->_app->display_response(200, ['id' => $this->_target->id, 'username' => $this->_target->username]);
+      $this->_app->display_response(200, $this->_target->serialize());
     } else {
       $this->_app->display_error(403, "The username/password combination you specified is not correct. Please try again.");
     }    

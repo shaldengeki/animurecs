@@ -8,6 +8,8 @@ class CommentsController extends Controller {
     // takes a user object and an action and returns a bool.
     if ($this->_target->id !== 0) {
       $parentClass = get_class($this->_target->parent());
+
+      /* TODO: fix this.  first controller is not necessarily the correct one. */
       $parentController = $this->_app->modelControllers($parentClass)[0];
     }
     switch($action) {
