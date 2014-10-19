@@ -1,5 +1,19 @@
 (function() {
-  var app = angular.module('animurecsServices', ['ngResource']);
+  var app = angular.module('animurecsServices', ['ngResource', 'ngCookies']);
+
+  app.factory('AuthInterceptor', ['$rootScope', '$q', 'AUTH_EVENTS', function ($rootScope, $q, AUTH_EVENTS) {
+    return {
+      responseError: function (response) { 
+        $rootScope.$broadcast({
+          401: AUTH_EVENTS.notAuthenticated,
+          403: AUTH_EVENTS.notAuthorized,
+          419: AUTH_EVENTS.sessionTimeout,
+          440: AUTH_EVENTS.sessionTimeout
+        }[response.status], response);
+        return $q.reject(response);
+      }
+    };
+  }]);
 
   app.factory('User', ['$resource',
     function($resource){
@@ -17,9 +31,50 @@
           method: 'POST',
           url: '/api/users/:username/log_out',
           withCredentials: true
+        },
+        getCurrent: {
+          method: 'GET',
+          url: '/api/account/',
+          withCredentials: true
         }
       });
     }]);
+
+  app.factory('Auth', ['$cookieStore', 'User', function($cookieStore, User) {
+    var user = null;
+    return {
+      login: function(u) {
+        user = {
+          id: u.id,
+          username: u.username,
+          usermask: u.usermask
+        }
+
+        // Session.create(u.id, u.username, u.usermask);
+        $cookieStore.put('user', u);
+        return u;
+      },
+      logout: function() {
+        user = null;
+      },
+      isAuthenticated: function() {
+        return !!user && !!user.id;
+      },
+      isAuthorized: function(authorizedRoles) {
+        if (!angular.isArray(authorizedRoles)) {
+          authorizedRoles = [authorizedRoles];
+        }
+        if (authorizedRoles.indexOf(0) >= 0 && !user) {
+          // public route.
+          return true;
+        }
+        return authorizedRoles.some(function(r) { return user && user.usermask & Math.pow(2, r); });
+      },
+      currentUser: function() {
+        return user;
+      }
+    }
+  }]);
 
   app.factory('Anime', ['$resource',
     function($resource){

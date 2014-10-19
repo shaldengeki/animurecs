@@ -10,26 +10,24 @@
       <a href='/' class='navbar-brand' href='#'>Animurecs</a>
     </div>
     <div class='collapse navbar-collapse'>
-        <ul class='nav navbar-nav navbar-right'>
-          <li>
-            <form name='navbarLoginForm' class='form-inline' ng-controller="LoginController as loginCtrl" ng-submit="loginCtrl.login()">
-              <div class='form-group'>
-                <label class='sr-only' for='username'>Username</label>
-                <input class='form-control input-sm' type='text', name='username', placeholder='Username' ng-model="username" />
-              </div>
-              <div class='form-group'>
-                <label class='sr-only' for='password'>Password</label>
-                <input class='form-control input-sm' type='password', name='password', placeholder='Password' ng-model="password" />
-              </div>
-              <!--<label class='checkbox'>
-                <input type='checkbox'> Remember me
-              </label>-->
-              <button type='submit' class='btn btn-primary btn-sm'>Sign in</button>
-              <a href='/register.php' class='btn btn-success btn-sm'>Sign Up</a>
-            </form>
-          </li>
-        </ul>
-      </div>
+      <ul class="nav navbar-nav" ng-if="currentUser">
+        <li class='divider-vertical'></li>
+        <li><a ng-href='/dashboard'><i class='glyphicon glyphicon-th-list glyphicon-white'></i> Dashboard</a></li>
+        <li class='divider-vertical'></li>
+        <li><a ng-href='/users/{{ currentUser.username }}'><i class='glyphicon glyphicon-home glyphicon-white'></i> You</a></li>
+        <li class='divider-vertical'></li>
+        <li><a href='/users/'><i class='glyphicon glyphicon-globe glyphicon-white'></i> Connect</a></li>
+        <li class='divider-vertical'></li>
+        <li><a ng-href='/users/{{ currentUser.username }}/discover'><i class='glyphicon glyphicon-star glyphicon-white'></i> Discover</a></li>
+        <li class='divider-vertical'></li>
+      </ul>
+
+      <ul class='nav navbar-nav navbar-right'>
+        <navbar-search ng-if="currentUser"></navbar-search>
+        <navbar-alerts ng-if="currentUser"></navbar-alerts>
+        <navbar-user ng-if="currentUser"></navbar-user>
+        <navbar-login ng-if="!currentUser"></navbar-login>
+      </ul>
     </div>
   </div>
 </div>
