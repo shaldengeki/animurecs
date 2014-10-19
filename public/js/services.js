@@ -15,7 +15,7 @@
     };
   }]);
 
-  app.factory('User', ['$resource', 'Auth',
+  app.factory('User', ['$resource',
     function($resource){
       return $resource('/api/users/:username/show', {}, {
         get: {method: 'GET'},
