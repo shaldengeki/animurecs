@@ -5,6 +5,9 @@
     $scope.currentUser = Auth.currentUser();
     $scope.$watch(Auth.isAuthenticated, function(authed) {
       $scope.currentUser = Auth.currentUser();
+      $scope.isAdmin = Auth.isAdmin();
+      $scope.switched = Auth.switched();
+      $scope.notSwitched = Auth.notSwitched();
     });
     $scope.userRoles = USER_LEVELS;
 

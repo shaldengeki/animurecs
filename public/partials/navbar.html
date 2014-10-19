@@ -23,10 +23,10 @@
       </ul>
 
       <ul class='nav navbar-nav navbar-right'>
-        <navbar-search ng-if="currentUser"></navbar-search>
-        <navbar-alerts ng-if="currentUser"></navbar-alerts>
-        <navbar-user ng-if="currentUser"></navbar-user>
-        <navbar-login ng-if="!currentUser"></navbar-login>
+        <li navbar-search ng-if='currentUser'></li>
+        <navbar-alerts ng-if='currentUser'></navbar-alerts>
+        <li navbar-user ng-if='currentUser'></li>
+        <li navbar-login ng-if='!currentUser'></li>
       </ul>
     </div>
   </div>

@@ -40,14 +40,15 @@
       });
     }]);
 
-  app.factory('Auth', ['$cookieStore', 'User', function($cookieStore, User) {
+  app.factory('Auth', ['$cookieStore', 'User', 'USER_LEVELS', function($cookieStore, User, USER_LEVELS) {
     var user = null;
     return {
       login: function(u) {
         user = {
           id: u.id,
           username: u.username,
-          usermask: u.usermask
+          usermask: u.usermask,
+          switched: null
         }
 
         // Session.create(u.id, u.username, u.usermask);
@@ -68,10 +69,19 @@
           // public route.
           return true;
         }
-        return authorizedRoles.some(function(r) { return user && user.usermask & Math.pow(2, r); });
+        return authorizedRoles.some(function(r) { return !!user && user.usermask & Math.pow(2, r); });
       },
       currentUser: function() {
         return user;
+      },
+      isAdmin: function() {
+        return !!user && user.usermask & Math.pow(2, USER_LEVELS.admin);
+      },
+      switched: function() {
+        return !!user && !!user.switched;
+      },
+      notSwitched: function() {
+        return !this.switched();
       }
     }
   }]);

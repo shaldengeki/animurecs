@@ -8,22 +8,30 @@
   });
   app.directive("navbarLogin", function() {
     return {
-      restrict: 'E',
+      restrict: 'A',
       templateUrl: '/partials/navbar-login.html'
     };
   });
   app.directive("navbarSearch", function() {
     return {
-      restrict: 'E',
+      restrict: 'A',
       templateUrl: '/partials/navbar-search.html'
     };
   });
+  app.directive("navbarUser", function() {
+    return {
+      restrict: 'A',
+      templateUrl: '/partials/navbar-user.html'
+    };
+  });
+
   app.directive("landingPage", function() {
     return {
       restrict: 'E',
       templateUrl: '/partials/landing-page.html'
     };
   });
+
   app.directive("footer", function() {
     return {
       restrict: 'E',

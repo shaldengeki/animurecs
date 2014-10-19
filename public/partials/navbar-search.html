@@ -1,8 +1,6 @@
-        <li>
           <form name='navbarSearchForm' class='navbar-search searchForm' ng-controller="NavbarSearchController as searchCtrl" ng-submit="searchCtrl.search()">
             <div class='form-group'>
               <label class='sr-only' for='search'>Search</label>
               <input id='navbar-anime-search' class='form-control input-sm autocomplete search-query' name='search' type='text' data-labelField='title' data-valueField='title' data-url='/api/anime/token_search' data-tokenLimit='1' data-outputElement='#anime-title' placeholder='Search' />
             </div>
           </form>
-        </li>
