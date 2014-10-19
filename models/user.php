@@ -36,7 +36,7 @@ class User extends Model {
       'db' => 'about'
     ],
     'usermask' => [
-      'type' => 'str',
+      'type' => 'int',
       'db' => 'usermask'
     ],
     'achievementMask' => [
