@@ -20,10 +20,8 @@
         password: $scope.password
       }, function(data) {
         console.log("Successfully logged in!");
-        console.log(JSON.stringify(data));
       }, function(data) {
         console.log("Could not log you in.");
-        console.log(JSON.stringify(data));
       });
     }
   }])
