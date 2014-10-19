@@ -44,12 +44,19 @@
     }
   }]);
 
-  app.controller('NavbarSearchController', [function() {
+  app.controller('NavbarSearchController', ['$scope', function($scope) {
 
   }]);
 
-  app.controller('DashboardController', [function() {
+  app.controller('DashboardController', ['$scope', function($scope) {
 
+  }]);
+
+  app.controller('UsersProfileController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
+    var profile = $scope;
+    profile.user = User.get({
+      username: $routeParams.username
+    });
   }]);
 
 })();

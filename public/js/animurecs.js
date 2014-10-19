@@ -59,6 +59,13 @@
           authorizedRoles: [USER_LEVELS.user, USER_LEVELS.moderator, USER_LEVELS.admin]
         }
       })
+      .when('/users/:username', {
+        templateUrl: '/partials/users/profile.html',
+        controller: 'UsersProfileController',
+        data: {
+          authorizedRoles: [USER_LEVELS.guest]
+        }
+      })
       .otherwise({
         redirectTo: '/'
       });

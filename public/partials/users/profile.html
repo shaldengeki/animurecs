@@ -1,0 +1,84 @@
+    <div class='container'>
+     <div class='row'>
+        <div class='col-md-3 userProfileColumn leftColumn'>
+          <ul class='thumbnails avatarContainer'>
+            <li class='col-md-12'>
+              <div class='img-thumbnail profileAvatar'>
+                <img ng-src='/{{ user.avatarPath }}' class='img-rounded' alt="{{ user.username }}'s avatar">
+              </div>
+            </li>
+          </ul>
+          <div class='friendListBox'>
+            <h3>Friends (?)</h3>
+            <ul class='friendGrid'>
+              <li class='friendGridEntry'>
+                friendGrid here.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class='col-md-9 userProfileColumn rightColumn'>
+          <div class='profileUserInfo'>
+            <div class='page-header'>
+              <h1>
+                <a ng-href='/users/{{ user.username }}'>{{ user.username }}</a>
+                <span ng-if="user.isModerator()" class='label label-info staffUserTag'>Moderator</span>
+                <span ng-if="user.isAdmin()" class='label label-danger staffUserTag'>Admin</span>
+                <small ng-if="user.isCurrentUser()"><a ng-href='/users/{{ user.username }}/settings'>(edit)</a></small>
+                <span ng-if="user.isFriend()" class='pull-right'><button type='button' class='btn btn-success btn-lg disabled' disabled='disabled'>Friends</button></span>
+                <span ng-if="user.isRequestedFriend()" class='pull-right'><button type='button' class='btn btn-warning btn-lg disabled' disabled='disabled'>Request Sent</button></span>
+                <span ng-if="user.isPendingRequestFriend()" class='pull-right'><button type='button' class='btn btn-primary btn-lg'>Confirm Request</button></span>
+                <span ng-if="user.canRequestFriend()" class='pull-right'><button type='button' class='btn btn-primary btn-lg'>Add Friend</button></span>
+              </h1>
+            </div>
+            <p class='lead'>
+              {{ user.about }}
+            </p>
+            <ul class='thumbnails'>
+              <li ng-if="!user.isCurrentUser()" class='col-md-4'>
+                <p>Anime compatibility:</p>
+                  <div class='progress'>
+                    <div class='progress-bar progress-bar-<?php echo $barClass; ?>' role='progressbar' aria-valuenow="50" aria-valuemin="0" aria-valuenow="100" style='width: 50%'>
+                      <span>Compatibility%</span>
+                    </div>
+                  </div>
+              </li>
+              <li class='col-md-4'>
+                {{ user.points }}
+              </li>
+              <li class='col-md-4'>
+              </li>
+            </ul>
+          </div>
+          <div class='profileTabs'>
+            <ul class='nav nav-tabs'>
+              <li class='active ajaxTab' data-url='/api/users/{{ user.username }}/feed'><a href='#feed' data-toggle='tab'>Feed</a></li>
+              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/anime_list'><a href='#anime' data-toggle='tab'>List</a></li>
+              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/stats'><a href='#stats' data-toggle='tab'>Stats</a></li>
+              <!--<li class='ajaxTab' data-url='<?php //echo $this->url("achievements"); ?>'><a href='#achievements' data-toggle='tab'>Achievements</a></li>-->
+              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/friends'><a href='#friends' data-toggle='tab'>Friends (?)</a></li>
+              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/achievements'><a href='#achievements2' data-toggle='tab'>Achievements (beta)</a></li>
+            </ul>
+            <div class='tab-content'>
+              <div class='tab-pane active' id='feed'>
+                addInlineEntryForm here
+                comment->inlineForm here
+                feed here
+              </div>
+              <div class='tab-pane' id='anime'>
+                Loading...
+              </div>
+              <div class='tab-pane' id='stats'>
+                Loading...
+              </div>
+              <div class='tab-pane' id='friends'>
+                Loading...
+              </div>
+              <div class='tab-pane' id='achievements2'>
+                Loading...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
