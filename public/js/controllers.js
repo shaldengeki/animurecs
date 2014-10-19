@@ -1,26 +1,30 @@
 (function() {
   var app = angular.module('animurecsControllers', []);
 
-  app.controller('LandingPageController', ['$scope', '$http', function($scope, $http) {
+  app.controller('LandingPageController', ['$scope', 'User', function($scope, User) {
     var page = $scope;
-    page.user = {};
-    $http.get('/api/users/shaldengeki').success(function(data) {
-      page.user = data;
+    page.user = User.get({
+      username: 'shaldengeki'
     });
   }]);
 
-  app.controller('LoginController', ['$scope', '$http', function($scope, $http) {
+  app.controller('LoginController', ['$scope', 'User', function($scope, User) {
     $scope.username = "";
     $scope.password = "";
 
     this.login = function() {
-      $http.post('/api/users/' + $scope.username + '/log_in', {username: $scope.username, password: $scope.password})
-        .success(function(data) {
-          console.log("Sucessfully logged in!");
-        })
-        .error(function(data) {
-          console.log("Could not log you in.")
-        });
+      User.login({
+        username: $scope.username
+      }, {
+        username: $scope.username,
+        password: $scope.password
+      }, function(data) {
+        console.log("Successfully logged in!");
+        console.log(JSON.stringify(data));
+      }, function(data) {
+        console.log("Could not log you in.");
+        console.log(JSON.stringify(data));
+      });
     }
   }])
 
