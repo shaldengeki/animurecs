@@ -103,7 +103,7 @@ class Application {
 
   protected $totalPoints=Null;
 
-  public $achievements=[],$debugOutput=[];
+  public $achievements=[],$debugOutput=[],$requestHeaders=[];
   public $controller=Null, $statsd=Null, $logger=Null, $cache=Null, $dbConn=Null, $recsEngine=Null, $mailer=Null, $serverTimeZone=Null, $outputTimeZone=Null, $user=Null, $target=Null, $startRender=Null, $csrfToken=Null;
 
   public $action="", $status="", $class="";
@@ -137,15 +137,10 @@ class Application {
       return False;
     }
     if (empty($_POST[$this->csrfField])) {
-      $httpHeaders = getallheaders();
-
-      $this->logger->err(print_r($httpHeaders, True));
-      $this->logger->err(print_r($_SERVER, True));
-
       if (isset($_REQUEST[$this->csrfField])) {
         $_POST[$this->csrfField] = $_REQUEST[$this->csrfField];
-      } elseif (isset($httpHeaders['X-XSRF-TOKEN'])) {
-        $_POST[$this->csrfField] = $httpHeaders['X-XSRF-TOKEN'];
+      } elseif (isset($this->requestHeaders['X-Xsrf-Token'])) {
+        $_POST[$this->csrfField] = $this->requestHeaders['X-Xsrf-Token'];
       }
     }
     if (empty($_POST[$this->csrfField]) || $_POST[$this->csrfField] != $this->csrfToken) {
@@ -420,6 +415,15 @@ class Application {
       }
     }
   }
+  private function _checkJSONPost() {
+    // checks to see if we're receiving application/json POST data.
+    // if so, adds the JSON's data to $_POST.
+    if (isset($this->requestHeaders['Content-Type']) && substr($this->requestHeaders['Content-Type'], 0, 16) === 'application/json') {
+      foreach (json_decode(file_get_contents('php://input')) as $key=>$value) {
+        $_POST[$key] = $value;
+      }
+    }
+  }
 
   // bind/unbind/fire event handlers for objects.
   // event names are of the form modelName.eventName
@@ -634,6 +638,10 @@ class Application {
     $this->_loadDependencies();
     $this->_bindEvents();
 
+    // populate headers and $_POST (if necessary)
+    $this->requestHeaders = getallheaders();
+    $this->logger->err(print_r($this->requestHeaders, True));
+    $this->_checkJSONPost();
 
     $this->statsd->increment("hits");
 
