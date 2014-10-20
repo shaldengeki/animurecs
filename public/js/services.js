@@ -52,7 +52,7 @@
         }
 
         // Session.create(u.id, u.username, u.usermask);
-        $cookieStore.put('user', u);
+        $cookieStore.put('user', user);
         return u;
       },
       logout: function() {

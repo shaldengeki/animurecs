@@ -66,6 +66,13 @@
           authorizedRoles: [USER_LEVELS.guest]
         }
       })
+      .when('/log_out', {
+        template: ' ',
+        controller: 'LogOutController',
+        data: {
+          authorizedRoles: [USER_LEVELS.user, USER_LEVELS.moderator, USER_LEVELS.admin]
+        }
+      })
       .otherwise({
         redirectTo: '/'
       });

@@ -48,6 +48,13 @@
 
   }]);
 
+  app.controller('LogOutController', ['$scope', '$location', 'Auth', 'User', function($scope, $location, Auth, User) {
+    User.logout({username: Auth.currentUser().username}, {username: Auth.currentUser().username}, function(data) {
+      Auth.logout();
+      $location.path('/');
+    });
+  }]);
+
   app.controller('DashboardController', ['$scope', function($scope) {
 
   }]);
