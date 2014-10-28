@@ -68,11 +68,7 @@
   }]);
 
   app.controller('FriendGridController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
-    $scope.random = function(){
-        return 0.5 - Math.random();
-    };
-
-    this.friends = User.friends({
+    $scope.friends = User.friends({
       // TODO: make this rely on $scope.user
       username: $routeParams.username
     });

@@ -33,12 +33,30 @@
   });
 
 
-  app.directive("friendSidebarGrid", function() {
+  app.directive("userSidebarAvatar", function() {
     return {
-      restrict: 'A',
-      templateUrl: '/partials/users/friend-sidebar-grid.html'
+      restrict: 'E',
+      templateUrl: '/partials/users/user-sidebar-avatar.html'
     }
-  })
+  });
+  app.directive("userSidebarFriends", function() {
+    return {
+      restrict: 'E',
+      templateUrl: '/partials/users/user-sidebar-friends.html'
+    }
+  });
+  app.directive("userProfileInfo", function() {
+    return {
+      restrict: 'E',
+      templateUrl: '/partials/users/user-profile-info.html'
+    }
+  });
+  app.directive("userProfileTabs", function() {
+    return {
+      restrict: 'E',
+      templateUrl: '/partials/users/user-profile-tabs.html'
+    }
+  });
 
   app.directive("footer", function() {
     return {

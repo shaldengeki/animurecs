@@ -1,0 +1,11 @@
+          <div class='friendListBox' ng-controller='FriendGridController as friendCtrl'>
+            <h3>Friends ({{ friends.length }})</h3>
+            <ul class='friendGrid'>
+              <li class='friendGridEntry' ng-repeat='friend in friends | limitTo:4'>
+                <a ng-href='/users/{{ friend.friend.username }}'>
+                  <img ng-src='{{friend.friend.avatarPath}}' class='friendGridImage' />
+                  <div class='friendGridUsername'>{{ friend.friend.username }}</div>
+                </a>
+              </li>
+            </ul>
+          </div>
