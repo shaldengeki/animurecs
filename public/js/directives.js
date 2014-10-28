@@ -32,6 +32,14 @@
     };
   });
 
+
+  app.directive("friendSidebarGrid", function() {
+    return {
+      restrict: 'A',
+      templateUrl: '/partials/users/friend-sidebar-grid.html'
+    }
+  })
+
   app.directive("footer", function() {
     return {
       restrict: 'E',

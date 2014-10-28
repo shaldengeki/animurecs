@@ -15,30 +15,30 @@
     };
   }]);
 
-  app.factory('User', ['$resource',
-    function($resource){
-      return $resource('/api/users/:username/show', {}, {
-        get: {method: 'GET'},
-        save: {method: 'POST', url: '/api/users/:username/edit', withCredentials: true},
-        query: {method:'GET', url: '/api/users', isArray: true},
-        delete: {method: 'DELETE', url: '/api/users/:username/delete', withCredentials: true},
-        login: {
-          method: 'POST',
-          url: '/api/users/:username/log_in',
-          withCredentials: true
-        },
-        logout: {
-          method: 'POST',
-          url: '/api/users/:username/log_out',
-          withCredentials: true
-        },
-        getCurrent: {
-          method: 'GET',
-          url: '/api/account/',
-          withCredentials: true
-        }
-      });
-    }]);
+  app.factory('User', ['$resource', function($resource) {
+    return $resource('/api/users/:username/show', {}, {
+      get: {method: 'GET'},
+      friends: {method: 'GET', url: '/api/users/:username/friends', isArray: true},
+      save: {method: 'POST', url: '/api/users/:username/edit', withCredentials: true},
+      query: {method:'GET', url: '/api/users', isArray: true},
+      delete: {method: 'DELETE', url: '/api/users/:username/delete', withCredentials: true},
+      login: {
+        method: 'POST',
+        url: '/api/users/:username/log_in',
+        withCredentials: true
+      },
+      logout: {
+        method: 'POST',
+        url: '/api/users/:username/log_out',
+        withCredentials: true
+      },
+      getCurrent: {
+        method: 'GET',
+        url: '/api/account/',
+        withCredentials: true
+      }
+    });
+  }]);
 
   app.factory('Auth', ['$cookieStore', 'User', 'USER_LEVELS', function($cookieStore, User, USER_LEVELS) {
     var user = null;
@@ -74,6 +74,9 @@
       currentUser: function() {
         return user;
       },
+      isModerator: function() {
+        return !!user && user.usermask & Math.pow(2, USER_LEVELS.moderator);
+      },
       isAdmin: function() {
         return !!user && user.usermask & Math.pow(2, USER_LEVELS.admin);
       },
@@ -86,23 +89,21 @@
     }
   }]);
 
-  app.factory('Anime', ['$resource',
-    function($resource){
-      return $resource('/api/anime/:title/show', {}, {
-        get: {method: 'GET'},
-        save: {method: 'POST', url: '/api/anime/:title/edit', withCredentials: true},
-        query: {method:'GET', url: '/api/anime', isArray: true},
-        delete: {method: 'DELETE', url: '/api/anime/:title/delete', withCredentials: true}
-      });
-    }]);
+  app.factory('Anime', ['$resource', function($resource) {
+    return $resource('/api/anime/:title/show', {}, {
+      get: {method: 'GET'},
+      save: {method: 'POST', url: '/api/anime/:title/edit', withCredentials: true},
+      query: {method:'GET', url: '/api/anime', isArray: true},
+      delete: {method: 'DELETE', url: '/api/anime/:title/delete', withCredentials: true}
+    });
+  }]);
 
-  app.factory('Tag', ['$resource',
-    function($resource){
-      return $resource('/api/tag/:name/show', {}, {
-        get: {method: 'GET'},
-        save: {method: 'POST', url: '/api/tag/:name/edit', withCredentials: true},
-        query: {method:'GET', url: '/api/tag', isArray: true},
-        delete: {method: 'DELETE', url: '/api/tag/:name/delete', withCredentials: true}
-      });
-    }]);
+  app.factory('Tag', ['$resource', function($resource) {
+    return $resource('/api/tag/:name/show', {}, {
+      get: {method: 'GET'},
+      save: {method: 'POST', url: '/api/tag/:name/edit', withCredentials: true},
+      query: {method:'GET', url: '/api/tag', isArray: true},
+      delete: {method: 'DELETE', url: '/api/tag/:name/delete', withCredentials: true}
+    });
+  }]);
 })();

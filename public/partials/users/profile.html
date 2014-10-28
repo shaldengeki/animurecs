@@ -8,14 +8,7 @@
               </div>
             </li>
           </ul>
-          <div class='friendListBox'>
-            <h3>Friends (?)</h3>
-            <ul class='friendGrid'>
-              <li class='friendGridEntry'>
-                friendGrid here.
-              </li>
-            </ul>
-          </div>
+          <div class='friendListBox' ng-controller='FriendGridController as friendCtrl' friend-sidebar-grid></div>
         </div>
         <div class='col-md-9 userProfileColumn rightColumn'>
           <div class='profileUserInfo'>

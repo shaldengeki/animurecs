@@ -1,0 +1,9 @@
+            <h3>Friends ({{ friendCtrl.friends.length }})</h3>
+            <ul class='friendGrid'>
+              <li class='friendGridEntry' ng-repeat='friend in friendCtrl.friends | orderBy:random | limitTo:4'>
+                <a ng-href='/users/{{friend.friend.username}}/show'>
+                  <img ng-src='{{friend.friend.avatarPath}}' class='friendGridImage' />
+                  <div class='friendGridUsername'>{{friend.friend.username}}</div>
+                </a>
+              </li>
+            </ul>

@@ -16,13 +16,6 @@
     }
   }]);
 
-  app.controller('LandingPageController', ['$scope', 'User', 'Auth', function($scope, User, Auth) {
-    var page = $scope;
-    page.user = User.get({
-      username: 'shaldengeki'
-    });
-  }]);
-
   app.controller('LoginController', ['$scope', '$rootScope', '$location', 'User', 'AUTH_EVENTS', 'Auth', function($scope, $rootScope, $location, User, AUTH_EVENTS, Auth) {
     $scope.username = "";
     $scope.password = "";
@@ -45,13 +38,20 @@
   }]);
 
   app.controller('NavbarSearchController', ['$scope', function($scope) {
-
+    
   }]);
 
   app.controller('LogOutController', ['$scope', '$location', 'Auth', 'User', function($scope, $location, Auth, User) {
     User.logout({username: Auth.currentUser().username}, {username: Auth.currentUser().username}, function(data) {
       Auth.logout();
       $location.path('/');
+    });
+  }]);
+
+  app.controller('LandingPageController', ['$scope', 'User', 'Auth', function($scope, User, Auth) {
+    var page = $scope;
+    page.user = User.get({
+      username: 'shaldengeki'
     });
   }]);
 
@@ -62,6 +62,17 @@
   app.controller('UsersProfileController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
     var profile = $scope;
     profile.user = User.get({
+      username: $routeParams.username
+    });
+  }]);
+
+  app.controller('FriendGridController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
+    $scope.random = function(){
+        return 0.5 - Math.random();
+    };
+
+    this.friends = User.friends({
+      // TODO: make this rely on $scope.user
       username: $routeParams.username
     });
   }]);
