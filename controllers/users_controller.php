@@ -324,12 +324,13 @@ class UserController extends Controller {
     $this->_app->display_response(200, []);
   }
   public function friends() {
-    $friends = array_map(function ($f) {
-      return [
-        'friend' => $f['user']->serialize(),
-        'compatibility' => round($this->_target->animeList()->compatibility($f['user']->animeList()), 2)
+    $friends = [];
+    foreach ($this->_target->friends() as $friend) {
+      $friends[] = [
+        'friend' => $friend['user']->serialize(),
+        'compatibility' => round($this->_target->animeList()->compatibility($friend['user']->animeList()), 2)
       ];
-    }, $this->_target->friends());
+    }
     $this->_app->display_response(200, $friends);
   }
   public function global_feed() {
