@@ -98,6 +98,7 @@ class UserController extends Controller {
         break;
 
       /* public views */
+      case 'compatibility':
       case 'switch_back':
       case 'show':
       case 'feed':
@@ -269,6 +270,22 @@ class UserController extends Controller {
       }
     }
     $this->_app->display_response(200, $animeList);    
+  }
+  public function compatibility() {
+    if (!isset($_REQUEST['username']) || $_REQUEST['username'] === '') {
+      $this->_app->display_error(400, "You must give a username to calculate compatibility with.");
+    }
+    try {
+      $otherUser = User::Get($this->_app, [
+        'username' => $_REQUEST['username']
+      ]);
+    } catch (NoDatabaseRowsRetrievedException $e) {
+      $this->_app->display_error(404, "The user you provided does not exist.");
+    }
+
+    $this->_app->display_response(200, [
+      'compatibility' => round($this->_target->animeList()->compatibility($otherUser->animeList()), 2)
+    ]);
   }
   public function confirm_friend() {
     if (!$this->_app->checkCSRF()) {
@@ -447,7 +464,6 @@ class UserController extends Controller {
       $users[] = $thisUser->serialize();
     }
     $this->_app->display_response(200, $users);
-
   }
   public function log_in() {
     if (!$this->_app->checkCSRF()) {
