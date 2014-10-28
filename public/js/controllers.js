@@ -59,11 +59,12 @@
 
   }]);
 
-  app.controller('UsersProfileController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
+  app.controller('UsersProfileController', ['$scope', '$routeParams', 'User', 'Auth', function($scope, $routeParams, User, Auth) {
     var profile = $scope;
     profile.user = User.get({
       username: $routeParams.username
     });
+    profile.compatibility = User.compatibility({username: $routeParams.username});
   }]);
 
   app.controller('FriendGridController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {

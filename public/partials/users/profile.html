@@ -31,8 +31,8 @@
               <li ng-if="!user.isCurrentUser()" class='col-md-4'>
                 <p>Anime compatibility:</p>
                   <div class='progress'>
-                    <div class='progress-bar progress-bar-<?php echo $barClass; ?>' role='progressbar' aria-valuenow="50" aria-valuemin="0" aria-valuenow="100" style='width: 50%'>
-                      <span>Compatibility%</span>
+                    <div class='progress-bar progress-bar-TODO' role='progressbar' aria-valuenow="{{ compatibility.compatibility }}" aria-valuemin="0" aria-valuenow="100" style='width: {{ compatibility.compatibility }}%'>
+                      <span>{{ compatibility.compatibility }}%</span>
                     </div>
                   </div>
               </li>

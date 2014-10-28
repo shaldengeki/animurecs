@@ -16,9 +16,10 @@
   }]);
 
   app.factory('User', ['$resource', function($resource) {
-    return $resource('/api/users/:username/show', {}, {
+    return $resource('/api/users/:username', {username: '@username'}, {
       get: {method: 'GET'},
       friends: {method: 'GET', url: '/api/users/:username/friends', isArray: true},
+      compatibility: {method: 'GET', url: '/api/users/:username/compatibility'},
       save: {method: 'POST', url: '/api/users/:username/edit', withCredentials: true},
       query: {method:'GET', url: '/api/users', isArray: true},
       delete: {method: 'DELETE', url: '/api/users/:username/delete', withCredentials: true},
