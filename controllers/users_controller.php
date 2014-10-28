@@ -272,12 +272,16 @@ class UserController extends Controller {
     $this->_app->display_response(200, $animeList);    
   }
   public function compatibility() {
-    if (!isset($_REQUEST['username']) || $_REQUEST['username'] === '') {
-      $this->_app->display_error(400, "You must give a username to calculate compatibility with.");
+    if (!isset($_REQUEST['other_username']) || $_REQUEST['other_username'] === '') {
+      // default to the currently-authed user, if any.
+      if (!$this->_app->user->loggedIn()) {
+        $this->_app->display_error(400, "You must log in or give a username to calculate compatibility with.");
+      }
+      $_REQUEST['other_username'] = $this->_app->user->username;
     }
     try {
       $otherUser = User::Get($this->_app, [
-        'username' => $_REQUEST['username']
+        'username' => $_REQUEST['other_username']
       ]);
     } catch (NoDatabaseRowsRetrievedException $e) {
       $this->_app->display_error(404, "The user you provided does not exist.");
