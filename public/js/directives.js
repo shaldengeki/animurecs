@@ -32,6 +32,13 @@
     };
   });
 
+  app.directive("entryInlineForm", function() {
+    return {
+      restrict: 'E',
+      templateUrl: '/partials/entry-inline-form.html'
+    }
+  });
+
 
   app.directive("userSidebarAvatar", function() {
     return {

@@ -1,29 +1,11 @@
-          <div class='profileTabs'>
+          <div class='profileTabs' ng-controller="UsersProfileController as profileCtrl">
             <ul class='nav nav-tabs'>
-              <li class='active ajaxTab' data-url='/api/users/{{ user.username }}/feed'><a href='#feed' data-toggle='tab'>Feed</a></li>
-              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/anime_list'><a href='#anime' data-toggle='tab'>List</a></li>
-              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/stats'><a href='#stats' data-toggle='tab'>Stats</a></li>
-              <!--<li class='ajaxTab' data-url='<?php //echo $this->url("achievements"); ?>'><a href='#achievements' data-toggle='tab'>Achievements</a></li>-->
-              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/friends'><a href='#friends' data-toggle='tab'>Friends (?)</a></li>
-              <li class='ajaxTab' data-url='/api/users/{{ user.username }}/achievements'><a href='#achievements2' data-toggle='tab'>Achievements (beta)</a></li>
+              <li ng-class="{ active: currentTab == t.url }" ng-repeat="t in tabs">
+                <a href='#' ng-click="currentTab = t.url">{{ t.name }}</a>
+              </li>
             </ul>
             <div class='tab-content'>
-              <div class='tab-pane active' id='feed'>
-                addInlineEntryForm here
-                comment->inlineForm here
-                feed here
-              </div>
-              <div class='tab-pane' id='anime'>
-                Loading...
-              </div>
-              <div class='tab-pane' id='stats'>
-                Loading...
-              </div>
-              <div class='tab-pane' id='friends'>
-                Loading...
-              </div>
-              <div class='tab-pane' id='achievements2'>
-                Loading...
-              </div>
+              {{ currentTab.url }}
+              <div class='tab-pane' ng-include="currentTab.url"></div>
             </div>
           </div>

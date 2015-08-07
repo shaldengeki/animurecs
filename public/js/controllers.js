@@ -37,7 +37,7 @@
     }
   }]);
 
-  app.controller('NavbarSearchController', ['$scope', function($scope) {
+  app.controller('NavbarSearchController', ['$scope', 'Anime', function($scope, Anime) {
     
   }]);
 
@@ -59,12 +59,22 @@
 
   }]);
 
-  app.controller('UsersProfileController', ['$scope', '$routeParams', 'User', 'Auth', function($scope, $routeParams, User, Auth) {
+  app.controller('UsersProfileController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
     var profile = $scope;
+    profile.tabs = [
+      {name: "Feed", template: "feed.html"},
+      {name: "List", template: "list.html"},
+      {name: "Stats", template: "stats.html"},
+      {name: "Friends", template: "friends.html"},
+      {name: "Achivements", template: "achievements.html"}
+    ];
+
     profile.user = User.get({
       username: $routeParams.username
     });
     profile.compatibility = User.compatibility({username: $routeParams.username});
+
+    profile.currentTab = profile.tabs[0];
   }]);
 
   app.controller('FriendGridController', ['$scope', '$routeParams', 'User', function($scope, $routeParams, User) {
@@ -72,6 +82,17 @@
       // TODO: make this rely on $scope.user
       username: $routeParams.username
     });
+  }]);
+
+  app.controller('EntryController', ['$scope', 'Anime', function($scope, Anime) {
+    this.entry = {};
+    this.title = "";
+
+    this.submit = function() {
+      console.log("Submitted entry!");
+      console.log(this.title);
+      console.log(this.entry);
+    };
   }]);
 
 })();

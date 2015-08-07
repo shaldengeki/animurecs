@@ -1,0 +1,31 @@
+                <div class='row addListEntryForm'>
+                  <form name='entryInlineForm' class='form-inline' ng-controller="EntryController as entryCtrl" ng-submit="entryCtrl.submit()">
+                    <input ng-model='entryCtrl.entry.user_id' name='user_id' type='hidden' value='{{ user.id }}' />
+                    <div class='input-group input-group-sm col-md-4'>
+                      <input ng-model='entryCtrl.title' name='anime_entries_anime_title' id='anime_entries_anime_title' type='text' class='autocomplete autocomplete-shrink form-control' data-labelField='title' data-valueField='id' data-url='/api/anime/' data-tokenLimit='1' data-outputElement='#anime_entries\[anime_id\]' data-status-url='/api/users/{{ user.id }}/anime' placeholder='Have an anime to update? Type it in!' />
+                      <input ng-model='entryCtrl.entry.anime_id' name='anime_id' type='hidden' value='' />
+                    </div>
+                    <div class='addListEntryFormSecondCol'>
+                      <div class='input-group input-group-sm col-md-3'>
+                        <select ng-model='entryCtrl.entry.status' class='form-control' id='anime_entries[status]' name='anime_entries[status]'>
+                          <option value=0>Remove</option>
+                          <option value=1 selected='selected'>Currently Watching</option>
+                          <option value=2>Completed</option>
+                          <option value=3>On Hold</option>
+                          <option value=4>Dropped</option>
+                          <option value=6>Plan to Watch</option>
+                        </select>
+                      </div>
+                      <div class='input-group input-group-sm col-md-2'>
+                        <input ng-model='entryCtrl.entry.score' name='score' type='number' min=0 max=10 step='any' />
+                        <span class="input-group-addon">/10</span>
+                      </div>
+                      <div class='input-group input-group-sm col-md-3'>
+                        <span class="input-group-addon">Ep</span>
+                        <input ng-model='entryCtrl.entry.episode' name='episode' type='number' min=0 max=1000 step=1 />
+                        <span class="input-group-addon">/?</span>
+                      </div>
+                      <button type='submit' class='btn btn-sm btn-primary updateEntryButton'>Update</button>
+                    </div>
+                  </form>
+                </div>
