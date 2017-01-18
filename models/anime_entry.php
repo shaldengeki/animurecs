@@ -108,7 +108,13 @@ class AnimeEntry extends BaseEntry {
     if ($this->id === 0) {
       $user = User::FindById($this->app, (int) $entry['user_id']);
       $anime = Anime::FindById($this->app, (int) $entry['anime_id']);
-      $entry['predicted_score'] = round($this->app->recsEngine->predict($user, $anime)[$anime->id], 2);
+      try {
+        $entry['predicted_score'] = round($this->app->recsEngine->predict($user, $anime)[$anime->id], 2);
+      } catch (Exception $e) {
+        // recs engine is down. log the error and move on.
+        $this->app->log_exception($e);
+        //$entry['predicted_score'] = Null;
+      }
     }
     $this->validate($entry);
     return parent::create_or_update($entry, $whereConditions);
