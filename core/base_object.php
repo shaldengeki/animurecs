@@ -328,7 +328,7 @@ abstract class BaseObject {
       // attempt to retrieve this object from the cache.
       $cas = "";
       $info = $this->app->cache->get($this->cacheKey(), $foo, $cas);
-      if ($this->app->cache->resultCode() !== Memcached::RES_NOTFOUND) {
+      if ($info !== false && $this->app->cache->resultCode() !== Memcached::RES_NOTFOUND) {
         $this->set($info);
         $this->app->dbConn->reset();
         return $this;
@@ -423,18 +423,18 @@ abstract class BaseObject {
         // this is a property in the model's table.
         $this->load();
         if (!isset($this->{$property})) {
-          throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());          
+          throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class()."#".$this->id);
         }
         return $this->{$property};
       } elseif (isset(static::$JOINS[$property])) {
         // this is a join on the model.
         $this->load($property);
         if (!isset($this->{$property})) {
-          throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());
+          throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class()."#".$this->id);
         }
         return $this->{$property};
       } else {
-        throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class());
+        throw new ModelException($this->app, "Requested attribute does not exist: ".$property." on: ".get_called_class()."#".$this->id);
       }
     }
   }

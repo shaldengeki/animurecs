@@ -9,12 +9,17 @@ class CacheException extends Exception {
 class Cache {
   // Provides interface for memcached.
   private $memcached;
-  public function __construct() {
-    try {
-      $this->memcached = new Memcached();
-      $this->memcached->addServer(Config::MEMCACHED_HOST, intval(Config::MEMCACHED_PORT));
-    } catch (Exception $e) {
-      throw new CacheException("Could not connect to Memcached instance");
+  public function __construct($maxAttempts=10) {
+    $this->maxAttempts = intval($maxAttempts);
+    if (Config::MEMCACHED_HOST === Null) {
+      $this->memcached = Null;
+    } else {
+      try {
+        $this->memcached = new Memcached();
+        $this->memcached->addServer(Config::MEMCACHED_HOST, intval(Config::MEMCACHED_PORT));
+      } catch (Exception $e) {
+        throw new CacheException("Could not connect to Memcached instance");
+      }
     }
   }
 
@@ -31,30 +36,36 @@ class Cache {
   public function set($key, $value) {
     // sets a key-value pair in the memcached server using CAS.
     if ($this->memcached === Null) {
-      if (Config::ENVIRONMENT == "production") {
+      if (Config::MEMCACHED_HOST !== Null && Config::ENVIRONMENT == "production") {
         throw new CacheException("No Memcached instance attached");
-      } elseif (Config::ENVIRONMENT == "development") {
+      } else {
         return;
       }
     }
+    $numAttempts = 0;
     do {
+      $numAttempts++;
       $cas = "";
       $cachedValue = $this->memcached->get($key, Null, $cas);
-      if ($this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
+      if ($cachedValue === false || $this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
         // key is not yet set in cache.
         $this->memcached->add($key, $value);
       } else {
         // update the extant cache value.
         $this->memcached->cas($cas, $key, $value, Config::MEMCACHED_DEFAULT_LIFESPAN);
       }
-    } while ($this->memcached->getResultCode() != Memcached::RES_SUCCESS);
+    } while ($this->memcached->getResultCode() != Memcached::RES_SUCCESS && $numAttempts <= $this->maxAttempts);
+    if ($this->memcached->getResultCode() != Memcached::RES_SUCCESS) {
+      // the latest attempt to set failed, so throw an exception.
+      throw new CacheException("Failed to set cache key ".$key);
+    }
   }
   public function get($key, &$cas_token=Null) {
     // retrieves a key (or many keys) from the cache.
     if ($this->memcached === Null) {
-      if (Config::ENVIRONMENT == "production") {
+      if (Config::MEMCACHED_HOST !== Null && Config::ENVIRONMENT == "production") {
         throw new CacheException("No Memcached instance attached");
-      } elseif (Config::ENVIRONMENT == "development") {
+      } else {
         return False;
       }
     }
@@ -77,9 +88,9 @@ class Cache {
   public function delete($key) {
     // removes a key from the cache.
     if ($this->memcached === Null) {
-      if (Config::ENVIRONMENT == "production") {
+      if (Config::MEMCACHED_HOST !== Null && Config::ENVIRONMENT == "production") {
         throw new CacheException("No Memcached instance attached");
-      } elseif (Config::ENVIRONMENT == "development") {
+      } else {
         return True;
       }
     }
